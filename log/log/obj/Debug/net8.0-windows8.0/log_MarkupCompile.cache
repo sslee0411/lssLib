@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-D:\project\lssLib\log\log\obj\Debug\net8.0-windows8.0\
+D:\lssLib\log\log\obj\Debug\net8.0-windows8.0\
 log
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-D:\project\lssLib\log\log\App.xaml
+D:\lssLib\log\log\App.xaml
 21592000007
 
 5-1842292650
-199565496346
+1991659510536
 Logviewercontrol.xaml;MainWindow.xaml;
 
 False

@@ -39,12 +39,11 @@ public abstract class NetTransportBase : INetTransport
     private NetState _state = NetState.Disconnected;
     private volatile bool _disposed;
 
-    /*
     /// <summary>
     /// 로그 Source 식별자.
     /// <para><c>XxxTransport.FromConfig(cfg)</c> 팩토리 사용 시 cfg.DeviceName 이 자동 주입됩니다.</para>
     /// </summary>
-    public string LogSource { get; set; } = "Net.Transport"; */
+    public string LogSource { get; set; } = "Net.Transport";
 
     #endregion
 

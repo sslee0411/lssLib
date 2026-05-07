@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-D:\project\lssLib\Serialization\lssLib.Serialization.WpfDemo\obj\Debug\net8.0-windows8.0\
+D:\lssLib\Serialization\lssLib.Serialization.WpfDemo\obj\Debug\net8.0-windows8.0\
 lssLib.Serialization.WpfDemo
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-D:\project\lssLib\Serialization\lssLib.Serialization.WpfDemo\App.xaml
+D:\lssLib\Serialization\lssLib.Serialization.WpfDemo\App.xaml
 8-19574707
 
 13-1806420934
-200-1369894118
+200941559474
 MainWindow.xaml;Views\BufferView.xaml;Views\CompositeView.xaml;Views\CrcView.xaml;Views\DecimalView.xaml;Views\HookView.xaml;Views\ScaleView.xaml;Views\TypeView.xaml;
 
-False
+True
 

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\project\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj": {}
+    "D:\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj": {}
   },
   "projects": {
-    "D:\\project\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj": {
+    "D:\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\project\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj",
+        "projectUniqueName": "D:\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj",
         "projectName": "lssLib.Log",
-        "projectPath": "D:\\project\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj",
+        "projectPath": "D:\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj",
         "packagesPath": "C:\\Users\\sslee\\.nuget\\packages\\",
-        "outputPath": "D:\\project\\lssLib\\log\\lssLib.Log\\obj\\",
+        "outputPath": "D:\\lssLib\\log\\lssLib.Log\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\DevExpress 21.2\\Components\\Offline Packages",

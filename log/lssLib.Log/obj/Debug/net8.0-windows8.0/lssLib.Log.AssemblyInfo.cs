@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("lssLib.Log")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4986864d04396ff63f84e4d233fec0796807ba7a")]
 [assembly: System.Reflection.AssemblyProductAttribute("lssLib.Log")]
 [assembly: System.Reflection.AssemblyTitleAttribute("lssLib.Log")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

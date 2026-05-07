@@ -6,6 +6,7 @@
 using System.Net.Sockets;
 
 using lssLib.Net;
+
 namespace Lsslib.net.implementation;
 
 /// <summary>
@@ -72,15 +73,19 @@ public sealed class TcpTransport : NetTransportBase
 
     protected override async Task WriteCoreAsync(byte[] data, CancellationToken ct)
     {
-        if (_stream is null)
-            throw new InvalidOperationException($"[{LogSource}] TCP 연결이 없습니다.");
+        if (_stream is null){
+            throw new InvalidOperationException($"포트가 열려있지 않습니다.");
+            // throw new InvalidOperationException($"[{LogSource}] TCP 연결이 없습니다.");
+        }
         await _stream.WriteAsync(data, ct).ConfigureAwait(false);
     }
 
     protected override async Task<byte[]> ReadCoreAsync(int length, CancellationToken ct)
     {
-        if (_stream is null)
-            throw new InvalidOperationException($"[{LogSource}] TCP 연결이 없습니다.");
+        if (_stream is null) {
+            throw new InvalidOperationException($"포트가 열려있지 않습니다.");
+            //throw new InvalidOperationException($"[{LogSource}] TCP 연결이 없습니다.");
+        }
         var buf = new byte[length];
         int read = await _stream.ReadAsync(buf, ct).ConfigureAwait(false);
         return buf[..read];

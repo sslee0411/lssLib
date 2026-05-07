@@ -4,7 +4,9 @@
 
 using System.IO.MemoryMappedFiles;
 
-namespace lssLib.Net;
+using lssLib.Net;
+
+namespace Lsslib.net.implementation;
 
 /// <summary>공유 메모리 기반 IPC 전송 계층.</summary>
 /// <remarks>

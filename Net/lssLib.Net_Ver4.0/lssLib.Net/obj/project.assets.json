@@ -15,11 +15,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\project\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\lssLib.Net.Base.csproj",
+      "projectUniqueName": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\lssLib.Net.Base.csproj",
       "projectName": "lssLib.Net.Base",
-      "projectPath": "D:\\project\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\lssLib.Net.Base.csproj",
+      "projectPath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\lssLib.Net.Base.csproj",
       "packagesPath": "C:\\Users\\sslee\\.nuget\\packages\\",
-      "outputPath": "D:\\project\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\obj\\",
+      "outputPath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\DevExpress 21.2\\Components\\Offline Packages",

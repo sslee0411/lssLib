@@ -85,7 +85,7 @@ public sealed class SerialTransport : NetTransportBase
         return Task.CompletedTask;
     }
 
-    protected override Task DisconnectCoreAsync()
+    protected override Task DisconnectCoreAsync(CancellationToken ct)
     {
         if (_port?.IsOpen == true) _port.Close();
         return Task.CompletedTask;
@@ -94,15 +94,20 @@ public sealed class SerialTransport : NetTransportBase
     protected override Task WriteCoreAsync(byte[] data, CancellationToken ct)
     {
         if (_port is null || !_port.IsOpen)
-            throw new InvalidOperationException($"[{LogSource}] 포트가 열려있지 않습니다.");
+        {
+            throw new InvalidOperationException($"포트가 열려있지 않습니다.");
+            //throw new InvalidOperationException($"[{LogSource}] 포트가 열려있지 않습니다.");
+        }
         _port.Write(data, 0, data.Length);
         return Task.CompletedTask;
     }
 
     protected override Task<byte[]> ReadCoreAsync(int length, CancellationToken ct)
     {
-        if (_port is null || !_port.IsOpen)
-            throw new InvalidOperationException($"[{LogSource}] 포트가 열려있지 않습니다.");
+        if (_port is null || !_port.IsOpen){
+            throw new InvalidOperationException($"포트가 열려있지 않습니다.");
+            //throw new InvalidOperationException($"[{LogSource}] 포트가 열려있지 않습니다.");
+        }
         var buf = new byte[length];
         int read = _port.Read(buf, 0, length);
         return Task.FromResult(buf[..read]);

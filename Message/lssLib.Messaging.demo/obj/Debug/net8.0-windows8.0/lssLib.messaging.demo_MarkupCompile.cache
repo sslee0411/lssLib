@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-D:\Project\lssLib\lssLib\Message\lssLib.messaging.demo\obj\Debug\net8.0-windows8.0\
+D:\lssLib\Message\lssLib.Messaging.demo\obj\Debug\net8.0-windows8.0\
 lssLib.Messaging.demo
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-D:\Project\lssLib\lssLib\Message\lssLib.messaging.demo\App.xaml
+D:\lssLib\Message\lssLib.Messaging.demo\App.xaml
 4-1669585517
 
 8500828853
-1992062032567
+1991647379406
 Commandqueueview.xaml;Eventbusview.xaml;MainWindow.xaml;Schedulerview.xaml;
 
 False

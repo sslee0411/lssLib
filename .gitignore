@@ -1,0 +1,41 @@
+### 기본적으로 제외할 파일 ###
+node_modules/
+build/
+.vscode/
+.DS_Store
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.svn
+.svn/*
+
+### 패키지 매니저 관련 파일 ###
+package-lock.json
+yarn.lock
+
+### IDE 및 프로젝트 설정 파일 ###
+.project
+.idea/
+*.sublime-workspace
+
+### 압축 파일 및 백업 파일 ###
+*.zip
+*.tar
+*.gz
+*.backup.*
+*.back.*
+
+### 테스트 및 설정 관련 ###
+coverage/
+setupProxy.js
+setupTests.js
+
+### 기타 불필요한 파일 ###
+public/*.cache

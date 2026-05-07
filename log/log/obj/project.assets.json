@@ -37,11 +37,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\project\\lssLib\\log\\log\\log.csproj",
+      "projectUniqueName": "D:\\lssLib\\log\\log\\log.csproj",
       "projectName": "log",
-      "projectPath": "D:\\project\\lssLib\\log\\log\\log.csproj",
+      "projectPath": "D:\\lssLib\\log\\log\\log.csproj",
       "packagesPath": "C:\\Users\\sslee\\.nuget\\packages\\",
-      "outputPath": "D:\\project\\lssLib\\log\\log\\obj\\",
+      "outputPath": "D:\\lssLib\\log\\log\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\DevExpress 21.2\\Components\\Offline Packages",
@@ -66,8 +66,8 @@
         "net8.0-windows8.0": {
           "targetAlias": "net8.0-windows8.0",
           "projectReferences": {
-            "D:\\project\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj": {
-              "projectPath": "D:\\project\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj"
+            "D:\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj": {
+              "projectPath": "D:\\lssLib\\log\\lssLib.Log\\lssLib.Log.csproj"
             }
           }
         }
