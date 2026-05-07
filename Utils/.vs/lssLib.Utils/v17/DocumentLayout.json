@@ -1,0 +1,71 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\project\\lssLib\\Utils\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{789E4337-CC8A-D730-D277-E03FD365001C}|lssLib.Utils\\lssLib.Utils\\lssLib.Utils.csproj|d:\\project\\lsslib\\utils\\lsslib.utils\\lsslib.utils\\guard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{789E4337-CC8A-D730-D277-E03FD365001C}|lssLib.Utils\\lssLib.Utils\\lssLib.Utils.csproj|solutionrelative:lsslib.utils\\lsslib.utils\\guard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{789E4337-CC8A-D730-D277-E03FD365001C}|lssLib.Utils\\lssLib.Utils\\lssLib.Utils.csproj|d:\\project\\lsslib\\utils\\lsslib.utils\\lsslib.utils\\fileextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{789E4337-CC8A-D730-D277-E03FD365001C}|lssLib.Utils\\lssLib.Utils\\lssLib.Utils.csproj|solutionrelative:lsslib.utils\\lsslib.utils\\fileextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{789E4337-CC8A-D730-D277-E03FD365001C}|lssLib.Utils\\lssLib.Utils\\lssLib.Utils.csproj|d:\\project\\lsslib\\utils\\lsslib.utils\\lsslib.utils\\datetimeextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{789E4337-CC8A-D730-D277-E03FD365001C}|lssLib.Utils\\lssLib.Utils\\lssLib.Utils.csproj|solutionrelative:lsslib.utils\\lsslib.utils\\datetimeextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Guard.cs",
+              "DocumentMoniker": "D:\\project\\lssLib\\Utils\\lssLib.Utils\\lssLib.Utils\\Guard.cs",
+              "RelativeDocumentMoniker": "lssLib.Utils\\lssLib.Utils\\Guard.cs",
+              "ToolTip": "D:\\project\\lssLib\\Utils\\lssLib.Utils\\lssLib.Utils\\Guard.cs",
+              "RelativeToolTip": "lssLib.Utils\\lssLib.Utils\\Guard.cs",
+              "ViewState": "AgIAAK4AAAAAAAAAAAAmwLsAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T06:18:34.907Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Fileextensions.cs",
+              "DocumentMoniker": "D:\\project\\lssLib\\Utils\\lssLib.Utils\\lssLib.Utils\\Fileextensions.cs",
+              "RelativeDocumentMoniker": "lssLib.Utils\\lssLib.Utils\\Fileextensions.cs",
+              "ToolTip": "D:\\project\\lssLib\\Utils\\lssLib.Utils\\lssLib.Utils\\Fileextensions.cs",
+              "RelativeToolTip": "lssLib.Utils\\lssLib.Utils\\Fileextensions.cs",
+              "ViewState": "AgIAAL0BAAAAAAAAAAAmwMcBAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T06:18:06.253Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Datetimeextensions.cs",
+              "DocumentMoniker": "D:\\project\\lssLib\\Utils\\lssLib.Utils\\lssLib.Utils\\Datetimeextensions.cs",
+              "RelativeDocumentMoniker": "lssLib.Utils\\lssLib.Utils\\Datetimeextensions.cs",
+              "ToolTip": "D:\\project\\lssLib\\Utils\\lssLib.Utils\\lssLib.Utils\\Datetimeextensions.cs",
+              "RelativeToolTip": "lssLib.Utils\\lssLib.Utils\\Datetimeextensions.cs",
+              "ViewState": "AgIAADgBAAAAAAAAAAAmwEIBAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T06:17:44.832Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

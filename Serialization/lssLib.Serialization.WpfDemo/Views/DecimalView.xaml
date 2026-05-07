@@ -1,0 +1,49 @@
+﻿<UserControl x:Class="lssLib.Serialization.WpfDemo.Views.DecimalView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:lssLib.Serialization.WpfDemo.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="310"/>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="decimal 값 입력" Style="{StaticResource SectionLabel}"/>
+                    <TextBox x:Name="DecInput" Style="{StaticResource InputBox}" Height="32" Margin="0,0,0,6" Text="123.456789012345678"/>
+                    <TextBlock Text="decimal 배열 (쉼표 구분)" Style="{StaticResource SectionLabel}"/>
+                    <TextBox x:Name="ArrInput" Style="{StaticResource InputBox}" Height="32" Margin="0,0,0,10" Text="1234.56, 789.00, 100.50"/>
+                    <TextBlock Text="HEX 버퍼 (16B 배수)" Style="{StaticResource SectionLabel}"/>
+                    <TextBox x:Name="HexIn" Style="{StaticResource InputBox}" AcceptsReturn="True"
+                             Height="50" FontSize="11" Margin="0,0,0,10"
+                             Text="40 E2 01 00 00 00 00 00 00 00 00 00 00 00 03 00"/>
+                    <Button Content="▶ decimal → 16바이트 LE/BE"     Click="OnToBytes"       Style="{StaticResource Btn}"/>
+                    <Button Content="▶ byte[] → decimal 읽기"         Click="OnFromBytes"     Style="{StaticResource GreenBtn}"/>
+                    <Button Content="▶ decimal 내부 구조 분해"          Click="OnDecompose"     Style="{StaticResource PurpleBtn}"/>
+                    <Button Content="▶ decimal[] → byte[] (배열 변환)" Click="OnArrayToBytes"  Style="{StaticResource OrangeBtn}"/>
+                    <Button Content="▶ byte[] → decimal[] (배열 읽기)" Click="OnBytesToArray"  Style="{StaticResource TealBtn}"/>
+                    <Button Content="▶ 스키마 파싱 (DecimalLE)"        Click="OnSchemaParse"   Style="{StaticResource RedBtn}"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        <Border Grid.Column="2" Style="{StaticResource Card}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock Text="decimal 변환 결과" Style="{StaticResource SectionLabel}" DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                    <Button DockPanel.Dock="Right" Content="지우기" Click="OnClear" Padding="10,3" FontSize="11" Background="#ECEFF1" Foreground="#546E7A" BorderThickness="0" Cursor="Hand" HorizontalAlignment="Right" Margin="0"/>
+                </DockPanel>
+                <TextBox Grid.Row="1" x:Name="Out" Style="{StaticResource ResultBox}" MinHeight="500"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

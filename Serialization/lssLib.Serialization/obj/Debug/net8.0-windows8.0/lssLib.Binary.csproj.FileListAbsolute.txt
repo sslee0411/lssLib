@@ -1,0 +1,11 @@
+D:\project\lssLib\Serialization\lssLib.Serialization\bin\Debug\net8.0-windows8.0\lssLib.Binary.deps.json
+D:\project\lssLib\Serialization\lssLib.Serialization\bin\Debug\net8.0-windows8.0\lssLib.Binary.dll
+D:\project\lssLib\Serialization\lssLib.Serialization\bin\Debug\net8.0-windows8.0\lssLib.Binary.pdb
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\lssLib.Binary.GeneratedMSBuildEditorConfig.editorconfig
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\lssLib.Binary.AssemblyInfoInputs.cache
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\lssLib.Binary.AssemblyInfo.cs
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\lssLib.Binary.csproj.CoreCompileInputs.cache
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\lssLib.Binary.dll
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\refint\lssLib.Binary.dll
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\lssLib.Binary.pdb
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows8.0\ref\lssLib.Binary.dll

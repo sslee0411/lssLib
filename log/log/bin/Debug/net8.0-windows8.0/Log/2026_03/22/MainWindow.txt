@@ -1,0 +1,10 @@
+﻿2026_03_22 01:47:23.763  [INFO ]  MainWindow        애플리케이션 시작
+2026_03_22 01:47:36.377  [DEBUG]  MainWindow        Debug 테스트 - tick=99877375
+2026_03_22 01:47:38.119  [INFO ]  MainWindow        Info 테스트 - 01:47:38.119
+2026_03_22 01:47:39.055  [WARN ]  MainWindow        Warn 테스트 - 응답 지연 감지 (800ms)
+2026_03_22 01:47:39.743  [INFO ]  MainWindow        Info 테스트 - 01:47:39.743
+2026_03_22 01:47:40.119  [WARN ]  MainWindow        Warn 테스트 - 응답 지연 감지 (800ms)
+2026_03_22 01:47:40.489  [ERROR]  MainWindow        Error 테스트 - NullReferenceException 발생
+2026_03_22 01:47:40.871  [FATAL]  MainWindow        Fatal 테스트 - 서비스 비정상 종료 감지!
+2026_03_22 01:47:42.264  [FATAL]  MainWindow        Fatal 테스트 - 서비스 비정상 종료 감지!
+2026_03_22 01:48:07.922  [INFO ]  MainWindow        애플리케이션 종료 중...

@@ -1,0 +1,11 @@
+D:\project\lssLib\Serialization\lssLib.Extensions\bin\Debug\net8.0-windows8.0\lssLib.Extensions.deps.json
+D:\project\lssLib\Serialization\lssLib.Extensions\bin\Debug\net8.0-windows8.0\lssLib.Extensions.dll
+D:\project\lssLib\Serialization\lssLib.Extensions\bin\Debug\net8.0-windows8.0\lssLib.Extensions.pdb
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\lssLib.Extensions.GeneratedMSBuildEditorConfig.editorconfig
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\lssLib.Extensions.AssemblyInfoInputs.cache
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\lssLib.Extensions.AssemblyInfo.cs
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\lssLib.Extensions.csproj.CoreCompileInputs.cache
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\lssLib.Extensions.dll
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\refint\lssLib.Extensions.dll
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\lssLib.Extensions.pdb
+D:\project\lssLib\Serialization\lssLib.Extensions\obj\Debug\net8.0-windows8.0\ref\lssLib.Extensions.dll

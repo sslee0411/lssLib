@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35919.96
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "log", "log\log.csproj", "{32A7BD8E-68DD-43D0-AD5F-ABBA1450E3CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Log", "lssLib.Log\lssLib.Log.csproj", "{2C2FEFC5-9895-BC70-C0BC-159A9B696CEE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{32A7BD8E-68DD-43D0-AD5F-ABBA1450E3CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32A7BD8E-68DD-43D0-AD5F-ABBA1450E3CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32A7BD8E-68DD-43D0-AD5F-ABBA1450E3CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32A7BD8E-68DD-43D0-AD5F-ABBA1450E3CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C2FEFC5-9895-BC70-C0BC-159A9B696CEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C2FEFC5-9895-BC70-C0BC-159A9B696CEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C2FEFC5-9895-BC70-C0BC-159A9B696CEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C2FEFC5-9895-BC70-C0BC-159A9B696CEE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {08AA5F2C-E3D3-4AAC-B425-0E5CC2EE333A}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,11 @@
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\bin\Debug\net8.0-windows8.0\lssLib.Utils.deps.json
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\bin\Debug\net8.0-windows8.0\lssLib.Utils.dll
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\bin\Debug\net8.0-windows8.0\lssLib.Utils.pdb
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\lssLib.Utils.GeneratedMSBuildEditorConfig.editorconfig
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\lssLib.Utils.AssemblyInfoInputs.cache
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\lssLib.Utils.AssemblyInfo.cs
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\lssLib.Utils.csproj.CoreCompileInputs.cache
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\lssLib.Utils.dll
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\refint\lssLib.Utils.dll
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\lssLib.Utils.pdb
+D:\project\lssLib\Utils\lssLib.Utils\lssLib.Utils\obj\Debug\net8.0-windows8.0\ref\lssLib.Utils.dll

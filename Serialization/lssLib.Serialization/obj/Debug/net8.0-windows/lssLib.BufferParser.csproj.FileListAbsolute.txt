@@ -1,0 +1,11 @@
+D:\project\lssLib\Serialization\lssLib.Serialization\bin\Debug\net8.0-windows\lssLib.BufferParser.deps.json
+D:\project\lssLib\Serialization\lssLib.Serialization\bin\Debug\net8.0-windows\lssLib.BufferParser.dll
+D:\project\lssLib\Serialization\lssLib.Serialization\bin\Debug\net8.0-windows\lssLib.BufferParser.pdb
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\lssLib.BufferParser.GeneratedMSBuildEditorConfig.editorconfig
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\lssLib.BufferParser.AssemblyInfoInputs.cache
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\lssLib.BufferParser.AssemblyInfo.cs
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\lssLib.BufferParser.csproj.CoreCompileInputs.cache
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\lssLib.BufferParser.dll
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\refint\lssLib.BufferParser.dll
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\lssLib.BufferParser.pdb
+D:\project\lssLib\Serialization\lssLib.Serialization\obj\Debug\net8.0-windows\ref\lssLib.BufferParser.dll

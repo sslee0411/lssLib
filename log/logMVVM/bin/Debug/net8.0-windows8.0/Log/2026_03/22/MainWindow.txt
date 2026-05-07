@@ -1,0 +1,6 @@
+﻿2026_03_22 12:05:37.496  [INFO ]  MainWindow        애플리케이션 시작
+2026_03_22 12:05:42.738  [DEBUG]  MainWindow        Debug 테스트 - tick=136964984
+2026_03_22 12:06:24.082  [INFO ]  MainWindow        애플리케이션 시작
+2026_03_22 12:06:28.771  [INFO ]  MainWindow        Info 테스트 - 12:06:28.763
+2026_03_22 12:17:25.387  [INFO ]  MainWindow        애플리케이션 시작
+2026_03_22 12:17:27.931  [DEBUG]  MainWindow        Debug 테스트 - tick=137670171

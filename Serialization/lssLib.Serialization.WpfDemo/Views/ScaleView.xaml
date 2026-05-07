@@ -1,0 +1,147 @@
+﻿<UserControl x:Class="lssLib.Serialization.WpfDemo.Views.ScaleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:lssLib.Serialization.WpfDemo.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="800">
+    <Grid Margin="14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="290"/>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+            <!-- 1. 높이를 부모에 맞추기 위해 세로 스크롤도 Auto로 설정하는 것이 좋습니다 -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                  VerticalScrollBarVisibility="Auto"
+                  Height="800">
+                <!-- 적절한 높이 제한이 있어야 스크롤이 생깁니다 -->
+
+                <!-- 2. ScrollViewer 안에는 반드시 하나의 컨테이너(StackPanel)가 모든 내용을 감싸야 합니다 -->
+                <StackPanel Orientation="Vertical">
+
+                    <!-- [입력값 카드] -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="입력 x (MapTo/Lerp/SmoothStep 공용)"
+                               Style="{StaticResource SectionLabel}"/>
+                            <TextBox x:Name="XBox" Style="{StaticResource InputBox}"
+                             Height="32" Margin="0,0,0,6" Text="2048"/>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="inMin" Style="{StaticResource SectionLabel}"/>
+                                    <TextBox x:Name="InMin" Style="{StaticResource InputBox}" Height="30" Text="0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="inMax" Style="{StaticResource SectionLabel}"/>
+                                    <TextBox x:Name="InMax" Style="{StaticResource InputBox}" Height="30" Text="4095"/>
+                                </StackPanel>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="outMin" Style="{StaticResource SectionLabel}"/>
+                                    <TextBox x:Name="OutMin" Style="{StaticResource InputBox}" Height="30" Text="0.0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="outMax" Style="{StaticResource SectionLabel}"/>
+                                    <TextBox x:Name="OutMax" Style="{StaticResource InputBox}" Height="30" Text="3.3"/>
+                                </StackPanel>
+                            </Grid>
+                            <CheckBox x:Name="ClampCheck" Content="clamp=true (출력 범위 제한)"
+                              Margin="0,0,0,10" FontSize="11"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- [선형 변환 카드] -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="📐 선형 변환" Style="{StaticResource SectionLabel}" FontSize="12" Foreground="#1E88E5" FontWeight="Bold" Margin="0,0,0,6"/>
+                            <Button Content="▶ x.MapTo(inMin,inMax,outMin,outMax)" Click="OnMap" Style="{StaticResource Btn}"/>
+                            <Button Content="▶ MapDetail (Clamped/Wrapped 여부)" Click="OnMapDetail" Style="{StaticResource GreenBtn}"/>
+                            <Button Content="▶ Normalize / Denormalize" Click="OnNorm" Style="{StaticResource PurpleBtn}"/>
+                            <Button Content="▶ Lerp / InverseLerp" Click="OnLerp" Style="{StaticResource OrangeBtn}"/>
+                            <Button Content="▶ Clamp" Click="OnClamp" Style="{StaticResource TealBtn}"/>
+                            <Button Content="▶ DeadZone (조이스틱 드리프트)" Click="OnDeadZone" Style="{StaticResource RedBtn}"/>
+                            <Button Content="▶ Piecewise (비선형 센서 보정)" Click="OnPiecewise" Style="{StaticResource Btn}"/>
+                            <Button Content="▶ decimal MapTo / Piecewise" Click="OnDecimalScale" Style="{StaticResource GreenBtn}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- [S커브 보간 카드] -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="〰 S커브 보간 (★신규)" Style="{StaticResource SectionLabel}" FontSize="12" Foreground="#7B1FA2" FontWeight="Bold" Margin="0,0,0,6"/>
+                            <TextBlock FontSize="10" Foreground="#78909C" TextWrapping="Wrap" Margin="0,0,0,8">
+                        t=[0,1] 입력값을 x 입력란에 넣으세요 (예: 0.3)
+                            </TextBlock>
+                            <Button Content="▶ SmoothStep — 3차식 3t²-2t³" Click="OnSmoothStep" Style="{StaticResource PurpleBtn}"/>
+                            <Button Content="▶ SmootherStep — 5차식 6t⁵-15t⁴+10t³" Click="OnSmootherStep" Style="{StaticResource TealBtn}"/>
+                            <Button Content="▶ SmoothStep vs Lerp 전체 비교" Click="OnSmoothCompare" Style="{StaticResource OrangeBtn}"/>
+                            <Button Content="▶ LED 페이드 시뮬레이션" Click="OnFadeSim" Style="{StaticResource RedBtn}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- [히스테리시스 카드] -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="🔔 Hysteresis — 히스테리시스 (★신규)" Style="{StaticResource SectionLabel}" FontSize="12" Foreground="#E65100" FontWeight="Bold" Margin="0,0,0,6"/>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="low (꺼짐 임계값)" Style="{StaticResource SectionLabel}"/>
+                                    <TextBox x:Name="HystLow" Style="{StaticResource InputBox}" Height="30" Text="60.0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="high (켜짐 임계값)" Style="{StaticResource SectionLabel}"/>
+                                    <TextBox x:Name="HystHigh" Style="{StaticResource InputBox}" Height="30" Text="65.0"/>
+                                </StackPanel>
+                            </Grid>
+                            <Button Content="▶ 온도 경보 시뮬레이션 (ref 기반)" Click="OnHysteresis" Style="{StaticResource OrangeBtn}"/>
+                            <Button Content="▶ 팬 제어 시뮬레이션 (float)" Click="OnHysteresisFloat" Style="{StaticResource PurpleBtn}"/>
+                            <Button Content="▶ HysteresisPure (순수 함수/LINQ)" Click="OnHysteresisPure" Style="{StaticResource TealBtn}"/>
+                            <Button Content="▶ 예외 테스트 (low >= high)" Click="OnExceptions" Style="{StaticResource RedBtn}"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+                <!-- ScrollViewer 내부의 StackPanel 끝 -->
+            </ScrollViewer>
+        </StackPanel>
+
+        <!-- 오른쪽 결과 -->
+        <Border Grid.Column="2" Style="{StaticResource Card}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock Text="Scale 결과" Style="{StaticResource SectionLabel}"
+                               DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                    <Button DockPanel.Dock="Right" Content="지우기" Click="OnClear"
+                            Padding="10,3" FontSize="11" Background="#ECEFF1"
+                            Foreground="#546E7A" BorderThickness="0" Cursor="Hand"
+                            HorizontalAlignment="Right" Margin="0"/>
+                </DockPanel>
+                <TextBox Grid.Row="1" x:Name="Out" Style="{StaticResource ResultBox}" MinHeight="520"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

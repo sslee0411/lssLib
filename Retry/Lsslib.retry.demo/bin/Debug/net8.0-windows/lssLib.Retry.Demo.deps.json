@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "lssLib.Retry.Demo/1.0.0": {
+        "dependencies": {
+          "lssLib.Retry": "1.0.0"
+        },
+        "runtime": {
+          "lssLib.Retry.Demo.dll": {}
+        }
+      },
+      "lssLib.Retry/1.0.0": {
+        "runtime": {
+          "lssLib.Retry.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "lssLib.Retry.Demo/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "lssLib.Retry/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
