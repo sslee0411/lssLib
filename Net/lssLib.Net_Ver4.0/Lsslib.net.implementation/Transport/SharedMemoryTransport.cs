@@ -57,7 +57,7 @@ public sealed class SharedMemoryTransport : NetTransportBase
         return Task.CompletedTask;
     }
 
-    protected override Task DisconnectCoreAsync()
+    protected override Task DisconnectCoreAsync(CancellationToken ct)
     {
         _pollCts?.Cancel();
         _accessor?.Dispose(); _mmf?.Dispose();
@@ -67,8 +67,10 @@ public sealed class SharedMemoryTransport : NetTransportBase
 
     protected override Task WriteCoreAsync(byte[] data, CancellationToken ct)
     {
-        if (_accessor is null)
-            throw new InvalidOperationException($"[{LogSource}] 공유 메모리가 열려있지 않습니다.");
+        if (_accessor is null){
+            throw new InvalidOperationException($"포트가 열려있지 않습니다.");
+            //throw new InvalidOperationException($"[{LogSource}] 공유 메모리가 열려있지 않습니다.");
+        }
         _accessor.Write(OFFSET_LENGTH, data.Length);
         _accessor.WriteArray(OFFSET_DATA, data, 0, data.Length);
         _accessor.Write(OFFSET_FLAG, 1);
@@ -77,8 +79,10 @@ public sealed class SharedMemoryTransport : NetTransportBase
 
     protected override Task<byte[]> ReadCoreAsync(int length, CancellationToken ct)
     {
-        if (_accessor is null)
-            throw new InvalidOperationException($"[{LogSource}] 공유 메모리가 열려있지 않습니다.");
+        if (_accessor is null){
+            throw new InvalidOperationException($"포트가 열려있지 않습니다.");
+           // throw new InvalidOperationException($"[{LogSource}] 공유 메모리가 열려있지 않습니다.");
+        }
         int dataLen = _accessor.ReadInt32(OFFSET_LENGTH);
         var buf = new byte[dataLen];
         _accessor.ReadArray(OFFSET_DATA, buf, 0, dataLen);

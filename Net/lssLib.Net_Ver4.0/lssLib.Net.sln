@@ -5,7 +5,7 @@ VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Net.Base", "lssLib.Net\lssLib.Net.Base.csproj", "{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lsslib.net.implementation", "Lsslib.net.implementation\Lsslib.net.implementation.csproj", "{ABF59E72-FA9C-4EF3-8548-19A383894C62}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.net.Implementation", "Lsslib.net.implementation\lssLib.net.Implementation.csproj", "{ABF59E72-FA9C-4EF3-8548-19A383894C62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

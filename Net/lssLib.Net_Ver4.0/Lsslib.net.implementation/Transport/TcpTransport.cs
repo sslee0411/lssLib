@@ -64,7 +64,7 @@ public sealed class TcpTransport : NetTransportBase
         _stream = _client.GetStream();
     }
 
-    protected override Task DisconnectCoreAsync()
+    protected override Task DisconnectCoreAsync(CancellationToken ct)
     {
         _stream?.Dispose(); _client?.Dispose();
         _stream = null; _client = null;

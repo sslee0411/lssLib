@@ -26,11 +26,17 @@ namespace lssLib.Net;
 /// </remarks>
 public interface INetProtocol
 {
-    /// <summary>페이로드를 전송 가능한 프레임으로 인코딩합니다 (헤더·CRC 추가).</summary>
+    /// <summary>
+    /// 페이로드를 전송 가능한 프레임으로 인코딩<br/>
+    /// 정해진 규칙에 따라 변환 (프로토콜 생성)<br/>
+    /// (헤더·CRC 추가)
+    /// </summary>
     byte[] Encode(byte[] payload);
 
     /// <summary>
-    /// 수신된 원시 바이트에서 페이로드를 디코딩합니다.
+    /// 수신된 원시 바이트에서 페이로드를 디코딩<br/>
+    /// 부호화(Encoding)된 데이터를 원래의 형태(사람이 읽을 수 있는 형태나 본래의 신호)로 <br/>
+    /// 다시 변환하는 복호화 또는 해독
     /// </summary>
     /// <param name="raw">수신 원시 바이트</param>
     /// <param name="payload">디코딩된 페이로드. 실패 시 빈 배열.</param>
