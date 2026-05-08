@@ -15,6 +15,8 @@ yarn-error.log*
 *.suo
 .svn
 .svn/*
+[Dd]ebug/
+**/[Dd]ebug/
 
 ### 패키지 매니저 관련 파일 ###
 package-lock.json

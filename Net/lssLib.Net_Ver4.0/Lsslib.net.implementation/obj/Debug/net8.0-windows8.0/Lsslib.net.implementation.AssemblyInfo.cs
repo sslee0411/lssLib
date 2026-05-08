@@ -11,12 +11,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("Lsslib.net.implementation")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("lssLib.Net.Implementation")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ccd61ac50d8e42b8a3ccf85b61cb6f7245cbe8b9")]
-[assembly: System.Reflection.AssemblyProductAttribute("Lsslib.net.implementation")]
-[assembly: System.Reflection.AssemblyTitleAttribute("Lsslib.net.implementation")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+47f6c72f16dc8cd0b02ceaa8248767b9988b075d")]
+[assembly: System.Reflection.AssemblyProductAttribute("lssLib.Net.Implementation")]
+[assembly: System.Reflection.AssemblyTitleAttribute("lssLib.Net.Implementation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows8.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows8.0")]

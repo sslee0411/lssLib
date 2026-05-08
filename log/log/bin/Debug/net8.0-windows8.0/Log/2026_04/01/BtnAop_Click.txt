@@ -1,9 +1,0 @@
-﻿2026_04_01 18:51:34.011  [INFO ]  BtnAop_Click      [DEMO] Start
-2026_04_01 18:51:34.017  [INFO ]  BtnAop_Click      [DEMO] End
-2026_04_01 18:51:34.024  [INFO ]  BtnAop_Click      [DEMO] Start
-2026_04_01 18:51:34.133  [INFO ]  BtnAop_Click      [DEMO] End
-2026_04_01 18:51:34.138  [INFO ]  BtnAop_Click      [DEMO] Start
-2026_04_01 18:51:34.138  [INFO ]  BtnAop_Click      [DEMO] End
-2026_04_01 18:51:34.138  [INFO ]  BtnAop_Click      [DEMO] Start
-2026_04_01 18:51:34.166  [ERROR]  BtnAop_Click      [DEMO] Error - 의도적 예외
-2026_04_01 18:51:34.167  [INFO ]  BtnAop_Click      [DEMO] End
