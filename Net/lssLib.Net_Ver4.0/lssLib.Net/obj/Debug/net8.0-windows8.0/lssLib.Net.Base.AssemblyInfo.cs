@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("lssLib.Net Base — 인터페이스 · 추상 클래스 · 핵심 열거형 · 인프라")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+29f0440887d81566852d078f2fdbaef009fa8447")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2bd2f89a8db76927b145d4ce693cd59fba6d1233")]
 [assembly: System.Reflection.AssemblyProductAttribute("lssLib.Net.Base")]
 [assembly: System.Reflection.AssemblyTitleAttribute("lssLib.Net.Base")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

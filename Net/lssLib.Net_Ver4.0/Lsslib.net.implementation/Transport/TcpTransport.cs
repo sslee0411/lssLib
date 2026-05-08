@@ -7,7 +7,7 @@ using System.Net.Sockets;
 
 using lssLib.Net;
 
-namespace Lsslib.net.implementation;
+namespace lssLib.Net.Implementation;
 
 /// <summary>
 /// TCP 클라이언트 전송 계층.

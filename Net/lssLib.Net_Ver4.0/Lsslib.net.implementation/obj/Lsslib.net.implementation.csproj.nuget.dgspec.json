@@ -1,15 +1,15 @@
 {
   "format": 1,
   "restore": {
-    "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.net.Implementation.csproj": {}
+    "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.Net.Implementation.csproj": {}
   },
   "projects": {
-    "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.net.Implementation.csproj": {
+    "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.Net.Implementation.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.net.Implementation.csproj",
-        "projectName": "lssLib.net.Implementation",
-        "projectPath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.net.Implementation.csproj",
+        "projectUniqueName": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.Net.Implementation.csproj",
+        "projectName": "lssLib.Net.Implementation",
+        "projectPath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.Net.Implementation.csproj",
         "packagesPath": "C:\\Users\\sslee\\.nuget\\packages\\",
         "outputPath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\obj\\",
         "projectStyle": "PackageReference",

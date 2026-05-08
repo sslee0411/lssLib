@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "kviGXeKrKYc=",
+  "dgSpecHash": "MoySHO1s+xo=",
   "success": true,
-  "projectFilePath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.net.Implementation.csproj",
+  "projectFilePath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\lssLib.Net.Implementation.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\sslee\\.nuget\\packages\\runtime.android-arm.runtime.native.system.io.ports\\10.0.7\\runtime.android-arm.runtime.native.system.io.ports.10.0.7.nupkg.sha512",
     "C:\\Users\\sslee\\.nuget\\packages\\runtime.android-arm64.runtime.native.system.io.ports\\10.0.7\\runtime.android-arm64.runtime.native.system.io.ports.10.0.7.nupkg.sha512",

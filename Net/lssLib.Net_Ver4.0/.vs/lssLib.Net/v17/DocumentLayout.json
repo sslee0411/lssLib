@@ -3,28 +3,40 @@
   "WorkspaceRootPath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\config\\tcpdeviceconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\config\\tcpdeviceconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\config\\serialdeviceconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\config\\serialdeviceconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\transport\\serialtransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\transport\\serialtransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\config\\tcpdeviceconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\config\\tcpdeviceconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\transport\\sharedmemorytransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\transport\\sharedmemorytransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\transport\\tcptransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\transport\\tcptransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\transport\\serialtransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\transport\\serialtransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\protocol\\rawprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\protocol\\rawprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.implementation\\protocol\\binaryprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{ABF59E72-FA9C-4EF3-8548-19A383894C62}|Lsslib.net.implementation\\Lsslib.net.implementation.csproj|solutionrelative:lsslib.net.implementation\\protocol\\binaryprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}|lssLib.Net\\lssLib.Net.Base.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net\\interface\\inetprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}|lssLib.Net\\lssLib.Net.Base.csproj|solutionrelative:lsslib.net\\interface\\inetprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}|lssLib.Net\\lssLib.Net.Base.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net\\netchannelbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}|lssLib.Net\\lssLib.Net.Base.csproj|solutionrelative:lsslib.net\\netchannelbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}|lssLib.Net\\lssLib.Net.Base.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net\\interface\\inetprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}|lssLib.Net\\lssLib.Net.Base.csproj|solutionrelative:lsslib.net\\interface\\inetprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -34,33 +46,20 @@
       "DocumentGroups": [
         {
           "DockedWidth": 131,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 7,
               "Title": "NetChannelBase.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\NetChannelBase.cs",
               "RelativeDocumentMoniker": "lssLib.Net\\NetChannelBase.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\NetChannelBase.cs",
               "RelativeToolTip": "lssLib.Net\\NetChannelBase.cs",
-              "ViewState": "AgIAACcAAAAAAAAAAAAMwD0AAAAoAAAAAAAAAA==",
+              "ViewState": "AgIAACcAAAAAAAAAAAAMwEAAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-06T02:43:22.003Z",
               "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "SerialTransport.cs",
-              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\SerialTransport.cs",
-              "RelativeDocumentMoniker": "Lsslib.net.implementation\\Transport\\SerialTransport.cs",
-              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\SerialTransport.cs",
-              "RelativeToolTip": "Lsslib.net.implementation\\Transport\\SerialTransport.cs",
-              "ViewState": "AgIAABUAAAAAAAAAAAAqwDkAAAAtAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:50:03.855Z",
               "EditorCaption": ""
             },
             {
@@ -71,7 +70,7 @@
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Transport\\SharedMemoryTransport.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\SharedMemoryTransport.cs",
               "RelativeToolTip": "Lsslib.net.implementation\\Transport\\SharedMemoryTransport.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAkwCcAAAAzAAAAAAAAAA==",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAuwCcAAAAzAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-08T00:49:58.27Z",
               "EditorCaption": ""
@@ -79,19 +78,84 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "SerialDeviceConfig.cs",
+              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Config\\SerialDeviceConfig.cs",
+              "RelativeDocumentMoniker": "Lsslib.net.implementation\\Config\\SerialDeviceConfig.cs",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Config\\SerialDeviceConfig.cs",
+              "RelativeToolTip": "Lsslib.net.implementation\\Config\\SerialDeviceConfig.cs",
+              "ViewState": "AgIAAAQAAAAAQoEq00AuwBkAAAA8AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-08T00:55:48.797Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "TcpDeviceConfig.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Config\\TcpDeviceConfig.cs",
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Config\\TcpDeviceConfig.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Config\\TcpDeviceConfig.cs",
               "RelativeToolTip": "Lsslib.net.implementation\\Config\\TcpDeviceConfig.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAgwC4AAAAgAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-08T00:49:07.702Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TcpTransport.cs",
+              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\TcpTransport.cs",
+              "RelativeDocumentMoniker": "Lsslib.net.implementation\\Transport\\TcpTransport.cs",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\TcpTransport.cs",
+              "RelativeToolTip": "Lsslib.net.implementation\\Transport\\TcpTransport.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-08T00:59:00.198Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 4,
+              "Title": "SerialTransport.cs",
+              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\SerialTransport.cs",
+              "RelativeDocumentMoniker": "Lsslib.net.implementation\\Transport\\SerialTransport.cs",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\SerialTransport.cs",
+              "RelativeToolTip": "Lsslib.net.implementation\\Transport\\SerialTransport.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-08T00:50:03.855Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "RawProtocol.cs",
+              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\RawProtocol.cs",
+              "RelativeDocumentMoniker": "Lsslib.net.implementation\\Protocol\\RawProtocol.cs",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\RawProtocol.cs",
+              "RelativeToolTip": "Lsslib.net.implementation\\Protocol\\RawProtocol.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-08T00:56:34.969Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "BinaryProtocol.cs",
+              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
+              "RelativeDocumentMoniker": "Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
+              "RelativeToolTip": "Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-08T00:39:22.529Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
               "Title": "INetProtocol.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Interface\\INetProtocol.cs",
               "RelativeDocumentMoniker": "lssLib.Net\\Interface\\INetProtocol.cs",
@@ -100,19 +164,6 @@
               "ViewState": "AgIAAA0AAAAAAAAAAAAIwDgAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-08T00:43:12.644Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "BinaryProtocol.cs",
-              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
-              "RelativeDocumentMoniker": "Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
-              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
-              "RelativeToolTip": "Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
-              "ViewState": "AgIAAEgAAAAAAAAAAAAiwDcAAAAaAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:39:22.529Z",
               "EditorCaption": ""
             }
           ]

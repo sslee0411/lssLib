@@ -7,7 +7,7 @@
 using System.IO.Ports;
 using lssLib.Net;
 
-namespace Lsslib.net.implementation;
+namespace lssLib.Net.Implementation;
 /// <summary>
 /// COM 포트 직렬 통신 전송 계층.
 /// </summary>

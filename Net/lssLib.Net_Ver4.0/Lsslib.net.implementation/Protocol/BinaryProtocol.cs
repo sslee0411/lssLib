@@ -3,7 +3,9 @@
 //  프레임: [STX:1B][FC:1B][LEN:2B BE][DATA:NB][CRC32:4B LE]
 // ══════════════════════════════════════════════════════════════════════
 
-namespace lssLib.Net;
+using lssLib.Net;
+
+namespace lssLib.Net.Implementation;
 
 /// <summary>
 /// lssLib.Binary 기반 표준 바이너리 프레임 프로토콜.

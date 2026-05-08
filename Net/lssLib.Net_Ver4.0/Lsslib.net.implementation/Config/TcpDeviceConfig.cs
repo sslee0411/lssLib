@@ -2,7 +2,10 @@
 //  lssLib.Net · Config/TcpDeviceConfig.cs
 // ══════════════════════════════════════════════════════════════════════
 
-namespace lssLib.Net;
+
+using lssLib.Net;
+
+namespace lssLib.Net.Implementation;
 
 /// <summary>
 /// TCP 통신 장비 설정.

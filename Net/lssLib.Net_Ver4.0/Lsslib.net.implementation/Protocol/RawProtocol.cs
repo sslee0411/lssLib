@@ -4,7 +4,7 @@
 
 using lssLib.Net;
 
-namespace Lsslib.net.implementation;
+namespace lssLib.Net.Implementation;
 /// <summary>
 /// 인코딩·디코딩 없이 원시 바이트를 그대로 통과시키는 프로토콜.
 /// </summary>
