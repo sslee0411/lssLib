@@ -61,10 +61,12 @@ public class BinaryProtocol : INetProtocol
     public byte[] Encode(byte[] payload)
     {
         var frame = new byte[OVERHEAD + payload.Length];
+
         frame[0] = _stx;
         frame[OFFSET_FC] = _fc;
         frame[OFFSET_LEN] = (byte)(payload.Length >> 8);
         frame[OFFSET_LEN + 1] = (byte)(payload.Length & 0xFF);
+
         Buffer.BlockCopy(payload, 0, frame, OFFSET_DATA, payload.Length);
         uint crc = ComputeCrc32(frame, 0, OFFSET_DATA + payload.Length);
         Buffer.BlockCopy(BitConverter.GetBytes(crc), 0,
@@ -76,12 +78,22 @@ public class BinaryProtocol : INetProtocol
     public bool TryDecode(byte[] raw, out byte[] payload)
     {
         payload = Array.Empty<byte>();
-        if (raw.Length < OVERHEAD || raw[0] != _stx) return false;
+
+        if (raw.Length < OVERHEAD || raw[0] != _stx){
+            return false;
+        }
+
         int dataLen = (raw[OFFSET_LEN] << 8) | raw[OFFSET_LEN + 1];
-        if (raw.Length < OVERHEAD + dataLen) return false;
+        if (raw.Length < OVERHEAD + dataLen){
+            return false;
+        }
+
         uint rxCrc = BitConverter.ToUInt32(raw, OFFSET_DATA + dataLen);
         uint calcCrc = ComputeCrc32(raw, 0, OFFSET_DATA + dataLen);
-        if (rxCrc != calcCrc) return false;
+        
+        if (rxCrc != calcCrc){
+            return false;
+        }
         payload = raw[OFFSET_DATA..(OFFSET_DATA + dataLen)];
         return true;
     }
@@ -90,9 +102,13 @@ public class BinaryProtocol : INetProtocol
     public bool IsFrameComplete(ReadOnlySpan<byte> buffer, out int frameLength)
     {
         frameLength = 0;
-        if (buffer.Length < OVERHEAD || buffer[0] != _stx) return false;
+        if (buffer.Length < OVERHEAD || buffer[0] != _stx) { 
+            return false; 
+        }
+        
         int dataLen = (buffer[OFFSET_LEN] << 8) | buffer[OFFSET_LEN + 1];
         frameLength = OVERHEAD + dataLen;
+        
         return buffer.Length >= frameLength;
     }
 

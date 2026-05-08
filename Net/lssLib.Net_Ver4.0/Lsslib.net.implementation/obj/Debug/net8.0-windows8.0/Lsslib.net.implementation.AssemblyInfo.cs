@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Lsslib.net.implementation")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2bd2f89a8db76927b145d4ce693cd59fba6d1233")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ccd61ac50d8e42b8a3ccf85b61cb6f7245cbe8b9")]
 [assembly: System.Reflection.AssemblyProductAttribute("Lsslib.net.implementation")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Lsslib.net.implementation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
