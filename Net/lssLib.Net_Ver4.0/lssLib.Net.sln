@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Net.Base", "lssLib.N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Net.Implementation", "Lsslib.net.implementation\lssLib.Net.Implementation.csproj", "{ABF59E72-FA9C-4EF3-8548-19A383894C62}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Net.Demo", "Lsslib.net.demo\lssLib.Net.Demo.csproj", "{416F5484-631F-4804-9FC3-BB1DC583F485}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{ABF59E72-FA9C-4EF3-8548-19A383894C62}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABF59E72-FA9C-4EF3-8548-19A383894C62}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABF59E72-FA9C-4EF3-8548-19A383894C62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{416F5484-631F-4804-9FC3-BB1DC583F485}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{416F5484-631F-4804-9FC3-BB1DC583F485}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{416F5484-631F-4804-9FC3-BB1DC583F485}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{416F5484-631F-4804-9FC3-BB1DC583F485}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
