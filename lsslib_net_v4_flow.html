@@ -1,0 +1,157 @@
+
+<h2 class="sr-only">lssLib.Net v4 TCP/Serial 함수 호출 순서 및 데이터 흐름</h2>
+<style>
+.tn{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+.tb{padding:5px 12px;border:1px solid var(--color-border-secondary);border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-secondary);font-size:12px;cursor:pointer;}
+.tb.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);font-weight:500;}
+.tc{display:none;}.tc.on{display:block;}
+.sc{border:1px solid var(--color-border-tertiary);border-radius:8px;padding:9px 13px;margin-bottom:4px;background:var(--color-background-secondary);}
+.sc.g{border-left:3px solid var(--color-text-danger);}
+.sm{font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--color-text-primary);word-break:break-all;}
+.sn{font-size:11.5px;color:var(--color-text-secondary);margin-top:3px;line-height:1.5;}
+.sa{text-align:center;color:var(--color-text-tertiary);font-size:12px;margin:1px 0;line-height:1.2;user-select:none;}
+.bd{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;margin-bottom:3px;font-weight:500;}
+.df{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.dt{font-size:11px;padding:2px 7px;border-radius:4px;font-family:var(--font-mono);}
+.bu{background:#EEEDFE;color:#3C3489;}.bc{background:#E6F1FB;color:#0C447C;}
+.bm{background:#E1F5EE;color:#085041;}.bp{background:#d0eee3;color:#0F6E56;}
+.bs{background:#d0eee3;color:#0F6E56;}.bt{background:#EAF3DE;color:#27500A;}
+.bi{background:#d3e9bb;color:#173404;}.bo{background:#FAEEDA;color:#633806;}
+.bg{background:#F1EFE8;color:#444441;}.br{background:#FCEBEB;color:#A32D2D;}
+.dtcp{background:#E6F1FB;color:#0C447C;}.dser{background:#EAF3DE;color:#27500A;}
+@media(prefers-color-scheme:dark){
+  .bu{background:#26215C;color:#CECBF6;}.bc{background:#042C53;color:#B5D4F4;}
+  .bm{background:#04342C;color:#9FE1CB;}.bp{background:#04342C;color:#5DCAA5;}
+  .bs{background:#04342C;color:#5DCAA5;}.bt{background:#173404;color:#C0DD97;}
+  .bi{background:#173404;color:#97C459;}.bo{background:#412402;color:#FAC775;}
+  .bg{background:#2C2C2A;color:#B4B2A9;}.br{background:#501313;color:#F7C1C1;}
+  .dtcp{background:#042C53;color:#B5D4F4;}.dser{background:#173404;color:#C0DD97;}
+}
+.lg{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border-tertiary);}
+.lgt{font-size:11px;color:var(--color-text-secondary);margin-right:4px;align-self:center;}
+</style>
+
+<div style="padding:0 0 20px">
+<div class="tn" id="nav"></div>
+<div id="tcont"></div>
+<div class="lg" id="leg"></div>
+</div>
+
+<script>
+const CL={
+  user:['bu','사용자'],
+  channel:['bc','NetChannelBase'],
+  connmgr:['bm','NetConnectionManager'],
+  pipeline:['bp','NetDispatchPipeline'],
+  scheduler:['bs','NetScheduler'],
+  transport:['bt','NetTransportBase'],
+  impl:['bi','Transport 구현체'],
+  protocol:['bo','INetProtocol'],
+  stats:['bg','NetStatistics'],
+};
+
+const DATA=[
+{label:'① 접속',steps:[
+  {c:'user',m:'channel.StartAsync(ct)',n:'외부 진입점. ObjectDisposedException.ThrowIf(_disposed, this)'},
+  {c:'channel',m:'_cts = CancellationTokenSource.CreateLinkedTokenSource(ct)',n:'외부 ct + 내부 _cts 중 하나라도 취소되면 이후 모든 동작 정지'},
+  {c:'channel',m:'await _connMgr.ConnectAsync(token)',n:'NetConnectionManager에 접속 위임'},
+  {c:'connmgr',m:'ConnectLoopAsync(maxAttempts, ct)',n:'IsRetryEnabled && RetryTarget.Connect → MaxRetries(0=∞). 아니면 1회'},
+  {c:'transport',m:'_transport.ConnectAsync(ct)',n:'State = Connecting → StateChanged 이벤트 발생'},
+  {c:'channel',m:'OnStateChanged(Connecting)',n:'_scheduler.Pause() 호출 (안전 처리)'},
+  {c:'impl',m:'ConnectCoreAsync(ct)',n:'실제 물리 연결',tcp:'new TcpClient().ConnectAsync(host, port, connectTimeout)',serial:'SerialPort.Open() + DataReceived 이벤트 핸들러 등록'},
+  {c:'transport',m:'State = Connected',n:'StateChanged 이벤트 → NetChannelBase.OnStateChanged(Connected)'},
+  {c:'channel',m:'_pipeline.Start(token)',n:'ProcessLoopAsync() 백그라운드 Task 시작 — Channel[4] 소비자 루프 가동'},
+  {c:'channel',m:'_scheduler.Start(token)',n:'Task.WhenAll(RunPeriodicReadAsync, RunHeartbeatAsync) — 두 루프 병렬 시작'},
+]},
+{label:'② WriteAsync',steps:[
+  {c:'user',m:'channel.WriteAsync(data, priority, ct)',n:'priority 기본값: NetPriority.Write(1)'},
+  {c:'channel',m:'IsConnected 검사',n:'false → return (스킵). DeviceErrorOccurred 이벤트 발생 없음',g:1},
+  {c:'protocol',m:'_protocol.Encode(data)',n:'RawProtocol: pass-through | BinaryProtocol: STX+FC+LEN+DATA+CRC32 조립'},
+  {c:'channel',m:'NetPacket.CreateWrite(encoded, priority, ct)',n:'PacketMode.Write, RetryCount=0, CreatedAt=DateTime.Now'},
+  {c:'pipeline',m:'_pipeline.EnqueueAsync(packet, ct)',n:'_channels[(int)priority].Writer.WriteAsync(packet, ct) — 논블로킹 투입'},
+  {c:'pipeline',m:'ProcessLoopAsync — TryRead 0→1→2→3',n:'Critical(0)→Write(1)→Read(2)→Low(3) 비블로킹 순차 스캔. 모두 빈 경우 50ms WhenAny 대기'},
+  {c:'pipeline',m:'DispatchAsync(packet, ct)',n:'_connMgr.IsConnected 재확인 (큐 대기 중 연결이 끊어질 수 있음)'},
+  {c:'impl',m:'_transport.WriteAsync(packet.Data, ct)',n:'실제 데이터 전송',tcp:'stream.WriteAsync(data, ct)  [비동기]',serial:'port.Write(data, 0, data.Length)  [동기]'},
+  {c:'stats',m:'_stats.RecordSent()',n:'Interlocked.Increment(ref _totalSent)'},
+  {c:'scheduler',m:'★ PeriodicRead 경로: RunPeriodicReadAsync',n:'Task.Delay(PeriodicInterval) → !Paused && IsConnected → ReadCommands 순회 → EnqueueAsync(CreatePeriodicRead)'},
+  {c:'pipeline',m:'★ PeriodicRead: DispatchAsync Mode=PeriodicRead',n:'WriteAsync 후 ReadAsync → TryDecode 성공 시 _receiveChannel + FrameReceived 이벤트 (TCS 없음)'},
+]},
+{label:'③ RequestAsync',steps:[
+  {c:'user',m:'channel.RequestAsync(data, timeout, ct)',n:'단발 요청-응답. RequestResponse 채널 전용'},
+  {c:'channel',m:'IsConnected 검사',n:'false → 즉시 NetResult.Fail("연결 없음") 반환. 큐 투입 없음',g:1},
+  {c:'channel',m:'new TaskCompletionSource<NetResult>(RunContinuationsAsynchronously)',n:'응답 결과를 호출자에게 전달할 TCS 생성'},
+  {c:'protocol',m:'_protocol.Encode(data)',n:'인코딩 완료'},
+  {c:'channel',m:'NetPacket.CreateRequest(encoded, tcs, ct)',n:'PacketMode.Request, Priority=Write(1), TCS 포함'},
+  {c:'pipeline',m:'_pipeline.EnqueueAsync(packet, ct)',n:'Write 채널(1)에 투입'},
+  {c:'channel',m:'tcs.Task.WaitAsync(timeoutCts.Token)  ← 호출자 대기',n:'CancelAfter(timeout ?? RequestTimeout). 타임아웃 초과 시 OperationCanceledException'},
+  {c:'pipeline',m:'[백그라운드] DispatchAsync — _transport.WriteAsync',n:'요청 프레임 전송',tcp:'stream.WriteAsync(data, ct)',serial:'port.Write(data, 0, len)'},
+  {c:'impl',m:'_transport.ReadAsync(ct)  ← 응답 수신 대기',n:'',tcp:'stream.ReadAsync(buf, ct)  [비동기]',serial:'port.Read(buf, 0, length)  [동기]'},
+  {c:'protocol',m:'_protocol.TryDecode(raw, out decoded)',n:'CRC 검증 + 페이로드 추출. false → NetResult.Fail("프로토콜 디코딩 실패")'},
+  {c:'stats',m:'_stats.RecordResponse(sw.ElapsedMilliseconds)',n:'TotalResponseCount++, TotalResponseTimeMs+=ms, MaxResponseTimeMs CAS 업데이트'},
+  {c:'pipeline',m:'tcs.TrySetResult(NetResult.Ok(decoded))',n:'WaitAsync() 깨움 → RequestAsync await 완료'},
+  {c:'user',m:'return NetResult.Ok(decoded)  (또는 Fail on timeout)',n:'r.IsOk=true → r.Data=decoded | 타임아웃 → NetResult.Fail(TimeoutException)'},
+]},
+{label:'④ 수신 Passive',steps:[
+  {c:'impl',m:'[Serial] DataReceived 이벤트 발생',n:'TCP에는 이 경로 없음 — TCP는 PeriodicRead 또는 RequestAsync로만 수신'},
+  {c:'impl',m:'_port.BytesToRead > 0 확인 → _port.Read(buf, 0, BytesToRead)',n:'수신 바이트 읽기. IsOpen 체크 포함'},
+  {c:'transport',m:'RaiseDataReceived(buf[..read])',n:'NetTransportBase 헬퍼 — DataReceived 이벤트 발생'},
+  {c:'transport',m:'DataReceived?.Invoke(data)',n:'INetTransport 이벤트 → NetChannelBase.OnDataReceived 구독자 호출'},
+  {c:'channel',m:'OnDataReceived(raw)',n:'NetChannelBase 내부 이벤트 핸들러 (_transport.DataReceived에 등록)'},
+  {c:'pipeline',m:'_pipeline.PushReceived(raw)',n:'프로토콜 디코딩 + 채널 투입 + 이벤트 발생 처리'},
+  {c:'protocol',m:'_protocol.TryDecode(raw, out decoded)',n:'false → 조용히 return. 잘못된 STX/CRC 프레임 자동 폐기'},
+  {c:'stats',m:'_stats.RecordReceived()',n:'TotalReceived++'},
+  {c:'pipeline',m:'_receiveChannel.Writer.TryWrite(decoded)',n:'ReadAllAsync() IAsyncEnumerable 비동기 열거 경로 지원'},
+  {c:'pipeline',m:'FrameReceived?.Invoke(DeviceId, decoded)',n:'NetDispatchPipeline 내부 이벤트 → NetChannelBase에서 상위로 전달'},
+  {c:'user',m:'DeviceFrameReceived?.Invoke(id, frame)',n:'⚠ 백그라운드 스레드. WPF UI 접근 시 Dispatcher.InvokeAsync 필수'},
+]},
+{label:'⑤ 에러/재접속',steps:[
+  {c:'pipeline',m:'DispatchAsync — catch(Exception ex)',n:'WriteAsync / ReadAsync 중 예외. OperationCanceledException은 즉시 re-throw'},
+  {c:'pipeline',m:'packet.Tcs?.TrySetResult(NetResult.Fail(ex))',n:'Request 패킷이었다면 호출자에게 즉시 실패 결과 전달'},
+  {c:'pipeline',m:'retryPayload 보존 여부 판단',n:'IsRetryEnabled && RetryTarget.Write && Mode∈{Write,Retry} && RetryCount < MaxRetries',g:1},
+  {c:'pipeline',m:'_ = _connMgr.HandleErrorAsync(ex, payload, cb, ct)',n:'fire-and-forget. ProcessLoopAsync는 계속 다음 패킷 처리 가능'},
+  {c:'connmgr',m:'_lock.WaitAsync(0)  — SemaphoreSlim(1,1)',n:'0=즉시 시도. 이미 재접속 진행 중이면 false → 중복 무시 return',g:1},
+  {c:'stats',m:'_stats.RecordError(ex.Message)',n:'TotalErrors++, LastError, LastErrorTime 기록'},
+  {c:'connmgr',m:'ErrorOccurred?.Invoke(DeviceId, ex)',n:'→ DeviceErrorOccurred 이벤트 (사용자 알림)'},
+  {c:'transport',m:'_transport.DisconnectAsync()',n:'State = Disconnected → StateChanged → OnStateChanged'},
+  {c:'channel',m:'OnStateChanged(Disconnected)',n:'_scheduler.Pause() → PeriodicRead/Heartbeat 중지'},
+  {c:'connmgr',m:'ReconnectLoopAsync(ct)',n:'IsRetryEnabled && RetryTarget.Connect ? MaxRetries(0=∞) : 1회'},
+  {c:'connmgr',m:'Task.Delay(CalcDelay(n), ct)',n:'ReconnectBackoff=true: RetryDelay×2^(n-1) 최대 60s | false: 고정 RetryDelay'},
+  {c:'transport',m:'_transport.ConnectAsync(ct)  재시도',n:'State=Connecting → ConnectCoreAsync → 성공 시 Connected',tcp:'TcpClient.ConnectAsync()',serial:'SerialPort.Open()'},
+  {c:'connmgr',m:'[성공] _stats.RecordReconnect() + Reconnected?.Invoke()',n:'재접속 성공 이벤트 발생'},
+  {c:'channel',m:'[성공] _scheduler.Resume()',n:'_paused=false → PeriodicRead/Heartbeat 루프 재개'},
+  {c:'pipeline',m:'[성공] EnqueueAsync(CreateWrite(payload, Critical, ct))',n:'보존된 Write 패킷을 Critical(0) 최우선 우선순위로 재투입'},
+  {c:'connmgr',m:'[실패] ErrorOccurred?.Invoke() — 한도 초과',n:'MaxRetries 모두 소진 → InvalidOperationException 발생. 채널 재생성 필요'},
+]},
+];
+
+const navEl=document.getElementById('nav');
+const tcontEl=document.getElementById('tcont');
+const legEl=document.getElementById('leg');
+
+function bdg(c){const[cl,lb]=CL[c]||['bg',c];return`<span class="bd ${cl}">${lb}</span>`;}
+function stp(s,last){
+  const cls='sc'+(s.g?' g':'');
+  const diff=(s.tcp||s.serial)?`<div class="df">${s.tcp?`<span class="dt dtcp">TCP: ${s.tcp}</span>`:''}${s.serial?`<span class="dt dser">Serial: ${s.serial}</span>`:''}</div>`:'';
+  return`<div class="${cls}">${bdg(s.c)}<div class="sm">${s.m}</div>${s.n?`<div class="sn">${s.n}</div>`:''}${diff}</div>${last?'':'<div class="sa">↓</div>'}`;
+}
+
+DATA.forEach((t,i)=>{
+  const btn=document.createElement('button');
+  btn.className='tb'+(i===0?' on':'');
+  btn.textContent=t.label;
+  btn.onclick=(()=>{const idx=i;return()=>show(idx);})();
+  navEl.appendChild(btn);
+  const div=document.createElement('div');
+  div.className='tc'+(i===0?' on':'');
+  div.innerHTML=t.steps.map((s,j)=>stp(s,j===t.steps.length-1)).join('');
+  tcontEl.appendChild(div);
+});
+
+function show(i){
+  document.querySelectorAll('.tb').forEach((b,j)=>b.classList.toggle('on',j===i));
+  document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('on',j===i));
+}
+
+legEl.innerHTML='<span class="lgt">레이어</span>'+Object.entries(CL).map(([k,[cl,lb]])=>`<span class="bd ${cl}">${lb}</span>`).join('')
++'<span class="bd dtcp" style="margin-left:8px">TCP 전용</span><span class="bd dser">Serial 전용</span><span class="bd" style="border-left:3px solid var(--color-text-danger);padding-left:5px;border-radius:0 4px 4px 0;background:var(--color-background-secondary);color:var(--color-text-secondary)">조건 분기</span>';
+</script>
