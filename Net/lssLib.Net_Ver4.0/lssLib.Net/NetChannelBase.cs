@@ -224,8 +224,10 @@ public abstract class NetChannelBase : IAsyncDisposable
         // 결과를 기다리는 TaskCompletionSource 생성.RunContinuationsAsynchronously 옵션으로,
         // 결과가 준비된 후에도 비동기적으로 후속 작업이 실행되도록 보장합니다.
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        
         // 요청 데이터를 프로토콜로 인코딩하여 패킷 생성 후 파이프라인에 EnqueueAsync 합니다.
         var packet = NetPacket.CreateRequest(_protocol.Encode(requestData), tcs, ct);
+        
         // 요청데이터 입력과 함께 패킷을 생성하여 파이프라인에 EnqueueAsync 합니다.
         // 이때, 요청 패킷은 NetDispatchPipeline의 처리 대기열에 추가됩니다.
         await _pipeline.EnqueueAsync(packet, ct).ConfigureAwait(false);
@@ -237,9 +239,11 @@ public abstract class NetChannelBase : IAsyncDisposable
         //          외부에서 전달된 ct와 별도의 timeoutCts를 생성하여,
         //          둘 중 하나라도 취소되면 timeoutCts.Token이 취소됩니다.
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        
         // 요청 타임아웃 설정. 지정된 시간 후에 timeoutCts.Token이 취소되어 대기 중인
         // Task가 OperationCanceledException을 throw 하도록 합니다.
         timeoutCts.CancelAfter(limit);
+        
         try
         {
             // 요청 패킷이 처리되어 응답이 도착하면,

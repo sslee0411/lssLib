@@ -193,6 +193,7 @@ internal sealed class NetDispatchPipeline : IAsyncDisposable
 
     /// <summary>
     /// Write Channel 패킷을 처리하는 핵심 로직.
+    /// 통신 오류 발생 시 예외 처리 포함.
     /// </summary>
     private async Task DispatchAsync(NetPacket packet, CancellationToken ct)
     {
