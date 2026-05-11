@@ -134,6 +134,7 @@ static class Example4_TcpPassiveClient
             $"온도: {temp,5:F1}°C | 습도: {hum,5:F1}%  " +
             $"({DateTime.Now:HH:mm:ss.fff})");
     }
+
 }
 
 // ══════════════════════════════════════════════════════════════════════
