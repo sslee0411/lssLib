@@ -17,13 +17,13 @@ using lssLib.Net.Demo;
 // 예시 3: NetDeviceRegistry 다중 장비 관리
 // await Example3_MultiDevice.RunAsync();
 
-// await Example4_TcpPassiveClient.RunAsync();
+ //await Example4_TcpPassiveClient.RunAsync();
 
-// await Example5A_TcpRequestResponse_Periodic.RunAsync();
+ //await Example5A_TcpRequestResponse_Periodic.RunAsync();
 
-// await Example5B_TcpRequestResponse_OneShot.RunAsync();
+ //await Example5B_TcpRequestResponse_OneShot.RunAsync();
 
-//await Example5C_TcpWriteAndRead.RunAsync();
+await Example5C_TcpWriteAndRead.RunAsync();
 
-await Example6_MultiChannel_Registry.RunAsync();
+//await Example6_MultiChannel_Registry.RunAsync();
 

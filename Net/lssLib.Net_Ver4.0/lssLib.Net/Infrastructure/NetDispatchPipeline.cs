@@ -250,35 +250,20 @@ internal sealed class NetDispatchPipeline : IAsyncDisposable
     /// <summary>
     /// 패킷 종류별 처리 핵심 로직.
     ///
-    /// <b>패킷별 처리 분기:</b>
-    /// <list type="table">
-    ///   <item>
-    ///     <term>Write / Retry</term>
-    ///     <description>Transport.WriteAsync 만 호출. 응답 없음.</description>
-    ///   </item>
-    ///   <item>
-    ///     <term>Request (RequestAsync 호출 시)</term>
-    ///     <description>
-    ///       WriteAsync → <b>ReadAsync</b> → TryDecode → TCS.SetResult.
-    ///       ReadAsync 는 요청을 보내고 응답을 기다리기 위해 필요합니다.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <term>PeriodicRead (NetScheduler 자동 생성)</term>
-    ///     <description>
-    ///       WriteAsync (Read 명령 전송) → <b>ReadAsync</b> (응답 수신) → DeviceFrameReceived.
-    ///       ReadAsync 는 ReadCommand 전송 후 응답을 수신하기 위해 필요합니다.
-    ///       <b>Passive 모드에서는 PeriodicRead 패킷이 생성되지 않으므로 이 경로는 실행되지 않습니다.</b>
-    ///     </description>
-    ///   </item>
-    /// </list>
+    /// ① Write (ExpectResponse=false): WriteAsync 만 — 응답 없음
+    /// ② Write (ExpectResponse=true) : WriteAsync + ReadAsync → FrameReceived 이벤트
+    ///    예) WRITE_CMD에 서버 ACK가 있을 때 (Modbus FC06 등)
+    ///        Heartbeat ACK 수신 (IsHeartbeatAcknowledged=true)
+    /// ③ Request                     : WriteAsync + ReadAsync → TCS.SetResult
+    /// ④ PeriodicRead                : WriteAsync + ReadAsync → FrameReceived 이벤트
+    ///
+    /// ★ ReadAsync 에는 RequestTimeout 이 적용됩니다.
+    ///   서버가 응답하지 않으면 타임아웃 후 다음 패킷 처리로 이동합니다.
     /// </summary>
     private async Task DispatchAsync(NetPacket packet, CancellationToken ct)
     {
-        // 연결 상태 재확인 (큐 대기 중 끊어졌을 수 있음)
         if (!_connMgr.IsConnected)
         {
-            // Log(LogLevel.Warn, $"Dispatch 스킵 (Mode={packet.Mode}) — {_connMgr.State}");
             packet.Tcs?.TrySetResult(NetResult.Fail($"[{_cfg.DeviceName}] 연결 없음"));
             return;
         }
@@ -286,68 +271,75 @@ internal sealed class NetDispatchPipeline : IAsyncDisposable
         var sw = Stopwatch.StartNew();
         try
         {
-            // ── ① 모든 패킷 공통: 데이터 전송 ──────────────────────────
+            // 모든 패킷 공통: 전송
             await _transport.WriteAsync(packet.Data, ct).ConfigureAwait(false);
             _stats.RecordSent();
 
-
-            // ── ② Request 패킷 전용: 응답 수신 + TCS 완료 ─────────────
-            // RequestAsync 호출 시 생성된 패킷
-            // ReadAsync 가 필요한 이유:
-            //   요청 프레임을 전송한 후 서버 응답이 올 때까지 기다려야 함
-            //   응답이 도착해야 RequestAsync await 가 완료됨
-            if (packet.Mode == PacketMode.Request &&
-                packet.Tcs is not null)
+            // ─────────────────────────────────────────────────────────
+            // ① Write + 응답 수신 (ExpectResponse=true)
+            //    WriteAsync 후 서버 응답을 FrameReceived 이벤트로 전달
+            //    예: WRITE_CMD → 서버 ACK / Heartbeat → 서버 ACK
+            // ─────────────────────────────────────────────────────────
+            if (packet.Mode == PacketMode.Write && packet.ExpectResponse)
             {
-                var raw = await _transport.ReadAsync(ct).ConfigureAwait(false);
+                var raw = await ReadWithTimeoutAsync(ct).ConfigureAwait(false);
+                if (raw is null) return;  // 타임아웃 — 다음 패킷 처리
+                _stats.RecordReceived();
+                if (_protocol.TryDecode(raw, out var d0))
+                {
+                    _receiveChannel.Writer.TryWrite(d0);
+                    FrameReceived?.Invoke(_cfg.DeviceId, d0);
+                }
+                return;
+            }
 
+            // ─────────────────────────────────────────────────────────
+            // ② Request — RequestAsync 단발 요청-응답
+            //    WriteAsync → ReadAsync → TCS.SetResult → await 완료
+            // ─────────────────────────────────────────────────────────
+            if (packet.Mode == PacketMode.Request && packet.Tcs is not null)
+            {
+                var raw = await ReadWithTimeoutAsync(ct).ConfigureAwait(false);
+                if (raw is null)
+                {
+                    packet.Tcs.TrySetResult(NetResult.Fail(
+                        new TimeoutException($"[{_cfg.DeviceName}] Request 응답 타임아웃")));
+                    return;
+                }
                 sw.Stop();
                 _stats.RecordResponse(sw.ElapsedMilliseconds);
                 _stats.RecordReceived();
-
-                if (_protocol.TryDecode(raw, out var decoded))
-                    packet.Tcs.TrySetResult(NetResult.Ok(decoded));
-                else
-                    packet.Tcs.TrySetResult(NetResult.Fail("프로토콜 디코딩 실패"));
-
+                if (_protocol.TryDecode(raw, out var d1)) packet.Tcs.TrySetResult(NetResult.Ok(d1));
+                else packet.Tcs.TrySetResult(NetResult.Fail("프로토콜 디코딩 실패"));
                 return;
             }
 
-            // ── ③ PeriodicRead 패킷 전용: 응답 수신 + 이벤트 발생 ─────
-            // NetScheduler 가 ReadCommands 를 주기적으로 전송할 때 생성
-            // ReadAsync 가 필요한 이유:
-            //   모드버스 등 RequestResponse 장비는 질의 후 응답이 옴
-            //   응답을 수신해야 DeviceFrameReceived 이벤트로 전달 가능
-            // ★ Passive 모드에서는 이 분기에 진입하지 않음
-            //   (NetScheduler.PeriodicInterval=Zero → PeriodicRead 패킷 미생성)
+            // ─────────────────────────────────────────────────────────
+            // ③ PeriodicRead — READ_CMD 주기 요청-응답
+            //    WriteAsync → ReadAsync → FrameReceived 이벤트
+            //    ★ Passive 모드에서는 이 분기 실행 안 됨
+            // ─────────────────────────────────────────────────────────
             if (packet.Mode == PacketMode.PeriodicRead)
             {
-                var raw = await _transport.ReadAsync(ct).ConfigureAwait(false);
-
+                var raw = await ReadWithTimeoutAsync(ct).ConfigureAwait(false);
+                if (raw is null) return;  // 타임아웃 — 다음 주기 재시도
                 _stats.RecordReceived();
-                if (_protocol.TryDecode(raw, out var decoded))
+                if (_protocol.TryDecode(raw, out var d2))
                 {
-                    _receiveChannel.Writer.TryWrite(decoded);
-                    FrameReceived?.Invoke(_cfg.DeviceId, decoded);
+                    _receiveChannel.Writer.TryWrite(d2);
+                    FrameReceived?.Invoke(_cfg.DeviceId, d2);
                 }
-
                 return;
             }
 
-            // ── ④ Write / Retry 패킷: 전송 완료 (위에서 이미 처리됨) ──
-            // WriteAsync 만 호출하고 종료 (응답 대기 없음)
+            // ④ Write (ExpectResponse=false) / Retry: 전송만 (위에서 완료)
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            //Log(LogLevel.Error, $"통신 오류 (Mode={packet.Mode}): {ex.Message}");
-
-            /// 통신 오류 발생 → 통계 기록 + 이벤트 발생 + Tcs 실패 설정 + 재접속 시도 (Write 패킷인 경우 재전송 페이로드 보존)
             packet.Tcs?.TrySetResult(NetResult.Fail(ex));
 
-            // Write 재전송 페이로드 보존
             byte[]? retryPayload = null;
-
             if (_cfg.IsRetryEnabled &&
                 _cfg.RetryTarget.HasFlag(RetryTarget.Write) &&
                 packet.Mode is PacketMode.Write or PacketMode.Retry &&
@@ -358,14 +350,30 @@ internal sealed class NetDispatchPipeline : IAsyncDisposable
             }
 
             _ = _connMgr.HandleErrorAsync(ex, retryPayload,
-                                            async (data, t) =>
-                                                await EnqueueAsync(
-                                                        NetPacket.CreateWrite(data, NetPriority.Critical, t), t)
-                                            .ConfigureAwait(false),
-                                            ct);
+                async (data, t) => await EnqueueAsync(
+                    NetPacket.CreateWrite(data, NetPriority.Critical, t), t)
+                    .ConfigureAwait(false),
+                ct);
         }
     }
 
+    /// <summary>
+    /// RequestTimeout 을 적용한 ReadAsync 헬퍼.
+    /// 타임아웃 초과 시 null 반환 (예외 없음).
+    /// </summary>
+    private async Task<byte[]?> ReadWithTimeoutAsync(CancellationToken ct)
+    {
+        using var readCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        readCts.CancelAfter(_cfg.RequestTimeout);
+        try
+        {
+            return await _transport.ReadAsync(readCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return null;  // 타임아웃
+        }
+    }
     /*
     private void Log(LogLevel lv, string msg)
         => LogManager.Instance.AddLog(lv, _cfg.DeviceName, msg);

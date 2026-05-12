@@ -118,12 +118,23 @@ public abstract class NetChannelBase : IAsyncDisposable
         _transport.DataReceived += OnDataReceived;
         _connMgr.ErrorOccurred += (id, ex) => DeviceErrorOccurred?.Invoke(id, ex);
 
+        // 재접속 진행 상황 → DeviceErrorOccurred 로 전달
+        _connMgr.ReconnectProgress += (n, max, waitSec) =>
+        {
+            string msg = waitSec > 0
+                ? $"재접속 {n}/{max} — {waitSec:F0}초 후 재시도"
+                : $"재접속 {n}/{max} — 시도 중...";
+            DeviceErrorOccurred?.Invoke(_cfg.DeviceId, new InvalidOperationException(msg));
+        };
+
         // 재접속 성공 → 스케줄러 자동 재개
         _connMgr.Reconnected += () =>
         {
             _scheduler.Resume();
             //Log(LogLevel.Info, "재접속 완료 — 스케줄러 재개");
         };
+
+        _connMgr.Reconnected += () => _scheduler.Resume();
 
         // Pipeline 수신 이벤트 → 상위 이벤트 전파
         _pipeline.FrameReceived += (id, frame) => DeviceFrameReceived?.Invoke(id, frame);
@@ -194,7 +205,7 @@ public abstract class NetChannelBase : IAsyncDisposable
 
         _pipeline.Start(token);  // 데이터 흐름(Pipeline)을 활성화
         _scheduler.Start(token); //"1초마다 데이터를 읽어와라", "특정 명령을 우선 전송해라"와 같은 스케줄링 로직을 가동
-
+        _ = Task.Run(() => ConnectionMonitorAsync(token), token);
         /*Log(LogLevel.Info,
             $"[{GetType().Name}] 시작 Mode={Mode} " +
             $"ReadCmd={_cfg.ReadCommands.Count} Sequential={_cfg.IsSequential}");*/
@@ -207,8 +218,7 @@ public abstract class NetChannelBase : IAsyncDisposable
     /// </summary>
     public virtual async Task StopAsync()
     {
-        // ★ Cancel 먼저 → OnStateChanged(Error/Disconnected) 에서 재접속 안 함
-        _cts.Cancel();
+        _cts.Cancel();  // 먼저 취소 — 재접속 루프 즉시 중단
 
         await _pipeline.StopAsync().ConfigureAwait(false);
         try { await _scheduler.WaitAsync().ConfigureAwait(false); }
@@ -218,11 +228,30 @@ public abstract class NetChannelBase : IAsyncDisposable
     }
 
     /// <summary>
-    /// 데이터를 전송 큐에 넣습니다 (Fire-and-forget).
-    /// <para>연결 없으면 스킵. 실패는 <see cref="DeviceErrorOccurred"/> 이벤트로 통보.</para>
+    /// 데이터 전송 (Fire-and-forget).
+    /// <para>
+    /// <b>응답 없는 경우 (기본):</b> <c>expectResponse: false</c><br/>
+    /// → <c>_stream.WriteAsync</c> 만 수행.
+    /// </para>
+    /// <para>
+    /// <b>응답 있는 경우:</b> <c>expectResponse: true</c><br/>
+    /// → <c>_stream.WriteAsync</c> + <c>_stream.ReadAsync</c><br/>
+    /// → <c>DeviceFrameReceived</c> 이벤트 발생.<br/>
+    /// → 예: Modbus FC06 Write → 서버가 ACK 응답을 보낼 때.
+    /// </para>
+    /// <para>
+    /// <b>응답 대기가 필요한 경우:</b> <c>RequestAsync</c> 사용 권장.<br/>
+    /// → <c>expectResponse: true</c> 는 응답을 이벤트로만 받을 수 있음.<br/>
+    /// → 응답 내용을 직접 반환받으려면 <c>RequestAsync</c> 사용.
+    /// </para>
     /// </summary>
+    /// <param name="data">전송 페이로드 (프로토콜 인코딩 전 원시 데이터)</param>
+    /// <param name="priority">큐 우선순위. 기본: Write(1)</param>
+    /// <param name="expectResponse">true = 전송 후 서버 응답 수신 (DeviceFrameReceived 이벤트)</param>
+    /// <param name="ct">취소 토큰</param>
     public async Task WriteAsync(byte[] data,
                                  NetPriority priority = NetPriority.Write,
+                                 bool expectResponse = false,
                                  CancellationToken ct = default)
     {
         if (!IsConnected)
@@ -231,7 +260,7 @@ public abstract class NetChannelBase : IAsyncDisposable
             return;
         }
 
-        var pkt = NetPacket.CreateWrite(_protocol.Encode(data), priority, ct);
+        var pkt = NetPacket.CreateWrite(_protocol.Encode(data), priority, ct, expectResponse);
 
         await _pipeline.EnqueueAsync(pkt, ct).ConfigureAwait(false);
     }
@@ -335,10 +364,31 @@ public abstract class NetChannelBase : IAsyncDisposable
 
     // private void Log(LogLevel level, string message)
     //     => LogManager.Instance.AddLog(level, DeviceName, message);
+    #endregion
+
+    #region §8 ─ 연결 감시 루프 (재접속 누락 보장)
+
+    private async Task ConnectionMonitorAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            try { await Task.Delay(2000, ct).ConfigureAwait(false); }
+            catch (OperationCanceledException) { break; }
+
+            if (_disposed || ct.IsCancellationRequested) break;
+
+            if (!IsConnected && !_connMgr.IsReconnecting)
+            {
+                _ = _connMgr.HandleErrorAsync(
+                    new IOException($"[{DeviceName}] 감시 루프: 재접속 시도"),
+                    null, null, ct);
+            }
+        }
+    }
 
     #endregion
 
-    #region §8 ─ IAsyncDisposable
+    #region §9 ─ IAsyncDisposable
 
     /// <summary>
     /// 채널을 완전히 폐기합니다. 재접속 시도 없이 즉시 종료합니다.

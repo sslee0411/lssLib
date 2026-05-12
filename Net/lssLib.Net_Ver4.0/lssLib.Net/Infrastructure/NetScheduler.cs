@@ -164,8 +164,10 @@ internal sealed class NetScheduler
     ///   PeriodicInterval=Zero → 즉시 return. 루프 실행 안 함.
     ///   수신은 TcpTransport.PassiveReceiveLoopAsync 또는 Serial.DataReceived 가 담당.
     ///
-    /// <b>RequestResponse 모드:</b>
-    ///   PeriodicInterval 마다 ReadCommands 를 EnqueueAsync 로 투입.
+    /// <b>RequestResponse 모드:</b> PeriodicInterval 마다 ReadCommands 투입.
+    ///
+    /// ★ Scheduler 는 "언제 투입할지"만 결정합니다.
+    ///   실제 WriteAsync+ReadAsync 처리는 Pipeline.DispatchAsync 에서 수행합니다.
     ///   IsSequential=true  → foreach 순차 투입 (RS-485/Modbus)
     ///   IsSequential=false → Task.WhenAll 병렬 투입 (TCP 다중 요청)
     /// </summary>
@@ -195,7 +197,9 @@ internal sealed class NetScheduler
                     // (Pipeline 의 SingleReader=false 채널에 순서대로 투입)
                     foreach (var cmd in cmds)
                     {
-                        await EnqueueReadAsync(cmd, ct).ConfigureAwait(false);
+                        await _pipeline.EnqueueAsync(
+                            NetPacket.CreatePeriodicRead(_protocol.Encode(cmd), ct), ct)
+                            .ConfigureAwait(false);
                     }
                 }
                 else
@@ -246,6 +250,29 @@ internal sealed class NetScheduler
     /// // 커스텀 예시:
     /// // public byte[]? BuildHeartbeat()
     /// //     => BuildFrame(new byte[] { 0x00 });  // Keep-Alive 코드
+    /// <b>IsHeartbeatAcknowledged=false (기본):</b>
+    ///   _stream.WriteAsync(hb) 만 수행 — Keep-Alive 역할.
+    ///
+    /// <b>IsHeartbeatAcknowledged=true:</b>
+    ///   _stream.WriteAsync(hb) + _stream.ReadAsync() → DeviceFrameReceived 이벤트.
+    ///   서버가 Heartbeat 에 ACK 를 보내는 경우 사용합니다.
+    ///
+    /// <b>설정 예시:</b>
+    /// <code>
+    /// // Heartbeat 전송만 (Keep-Alive)
+    /// cfg.HeartbeatInterval       = TimeSpan.FromSeconds(30);
+    /// cfg.IsHeartbeatAcknowledged = false;  // 기본값
+    ///
+    /// // Heartbeat ACK 수신
+    /// cfg.HeartbeatInterval       = TimeSpan.FromSeconds(30);
+    /// cfg.IsHeartbeatAcknowledged = true;
+    ///
+    /// // ACK 처리
+    /// channel.DeviceFrameReceived += (id, frame) =>
+    /// {
+    ///     if (IsHeartbeatAck(frame)) Console.WriteLine("Heartbeat ACK");
+    ///     else                       ProcessSensorData(frame);
+    /// };
     /// </code>
     /// </summary>
     private async Task RunHeartbeatAsync(CancellationToken ct)
@@ -269,10 +296,9 @@ internal sealed class NetScheduler
                 var hb = _protocol.BuildHeartbeat();
                 if (hb is null) continue;
 
-                // Low(3) 최저 우선순위 → Write/Read 가 없는 통신 공백에만 전송
-                await _pipeline.EnqueueAsync(
-                    NetPacket.CreateWrite(hb, NetPriority.Low, ct), ct)
-                    .ConfigureAwait(false);
+                // IsHeartbeatAcknowledged 에 따라 응답 수신 여부 결정
+                var packet = NetPacket.CreateHeartbeat(hb, ct, _cfg.IsHeartbeatAcknowledged);
+                await _pipeline.EnqueueAsync(packet, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)

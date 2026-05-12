@@ -30,6 +30,7 @@ internal sealed class NetConnectionManager : IAsyncDisposable
 
     private readonly SemaphoreSlim _lock = new(1, 1);
     private volatile bool _disposed;
+    private volatile bool _reconnecting;
 
     #endregion
 
@@ -49,12 +50,19 @@ internal sealed class NetConnectionManager : IAsyncDisposable
 
     public NetState State => _transport.State;
     public bool IsConnected => _transport.State == NetState.Connected;
+    public bool IsReconnecting => _reconnecting;
 
     /// <summary>재접속 성공 시 발생. NetScheduler.Resume() 트리거.</summary>
     public event Action? Reconnected;
 
     /// <summary>오류 발생 시 발생 (재접속 시도 전).</summary>
     public event Action<int, Exception>? ErrorOccurred;
+
+    /// <summary>
+    /// 재접속 시도 진행 알림. (시도번호, 최대횟수문자열, 다음대기초)
+    /// DeviceErrorOccurred 이벤트로 전달되어 UI/로그에 표시됩니다.
+    /// </summary>
+    public event Action<int, string, double>? ReconnectProgress;
 
     #endregion
 
@@ -63,24 +71,25 @@ internal sealed class NetConnectionManager : IAsyncDisposable
     /// <summary>초기 접속 (StartAsync 에서 호출).</summary>
     internal async Task ConnectAsync(CancellationToken ct)
     {
-        /// 재접속이 활성화되어 있고, ConnectTarget 이 포함된 경우 → 최대 재시도 횟수에 따라 ConnectLoopAsync 실행
         bool doRetry = _cfg.IsRetryEnabled && _cfg.RetryTarget.HasFlag(RetryTarget.Connect);
-
-        await ConnectLoopAsync( doRetry ? 
-                                ( _cfg.MaxRetries == 0 ? int.MaxValue : _cfg.MaxRetries ) : 
-                                1, ct)
-            .ConfigureAwait(false);
+        int max = doRetry
+            ? (_cfg.MaxRetries == 0 ? int.MaxValue : _cfg.MaxRetries)
+            : 1;
+        await ConnectLoopAsync(max, ct).ConfigureAwait(false);
     }
 
-    /// <summary>통신 오류 발생 시 호출 → 끊기 + 재접속.</summary>
-    internal async Task HandleErrorAsync(   Exception ex,
+    /// <summary>
+    /// 통신 오류 발생 시 호출 → 연결 끊기 + 재접속 루프.
+    /// <para>SemaphoreSlim(1,1) 으로 중복 실행 방지 — 이미 재접속 중이면 즉시 return.</para>
+    /// </summary>
+    internal async Task HandleErrorAsync(Exception ex,
                                             byte[]? retryPayload,
-                                            Func<byte[], CancellationToken, Task>? onReconnected, 
+                                            Func<byte[], CancellationToken, Task>? onReconnected,
                                             CancellationToken ct)
     {
         if (!await _lock.WaitAsync(0).ConfigureAwait(false)) // 중복 진행 금지 ( 즉시 실행 )
         {
-           //  Log(LogLevel.Debug, "재접속 이미 진행 중 — 중복 무시");
+            //  Log(LogLevel.Debug, "재접속 이미 진행 중 — 중복 무시");
             return;
         }
         try
@@ -89,14 +98,19 @@ internal sealed class NetConnectionManager : IAsyncDisposable
             ErrorOccurred?.Invoke(_cfg.DeviceId, ex);
             // Log(LogLevel.Warn, $"오류 → 재접속 준비: {ex.Message}");
 
-            try {
+
+            try
+            {
                 // 기존 연결 끊기 (이미 끊긴 상태여도 예외 없음)
-                await _transport.DisconnectAsync().ConfigureAwait(false); 
+                await _transport.DisconnectAsync().ConfigureAwait(false);
             }
-            catch (Exception dex) {
+            catch (Exception dex)
+            {
                 dex.Message.ToString(); // Log 무한 루프 방지 위해 메시지만 참조
                 //Log(LogLevel.Warn, $"Disconnect 오류(무시): {dex.Message}");
             }
+
+            if (ct.IsCancellationRequested) return;
 
             // 재접속 시도
             bool success = await ReconnectLoopAsync(ct).ConfigureAwait(false);
@@ -116,9 +130,10 @@ internal sealed class NetConnectionManager : IAsyncDisposable
                 }
             }
         }
-        finally 
-        { 
-            _lock.Release(); 
+        finally
+        {
+            _reconnecting = false;
+            _lock.Release();
         }
     }
 
@@ -136,13 +151,15 @@ internal sealed class NetConnectionManager : IAsyncDisposable
     {
         for (int n = 1; n <= maxAttempts; n++)
         {
-            try {
+            try
+            {
                 // 첫 번째 시도는 즉시, 이후 시도는 지수 백오프 또는 고정 간격으로 대기
                 await _transport.ConnectAsync(ct).ConfigureAwait(false);
                 return;
             }
-            catch (OperationCanceledException) { 
-                throw; 
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex) when (n < maxAttempts)
             {
@@ -162,16 +179,25 @@ internal sealed class NetConnectionManager : IAsyncDisposable
     }
 
     /// <summary>
-    /// 재접속 시도 루프 (HandleErrorAsync 에서 호출).
-    /// 재접속이 활성화되어 있고, ConnectTarget 이 포함된 경우 → 최대 재시도 횟수에 따라 시도.
+    /// 재접속 루프.
+    ///
+    /// <b>MaxRetries=0 → 무제한:</b> 서버가 살아날 때까지 지수 백오프로 계속 시도합니다.
+    ///
+    /// <b>백오프 계산:</b>
+    ///   ReconnectBackoff=true  → RetryDelay × 2^(n-1), 최대 60s
+    ///   ReconnectBackoff=false → RetryDelay 고정
+    ///
+    /// <b>진행 상황:</b> ReconnectProgress 이벤트 → NetChannelBase → DeviceErrorOccurred 이벤트
     /// </summary>
     private async Task<bool> ReconnectLoopAsync(CancellationToken ct)
     {
         // 재접속 활성화 여부 및 ConnectTarget 포함 여부 확인 → 최대 재시도 횟수 결정
         bool doRetry = _cfg.IsRetryEnabled && _cfg.RetryTarget.HasFlag(RetryTarget.Connect);
-        int max = doRetry ? 
-                (_cfg.MaxRetries == 0 ? int.MaxValue : _cfg.MaxRetries) : 
+        int max = doRetry ?
+                (_cfg.MaxRetries == 0 ? int.MaxValue : _cfg.MaxRetries) :
                 1;
+
+        string maxStr = max == int.MaxValue ? "∞" : max.ToString();
 
         //Log(LogLevel.Warn, $"재접속 시작 (최대 {(max == int.MaxValue ? "무제한" : max)}회)");
 
@@ -180,17 +206,28 @@ internal sealed class NetConnectionManager : IAsyncDisposable
             // 재접속 시도 전 취소 요청 확인
             if (ct.IsCancellationRequested) return false;
 
+            // n=1: 즉시 시도, n>1: 백오프 대기 후 시도
             if (n > 1)
             {
                 var delay = CalcDelay(n);
+
+                ReconnectProgress?.Invoke(n, maxStr, delay.TotalSeconds);
                 //Log(LogLevel.Warn, $"재접속 대기 {delay.TotalSeconds:F1}s ({n}/{max})");
-                try { 
-                    await Task.Delay(delay, ct).ConfigureAwait(false); 
+                try
+                {
+                    await Task.Delay(delay, ct).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) {
-                    return false; 
+                catch (OperationCanceledException)
+                {
+                    return false;
                 }
             }
+            else
+            {
+                ReconnectProgress?.Invoke(1, maxStr, 0);
+            }
+
+            if (ct.IsCancellationRequested) return false;
 
             try
             {
@@ -199,16 +236,18 @@ internal sealed class NetConnectionManager : IAsyncDisposable
                 //Log(LogLevel.Info, $"재접속 성공 ({n}회)");
                 return true;
             }
-            catch (OperationCanceledException) { 
-                return false; 
+            catch (OperationCanceledException)
+            {
+                return false;
             }
             catch (Exception ex)
             {
                 // Log(LogLevel.Warn, $"재접속 실패 ({n}/{max}): {ex.Message}");
-                if (n >= max)
+                // 한도 초과 시 ErrorOccurred
+                if (n >= max && max != int.MaxValue)
                 {
                     //Log(LogLevel.Fatal, "재접속 한도 초과 — 포기");
-                    ErrorOccurred?.Invoke(  _cfg.DeviceId,
+                    ErrorOccurred?.Invoke(_cfg.DeviceId,
                                             new InvalidOperationException(
                                             $"[{_cfg.DeviceName}] 재접속 {max}회 실패: {ex.Message}"));
                 }
@@ -240,9 +279,10 @@ internal sealed class NetConnectionManager : IAsyncDisposable
     /// <returns></returns>
     public ValueTask DisposeAsync()
     {
-        if (!_disposed) { 
-            _disposed = true; 
-            _lock.Dispose(); 
+        if (!_disposed)
+        {
+            _disposed = true;
+            _lock.Dispose();
         }
 
         return ValueTask.CompletedTask;

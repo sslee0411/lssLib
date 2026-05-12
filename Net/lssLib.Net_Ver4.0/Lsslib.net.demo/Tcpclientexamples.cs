@@ -37,6 +37,22 @@
 //  │    [FC:0x03][DataLen:0x0C]                                        │
 //  │    [FrameId:uint 4B LE][Temp:float 4B LE][Hum:float 4B LE]       │
 //  └──────────────────────────────────────────────────────────────────┘
+//  READ_CMD / WRITE_CMD / Heartbeat 개념:
+//
+//  WRITE_CMD : WriteAsync(cmd) → _stream.WriteAsync   [응답 없음]
+//              Write(1) 우선순위 → READ_CMD 보다 항상 먼저
+//
+//  READ_CMD  : cfg.AddReadCommand(cmd) + PeriodicInterval 설정
+//              → 100ms마다 _stream.WriteAsync(cmd) + _stream.ReadAsync()
+//              → DeviceFrameReceived 이벤트 (응답 있음, 타임아웃 적용)
+//              ★ Echo 서버 전용 — Push 서버와 혼용 불가
+//
+//  Heartbeat : HeartbeatInterval=30s
+//              → 30초 통신 공백 시 _stream.WriteAsync(hb)  [응답 없음]
+//              Low(3) 최저 우선순위 → Write/Read 중에는 전송 안 함
+//
+//  재접속    : 서버 강제 종료 → 2초 내 자동 재접속 시작
+//              DeviceErrorOccurred 이벤트: "재접속 1/∞ — 즉시 시도 중..."
 // ══════════════════════════════════════════════════════════════════════
 
 using lssLib.Net;
@@ -45,273 +61,155 @@ using lssLib.Net.Implementation;
 namespace lssLib.Net.Demo;
 
 // ══════════════════════════════════════════════════════════════════════
-//  예시 4 — TCP Passive 클라이언트 (Push 서버 연동)
-//
-//  [TcpTestServer] Push 모드 / 포트 9000
-//  [이 클라이언트] PassiveNetChannel — 서버 Push 프레임 수신만 담당
-//
-//  ★ 데이터가 오는 경로:
-//    서버 stream.WriteAsync(frame)
-//      → [TcpTransport] PassiveReceiveLoopAsync: stream.ReadAsync
-//        → RaiseDataReceived(bytes)
-//          → [NetChannelBase] OnDataReceived
-//            → [NetDispatchPipeline] PushReceived
-//              → BinaryProtocol.TryDecode
-//                → FrameReceived 이벤트
-//                  → DeviceFrameReceived 이벤트  ← 여기서 받음
-//
-//  ★ 데이터 받는 함수: channel.DeviceFrameReceived 이벤트 핸들러
-//    또는: await foreach (var frame in channel.ReadAllAsync(ct))
+//  예시 4 — TCP Passive 클라이언트 (Push 서버)
+//  서버: TcpTestServer → Push 모드 → 포트 9000
+//  ★ enablePassiveReceive: true 필수
+//  ★ PeriodicInterval = Zero (READ_CMD 없음)
+//  ★ 서버 재시작 후 자동 재접속됨
 // ══════════════════════════════════════════════════════════════════════
 static class Example4_TcpPassiveClient
 {
-    private const int OFFSET_FRAME_ID = 0;   // uint  4B LE
-    private const int OFFSET_TEMPERATURE = 4;   // float 4B LE
-    private const int OFFSET_HUMIDITY = 8;    // float 4B LE
     private const int PAYLOAD_SIZE = 12;
 
     public static async Task RunAsync(CancellationToken ct = default)
     {
-        Console.WriteLine("=================================================");
-        Console.WriteLine(" Example4: TCP Passive 클라이언트");
-        Console.WriteLine(" 서버: TcpTestServer → Push 모드 → 포트 9000");
-        Console.WriteLine("=================================================");
+        Console.WriteLine("=== Example4: TCP Passive (Push 서버) ===");
+        Console.WriteLine("서버: TcpTestServer → Push 모드 → 포트 9000\n");
 
-        // §1. 설정
         var cfg = new TcpDeviceConfig(4, "PushServer", "127.0.0.1", 9000)
         {
             IsRetryEnabled = true,
             RetryTarget = RetryTarget.Connect,
-            MaxRetries = 0,                               // 0 = 무제한 재시도
+            MaxRetries = 0,                    // 무제한 재시도
             RetryDelay = TimeSpan.FromSeconds(2),
-            ReconnectBackoff = true,                            // 2s → 4s → 8s ... 최대 60s
-
-            // ★ Passive 모드 필수 설정
-            PeriodicInterval = TimeSpan.Zero,                  // 주기 Read 없음
-            HeartbeatInterval = TimeSpan.Zero,                  // Heartbeat 없음
+            ReconnectBackoff = true,                 // 2→4→8→...→60초
+            PeriodicInterval = TimeSpan.Zero,        // READ_CMD 없음
+            HeartbeatInterval = TimeSpan.Zero,
         };
 
-        // §2. 채널 조립
-        // ★ 핵심: enablePassiveReceive: true
-        //   이 옵션이 없으면 서버가 Push 해도 클라이언트에서 수신 안 됨
-        //   TCP 는 Serial 과 달리 DataReceived 이벤트가 없으므로
-        //   별도 백그라운드 수신 루프(PassiveReceiveLoopAsync)가 필요함
         await using var channel = new PassiveNetChannel(
             cfg,
-            TcpTransport.FromConfig(cfg, enablePassiveReceive: true),   // ← 필수
+            TcpTransport.FromConfig(cfg, enablePassiveReceive: true),  // ← 필수
             new BinaryProtocol(stx: 0xAA, fc: 0x01),
             autoRegister: true);
 
-        // §3. 이벤트 구독
-        // ★ 서버 Push 프레임을 받는 함수: DeviceFrameReceived 이벤트 핸들러
-        // ⚠ 백그라운드 스레드 → WPF: Dispatcher.InvokeAsync(() => ...) 필수
-        channel.DeviceFrameReceived += OnFrameReceived;
-
+        channel.DeviceFrameReceived += OnFrameReceived;  // ← 데이터 받는 함수
         channel.DeviceStateChanged += (id, state) =>
-        {
-            Console.WriteLine($"[Example4] 상태 변경: {state}");
-            // WPF 예시:
-            // Dispatcher.InvokeAsync(() => LblState.Content = state.ToString());
-        };
+            Console.WriteLine($"[Example4] 상태: {state}");
+        channel.DeviceErrorOccurred += (id, ex) =>       // ← 재접속 진행 상황 포함
+            Console.WriteLine($"[Example4] {ex.Message}");
 
-        channel.DeviceErrorOccurred += (id, ex) =>
-            Console.WriteLine($"[Example4] 오류 (재접속 시도 중): {ex.Message}");
-
-        // §4. 시작 (내부에서 ConnectAsync → PassiveReceiveLoopAsync 시작)
+        Console.WriteLine("[Example4] 접속 중...");
         await channel.StartAsync(ct);
-        Console.WriteLine("[Example4] 연결됨 — 서버 Push 프레임 대기 중...\n");
+        Console.WriteLine("[Example4] 연결됨 — Push 수신 대기 중");
+        Console.WriteLine("[Example4] 서버 강제 종료 후 재시작하면 자동 재접속됩니다\n");
 
-        // §5. 비동기 열거 방법 (이벤트 대신 사용 가능 — 둘 중 하나만 사용)
-        //
-        //   방법 A: DeviceFrameReceived 이벤트 (§3에서 등록, 현재 방식)
-        //   방법 B: ReadAllAsync 비동기 열거 (아래 주석 해제)
-        //
-        // await foreach (var frame in channel.ReadAllAsync(ct))
-        // {
-        //     ParseAndPrint(frame, "ReadAllAsync");
-        // }
-
-        // Ctrl+C 또는 CancellationToken 취소 대기
         try { await Task.Delay(Timeout.Infinite, ct); }
         catch (OperationCanceledException) { }
-
-        Console.WriteLine("[Example4] 종료");
     }
 
     // ★ 서버 Push 데이터를 실제로 받는 함수
-    // ⚠ 백그라운드 스레드에서 호출됨 — WPF UI 직접 접근 금지
-    private static void OnFrameReceived(int deviceId, byte[] frame)
+    // ⚠ 백그라운드 스레드 — WPF: Dispatcher.InvokeAsync 필수
+    private static void OnFrameReceived(int id, byte[] frame)
     {
-        if (frame.Length < PAYLOAD_SIZE)
-        {
-            Console.WriteLine($"[Example4] 프레임 크기 오류: {frame.Length}B (최소 {PAYLOAD_SIZE}B 필요)");
-            return;
-        }
-
-        ParseAndPrint(frame, "이벤트");
-    }
-
-    private static void ParseAndPrint(byte[] frame, string source)
-    {
-        // BinaryProtocol 디코딩 완료 — frame = 순수 페이로드 (헤더/CRC 제거됨)
-        uint frameId = BitConverter.ToUInt32(frame, OFFSET_FRAME_ID);
-        float temp = BitConverter.ToSingle(frame, OFFSET_TEMPERATURE);
-        float hum = BitConverter.ToSingle(frame, OFFSET_HUMIDITY);
-
+        if (frame.Length < PAYLOAD_SIZE) return;
+        uint frameId = BitConverter.ToUInt32(frame, 0);
+        float temp = BitConverter.ToSingle(frame, 4);
+        float hum = BitConverter.ToSingle(frame, 8);
         Console.WriteLine(
-            $"[Example4][{source}] " +
-            $"Frame#{frameId:D5} | " +
-            $"온도: {temp,5:F1}°C | " +
-            $"습도: {hum,5:F1}%  " +
-            $"({DateTime.Now:HH:mm:ss.fff})");
+            $"[Example4] Frame#{frameId:D5} | " +
+            $"온도: {temp,5:F1}°C | 습도: {hum,5:F1}%  ({DateTime.Now:HH:mm:ss.fff})");
     }
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  예시 5A — TCP RequestResponse / 주기 폴링 (Echo 서버 연동)
+//  예시 5A — TCP RequestResponse / 주기 READ_CMD
+//  서버: TcpTestServer → Echo 모드 → 포트 9000
 //
-//  [TcpTestServer] Echo 모드 / 포트 9000
-//  [이 클라이언트] RequestResponseChannel — PeriodicRead 자동 전송
+//  ★ READ_CMD 동작:
+//    cfg.AddReadCommand(READ_CMD) + PeriodicInterval=100ms
+//    → 100ms마다: WriteAsync(READ_CMD) → ReadAsync() → DeviceFrameReceived
 //
-//  ★ 데이터 흐름:
-//    [NetScheduler] RunPeriodicReadAsync
-//      → 100ms 마다 EnqueueAsync(PeriodicRead 패킷)
-//        → [NetDispatchPipeline] DispatchAsync
-//          → Transport.WriteAsync(READ_COMMAND)   ← 서버로 요청 전송
-//            → Transport.ReadAsync()               ← 응답 수신 대기
-//              → BinaryProtocol.TryDecode()
-//                → DeviceFrameReceived 이벤트      ← 여기서 받음
-//
-//  ★ Heartbeat 사용법:
-//    HeartbeatInterval = TimeSpan.FromSeconds(30) 설정 시
-//    30초 동안 Write/Read 가 없으면 Keep-Alive 프레임 자동 전송
+//  ★ READ_CMD 가 동작하지 않을 때 체크 항목:
+//    1. cfg.AddReadCommand(READ_CMD) 호출 여부
+//    2. PeriodicInterval 이 Zero 가 아닌지 확인
+//    3. Echo 서버인지 확인 (Push 서버는 응답 안 함 → ReadAsync 블로킹)
 // ══════════════════════════════════════════════════════════════════════
 static class Example5A_TcpRequestResponse_Periodic
 {
-    private const int OFFSET_FC = 0;
-    private const int OFFSET_DATA_LEN = 1;
-    private const int OFFSET_FRAME_ID = 2;
-    private const int OFFSET_TEMP = 6;
-    private const int OFFSET_HUM = 10;
     private const int RESPONSE_SIZE = 14;
-
-    // 서버에게 보낼 읽기 명령 [FC=0x03][AddrHi=0x00][AddrLo=0x00]
-    private static readonly byte[] READ_COMMAND = [0x03, 0x00, 0x00];
+    // READ_CMD: [FC=0x03][AddrHi=0x00][AddrLo=0x00]
+    private static readonly byte[] READ_CMD = [0x03, 0x00, 0x00];
 
     public static async Task RunAsync(CancellationToken ct = default)
     {
-        Console.WriteLine("=================================================");
-        Console.WriteLine(" Example5A: TCP RequestResponse — 주기 폴링");
-        Console.WriteLine(" 서버: TcpTestServer → Echo 모드 → 포트 9000");
-        Console.WriteLine("=================================================");
+        Console.WriteLine("=== Example5A: TCP RequestResponse (주기 READ_CMD) ===");
+        Console.WriteLine("서버: TcpTestServer → Echo 모드 → 포트 9000\n");
 
-        // §1. 설정
         var cfg = new TcpDeviceConfig(5, "EchoServer", "127.0.0.1", 9000)
         {
             IsRetryEnabled = true,
             RetryTarget = RetryTarget.Connect | RetryTarget.Write,
-            MaxRetries = 0,                               // 0 = 무제한
+            MaxRetries = 0,
             RetryDelay = TimeSpan.FromSeconds(2),
             ReconnectBackoff = true,
-
-            IsSequential = true,                           // 순차 처리
-            PeriodicInterval = TimeSpan.FromMilliseconds(100), // 100ms 주기 Read
+            IsSequential = true,
+            // ★ READ_CMD 주기 — 0 이면 READ_CMD 전송 안 됨
+            PeriodicInterval = TimeSpan.FromMilliseconds(100),
             RequestTimeout = TimeSpan.FromMilliseconds(500),
-
-            // ★ Heartbeat 설정 예시
-            // HeartbeatInterval = TimeSpan.FromSeconds(30),
-            // → 30초 동안 통신이 없으면 BinaryProtocol.BuildHeartbeat() 전송
-            // → 기본값 Zero = 비활성 (현재 비활성)
             HeartbeatInterval = TimeSpan.Zero,
+            // HeartbeatInterval = TimeSpan.FromSeconds(30),  // 활성화 예시
         };
+        // ★ READ_CMD 등록 — PeriodicInterval 마다 자동 전송
+        cfg.AddReadCommand(READ_CMD);
 
-        // ReadCommand 등록 — PeriodicInterval 마다 자동 전송됨
-        cfg.AddReadCommand(READ_COMMAND);
-
-        // §2. 채널 조립
-        // RequestResponse 모드: enablePassiveReceive 기본값 false (생략 가능)
         await using var channel = new RequestResponseChannel(
             cfg,
-            TcpTransport.FromConfig(cfg),   // enablePassiveReceive: false (기본)
+            TcpTransport.FromConfig(cfg),  // enablePassiveReceive 기본 false
             new BinaryProtocol(stx: 0xAA, fc: 0x01),
             autoRegister: true);
 
-        // §3. 이벤트 구독
-        // ★ PeriodicRead 응답을 받는 함수: DeviceFrameReceived 이벤트 핸들러
-        channel.DeviceFrameReceived += OnFrameReceived;
-
+        channel.DeviceFrameReceived += OnFrameReceived;  // ← READ_CMD 응답 받는 함수
         channel.DeviceStateChanged += (id, state) =>
-            Console.WriteLine($"[Example5A] 상태 변경: {state}");
-
+            Console.WriteLine($"[Example5A] 상태: {state}");
         channel.DeviceErrorOccurred += (id, ex) =>
-            Console.WriteLine($"[Example5A] 오류: {ex.Message}");
+            Console.WriteLine($"[Example5A] {ex.Message}");
 
-        // §4. 시작
         await channel.StartAsync(ct);
-        Console.WriteLine($"[Example5A] 연결됨 — {cfg.PeriodicInterval.TotalMilliseconds}ms 주기 폴링 시작\n");
+        Console.WriteLine($"[Example5A] 연결됨 — {cfg.PeriodicInterval.TotalMilliseconds}ms 주기 READ_CMD 시작\n");
 
-        // §5. 5초마다 통계 출력
         _ = Task.Run(async () =>
         {
             while (!ct.IsCancellationRequested)
             {
-                try { await Task.Delay(5000, ct); }
-                catch { break; }
+                try { await Task.Delay(5000, ct); } catch { break; }
                 var s = channel.Statistics;
                 Console.WriteLine(
                     $"[Example5A][통계] 전송={s.TotalSent} 수신={s.TotalReceived} " +
                     $"오류={s.TotalErrors} 재접속={s.TotalReconnects} " +
-                    $"평균응답={s.AvgResponseMs:F1}ms 최대={s.MaxResponseMs}ms");
+                    $"평균응답={s.AvgResponseMs:F1}ms");
             }
         }, ct);
 
         try { await Task.Delay(Timeout.Infinite, ct); }
         catch (OperationCanceledException) { }
-
-        Console.WriteLine("[Example5A] 종료");
     }
 
-    // ★ PeriodicRead 응답을 실제로 받는 함수
-    private static void OnFrameReceived(int deviceId, byte[] frame)
+    private static void OnFrameReceived(int id, byte[] frame)
     {
-        if (frame.Length < RESPONSE_SIZE)
-        {
-            Console.WriteLine($"[Example5A] 응답 크기 오류: {frame.Length}B");
-            return;
-        }
-
-        byte fc = frame[OFFSET_FC];
-        byte dataLen = frame[OFFSET_DATA_LEN];
-        uint frameId = BitConverter.ToUInt32(frame, OFFSET_FRAME_ID);
-        float temp = BitConverter.ToSingle(frame, OFFSET_TEMP);
-        float hum = BitConverter.ToSingle(frame, OFFSET_HUM);
-
+        if (frame.Length < RESPONSE_SIZE) return;
+        uint frameId = BitConverter.ToUInt32(frame, 2);
+        float temp = BitConverter.ToSingle(frame, 6);
+        float hum = BitConverter.ToSingle(frame, 10);
         Console.WriteLine(
-            $"[Example5A][이벤트] " +
-            $"FC=0x{fc:X2} DataLen={dataLen} " +
-            $"Frame#{frameId:D5} | " +
-            $"온도: {temp,5:F1}°C | " +
-            $"습도: {hum,5:F1}%  " +
-            $"({DateTime.Now:HH:mm:ss.fff})");
+            $"[Example5A] Frame#{frameId:D5} | " +
+            $"온도: {temp,5:F1}°C | 습도: {hum,5:F1}%  ({DateTime.Now:HH:mm:ss.fff})");
     }
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  예시 5B — TCP RequestResponse / 단발 RequestAsync (Echo 서버 연동)
-//
-//  [TcpTestServer] Echo 모드 / 포트 9000
-//  [이 클라이언트] channel.RequestAsync() 단발 호출
-//
-//  ★ 데이터 흐름:
-//    channel.RequestAsync(QUERY)
-//      → TCS 생성 → EnqueueAsync(Request 패킷)
-//        → [NetDispatchPipeline] DispatchAsync
-//          → Transport.WriteAsync(QUERY)  ← 서버로 전송
-//            → Transport.ReadAsync()       ← 응답 대기
-//              → TryDecode → tcs.SetResult(NetResult.Ok(decoded))
-//                → RequestAsync await 완료  ← 여기서 결과 받음
-//
-//  NetResult 사용 패턴 3가지 예시 포함
+//  예시 5B — TCP RequestResponse / 단발 RequestAsync
+//  서버: TcpTestServer → Echo 모드 → 포트 9000
 // ══════════════════════════════════════════════════════════════════════
 static class Example5B_TcpRequestResponse_OneShot
 {
@@ -319,10 +217,8 @@ static class Example5B_TcpRequestResponse_OneShot
 
     public static async Task RunAsync(CancellationToken ct = default)
     {
-        Console.WriteLine("=================================================");
-        Console.WriteLine(" Example5B: TCP RequestResponse — 단발 RequestAsync");
-        Console.WriteLine(" 서버: TcpTestServer → Echo 모드 → 포트 9000");
-        Console.WriteLine("=================================================");
+        Console.WriteLine("=== Example5B: TCP RequestResponse (단발 RequestAsync) ===");
+        Console.WriteLine("서버: TcpTestServer → Echo 모드 → 포트 9000\n");
 
         var cfg = new TcpDeviceConfig(6, "EchoServer-OneShot", "127.0.0.1", 9000)
         {
@@ -330,28 +226,25 @@ static class Example5B_TcpRequestResponse_OneShot
             RetryTarget = RetryTarget.Connect | RetryTarget.Write,
             MaxRetries = 0,
             ReconnectBackoff = true,
-            PeriodicInterval = TimeSpan.Zero,     // 주기 Read 없음
+            PeriodicInterval = TimeSpan.Zero,   // READ_CMD 없음
             RequestTimeout = TimeSpan.FromMilliseconds(500),
             HeartbeatInterval = TimeSpan.Zero,
         };
 
         await using var channel = new RequestResponseChannel(
-            cfg,
-            TcpTransport.FromConfig(cfg),
-            new BinaryProtocol(stx: 0xAA, fc: 0x01),
-            autoRegister: true);
+            cfg, TcpTransport.FromConfig(cfg),
+            new BinaryProtocol(stx: 0xAA, fc: 0x01), autoRegister: true);
 
         channel.DeviceStateChanged += (id, state) =>
             Console.WriteLine($"[Example5B] 상태: {state}");
         channel.DeviceErrorOccurred += (id, ex) =>
-            Console.WriteLine($"[Example5B] 오류: {ex.Message}");
+            Console.WriteLine($"[Example5B] {ex.Message}");
 
         await channel.StartAsync(ct);
-        Console.WriteLine("[Example5B] 연결됨 — 단발 RequestAsync 테스트 (10회)\n");
+        Console.WriteLine("[Example5B] 연결됨 — 단발 RequestAsync 10회 테스트\n");
 
-        for (int i = 1; i <= 10 && !ct.IsCancellationRequested; i++)
+        for (int i = 1; i <= 30 && !ct.IsCancellationRequested; i++)
         {
-            // ── 패턴 A: IsOk / IsError 분기 ──────────────────────────
             NetResult r = await channel.RequestAsync(QUERY,
                 timeout: TimeSpan.FromMilliseconds(500), ct: ct);
 
@@ -361,34 +254,10 @@ static class Example5B_TcpRequestResponse_OneShot
                 float temp = BitConverter.ToSingle(r.Data, 6);
                 float hum = BitConverter.ToSingle(r.Data, 10);
                 Console.WriteLine(
-                    $"[Example5B][A #{i:D2}] Frame#{frameId:D5} " +
-                    $"온도: {temp:F1}°C 습도: {hum:F1}%");
+                    $"[Example5B][{i:D2}] Frame#{frameId:D5} 온도: {temp:F1}°C 습도: {hum:F1}%");
             }
-            else if (r.IsError)
-            {
-                Console.WriteLine($"[Example5B][A #{i:D2}] 실패: {r.Error!.Message}");
-                continue;
-            }
-
-            // ── 패턴 B: Map + ValueOr ─────────────────────────────────
-            var parsed = r.Map(frame =>
-            {
-                if (frame.Length < 14) throw new InvalidOperationException("응답 크기 부족");
-                return (
-                    Id: BitConverter.ToUInt32(frame, 2),
-                    Temp: BitConverter.ToSingle(frame, 6),
-                    Hum: BitConverter.ToSingle(frame, 10));
-            });
-
-            var (id, t, h) = parsed.ValueOr((0u, 0f, 0f));
-            Console.WriteLine(
-                $"[Example5B][B #{i:D2}] Map → Frame#{id:D5} " +
-                $"온도: {t:F1}°C 습도: {h:F1}%");
-
-            // ── 패턴 C: DataOr (실패 시 기본값) ──────────────────────
-            byte[] safeData = r.DataOr(Array.Empty<byte>());
-            Console.WriteLine(
-                $"[Example5B][C #{i:D2}] DataOr → {safeData.Length}B 수신\n");
+            else
+                Console.WriteLine($"[Example5B][{i:D2}] 실패: {r.Error?.Message}");
 
             await Task.Delay(200, ct);
         }
@@ -396,33 +265,27 @@ static class Example5B_TcpRequestResponse_OneShot
         var s = channel.Statistics;
         Console.WriteLine(
             $"[Example5B] 완료 | 전송={s.TotalSent} 수신={s.TotalReceived} " +
-            $"오류={s.TotalErrors} 평균응답={s.AvgResponseMs:F1}ms 최대={s.MaxResponseMs}ms");
+            $"평균응답={s.AvgResponseMs:F1}ms");
+
+
     }
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  예시 5C — TCP RequestResponse + WriteAsync + Heartbeat (Echo 서버)
+//  예시 5C — WRITE_CMD + READ_CMD + Heartbeat 혼용
+//  서버: TcpTestServer → Echo 모드 → 포트 9000
 //
-//  [TcpTestServer] Echo 모드 / 포트 9000
-//  [이 클라이언트] WriteAsync (설정값 쓰기) + PeriodicRead (주기 읽기)
-//                 + Heartbeat (30초 Keep-Alive)
-//
-//  ★ Heartbeat 동작:
-//    HeartbeatInterval=30s 설정 → 30초 동안 Write/Read 없으면
-//    BinaryProtocol.BuildHeartbeat() → Encode(Array.Empty<byte>()) 자동 전송
-//    Low(3) 우선순위 → Write/Read 있으면 Heartbeat 는 건너뜀
+//  우선순위: Critical(0) > WRITE_CMD Write(1) > READ_CMD Read(2) > Heartbeat Low(3)
 // ══════════════════════════════════════════════════════════════════════
 static class Example5C_TcpWriteAndRead
 {
+    private static readonly byte[] WRITE_CMD = [0x06, 0x00, 0x01, 0x00, 0x64];
     private static readonly byte[] READ_CMD = [0x03, 0x00, 0x00];
-    private static readonly byte[] WRITE_CMD = [0x06, 0x00, 0x01, 0x00, 0x64];  // 쓰기 FC=06
 
     public static async Task RunAsync(CancellationToken ct = default)
     {
-        Console.WriteLine("=================================================");
-        Console.WriteLine(" Example5C: TCP WriteAsync + PeriodicRead + Heartbeat");
-        Console.WriteLine(" 서버: TcpTestServer → Echo 모드 → 포트 9000");
-        Console.WriteLine("=================================================");
+        Console.WriteLine("=== Example5C: WRITE_CMD + READ_CMD + Heartbeat ===");
+        Console.WriteLine("서버: TcpTestServer → Echo 모드 → 포트 9000\n");
 
         var cfg = new TcpDeviceConfig(7, "EchoServer-RW", "127.0.0.1", 9000)
         {
@@ -430,25 +293,18 @@ static class Example5C_TcpWriteAndRead
             RetryTarget = RetryTarget.Connect | RetryTarget.Write,
             MaxRetries = 0,
             ReconnectBackoff = true,
-
             IsSequential = true,
             PeriodicInterval = TimeSpan.FromMilliseconds(200),
-
-            // ★ Heartbeat 활성화
-            // 200ms 주기 Read 가 진행되는 동안은 Heartbeat 전송 안 함
-            // PeriodicRead 가 멈추는 순간(재접속 Pause 등)부터 카운트 시작
-            // 테스트: PeriodicInterval=Zero 로 바꾸면 30초 후 Heartbeat 전송 확인 가능
-            HeartbeatInterval = TimeSpan.FromSeconds(30),
-
             RequestTimeout = TimeSpan.FromMilliseconds(500),
+            // ★ Heartbeat: READ_CMD 진행 중에는 Low(3) 우선순위로 전송 안 됨
+            //   PeriodicInterval=Zero 로 테스트하면 30초 후 Heartbeat 확인 가능
+            HeartbeatInterval = TimeSpan.FromSeconds(30),
         };
         cfg.AddReadCommand(READ_CMD);
 
         await using var channel = new RequestResponseChannel(
-            cfg,
-            TcpTransport.FromConfig(cfg),
-            new BinaryProtocol(stx: 0xAA, fc: 0x01),
-            autoRegister: true);
+            cfg, TcpTransport.FromConfig(cfg),
+            new BinaryProtocol(stx: 0xAA, fc: 0x01), autoRegister: true);
 
         channel.DeviceFrameReceived += (id, frame) =>
         {
@@ -456,51 +312,42 @@ static class Example5C_TcpWriteAndRead
             {
                 uint frameId = BitConverter.ToUInt32(frame, 2);
                 float temp = BitConverter.ToSingle(frame, 6);
-                Console.WriteLine(
-                    $"[Example5C] 주기응답 Frame#{frameId:D5} 온도: {temp:F1}°C");
+                Console.WriteLine($"[Example5C] READ 응답 Frame#{frameId:D5} 온도: {temp:F1}°C");
             }
         };
-
-        // ★ WriteAsync 실패 → DeviceErrorOccurred 이벤트 (v4 설계)
         channel.DeviceErrorOccurred += (id, ex) =>
-            Console.WriteLine($"[Example5C] WriteAsync 오류: {ex.Message}");
-
+            Console.WriteLine($"[Example5C] {ex.Message}");
         channel.DeviceStateChanged += (id, state) =>
             Console.WriteLine($"[Example5C] 상태: {state}");
 
         await channel.StartAsync(ct);
         Console.WriteLine("[Example5C] 연결됨\n");
 
-        // ── WriteAsync: Write(1) 우선순위 → PeriodicRead(2) 보다 먼저 처리 ──
-        await channel.WriteAsync(WRITE_CMD, NetPriority.Write, ct);
-        Console.WriteLine("[Example5C] WriteAsync 전송 (큐 투입 완료)");
+        // WRITE_CMD: Write(1) 우선순위 → READ_CMD(2) 보다 먼저 처리
+        await channel.WriteAsync(WRITE_CMD, NetPriority.Write, false, ct);
+        Console.WriteLine("[Example5C] WRITE_CMD 전송");
 
-        // ── 긴급 WriteAsync: Critical(0) 최우선 ──────────────────────────
-        byte[] emergencyStop = [0xFF, 0x00];
-        await channel.WriteAsync(emergencyStop, NetPriority.Critical, ct);
-        Console.WriteLine("[Example5C] Emergency Stop 전송 (Critical)\n");
+        // Critical: 최우선
+        await channel.WriteAsync([0xFF, 0x00], NetPriority.Critical, false, ct);
+        Console.WriteLine("[Example5C] Emergency Stop (Critical)\n");
 
-        // ── 단발 RequestAsync (주기 Read 와 혼용 가능) ──────────────────
+        // 단발 RequestAsync
         await Task.Delay(1000, ct);
         NetResult r = await channel.RequestAsync(READ_CMD,
             timeout: TimeSpan.FromMilliseconds(500), ct: ct);
-
         Console.WriteLine(r.IsOk
-            ? $"[Example5C] 단발 읽기 성공: {r.Data!.Length}B"
+            ? $"[Example5C] 단발 읽기: {r.Data!.Length}B"
             : $"[Example5C] 단발 읽기 실패: {r.Error!.Message}");
 
         await Task.Delay(5000, ct);
-
         var s = channel.Statistics;
         Console.WriteLine(
             $"\n[Example5C] 완료 | 전송={s.TotalSent} 수신={s.TotalReceived} " +
-            $"오류={s.TotalErrors} 재접속={s.TotalReconnects} " +
-            $"평균응답={s.AvgResponseMs:F1}ms");
+            $"재접속={s.TotalReconnects} 평균응답={s.AvgResponseMs:F1}ms");
+
 
         try { await Task.Delay(Timeout.Infinite, ct); }
         catch (OperationCanceledException) { }
-
-        Console.WriteLine("[Example5C] 종료");
     }
 }
 
@@ -586,7 +433,7 @@ static class Example6_MultiChannel_Registry
         var echo = NetDeviceRegistry.Instance.Get(11);
         if (echo?.IsConnected == true)
         {
-            await echo.WriteAsync([0x06, 0x00, 0x01, 0x00, 0x64], NetPriority.Write, ct);
+            await echo.WriteAsync([0x06, 0x00, 0x01, 0x00, 0x64], NetPriority.Write, false, ct);
             Console.WriteLine("[Registry] Echo 채널 Write 전송");
         }
 

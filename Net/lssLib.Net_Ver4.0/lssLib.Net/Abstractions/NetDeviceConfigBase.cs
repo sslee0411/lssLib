@@ -1,7 +1,10 @@
 ﻿// ══════════════════════════════════════════════════════════════════════
 //  lssLib.Net · Abstractions/NetDeviceConfigBase.cs
 //  역할: 4개 Config 인터페이스 브릭 조립 추상 베이스
-//        파생 클래스는 전송 계층 고유 파라미터만 추가합니다.
+//
+//  v4 수정: IsHeartbeatAcknowledged 추가
+//    true  → Heartbeat 전송 후 서버 응답 수신 → DeviceFrameReceived 이벤트
+//    false → Heartbeat 전송만 (Keep-Alive, 기본값)
 // ══════════════════════════════════════════════════════════════════════
 
 namespace lssLib.Net;
@@ -137,6 +140,35 @@ public abstract class NetDeviceConfigBase
 
     /// <summary>Heartbeat 전송 주기. Zero=비활성. 기본값: Zero.</summary>
     public TimeSpan HeartbeatInterval { get; set; } = TimeSpan.Zero;
+
+    /// <summary>
+    /// Heartbeat 전송 후 서버 응답 수신 여부.
+    /// <para>
+    /// <c>false</c> (기본값): Heartbeat 전송만 수행 (Keep-Alive 역할).<br/>
+    /// <c>true</c>: Heartbeat 전송 후 <c>ReadAsync</c> 수행
+    ///             → 응답 수신 시 <c>DeviceFrameReceived</c> 이벤트 발생.
+    /// </para>
+    /// <para>
+    /// <b>사용 예 — 서버가 Heartbeat ACK 를 보내는 경우:</b>
+    /// <code>
+    /// var cfg = new TcpDeviceConfig(1, "PLC", "192.168.1.10", 502)
+    /// {
+    ///     HeartbeatInterval      = TimeSpan.FromSeconds(30),
+    ///     IsHeartbeatAcknowledged = true   // 서버가 ACK 응답을 보낼 때
+    /// };
+    ///
+    /// // Heartbeat ACK 처리
+    /// channel.DeviceFrameReceived += (id, frame) =>
+    /// {
+    ///     if (IsHeartbeatAck(frame))
+    ///         LogManager.Instance.Debug("PLC", "Heartbeat ACK 수신");
+    ///     else
+    ///         ProcessSensorData(frame);
+    /// };
+    /// </code>
+    /// </para>
+    /// </summary>
+    public bool IsHeartbeatAcknowledged { get; set; } = false;
 
     /// <summary>수신 Channel 용량. 0=무제한. 양수=초과 시 오래된 항목 제거. 기본값: 0.</summary>
     public int ReceiveChannelCapacity { get; set; } = 0;

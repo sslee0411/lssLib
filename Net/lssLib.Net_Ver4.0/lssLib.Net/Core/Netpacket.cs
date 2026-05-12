@@ -17,6 +17,36 @@
 //  │      ├─ 성공 → 결과 전달 (TCS.SetResult / 수신 채널)          │
 //  │      └─ 실패 → ToRetry() 로 Critical 승격 후 재투입           │
 //  └─────────────────────────────────┘
+//  v4 수정: ExpectResponse 프로퍼티 추가
+//    WriteAsync(data, expectResponse: true) → WriteAsync + ReadAsync
+//    → DeviceFrameReceived 이벤트 발생
+//
+//  ┌─ 패킷 종류별 동작 ──────────────────────────────────────────────┐
+//  │                                                                   │
+//  │  Write (ExpectResponse=false, 기본)                              │
+//  │    → _stream.WriteAsync(data)   [응답 없음]                     │
+//  │    → Fire-and-forget                                             │
+//  │                                                                   │
+//  │  Write (ExpectResponse=true)                                     │
+//  │    → _stream.WriteAsync(data)   [전송]                          │
+//  │    → _stream.ReadAsync()        [응답 수신, 타임아웃 적용]      │
+//  │    → DeviceFrameReceived 이벤트                                 │
+//  │                                                                   │
+//  │  Request                                                          │
+//  │    → _stream.WriteAsync(data)                                   │
+//  │    → _stream.ReadAsync() → TCS.SetResult → RequestAsync 완료   │
+//  │                                                                   │
+//  │  PeriodicRead                                                     │
+//  │    → _stream.WriteAsync(READ_CMD)                               │
+//  │    → _stream.ReadAsync() → DeviceFrameReceived 이벤트           │
+//  │                                                                   │
+//  │  Heartbeat (IsHeartbeatAcknowledged=false, 기본)                │
+//  │    → _stream.WriteAsync(hb)     [응답 없음]                     │
+//  │                                                                   │
+//  │  Heartbeat (IsHeartbeatAcknowledged=true)                       │
+//  │    → _stream.WriteAsync(hb)                                     │
+//  │    → _stream.ReadAsync() → DeviceFrameReceived 이벤트           │
+//  └───────────────────────────────────────────────────────────────────┘
 // ══════════════════════════════════════════════════════════════════════
 
 namespace lssLib.Net;
@@ -89,16 +119,23 @@ internal sealed class NetPacket
     public required PacketMode Mode { get; init; }
 
     /// <summary>
-    /// 요청-응답 모드에서 응답 결과를 호출자에게 전달할 TCS.
+    /// 전송 후 응답 수신 여부.
     /// <para>
-    /// <see cref="PacketMode.Request"/> 일 때만 값이 있습니다.
-    /// 다른 모드에서는 <c>null</c> 입니다.
+    /// <c>true</c>: WriteAsync 후 ReadAsync 수행 → DeviceFrameReceived 이벤트 발생.<br/>
+    /// <c>false</c>: WriteAsync 만 수행 (Fire-and-forget).
     /// </para>
     /// <para>
-    /// 처리 완료 시 <c>TrySetResult</c> 를 통해
-    /// <c>RequestAsync</c> 의 <c>await</c> 를 깨웁니다.
+    /// <b>사용 예:</b>
+    /// <list type="bullet">
+    ///   <item><description>Modbus FC06 Write → 서버가 ACK 응답을 보낼 때: <c>true</c></description></item>
+    ///   <item><description>단방향 명령 전송 (응답 없음): <c>false</c> (기본값)</description></item>
+    ///   <item><description>Heartbeat ACK 수신이 필요할 때: <c>IsHeartbeatAcknowledged=true</c> 설정</description></item>
+    /// </list>
     /// </para>
     /// </summary>
+    public bool ExpectResponse { get; init; } = false;
+
+    /// <summary>요청-응답 모드에서 결과를 호출자에게 전달할 TCS. Request 패킷에만 존재.</summary>
     public TaskCompletionSource<NetResult>? Tcs { get; init; }
 
     /// <summary>
@@ -129,27 +166,33 @@ internal sealed class NetPacket
     #region §2 ─ 팩토리 메서드
 
     /// <summary>
-    /// Fire-and-forget Write 패킷을 생성합니다.
-    /// </summary>
-    /// <param name="data">프로토콜 인코딩 완료 바이트 (<see cref="INetProtocol.Encode"/> 결과)</param>
-    /// <param name="priority">처리 우선순위 (기본: <see cref="NetPriority.Write"/>)</param>
-    /// <param name="ct">취소 토큰</param>
-    internal static NetPacket CreateWrite(byte[] data, NetPriority priority, CancellationToken ct)
-        => new() { Data = data, Priority = priority, Mode = PacketMode.Write, Ct = ct };
-
-    /// <summary>
-    /// 요청-응답 패킷을 생성합니다.
+    /// Fire-and-forget Write 패킷 생성.
     /// </summary>
     /// <param name="data">프로토콜 인코딩 완료 바이트</param>
-    /// <param name="tcs">결과를 호출자에게 전달할 TCS (<c>RequestAsync</c> 에서 생성)</param>
+    /// <param name="priority">처리 우선순위</param>
     /// <param name="ct">취소 토큰</param>
-    /// <remarks>Priority 는 항상 <see cref="NetPriority.Write"/> 입니다.</remarks>
+    /// <param name="expectResponse">
+    /// true = 전송 후 ReadAsync 수행 → DeviceFrameReceived 이벤트.<br/>
+    /// false = 전송만 수행 (기본값).
+    /// </param>
+    internal static NetPacket CreateWrite(byte[] data, NetPriority priority,
+        CancellationToken ct, bool expectResponse = false)
+        => new()
+        {
+            Data = data,
+            Priority = priority,
+            Mode = PacketMode.Write,
+            Ct = ct,
+            ExpectResponse = expectResponse
+        };
+
+    /// <summary>요청-응답 패킷 생성. Priority = Write(1).</summary>
     internal static NetPacket CreateRequest(byte[] data,
         TaskCompletionSource<NetResult> tcs, CancellationToken ct)
         => new()
         {
             Data = data,
-            Priority = NetPriority.Write,   // Request 는 Write 와 동일 우선순위
+            Priority = NetPriority.Write,
             Mode = PacketMode.Request,
             Tcs = tcs,
             Ct = ct
@@ -172,6 +215,27 @@ internal sealed class NetPacket
             Mode = PacketMode.PeriodicRead,
             Ct = ct
         };
+    /// <summary>
+    /// Heartbeat 패킷 생성.
+    /// </summary>
+    /// <param name="data">Heartbeat 프레임 (BuildHeartbeat() 결과)</param>
+    /// <param name="ct">취소 토큰</param>
+    /// <param name="expectAck">
+    /// true = Heartbeat 전송 후 ReadAsync 수행 → DeviceFrameReceived 이벤트.<br/>
+    /// false = 전송만 수행 (기본값).
+    /// </param>
+    internal static NetPacket CreateHeartbeat(byte[] data, CancellationToken ct,
+        bool expectAck = false)
+        => new()
+        {
+            Data = data,
+            Priority = NetPriority.Low,
+            Mode = PacketMode.Write,
+            Ct = ct,
+            ExpectResponse = expectAck
+        };
+
+    /// <summary>재전송 패킷 생성. Priority = Critical(0) 승격, RetryCount += 1.</summary>
 
     /// <summary>
     /// 재전송 패킷을 생성합니다.
@@ -197,6 +261,7 @@ internal sealed class NetPacket
         Mode = PacketMode.Retry,
         Tcs = Tcs,                   // TCS 가 있으면 그대로 유지
         Ct = Ct,
+        ExpectResponse = ExpectResponse,
         RetryCount = RetryCount + 1         // 재전송 횟수 누적
     };
 

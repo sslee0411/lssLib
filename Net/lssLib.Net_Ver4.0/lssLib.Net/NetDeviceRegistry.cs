@@ -141,7 +141,7 @@ public sealed class NetDeviceRegistry
     /// </code></example>
     public Task BroadcastAsync(byte[] data,
         NetPriority priority = NetPriority.Write, CancellationToken ct = default)
-        => Task.WhenAll( GetConnected().Select(c => c.WriteAsync(data, priority, ct) ) );
+        => Task.WhenAll( GetConnected().Select(c => c.WriteAsync(data, priority, false, ct) ) ); // WriteAsync 의 broadcast=false 옵션으로 개별 채널의 BroadcastAsync() 를 우회하여 전체 브로드캐스트 구현
 
     #endregion
 
