@@ -19,9 +19,23 @@
 //  │             → Scheduler.Pause → Disconnect → ReconnectAsync    │
 //  │             → 성공: Scheduler.Resume → 보존 Write 재투입        │
 //  └──────────────────────────────────┘
+//  ┌─ 연결 끊김 감지 흐름 (v4 수정) ─────────────────┐
+//  │                                                                  │
+//  │  [TCP Passive] PassiveReceiveLoopAsync 예외                      │
+//  │      → State = NetState.Error                                   │
+//  │          → StateChanged 이벤트                                  │
+//  │              → OnStateChanged(Error)                            │
+//  │                  → _connMgr.HandleErrorAsync()  ← 재접속 트리거│
+//  │                                                                  │
+//  │  [StopAsync] _cts.Cancel() 먼저 호출                             │
+//  │      → _cts.IsCancellationRequested == true                     │
+//  │          → OnStateChanged(Disconnected) 에서 재접속 안 함       │
+//  └─────────────────────────────────┘
 // ══════════════════════════════════════════════════════════════════════
 
 //using lssLib.Log;
+
+using System.IO;
 
 namespace lssLib.Net;
 
@@ -34,9 +48,17 @@ namespace lssLib.Net;
 ///
 /// <b>조립 예시:</b>
 /// <code>
+/// // Passive (TCP Push 서버) — enablePassiveReceive: true 필수
+/// await using var channel = new PassiveNetChannel(
+///     cfg,
+///     TcpTransport.FromConfig(cfg, enablePassiveReceive: true),
+///     new BinaryProtocol(),
+///     autoRegister: true);
+///
+/// // RequestResponse
 /// await using var channel = new RequestResponseChannel(
 ///     cfg,
-///     TcpTransport.FromConfig(cfg),
+///     TcpTransport.FromConfig(cfg),   // enablePassiveReceive 기본 false
 ///     new BinaryProtocol(),
 ///     autoRegister: true);
 ///
@@ -132,7 +154,12 @@ public abstract class NetChannelBase : IAsyncDisposable
     /// <summary>통신 통계 (WPF 바인딩 / 대시보드 활용).</summary>
     public NetStatistics Statistics => _statistics;
 
-    /// <summary>프레임 수신·디코딩 완료 시 발생. (DeviceId, frame) ⚠ 백그라운드 스레드.</summary>
+    /// <summary>
+    /// 프레임 수신·디코딩 완료 시 발생. (DeviceId, frame)
+    /// <para>⚠ 백그라운드 스레드 — WPF: <c>Dispatcher.InvokeAsync</c> 필수.</para>
+    /// <para><b>Passive 모드</b>: 서버 Push → TcpTransport 수신 루프 → 이 이벤트</para>
+    /// <para><b>RequestResponse 모드</b>: PeriodicRead 응답 / RequestAsync 응답 → 이 이벤트</para>
+    /// </summary>
     public event Action<int, byte[]>? DeviceFrameReceived;
 
     /// <summary>연결 상태 변경 시 발생. (DeviceId, NetState) ⚠ 백그라운드 스레드.</summary>
@@ -176,19 +203,18 @@ public abstract class NetChannelBase : IAsyncDisposable
     /// <summary>
     /// 채널을 정지합니다. 파이프라인 큐 소진 후 종료.
     /// ConfigureAwait : 컨텍스트 캡처 방지. UI 스레드에서 호출해도 안전하게 백그라운드에서 계속 실행됩니다.
+    /// <para>⚠ <c>_cts.Cancel()</c> 을 먼저 호출하여 OnStateChanged 에서 재접속 루프 진입을 방지합니다.</para>
     /// </summary>
     public virtual async Task StopAsync()
     {
-        await _pipeline.StopAsync().ConfigureAwait(false);
-        try { 
-            await _scheduler.WaitAsync().ConfigureAwait(false); 
-        }
-        catch (OperationCanceledException) { }
-        
-        await _transport.DisconnectAsync().ConfigureAwait(false);
+        // ★ Cancel 먼저 → OnStateChanged(Error/Disconnected) 에서 재접속 안 함
         _cts.Cancel();
-        
-        //Log(LogLevel.Info, $"[{GetType().Name}] 정지 | {_statistics}");
+
+        await _pipeline.StopAsync().ConfigureAwait(false);
+        try { await _scheduler.WaitAsync().ConfigureAwait(false); }
+        catch (OperationCanceledException) { }
+
+        await _transport.DisconnectAsync().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -196,12 +222,13 @@ public abstract class NetChannelBase : IAsyncDisposable
     /// <para>연결 없으면 스킵. 실패는 <see cref="DeviceErrorOccurred"/> 이벤트로 통보.</para>
     /// </summary>
     public async Task WriteAsync(byte[] data,
-                                 NetPriority priority = NetPriority.Write, 
+                                 NetPriority priority = NetPriority.Write,
                                  CancellationToken ct = default)
     {
-        if (!IsConnected) { 
+        if (!IsConnected)
+        {
             // Log(LogLevel.Warn, $"Write 스킵 — {State}"); 
-            return; 
+            return;
         }
 
         var pkt = NetPacket.CreateWrite(_protocol.Encode(data), priority, ct);
@@ -214,20 +241,21 @@ public abstract class NetChannelBase : IAsyncDisposable
     /// <para>연결 없으면 즉시 <see cref="NetResult.Fail(string)"/> 반환.</para>
     /// </summary>
     public async Task<NetResult> RequestAsync(byte[] requestData,
-                                              TimeSpan? timeout = null, 
+                                              TimeSpan? timeout = null,
                                               CancellationToken ct = default)
     {
-        if (!IsConnected) {
+        if (!IsConnected)
+        {
             return NetResult.Fail($"[{DeviceName}] 연결 없음 ({State})");
         }
 
         // 결과를 기다리는 TaskCompletionSource 생성.RunContinuationsAsynchronously 옵션으로,
         // 결과가 준비된 후에도 비동기적으로 후속 작업이 실행되도록 보장합니다.
         var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-        
+
         // 요청 데이터를 프로토콜로 인코딩하여 패킷 생성 후 파이프라인에 EnqueueAsync 합니다.
         var packet = NetPacket.CreateRequest(_protocol.Encode(requestData), tcs, ct);
-        
+
         // 요청데이터 입력과 함께 패킷을 생성하여 파이프라인에 EnqueueAsync 합니다.
         // 이때, 요청 패킷은 NetDispatchPipeline의 처리 대기열에 추가됩니다.
         await _pipeline.EnqueueAsync(packet, ct).ConfigureAwait(false);
@@ -239,11 +267,11 @@ public abstract class NetChannelBase : IAsyncDisposable
         //          외부에서 전달된 ct와 별도의 timeoutCts를 생성하여,
         //          둘 중 하나라도 취소되면 timeoutCts.Token이 취소됩니다.
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        
+
         // 요청 타임아웃 설정. 지정된 시간 후에 timeoutCts.Token이 취소되어 대기 중인
         // Task가 OperationCanceledException을 throw 하도록 합니다.
         timeoutCts.CancelAfter(limit);
-        
+
         try
         {
             // 요청 패킷이 처리되어 응답이 도착하면,
@@ -275,9 +303,25 @@ public abstract class NetChannelBase : IAsyncDisposable
 
     private void OnStateChanged(NetState state)
     {
-        if (state is NetState.Connecting or 
-                     NetState.Reconnecting) {
+        // 재접속 시작 → 스케줄러 일시 정지
+        if (state is NetState.Connecting or
+                     NetState.Reconnecting)
+        {
             _scheduler.Pause();
+
+            // ── 연결 끊김 감지 → 재접속 트리거 ──────────────────────────────
+            // [TCP Passive] PassiveReceiveLoopAsync: read==0 또는 IOException
+            //              → State = NetState.Error → 여기 진입
+            // [조건] 정상 종료(_cts.Cancelled) 또는 Dispose 중이면 재접속 안 함
+            if (state == NetState.Error &&
+                !_disposed &&
+                !(_cts?.IsCancellationRequested ?? true))
+            {
+                _ = _connMgr.HandleErrorAsync(
+                    new IOException($"[{DeviceName}] 예기치 못한 연결 끊김 — 재접속 시작"),
+                    null, null, _cts!.Token);
+            }
+
         }
         DeviceStateChanged?.Invoke(DeviceId, state);
         //Log(LogLevel.Info, $"상태 변경 → {state}");
@@ -305,7 +349,7 @@ public abstract class NetChannelBase : IAsyncDisposable
         if (_disposed) return;
 
         _disposed = true;
-        
+
         await StopAsync().ConfigureAwait(false);
 
         _transport.StateChanged -= OnStateChanged;
@@ -316,7 +360,7 @@ public abstract class NetChannelBase : IAsyncDisposable
         await _transport.DisposeAsync().ConfigureAwait(false);
 
         _cts.Dispose();
-        
+
         GC.SuppressFinalize(this);
     }
 

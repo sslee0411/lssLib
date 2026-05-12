@@ -2,14 +2,18 @@
 //  lssLib.Net.TcpTestServer · TcpServerCore.cs
 //  역할: TCP 서버 엔진 — Push 모드 / Echo 모드 지원
 //
-//  ┌─ Push 모드 (Passive 클라이언트 테스트용) ─────---─────┐
-//  │  서버가 pushIntervalMs 주기로 센서 데이터 프레임을 push          │
-//  │  클라이언트는 PassiveNetChannel + DeviceFrameReceived 로 수신    │
-//  └─────────────────────────────────┘
-//  ┌─ Echo 모드 (RequestResponse 클라이언트 테스트용) ─────── ─┐
-//  │  클라이언트가 요청 프레임 전송 → 서버가 응답 프레임 반환          │
-//  │  클라이언트는 RequestResponseChannel + PeriodicRead / RequestAsync │
-//  └──────────────────────────────────┘
+//  ┌─ Push 모드 (Passive 클라이언트 테스트용) ────────────────────────┐
+//  │  클라이언트 1개당 HandlePushClientAsync Task 1개 생성            │
+//  │  각 Task 가 PushIntervalMs 마다 독립적으로 센서 프레임 전송      │
+//  │                                                                   │
+//  │  클라이언트 측 설정:                                              │
+//  │    new PassiveNetChannel(cfg,                                     │
+//  │        TcpTransport.FromConfig(cfg, enablePassiveReceive: true), │
+//  │        new BinaryProtocol(stx: 0xAA))                            │
+//  └──────────────────────────────────────────────────────────────────┘
+//  ┌─ Echo 모드 (RequestResponse 클라이언트 테스트용) ────────────────┐
+//  │  클라이언트 요청 수신 → 센서 응답 프레임 반환                    │
+//  └──────────────────────────────────────────────────────────────────┘
 // ══════════════════════════════════════════════════════════════════════
 
 using System.Net;
@@ -100,15 +104,11 @@ public sealed class TcpServerCore : IAsyncDisposable
         _listener = new TcpListener(IPAddress.Any, port);
         _listener.Start();
 
-        RaiseLog($"서버 시작 — 포트: {port} / 모드: {mode}");
+        RaiseLog($"서버 시작 — 포트: {port} / 모드: {mode}" +
+                 (mode == ServerMode.Push ? $" / 간격: {pushIntervalMs}ms" : ""));
 
-        // 클라이언트 Accept 루프
+        // Accept 루프 시작 (fire-and-forget)
         _ = AcceptLoopAsync(_cts.Token);
-
-        // Push 모드: 전체 클라이언트 Push 루프
-        if (mode == ServerMode.Push)
-            _ = PushLoopAsync(_cts.Token);
-
         await Task.CompletedTask;
     }
 
@@ -125,8 +125,8 @@ public sealed class TcpServerCore : IAsyncDisposable
         catch { }
 
         lock (_clientLock) _clients.Clear();
+        _clientTasks.Clear();
         ClientsChanged?.Invoke();
-
         RaiseLog("서버 정지");
     }
 
@@ -143,7 +143,7 @@ public sealed class TcpServerCore : IAsyncDisposable
                 var client = await _listener!.AcceptTcpClientAsync(ct).ConfigureAwait(false);
                 client.NoDelay = true;
 
-                int id = Interlocked.Increment(ref _nextClientId);
+                int id = _nextClientId++;
                 var endpoint = client.Client.RemoteEndPoint?.ToString() ?? "unknown";
                 var info = new ClientInfo(id, endpoint, DateTime.Now);
 
@@ -151,14 +151,12 @@ public sealed class TcpServerCore : IAsyncDisposable
                 ClientsChanged?.Invoke();
                 RaiseLog($"[{id}] 클라이언트 연결: {endpoint}");
 
-                // 클라이언트별 처리 Task
                 var task = Mode == ServerMode.Push
                     ? HandlePushClientAsync(id, client, ct)
                     : HandleEchoClientAsync(id, client, ct);
 
-                lock (_clientTasks) _clientTasks.Add(task);
+                _clientTasks.Add(task);
 
-                // 완료 후 정리
                 _ = task.ContinueWith(_ =>
                 {
                     lock (_clientLock) _clients.Remove(id);
@@ -181,37 +179,26 @@ public sealed class TcpServerCore : IAsyncDisposable
     #region §6 ─ Push 모드
 
     /// <summary>
-    /// Push 모드 — 전체 클라이언트에 주기적으로 프레임 전송.
-    /// </summary>
-    private async Task PushLoopAsync(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                await Task.Delay(PushIntervalMs, ct).ConfigureAwait(false);
-
-                List<(int id, NetworkStream stream)> targets = [];
-                lock (_clientLock)
-                {
-                    foreach (var kvp in _clients)
-                    {
-                        // 각 클라이언트의 스트림은 HandlePushClientAsync 에서 관리
-                        // → PushLoopAsync 는 신호만 보내고 실제 전송은 클라이언트 Task
-                    }
-                }
-                // Push 신호: _frameTrigger 로 통지
-                _frameTrigger?.TrySetResult();
-            }
-            catch (OperationCanceledException) { break; }
-        }
-    }
-
-    private TaskCompletionSource? _frameTrigger;
-
-    /// <summary>
     /// Push 모드 — 클라이언트 1개 전담 Task.
-    /// PushLoopAsync 의 트리거를 기다렸다가 프레임 전송.
+    /// PushIntervalMs 마다 센서 데이터 프레임을 클라이언트로 전송.
+    ///
+    /// <b>서버 전송 → 클라이언트 수신 전체 흐름:</b>
+    /// <code>
+    /// [서버] Task.Delay(PushIntervalMs)
+    ///   → BuildSensorPayload(FrameId, Temp, Hum)   ← 12B 페이로드
+    ///     → ServerProtocolHelper.BuildFrame()       ← BinaryProtocol 프레임 조립
+    ///       → stream.WriteAsync()                   ← TCP 전송
+    ///
+    /// [클라이언트] TcpTransport.PassiveReceiveLoopAsync
+    ///   → stream.ReadAsync()                        ← TCP 수신
+    ///     → RaiseDataReceived(bytes)
+    ///       → NetChannelBase.OnDataReceived()
+    ///         → NetDispatchPipeline.PushReceived()
+    ///           → BinaryProtocol.TryDecode()        ← STX/CRC 검증 + 페이로드 추출
+    ///             → _receiveChannel.TryWrite()
+    ///             → FrameReceived 이벤트
+    ///               → DeviceFrameReceived 이벤트   ← 사용자 코드
+    /// </code>
     /// </summary>
     private async Task HandlePushClientAsync(int clientId, TcpClient client, CancellationToken ct)
     {
@@ -254,6 +241,19 @@ public sealed class TcpServerCore : IAsyncDisposable
 
     /// <summary>
     /// Echo 모드 — 클라이언트 요청 수신 → 응답 전송.
+    ///
+    /// <b>요청-응답 전체 흐름:</b>
+    /// <code>
+    /// [클라이언트] channel.RequestAsync(queryFrame)
+    ///   → TcpTransport.WriteCoreAsync → stream.WriteAsync  ← 요청 전송
+    ///
+    /// [서버] stream.ReadAsync → TryExtractFrame → BuildEchoResponsePayload
+    ///   → BuildFrame → stream.WriteAsync                   ← 응답 전송
+    ///
+    /// [클라이언트] TcpTransport.ReadCoreAsync → stream.ReadAsync
+    ///   → BinaryProtocol.TryDecode → tcs.SetResult(NetResult.Ok)
+    ///     → RequestAsync await 완료
+    /// </code>
     /// </summary>
     private async Task HandleEchoClientAsync(int clientId, TcpClient client, CancellationToken ct)
     {
@@ -293,8 +293,9 @@ public sealed class TcpServerCore : IAsyncDisposable
                     Interlocked.Increment(ref _totalSent);
                     StatsChanged?.Invoke();
 
-                    RaiseLog($"[{clientId}] 수신 FC=0x{reqFc:X2} Addr=0x{addr:X4} ({payload.Length}B) " +
-                             $"→ 응답 Frame#{id:D5} Temp={temp:F1}°C Hum={hum:F1}%");
+                    RaiseLog($"[{clientId}] 수신 FC=0x{reqFc:X2} Addr=0x{addr:X4} " +
+                             $"({payload.Length}B) → " +
+                             $"응답 Frame#{id:D5} Temp={temp:F1}°C Hum={hum:F1}%");
                 }
             }
             catch (OperationCanceledException) { break; }
