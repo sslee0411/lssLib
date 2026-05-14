@@ -158,7 +158,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 131,
-          "SelectedChildIndex": 13,
+          "SelectedChildIndex": 12,
           "Children": [
             {
               "$type": "Document",
@@ -168,7 +168,7 @@
               "RelativeDocumentMoniker": "lssLib.Net\\NetChannelBase.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\NetChannelBase.cs",
               "RelativeToolTip": "lssLib.Net\\NetChannelBase.cs",
-              "ViewState": "AgIAAHIBAAAAAAAAAAA1wHQBAAArAAAAAAAAAA==",
+              "ViewState": "AgIAAIUBAAAAAAAAAAAQwHABAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-06T02:43:22.003Z",
               "IsPinned": true,
@@ -180,12 +180,13 @@
               "Title": "TcpTransport.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\TcpTransport.cs",
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Transport\\TcpTransport.cs",
-              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\TcpTransport.cs",
-              "RelativeToolTip": "Lsslib.net.implementation\\Transport\\TcpTransport.cs",
-              "ViewState": "AgIAAJEAAAAAAAAAAAAAwKsAAAAFAAAAAAAAAA==",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\TcpTransport.cs*",
+              "RelativeToolTip": "Lsslib.net.implementation\\Transport\\TcpTransport.cs*",
+              "ViewState": "AgIAAEQAAAAAAAAAAAAAwGYAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-08T00:59:00.198Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -195,23 +196,10 @@
               "RelativeDocumentMoniker": "lssLib.Net\\Infrastructure\\NetDispatchPipeline.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Infrastructure\\NetDispatchPipeline.cs",
               "RelativeToolTip": "lssLib.Net\\Infrastructure\\NetDispatchPipeline.cs",
-              "ViewState": "AgIAAAIBAAAAAAAAAAAlwBoBAAA6AAAAAAAAAA==",
+              "ViewState": "AgIAAMgAAAAAAAAAAAAlwMgAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-11T00:37:43.394Z",
               "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Packetmode.cs",
-              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Core\\Packetmode.cs",
-              "RelativeDocumentMoniker": "lssLib.Net\\Core\\Packetmode.cs",
-              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Core\\Packetmode.cs",
-              "RelativeToolTip": "lssLib.Net\\Core\\Packetmode.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-12T08:41:18.685Z",
               "EditorCaption": ""
             },
             {
@@ -250,7 +238,8 @@
               "RelativeToolTip": "Lsslib.net.implementation\\Channels\\RequestResponseChannel.cs",
               "ViewState": "AgIAADkAAAAAAAAAAADwv1EAAAAcAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T06:40:30.758Z"
+              "WhenOpened": "2026-05-11T06:40:30.758Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -260,7 +249,7 @@
               "RelativeDocumentMoniker": "lssLib.Net\\Abstractions\\NetTransportBase.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Abstractions\\NetTransportBase.cs",
               "RelativeToolTip": "lssLib.Net\\Abstractions\\NetTransportBase.cs",
-              "ViewState": "AgIAAC0AAAAAAAAAAADgv0sAAAAiAAAAAAAAAA==",
+              "ViewState": "AgIAACQAAAAAAAAAAADgvzEAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-08T02:42:01.518Z",
               "EditorCaption": ""
@@ -273,7 +262,7 @@
               "RelativeDocumentMoniker": "lssLib.Net\\NetDeviceRegistry.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\NetDeviceRegistry.cs",
               "RelativeToolTip": "lssLib.Net\\NetDeviceRegistry.cs",
-              "ViewState": "AgIAACUAAAAAAAAAAAArwJYAAAA2AAAAAAAAAA==",
+              "ViewState": "AgIAACUAAAAAAAAAAAArwJMAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-08T03:18:53.893Z",
               "EditorCaption": ""
@@ -286,7 +275,7 @@
               "RelativeDocumentMoniker": "lssLib.Net\\Infrastructure\\NetScheduler.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Infrastructure\\NetScheduler.cs",
               "RelativeToolTip": "lssLib.Net\\Infrastructure\\NetScheduler.cs",
-              "ViewState": "AgIAABMBAAAAAAAAAAAUwC0BAAANAAAAAAAAAA==",
+              "ViewState": "AgIAAIMAAAAAAAAAAAAUwIMAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-11T00:50:12Z",
               "EditorCaption": ""
@@ -325,7 +314,7 @@
               "RelativeDocumentMoniker": "lssLib.Net\\Core\\Netpacket.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Core\\Netpacket.cs",
               "RelativeToolTip": "lssLib.Net\\Core\\Netpacket.cs",
-              "ViewState": "AgIAAN4AAAAAAAAAAAAUwAMBAAA1AAAAAAAAAA==",
+              "ViewState": "AgIAAKUAAAAAAAAAAAAUwKUAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-11T06:45:12.71Z",
               "EditorCaption": ""
@@ -345,13 +334,26 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Packetmode.cs",
+              "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Core\\Packetmode.cs",
+              "RelativeDocumentMoniker": "lssLib.Net\\Core\\Packetmode.cs",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Core\\Packetmode.cs",
+              "RelativeToolTip": "lssLib.Net\\Core\\Packetmode.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-12T08:41:18.685Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 13,
               "Title": "NetConnectionManager.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Infrastructure\\NetConnectionManager.cs",
               "RelativeDocumentMoniker": "lssLib.Net\\Infrastructure\\NetConnectionManager.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Infrastructure\\NetConnectionManager.cs",
               "RelativeToolTip": "lssLib.Net\\Infrastructure\\NetConnectionManager.cs",
-              "ViewState": "AgIAAPIAAAAAAAAAAAAcwBABAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAI0AAAAAAAAAAAAcwBABAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-12T01:00:46.304Z",
               "EditorCaption": ""
@@ -364,7 +366,7 @@
               "RelativeDocumentMoniker": "lssLib.Net\\Abstractions\\NetDeviceConfigBase.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Abstractions\\NetDeviceConfigBase.cs",
               "RelativeToolTip": "lssLib.Net\\Abstractions\\NetDeviceConfigBase.cs",
-              "ViewState": "AgIAAKAAAAAAAAAAAAAAwLsAAABTAAAAAAAAAA==",
+              "ViewState": "AgIAAIQAAAAAAAAAAAAAwLgAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-11T06:45:06.253Z",
               "EditorCaption": ""
@@ -379,7 +381,8 @@
               "RelativeToolTip": "Lsslib.net.demo\\Usageexamples.cs",
               "ViewState": "AgIAAEMAAAAAAAAAAAAIwF4AAAA3AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T00:14:31.45Z"
+              "WhenOpened": "2026-05-11T00:14:31.45Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -402,9 +405,10 @@
               "RelativeDocumentMoniker": "lssLib.Net.TcpTestServer\\TcpServerCore.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net.TcpTestServer\\TcpServerCore.cs",
               "RelativeToolTip": "lssLib.Net.TcpTestServer\\TcpServerCore.cs",
-              "ViewState": "AgIAABcBAAAAAAAAAAAcwDEBAAANAAAAAAAAAA==",
+              "ViewState": "AgIAAO8AAAAAAAAAAAAcwO8AAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T04:43:37.544Z"
+              "WhenOpened": "2026-05-11T04:43:37.544Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -416,7 +420,8 @@
               "RelativeToolTip": "lssLib.Net\\Interface\\INetTransport.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAC0AAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T08:10:04.975Z"
+              "WhenOpened": "2026-05-11T08:10:04.975Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -428,7 +433,8 @@
               "RelativeToolTip": "Lsslib.net.implementation\\Channels\\PassiveNetChanne.cs",
               "ViewState": "AgIAACcAAAAAAAAAAADwvzkAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T06:53:55.947Z"
+              "WhenOpened": "2026-05-11T06:53:55.947Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -438,9 +444,10 @@
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Transport\\SerialTransport.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\SerialTransport.cs",
               "RelativeToolTip": "Lsslib.net.implementation\\Transport\\SerialTransport.cs",
-              "ViewState": "AgIAADQAAAAAAAAAAAAAwFAAAAArAAAAAAAAAA==",
+              "ViewState": "AgIAACkAAAAAAAAAAAAAwEAAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T06:34:19.52Z"
+              "WhenOpened": "2026-05-11T06:34:19.52Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -450,9 +457,10 @@
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Transport\\SharedMemoryTransport.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Transport\\SharedMemoryTransport.cs",
               "RelativeToolTip": "Lsslib.net.implementation\\Transport\\SharedMemoryTransport.cs",
-              "ViewState": "AgIAACwAAAAAAAAAAAA+wEIAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAswEIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:49:58.27Z"
+              "WhenOpened": "2026-05-08T00:49:58.27Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -462,9 +470,10 @@
               "RelativeDocumentMoniker": "lssLib.Net.TcpTestServer\\ServerProtocolHelper.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net.TcpTestServer\\ServerProtocolHelper.cs",
               "RelativeToolTip": "lssLib.Net.TcpTestServer\\ServerProtocolHelper.cs",
-              "ViewState": "AgIAAI0AAAAAAAAAAAAYwBcAAAAYAAAAAAAAAA==",
+              "ViewState": "AgIAAHIAAAAAAAAAAAAYwBQAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T04:44:43.925Z"
+              "WhenOpened": "2026-05-11T04:44:43.925Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -474,9 +483,10 @@
               "RelativeDocumentMoniker": "lssLib.Net.TcpTestServer\\MainWindow.xaml.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net.TcpTestServer\\MainWindow.xaml.cs",
               "RelativeToolTip": "lssLib.Net.TcpTestServer\\MainWindow.xaml.cs",
-              "ViewState": "AgIAAAQAAAAAAAAAAAAhwA8AAAAZAAAAAAAAAA==",
+              "ViewState": "AgIAAAQAAAAAAAAAAAAhwA0AAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T04:42:48.383Z"
+              "WhenOpened": "2026-05-11T04:42:48.383Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -499,7 +509,8 @@
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net.TcpTestServer\\MainWindow.xaml",
               "RelativeToolTip": "lssLib.Net.TcpTestServer\\MainWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-05-11T04:42:49.387Z"
+              "WhenOpened": "2026-05-11T04:42:49.387Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -511,7 +522,8 @@
               "RelativeToolTip": "lssLib.Net.TcpTestServer\\App.xaml.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T04:47:45.667Z"
+              "WhenOpened": "2026-05-11T04:47:45.667Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -535,7 +547,8 @@
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net.TcpTestServer\\App.xaml",
               "RelativeToolTip": "lssLib.Net.TcpTestServer\\App.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2026-05-11T04:47:31.526Z"
+              "WhenOpened": "2026-05-11T04:47:31.526Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -547,7 +560,8 @@
               "RelativeToolTip": "Lsslib.net.implementation\\Config\\UdpDeviceConfig.cs",
               "ViewState": "AgIAAAgAAAAAAAAAAAAiwBMAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T05:51:04.81Z"
+              "WhenOpened": "2026-05-08T05:51:04.81Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -557,9 +571,10 @@
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Config\\SerialDeviceConfig.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Config\\SerialDeviceConfig.cs",
               "RelativeToolTip": "Lsslib.net.implementation\\Config\\SerialDeviceConfig.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAABQAAAAWAAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAABIwBQAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:55:48.797Z"
+              "WhenOpened": "2026-05-08T00:55:48.797Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -569,9 +584,10 @@
               "RelativeDocumentMoniker": "lssLib.Net\\Interface\\ICommandConfig.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\lssLib.Net\\Interface\\ICommandConfig.cs",
               "RelativeToolTip": "lssLib.Net\\Interface\\ICommandConfig.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAABMAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAABIwBMAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T02:42:36.379Z"
+              "WhenOpened": "2026-05-08T02:42:36.379Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -581,9 +597,10 @@
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Config\\TcpDeviceConfig.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Config\\TcpDeviceConfig.cs",
               "RelativeToolTip": "Lsslib.net.implementation\\Config\\TcpDeviceConfig.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAABwAAAA5AAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAABIwBwAAAA5AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:49:07.702Z"
+              "WhenOpened": "2026-05-08T00:49:07.702Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -595,7 +612,8 @@
               "RelativeToolTip": "Lsslib.net.implementation\\Protocol\\RawProtocol.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAuwA0AAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:56:34.969Z"
+              "WhenOpened": "2026-05-08T00:56:34.969Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -603,11 +621,12 @@
               "Title": "BinaryProtocol.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
               "RelativeDocumentMoniker": "Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
-              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
-              "RelativeToolTip": "Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs",
-              "ViewState": "AgIAABUAAAAAAAAAAAAAwCAAAAAqAAAAAAAAAA==",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs*",
+              "RelativeToolTip": "Lsslib.net.implementation\\Protocol\\BinaryProtocol.cs*",
+              "ViewState": "AgIAABQAAAAAAAAAAAAAwCEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:39:22.529Z"
+              "WhenOpened": "2026-05-08T00:39:22.529Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -619,7 +638,8 @@
               "RelativeToolTip": "lssLib.Net\\Interface\\INetProtocol.cs",
               "ViewState": "AgIAABEAAAAAAAAAAAAnwCEAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T00:43:12.644Z"
+              "WhenOpened": "2026-05-08T00:43:12.644Z",
+              "EditorCaption": ""
             }
           ]
         }
