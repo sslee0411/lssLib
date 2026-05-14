@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{416F5484-631F-4804-9FC3-BB1DC583F485}|Lsslib.net.demo\\lssLib.Net.Demo.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.demo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{416F5484-631F-4804-9FC3-BB1DC583F485}|Lsslib.net.demo\\lssLib.Net.Demo.csproj|solutionrelative:lsslib.net.demo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{416F5484-631F-4804-9FC3-BB1DC583F485}|Lsslib.net.demo\\lssLib.Net.Demo.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.demo\\tcpclientexamples.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{416F5484-631F-4804-9FC3-BB1DC583F485}|Lsslib.net.demo\\lssLib.Net.Demo.csproj|solutionrelative:lsslib.net.demo\\tcpclientexamples.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{416F5484-631F-4804-9FC3-BB1DC583F485}|Lsslib.net.demo\\lssLib.Net.Demo.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net.demo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{416F5484-631F-4804-9FC3-BB1DC583F485}|Lsslib.net.demo\\lssLib.Net.Demo.csproj|solutionrelative:lsslib.net.demo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B5A3D28C-2290-4DF6-B610-98CDEDB003CF}|lssLib.Net\\lssLib.Net.Base.csproj|d:\\lsslib\\net\\lsslib.net_ver4.0\\lsslib.net\\infrastructure\\netscheduler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -146,7 +146,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 131,
-          "SelectedChildIndex": 9,
+          "SelectedChildIndex": 8,
           "Children": [
             {
               "$type": "Document",
@@ -255,26 +255,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "Tcpclientexamples.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.demo\\Tcpclientexamples.cs",
               "RelativeDocumentMoniker": "Lsslib.net.demo\\Tcpclientexamples.cs",
               "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.demo\\Tcpclientexamples.cs",
               "RelativeToolTip": "Lsslib.net.demo\\Tcpclientexamples.cs",
-              "ViewState": "AgIAAA8BAAAAAAAAAAAMwEQBAABEAAAAAAAAAA==",
+              "ViewState": "AgIAAC8BAAAAAAAAAAAMwE8BAAA6AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-11T04:49:39.762Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Program.cs",
               "DocumentMoniker": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.demo\\Program.cs",
               "RelativeDocumentMoniker": "Lsslib.net.demo\\Program.cs",
-              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.demo\\Program.cs*",
-              "RelativeToolTip": "Lsslib.net.demo\\Program.cs*",
-              "ViewState": "AgIAAAAAAAAAAAAAAADwvx0AAAAAAAAAAAAAAA==",
+              "ToolTip": "D:\\lssLib\\Net\\lssLib.Net_Ver4.0\\Lsslib.net.demo\\Program.cs",
+              "RelativeToolTip": "Lsslib.net.demo\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvxkAAAAoAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-11T05:08:44.013Z",
               "EditorCaption": ""

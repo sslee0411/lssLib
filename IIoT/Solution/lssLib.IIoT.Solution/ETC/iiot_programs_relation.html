@@ -1,0 +1,332 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif}
+.page{padding:20px 16px;display:flex;flex-direction:column;gap:24px}
+
+/* ── 섹션 타이틀 */
+.sec-title{font-size:13px;font-weight:600;color:var(--color-text-secondary);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;border-left:3px solid var(--color-border-secondary);padding-left:10px}
+
+/* ── 관계도 */
+.rel-wrap{position:relative;width:100%;background:var(--color-background-secondary);border-radius:14px;padding:16px;border:.5px solid var(--color-border-tertiary)}
+.rel-wrap svg{width:100%;height:auto;display:block}
+
+/* ── 프로그램 카드 그리드 */
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pcard{background:var(--color-background-secondary);border-radius:12px;border:.5px solid var(--color-border-tertiary);padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.pcard-head{display:flex;align-items:center;gap:10px}
+.dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.pcard-name{font-size:13px;font-weight:600;color:var(--color-text-primary);line-height:1.2}
+.pcard-sub{font-size:11px;color:var(--color-text-secondary)}
+.feat-list{display:flex;flex-direction:column;gap:4px;padding-left:4px}
+.feat{font-size:11px;color:var(--color-text-secondary);display:flex;gap:6px;align-items:flex-start;line-height:1.45}
+.feat::before{content:"·";color:var(--color-text-tertiary);flex-shrink:0;margin-top:0px}
+
+/* ── 명칭 추천 */
+.name-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ncard{background:var(--color-background-secondary);border-radius:12px;border:.5px solid var(--color-border-tertiary);padding:14px}
+.ncard-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;margin-bottom:8px;letter-spacing:.04em}
+.ncard-rec{font-size:15px;font-weight:700;color:var(--color-text-primary);margin-bottom:3px}
+.ncard-orig{font-size:11px;color:var(--color-text-tertiary);margin-bottom:8px}
+.ncard-why{font-size:11px;color:var(--color-text-secondary);line-height:1.5}
+
+/* 색상 팔레트 */
+.c-blue{background:#0f2a4a;color:#4fa3e8}
+.c-amber{background:#2a1800;color:#ef9f27}
+.c-green{background:#031a0e;color:#3fb950}
+.c-purple{background:#150d28;color:#afa9ec}
+.c-red{background:#1a0306;color:#d85a72}
+.c-coral{background:#140604;color:#d85a30}
+
+.dot-blue{background:#4fa3e8}.dot-amber{background:#ef9f27}.dot-green{background:#3fb950}
+.dot-purple{background:#afa9ec}.dot-red{background:#d85a72}.dot-coral{background:#d85a30}
+
+.badge-blue{background:#0c2240;color:#4fa3e8}
+.badge-amber{background:#2a1800;color:#ef9f27}
+.badge-green{background:#031a0e;color:#3fb950}
+.badge-purple{background:#150d28;color:#afa9ec}
+.badge-red{background:#1a0306;color:#d85a72}
+.badge-coral{background:#140604;color:#d85a30}
+</style>
+
+<div class="page">
+
+<!-- ─────────────── 1. 관계도 ─────────────── -->
+<div>
+<div class="sec-title">① 프로그램 관계도</div>
+<div class="rel-wrap">
+<svg viewBox="0 0 660 400" xmlns="http://www.w3.org/2000/svg">
+
+<!-- ── JSON 파일 행 (상단) -->
+<rect x="30" y="18" width="108" height="32" rx="8" fill="#0c1e35" stroke="#2a7fd4" stroke-width="1.5"/>
+<text x="84" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4fa3e8" font-weight="600">device.json</text>
+
+<rect x="158" y="18" width="108" height="32" rx="8" fill="#1c1000" stroke="#c97d0a" stroke-width="1.5"/>
+<text x="212" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#ef9f27" font-weight="600">collect.json</text>
+
+<rect x="286" y="18" width="108" height="32" rx="8" fill="#0e081c" stroke="#534ab7" stroke-width="1.5"/>
+<text x="340" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#afa9ec" font-weight="600">monitor.json</text>
+
+<rect x="414" y="18" width="108" height="32" rx="8" fill="#1a0306" stroke="#d85a72" stroke-width="1.5"/>
+<text x="468" y="38" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#d85a72" font-weight="600">alarm.json</text>
+
+<!-- ── 프로그램 박스 행 (중단) -->
+<!-- DeviceManager -->
+<rect x="16" y="110" width="120" height="56" rx="10" fill="#0a1e35" stroke="#2a7fd4" stroke-width="2"/>
+<text x="76" y="133" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#4fa3e8" font-weight="700">①</text>
+<text x="76" y="149" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#85b7eb">DeviceManager</text>
+<text x="76" y="162" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#3a6a9a">WPF 설정</text>
+
+<!-- CollectConfig -->
+<rect x="150" y="110" width="120" height="56" rx="10" fill="#1c1000" stroke="#c97d0a" stroke-width="2"/>
+<text x="210" y="133" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#ef9f27" font-weight="700">②</text>
+<text x="210" y="149" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#fac775">CollectConfig</text>
+<text x="210" y="162" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#7a4e00">WPF NodeRed</text>
+
+<!-- Monitor -->
+<rect x="284" y="110" width="120" height="56" rx="10" fill="#0e081c" stroke="#534ab7" stroke-width="2"/>
+<text x="344" y="133" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#afa9ec" font-weight="700">③</text>
+<text x="344" y="149" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#d2a8ff">Monitor</text>
+<text x="344" y="162" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#534ab7">WPF + Web</text>
+
+<!-- AlarmEngine -->
+<rect x="418" y="110" width="120" height="56" rx="10" fill="#1a0306" stroke="#d85a72" stroke-width="2"/>
+<text x="478" y="133" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#d85a72" font-weight="700">⑤</text>
+<text x="478" y="149" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#f5c4b3">AlarmEngine</text>
+<text x="478" y="162" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#993050">Service + Web</text>
+
+<!-- CollectorRuntime (center-bottom) -->
+<rect x="200" y="234" width="140" height="56" rx="10" fill="#021208" stroke="#1d9e75" stroke-width="2.5"/>
+<text x="270" y="257" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#3fb950" font-weight="700">④</text>
+<text x="270" y="273" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#5dcaa5">CollectorRuntime</text>
+<text x="270" y="285" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#0f6e56">Windows Service</text>
+
+<!-- Manager (far right) -->
+<rect x="530" y="234" width="110" height="56" rx="10" fill="#140604" stroke="#d85a30" stroke-width="2"/>
+<text x="585" y="257" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#d85a30" font-weight="700">⑥</text>
+<text x="585" y="273" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#f0997b">Manager</text>
+<text x="585" y="285" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#993c1d">WPF 총괄</text>
+
+<!-- ── device.json → 하위 프로그램들 (쓰기 화살표) -->
+<line x1="84" y1="50" x2="76" y2="110" stroke="#2a7fd4" stroke-width="1.8" stroke-dasharray="4,3"/>
+<line x1="84" y1="50" x2="210" y2="110" stroke="#2a7fd4" stroke-width="1.2" stroke-dasharray="4,3" opacity=".6"/>
+<line x1="84" y1="50" x2="344" y2="110" stroke="#2a7fd4" stroke-width="1.2" stroke-dasharray="4,3" opacity=".5"/>
+<line x1="84" y1="50" x2="478" y2="110" stroke="#2a7fd4" stroke-width="1.2" stroke-dasharray="4,3" opacity=".5"/>
+<line x1="84" y1="50" x2="270" y2="234" stroke="#2a7fd4" stroke-width="1.2" stroke-dasharray="4,3" opacity=".4"/>
+<!-- collect.json → CollectorRuntime -->
+<line x1="212" y1="50" x2="210" y2="110" stroke="#c97d0a" stroke-width="1.8" stroke-dasharray="4,3"/>
+<line x1="212" y1="50" x2="270" y2="234" stroke="#c97d0a" stroke-width="1.2" stroke-dasharray="4,3" opacity=".6"/>
+<!-- monitor.json → Monitor -->
+<line x1="340" y1="50" x2="344" y2="110" stroke="#534ab7" stroke-width="1.8" stroke-dasharray="4,3"/>
+<!-- alarm.json → AlarmEngine -->
+<line x1="468" y1="50" x2="478" y2="110" stroke="#d85a72" stroke-width="1.8" stroke-dasharray="4,3"/>
+
+<!-- ── CollectorRuntime → Monitor (실시간 TagValue) -->
+<path d="M270 234 C270 210 344 210 344 166" stroke="#1d9e75" stroke-width="2" fill="none" stroke-linecap="round"/>
+<text x="318" y="204" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#1d9e75">MQTT</text>
+
+<!-- ── CollectorRuntime → AlarmEngine -->
+<path d="M320 262 C380 262 420 220 418 166" stroke="#1d9e75" stroke-width="2" fill="none" stroke-linecap="round"/>
+<text x="388" y="238" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#1d9e75">EventBus</text>
+
+<!-- ── Monitor → AlarmEngine (AnomalyEvent) -->
+<line x1="404" y1="138" x2="418" y2="138" stroke="#afa9ec" stroke-width="1.5" stroke-linecap="round"/>
+<text x="411" y="131" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#7f77dd">Anomaly</text>
+
+<!-- ── Manager → All (gRPC) -->
+<line x1="530" y1="255" x2="340" y2="166" stroke="#d85a30" stroke-width="1.5" stroke-dasharray="5,3"/>
+<line x1="530" y1="262" x2="418" y2="166" stroke="#d85a30" stroke-width="1.5" stroke-dasharray="5,3"/>
+<line x1="530" y1="268" x2="340" y2="290" stroke="#d85a30" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+<!-- ── AlarmEngine → 외부 채널 (하단) -->
+<rect x="18" y="340" width="68" height="28" rx="7" fill="#1a0306" stroke="#993050" stroke-width="1.2"/>
+<text x="52" y="358" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#d85a72">이메일</text>
+<rect x="96" y="340" width="68" height="28" rx="7" fill="#1a0306" stroke="#993050" stroke-width="1.2"/>
+<text x="130" y="358" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#d85a72">SMS</text>
+<rect x="174" y="340" width="68" height="28" rx="7" fill="#1a0306" stroke="#993050" stroke-width="1.2"/>
+<text x="208" y="358" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#d85a72">카카오</text>
+<rect x="252" y="340" width="68" height="28" rx="7" fill="#1a0306" stroke="#993050" stroke-width="1.2"/>
+<text x="286" y="358" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#d85a72">Webhook</text>
+<rect x="330" y="340" width="68" height="28" rx="7" fill="#1a0306" stroke="#993050" stroke-width="1.2"/>
+<text x="364" y="358" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#d85a72">FCM Push</text>
+
+<line x1="478" y1="166" x2="52" y2="340" stroke="#d85a72" stroke-width="1.2" opacity=".6"/>
+<line x1="478" y1="166" x2="130" y2="340" stroke="#d85a72" stroke-width="1.2" opacity=".6"/>
+<line x1="478" y1="166" x2="208" y2="340" stroke="#d85a72" stroke-width="1.2" opacity=".6"/>
+<line x1="478" y1="166" x2="286" y2="340" stroke="#d85a72" stroke-width="1.2" opacity=".6"/>
+<line x1="478" y1="166" x2="364" y2="340" stroke="#d85a72" stroke-width="1.2" opacity=".6"/>
+
+<!-- CollectorRuntime → DB -->
+<rect x="440" y="330" width="88" height="28" rx="7" fill="#021208" stroke="#0f6e56" stroke-width="1.2"/>
+<text x="484" y="349" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#3fb950">SQLite / DB</text>
+<line x1="340" y1="272" x2="440" y2="344" stroke="#1d9e75" stroke-width="1.5" opacity=".7"/>
+<line x1="478" y1="166" x2="484" y2="330" stroke="#d85a72" stroke-width="1" stroke-dasharray="3,3" opacity=".5"/>
+
+<!-- 범례 -->
+<rect x="550" y="340" width="100" height="52" rx="6" fill="none" stroke="#333" stroke-width=".5" opacity=".3"/>
+<line x1="556" y1="353" x2="578" y2="353" stroke="#4fa3e8" stroke-width="1.5" stroke-dasharray="4,3"/>
+<text x="582" y="357" font-family="sans-serif" font-size="9" fill="#999">JSON 동기화</text>
+<line x1="556" y1="369" x2="578" y2="369" stroke="#1d9e75" stroke-width="2"/>
+<text x="582" y="373" font-family="sans-serif" font-size="9" fill="#999">데이터 스트림</text>
+<line x1="556" y1="385" x2="578" y2="385" stroke="#d85a30" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="582" y="389" font-family="sans-serif" font-size="9" fill="#999">gRPC 제어</text>
+</svg>
+</div>
+</div>
+
+<!-- ─────────────── 2. 기능 리스트 ─────────────── -->
+<div>
+<div class="sec-title">② 프로그램별 주요 기능</div>
+<div class="card-grid">
+
+<div class="pcard">
+  <div class="pcard-head"><div class="dot dot-blue"></div><div><div class="pcard-name">① DeviceManager</div><div class="pcard-sub">WPF · device.json 쓰기</div></div></div>
+  <div class="feat-list">
+    <div class="feat">Group → Device → PLC → Tag 트리 CRUD</div>
+    <div class="feat">장비 타입 템플릿 캡처 / 인스턴스화</div>
+    <div class="feat">스케일 설정 (Linear/다항식) 실시간 미리보기</div>
+    <div class="feat">HH/H/L/LL 알람 임계값 설정</div>
+    <div class="feat">CSV / Excel 태그 대량 Import</div>
+    <div class="feat">원자적 JSON 저장 → SHA-256 무결성</div>
+    <div class="feat">변경 이력 Audit Log (전/후 스냅샷)</div>
+  </div>
+</div>
+
+<div class="pcard">
+  <div class="pcard-head"><div class="dot dot-amber"></div><div><div class="pcard-name">② CollectConfig</div><div class="pcard-sub">WPF · collect.json 쓰기</div></div></div>
+  <div class="feat-list">
+    <div class="feat">NodeRed 방식 FlowCanvas 편집기</div>
+    <div class="feat">BufParser 테이블 (BufSchema 필드 정의)</div>
+    <div class="feat">Modbus / Serial / OPC-UA / MQTT 채널 설정</div>
+    <div class="feat">Primary-Backup 이중화 통신 설정</div>
+    <div class="feat">Scale / DeadBand / MathNode 처리 파이프라인</div>
+    <div class="feat">시뮬레이터 노드로 실장비 없이 테스트</div>
+    <div class="feat">런타임 TPS / 에러율 실시간 플로우 뷰</div>
+  </div>
+</div>
+
+<div class="pcard">
+  <div class="pcard-head"><div class="dot dot-purple"></div><div><div class="pcard-name">③ Monitor</div><div class="pcard-sub">WPF + ASP.NET · monitor.json 쓰기</div></div></div>
+  <div class="feat-list">
+    <div class="feat">AbstractDetector 상속 확장 감지기 프레임워크</div>
+    <div class="feat">SPC 관리도 UCL/LCL + Nelson Rules 8가지</div>
+    <div class="feat">Cp / Cpk 공정능력 지수 계산</div>
+    <div class="feat">LiveCharts2 WPF 실시간 트렌드 차트</div>
+    <div class="feat">ASP.NET Core Web API + SignalR Push</div>
+    <div class="feat">추세 예측 (선형 회귀 → 임계값 도달 ETA)</div>
+    <div class="feat">대시보드 빌더 (Gauge / Table / Alarm 위젯)</div>
+  </div>
+</div>
+
+<div class="pcard">
+  <div class="pcard-head"><div class="dot dot-green"></div><div><div class="pcard-name">④ CollectorRuntime</div><div class="pcard-sub">Windows Service · 읽기 전용</div></div></div>
+  <div class="feat-list">
+    <div class="feat">DAG 파이프라인 24시간 무인 수집</div>
+    <div class="feat">SDT 압축 알고리즘 (저장 95% 절감)</div>
+    <div class="feat">TagDataStore 메모리 현재값 + RingBuffer 이력</div>
+    <div class="feat">JSON 변경 감지 → 자동 Graceful 재시작</div>
+    <div class="feat">ParameterOnly 변경 → 핫 리로드 (무중단)</div>
+    <div class="feat">품질 등급 관리 (Good / Uncertain / Bad / Interpolated)</div>
+    <div class="feat">TPS / 에러율 1분 주기 통계 보고</div>
+  </div>
+</div>
+
+<div class="pcard">
+  <div class="pcard-head"><div class="dot dot-red"></div><div><div class="pcard-name">⑤ AlarmEngine</div><div class="pcard-sub">Service + ASP.NET · alarm.json 쓰기</div></div></div>
+  <div class="feat-list">
+    <div class="feat">12종 상태 체크 룰 (임계/범위/기준값/변화율 등)</div>
+    <div class="feat">AlarmStateManager — Fired→ACK→Cleared 상태 머신</div>
+    <div class="feat">에스컬레이션 (H 5분 미확인 → HH 자동 격상)</div>
+    <div class="feat">Shelving — 유지보수 중 알람 일시 억제</div>
+    <div class="feat">이메일 / SMS / 카카오 알림톡 / Webhook / FCM</div>
+    <div class="feat">NotificationRouter — Severity × 수신자 × 야간 DND</div>
+    <div class="feat">알람 이력 DB + REST API (조회/ACK/Shelve)</div>
+  </div>
+</div>
+
+<div class="pcard">
+  <div class="pcard-head"><div class="dot dot-coral"></div><div><div class="pcard-name">⑥ Manager</div><div class="pcard-sub">WPF · gRPC 총괄 (선택)</div></div></div>
+  <div class="feat-list">
+    <div class="feat">ProcessOrchestrator — 전체 프로세스 Start/Stop</div>
+    <div class="feat">HealthChecker — Healthy/Degraded/Unhealthy 3단계</div>
+    <div class="feat">3회 연속 Unhealthy → 자동 재시작</div>
+    <div class="feat">ConfigDeployer — 설정 배포 제어</div>
+    <div class="feat">AlarmDashboard — 실시간 알람 수신 (gRPC Stream)</div>
+    <div class="feat">LogAggregator — 전체 프로그램 로그 중앙 수집</div>
+    <div class="feat">ResourceMonitor — CPU / 메모리 / 디스크 모니터링</div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ─────────────── 3. 명칭 추천 ─────────────── -->
+<div>
+<div class="sec-title">③ 프로그램 명칭 추천</div>
+<div class="name-grid">
+
+<div class="ncard">
+  <span class="ncard-badge badge-blue">① 장비관리</span>
+  <div class="ncard-rec">NexField Studio</div>
+  <div class="ncard-orig">기존: DeviceManager</div>
+  <div class="ncard-why">Next + Field(현장) + Studio(편집기). 현장 설비를 설계하는 작업실 이미지. "NexField"는 짧고 발음하기 쉬우며 산업용 소프트웨어 네이밍 톤에 잘 맞음.</div>
+</div>
+
+<div class="ncard">
+  <span class="ncard-badge badge-amber">② 수집설정</span>
+  <div class="ncard-rec">FlowForge</div>
+  <div class="ncard-orig">기존: CollectConfig</div>
+  <div class="ncard-why">Flow(데이터 흐름) + Forge(주조·제작). NodeRed 방식으로 데이터 파이프라인을 '만들어낸다'는 뉘앙스. 직관적이고 개발자 친화적.</div>
+</div>
+
+<div class="ncard">
+  <span class="ncard-badge badge-purple">③ 모니터링</span>
+  <div class="ncard-rec">ScopeView</div>
+  <div class="ncard-orig">기존: Monitor</div>
+  <div class="ncard-why">Scope(오실로스코프·범위) + View(시각화). 산업 계측기기 용어인 Scope를 활용, 데이터를 '관찰한다'는 의미를 직접 전달. 로컬+웹 양쪽 모두 어울림.</div>
+</div>
+
+<div class="ncard">
+  <span class="ncard-badge badge-green">④ 수집런타임</span>
+  <div class="ncard-rec">DataPulse</div>
+  <div class="ncard-orig">기존: CollectorRuntime</div>
+  <div class="ncard-why">Data + Pulse(맥박). 24시간 멈추지 않고 데이터를 '뛰게 한다'는 뜻. 백그라운드 서비스의 지속성과 실시간성을 함께 표현.</div>
+</div>
+
+<div class="ncard">
+  <span class="ncard-badge badge-red">⑤ 알람엔진</span>
+  <div class="ncard-rec">AlertCore</div>
+  <div class="ncard-orig">기존: AlarmEngine</div>
+  <div class="ncard-why">Alert(경보) + Core(핵심 엔진). 단순 알람 발송을 넘어 상태 판정·에스컬레이션·라우팅까지 담당하는 '핵심부'임을 강조. 전문적이고 간결.</div>
+</div>
+
+<div class="ncard">
+  <span class="ncard-badge badge-coral">⑥ 총괄관리</span>
+  <div class="ncard-rec">Nexus Hub</div>
+  <div class="ncard-orig">기존: Manager</div>
+  <div class="ncard-why">Nexus(연결점·중심) + Hub(허브). 모든 프로그램을 연결하고 총괄하는 중심 거점 이미지. 전체 시스템의 관제탑 역할을 직관적으로 표현.</div>
+</div>
+
+</div>
+</div>
+
+<!-- 제품 패밀리 이름 제안 -->
+<div style="background:var(--color-background-secondary);border-radius:12px;padding:16px;border:.5px solid var(--color-border-tertiary)">
+  <div class="sec-title" style="margin-bottom:8px">④ 제품 패밀리 네임 추천</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+    <div style="padding:10px;background:var(--color-background-primary);border-radius:8px;border:.5px solid var(--color-border-tertiary)">
+      <div style="font-size:14px;font-weight:700;color:var(--color-text-primary);margin-bottom:4px">NexPulse Suite</div>
+      <div style="font-size:11px;color:var(--color-text-secondary)">Next(미래) + Pulse(실시간 맥박). 6개 프로그램을 하나의 산업용 IIoT 플랫폼으로 묶는 브랜드.</div>
+    </div>
+    <div style="padding:10px;background:var(--color-background-primary);border-radius:8px;border:.5px solid var(--color-border-tertiary)">
+      <div style="font-size:14px;font-weight:700;color:var(--color-text-primary);margin-bottom:4px">FieldCore Platform</div>
+      <div style="font-size:11px;color:var(--color-text-secondary)">Field(현장) + Core(핵심). 현장 데이터를 핵심적으로 수집·관리한다는 의미. 산업 고객에게 신뢰감을 줌.</div>
+    </div>
+    <div style="padding:10px;background:var(--color-background-primary);border-radius:8px;border:.5px solid var(--color-border-tertiary)">
+      <div style="font-size:14px;font-weight:700;color:var(--color-text-primary);margin-bottom:4px">DataStream Pro</div>
+      <div style="font-size:11px;color:var(--color-text-secondary)">단순하고 직관적. 데이터가 흐른다는 개념 전달. "Pro" 붙여 전문 산업용 솔루션임을 강조.</div>
+    </div>
+  </div>
+</div>
+
+</div>
