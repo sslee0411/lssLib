@@ -329,8 +329,8 @@ public sealed class ConfigManager
     {
         var store = new ConfigStore();
         using var doc = JsonDocument.Parse(raw);
-        if (doc.Root.ValueKind != JsonValueKind.Object) return store;
-        foreach (var section in doc.Root.EnumerateObject())
+        if (doc.RootElement.ValueKind != JsonValueKind.Object) return store;
+        foreach (var section in doc.RootElement.EnumerateObject())
         {
             if (section.Value.ValueKind == JsonValueKind.Object)
             {

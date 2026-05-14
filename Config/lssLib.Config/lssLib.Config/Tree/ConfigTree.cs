@@ -32,7 +32,7 @@ namespace lssLib.Config.Tree;
 ///
 /// // 탐색
 /// ConfigNode? node = tree.FindById("dev-xxx");
-/// IEnumerable<ConfigNode> all = tree.FindAll(NodeType.Device);
+/// IEnumerable&lt;ConfigNode&gt; all = tree.FindAll(NodeType.Device);
 /// </code></example>
 /// </remarks>
 public sealed class ConfigTree
@@ -52,6 +52,13 @@ public sealed class ConfigTree
     /// <summary>트리 구조가 변경될 때 발생합니다 (추가/제거/이동).</summary>
     public event Action<ConfigNode, string>? NodeChanged;
     // args: (변경된 노드, 변경 유형: "Added" | "Removed" | "Moved" | "Modified")
+
+    // 외부에서 이벤트를 발생시킬 수 있도록 메서드 제공
+    public void NotifyNodeChanged(object srv, string state)
+    {
+        // 클래스 내부이므로 Invoke 호출이 가능합니다.
+        NodeChanged?.Invoke((ConfigNode)srv, state);
+    }
 
     #endregion
 

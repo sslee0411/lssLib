@@ -1,24 +1,21 @@
-﻿using System.Text;
+﻿// ══════════════════════════════════════════════════════════════════════════
+//  lssLib.Config.Demo · MainWindow.xaml.cs
+// ══════════════════════════════════════════════════════════════════════════
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace lssLib.Config.Demo
+namespace lssLib.Config.Demo;
+
+public partial class MainWindow : Window
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    public MainWindow()
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+    }
+
+    /// <summary>하단 상태바 메시지 갱신 (다른 View 에서 호출 가능).</summary>
+    public static void SetStatus(string msg)
+    {
+        if (Application.Current.MainWindow is MainWindow mw)
+            mw.TbStatus.Text = $"[{DateTime.Now:HH:mm:ss}]  {msg}";
     }
 }

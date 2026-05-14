@@ -1,14 +1,6 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿// ══════════════════════════════════════════════════════════════════════════
+//  lssLib.Config.Demo · App.xaml.cs
+// ══════════════════════════════════════════════════════════════════════════
+namespace lssLib.Config.Demo;
 
-namespace lssLib.Config.Demo
-{
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
-    {
-    }
-
-}
+public partial class App : System.Windows.Application { }
