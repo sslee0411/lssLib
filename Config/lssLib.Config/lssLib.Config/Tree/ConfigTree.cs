@@ -79,6 +79,18 @@ public sealed class ConfigTree
     }
 
     /// <summary>
+    /// 그룹 노드를 지정 부모에 추가합니다.
+    /// </summary>
+    public ConfigNode AddGroup(ConfigNode parent, string name, string? location = null)
+    {
+        var node = new ConfigNode(name, NodeType.Group);
+        if (location is not null) node.SetProperty("location", location);
+        parent.AddChild(node);
+        NodeChanged?.Invoke(node, "Added");
+        return node;
+    }
+
+    /// <summary>
     /// 장비 노드를 지정 부모에 추가합니다.
     /// </summary>
     /// <param name="parent">부모 노드 (Group 또는 Root).</param>

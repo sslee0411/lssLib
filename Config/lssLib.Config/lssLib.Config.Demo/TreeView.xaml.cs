@@ -454,12 +454,24 @@ public partial class TreeView : UserControl
         _tree.Clear();
 
         var line1 = _tree.AddGroup("Line-1", "Building-A-1F");
+
         var plc1 = _tree.AddDevice(line1, "PLC-001",
                         ip: "192.168.1.10", port: "502", protocol: "Modbus TCP");
         _tree.AddSensor(plc1, "TempSensor-01", address: "40001", scale: "0.1", unit: "°C");
         _tree.AddSensor(plc1, "PressureSensor", address: "40002", scale: "0.01", unit: "bar");
         _tree.AddTag(plc1, "Run_Coil", address: "M0.0", dataType: "Bool");
         _tree.AddTag(plc1, "Speed_Register", address: "D100", dataType: "Int16");
+
+        // 테스트 추가
+        var line1_1 = _tree.AddGroup(line1, "Line-1-1", "Building-A-1F");
+        var plc101 = _tree.AddDevice(line1_1, "PLC-101",
+                        ip: "192.168.1.10", port: "502", protocol: "Modbus TCP");
+        _tree.AddSensor(plc101, "TempSensor-01", address: "40001", scale: "0.1", unit: "°C");
+        _tree.AddSensor(plc101, "PressureSensor", address: "40002", scale: "0.01", unit: "bar");
+        _tree.AddTag(plc101, "Run_Coil", address: "M0.0", dataType: "Bool");
+        _tree.AddTag(plc101, "Speed_Register", address: "D100", dataType: "Int16");
+        //
+
         var hmi1 = _tree.AddDevice(line1, "HMI-001",
                        ip: "192.168.1.20", port: "80", protocol: "HTTP");
         _tree.AddSensor(hmi1, "ScreenTemp", address: "0x0010", unit: "°C");
