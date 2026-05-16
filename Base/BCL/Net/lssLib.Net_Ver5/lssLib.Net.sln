@@ -5,6 +5,8 @@ VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Net", "lssLib.Net\lssLib.Net.csproj", "{354AEF15-83CD-1D86-4EDC-824C0DF37525}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Net.Demo", "lssLib.Net.Demo\lssLib.Net.Demo.csproj", "{B09A0F21-0F0C-43BF-8500-96B9C6F21D97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{354AEF15-83CD-1D86-4EDC-824C0DF37525}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{354AEF15-83CD-1D86-4EDC-824C0DF37525}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{354AEF15-83CD-1D86-4EDC-824C0DF37525}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B09A0F21-0F0C-43BF-8500-96B9C6F21D97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B09A0F21-0F0C-43BF-8500-96B9C6F21D97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B09A0F21-0F0C-43BF-8500-96B9C6F21D97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B09A0F21-0F0C-43BF-8500-96B9C6F21D97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
