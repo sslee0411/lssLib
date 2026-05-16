@@ -225,13 +225,13 @@ public abstract class SequenceControllerBase : ISequenceExecutor
 
     /// <summary>단일 스텝 실행 + Before/After 훅 호출.</summary>
     private async Task<SequenceStepResult> RunStepAsync(
-        ISequenceStep step,
-        ISequenceContext context,
-        CancellationToken ct)
+       ISequenceStep step,
+       ISequenceContext context,
+       CancellationToken ct)
     {
         await OnBeforeStepAsync(step, context, ct).ConfigureAwait(false);
 
-        var result = await step.ExecuteAsync(context, lastResult, ct).ConfigureAwait(false);
+        var result = await step.ExecuteAsync(context, ct).ConfigureAwait(false); // ✅
 
         StepCompleted?.Invoke(result);
         await OnAfterStepAsync(result, context, ct).ConfigureAwait(false);

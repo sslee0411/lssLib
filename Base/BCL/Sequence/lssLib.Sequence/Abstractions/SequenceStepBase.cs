@@ -88,7 +88,7 @@ public abstract class SequenceStepBase : ISequenceStep
     /// Delay 처리 후 ExecuteCoreAsync 를 MaxRetries 횟수만큼 재시도합니다.
     /// </summary>
     public async Task<SequenceStepResult> ExecuteAsync(
-        ISequenceContext context, SequenceStepResult lastResult, CancellationToken ct)
+        ISequenceContext context, CancellationToken ct)
     {
         var startedAt = DateTime.Now;
         var sw = Stopwatch.StartNew();
@@ -107,59 +107,53 @@ public abstract class SequenceStepBase : ISequenceStep
 
         // ② 실행 + 재시도
         int maxAttempts = MaxRetries + 1;
-        SequenceStepResult? lastResult = null;
+        SequenceStepResult? stepResult = null;
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
             if (ct.IsCancellationRequested)
             {
-                lastResult = SequenceStepResult.Cancelled(this, sw.Elapsed, startedAt);
+                stepResult = SequenceStepResult.Cancelled(this, sw.Elapsed, startedAt);
                 break;
             }
 
-            // 재시도 대기
             if (attempt > 0 && RetryDelay > TimeSpan.Zero)
             {
                 try { await Task.Delay(RetryDelay, ct).ConfigureAwait(false); }
                 catch (OperationCanceledException)
                 {
-                    lastResult = SequenceStepResult.Cancelled(this, sw.Elapsed, startedAt);
+                    stepResult = SequenceStepResult.Cancelled(this, sw.Elapsed, startedAt);
                     break;
                 }
             }
 
             try
             {
-                lastResult = await ExecuteCoreAsync(context, ct).ConfigureAwait(false);
+                stepResult = await ExecuteCoreAsync(context, ct).ConfigureAwait(false);
 
-                // 결과에 소요 시간 / 재시도 횟수 / 시작 시각 보완
-                lastResult = lastResult with
-                {
-                    Elapsed = sw.Elapsed,
-                    RetryCount = attempt,
-                    StartedAt = startedAt
-                };
+                // ✅ with 식 대신 ApplyTiming 내부 메서드 사용
+                stepResult = stepResult.ApplyTiming(sw.Elapsed, attempt, startedAt);
 
-                if (lastResult.IsSuccess) break;       // 성공 → 재시도 불필요
-                if (attempt < maxAttempts - 1) continue; // 실패 → 재시도
+                if (stepResult.IsSuccess) break;
+                if (attempt < maxAttempts - 1) continue;
             }
             catch (OperationCanceledException)
             {
-                lastResult = SequenceStepResult.Cancelled(this, sw.Elapsed, startedAt);
+                stepResult = SequenceStepResult.Cancelled(this, sw.Elapsed, startedAt);
                 break;
             }
             catch (Exception ex)
             {
-                lastResult = SequenceStepResult.Fail(this, ex, sw.Elapsed, attempt, startedAt);
+                stepResult = SequenceStepResult.Fail(this, ex, sw.Elapsed, attempt, startedAt);
                 if (attempt < maxAttempts - 1) continue;
             }
         }
 
-        lastResult ??= SequenceStepResult.Fail(this, "알 수 없는 오류",
+        stepResult ??= SequenceStepResult.Fail(this, "알 수 없는 오류",
             elapsed: sw.Elapsed, startedAt: startedAt);
 
-        OnCompleted?.Invoke(lastResult);
-        return lastResult;
+        OnCompleted?.Invoke(stepResult);
+        return stepResult;
     }
 
     #endregion

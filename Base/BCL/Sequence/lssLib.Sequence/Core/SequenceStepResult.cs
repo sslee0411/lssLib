@@ -128,6 +128,27 @@ public sealed class SequenceStepResult
 
     #endregion
 
+    #region §3 ─ 내부 타이밍 적용 (SequenceStepBase 전용)
+
+    /// <summary>
+    /// 실행 후 타이밍 정보를 적용한 새 결과를 반환합니다.
+    /// ExecuteCoreAsync 결과에 Elapsed / RetryCount / StartedAt 을 덮어씁니다.
+    /// </summary>
+    internal SequenceStepResult ApplyTiming(
+        TimeSpan elapsed, int retryCount, DateTime startedAt)
+        => new()
+        {
+            Step = Step,
+            Status = Status,
+            ErrorMessage = ErrorMessage,
+            Exception = Exception,
+            OutputData = OutputData,
+            Elapsed = elapsed,
+            RetryCount = retryCount,
+            StartedAt = startedAt
+        };
+
+    #endregion
     /// <inheritdoc/>
     public override string ToString()
     {
