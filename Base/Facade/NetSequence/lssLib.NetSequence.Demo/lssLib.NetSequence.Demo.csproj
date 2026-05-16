@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj" />
+    <ProjectReference Include="..\..\..\BCL\Sequence\lssLib.Sequence\lssLib.Sequence.csproj" />
+    <ProjectReference Include="..\lssLib.NetSequence\lssLib.NetSequence.csproj" />
+  </ItemGroup>
+
+</Project>
