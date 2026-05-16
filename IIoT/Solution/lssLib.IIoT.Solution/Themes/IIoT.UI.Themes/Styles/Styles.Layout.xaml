@@ -272,4 +272,225 @@
         <Setter Property="Margin"     Value="0,10"/>
     </Style>
 
+    <!-- ════════════════════════════════════════════
+         §11 ─ ProgressBar (IIoT 전용 3종)
+              Standard : 일반 진행률 (수평)
+              Slim     : 얇은 라인형 (파이프라인 등)
+              Pulse    : 상태 불명 인디케이터 (Indeterminate)
+    ════════════════════════════════════════════ -->
+
+    <!-- 수평 ProgressBar 공통 Template -->
+    <ControlTemplate x:Key="HorzProgressTemplate" TargetType="ProgressBar">
+        <Grid>
+            <!-- 배경 트랙 -->
+            <Border x:Name="PART_Track"
+                    Background="{DynamicResource Border2Brush}"
+                    CornerRadius="{DynamicResource RadiusSm}"/>
+
+            <!-- 진행 채움 -->
+            <Border x:Name="PART_Indicator"
+                    HorizontalAlignment="Left"
+                    Background="{DynamicResource ScaleArrowBrush}"
+                    CornerRadius="{DynamicResource RadiusSm}"/>
+
+            <!-- Indeterminate 펄스 바 -->
+            <Border x:Name="PART_GlowRect"
+                    HorizontalAlignment="Left"
+                    Width="0"
+                    Background="{DynamicResource AccBrush}"
+                    CornerRadius="{DynamicResource RadiusSm}"
+                    Opacity="0.7"
+                    Visibility="Collapsed"/>
+
+            <!-- 텍스트 퍼센트 (Standard 전용) -->
+            <TextBlock x:Name="pctText"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextBrush}"
+                       FontSize="{DynamicResource FontSm}"
+                       FontFamily="{DynamicResource MonoFont}"
+                       FontWeight="Bold"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsIndeterminate" Value="True">
+                <Setter TargetName="PART_Indicator"  Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="PART_GlowRect"   Property="Visibility" Value="Visible"/>
+                <Setter TargetName="pctText"         Property="Visibility" Value="Collapsed"/>
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                            <DoubleAnimation
+                                Storyboard.TargetName="PART_GlowRect"
+                                Storyboard.TargetProperty="Width"
+                                From="0" To="120"
+                                Duration="0:0:0.9"
+                                EasingFunction="{x:Null}"/>
+                            <DoubleAnimation
+                                Storyboard.TargetName="PART_GlowRect"
+                                Storyboard.TargetProperty="(Canvas.Left)"
+                                From="0" To="9999"
+                                Duration="0:0:1.4"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <!-- §11-1 Standard ProgressBar (높이 20px, 퍼센트 텍스트 표시) -->
+    <Style x:Key="ProgressStandard" TargetType="ProgressBar">
+        <Setter Property="Height"         Value="20"/>
+        <Setter Property="Minimum"        Value="0"/>
+        <Setter Property="Maximum"        Value="100"/>
+        <Setter Property="Foreground"     Value="{DynamicResource AccBrush}"/>
+        <Setter Property="Background"     Value="{DynamicResource Border2Brush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Border x:Name="PART_Track"
+                                Background="{DynamicResource Border2Brush}"
+                                CornerRadius="{DynamicResource RadiusSm}"/>
+                        <Border x:Name="PART_Indicator"
+                                HorizontalAlignment="Left"
+                                CornerRadius="{DynamicResource RadiusSm}">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                    <GradientStop Color="{DynamicResource Acc2Color}" Offset="0"/>
+                                    <GradientStop Color="{DynamicResource AccColor}"  Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                        <!-- Indeterminate 펄스 -->
+                        <Border x:Name="PART_GlowRect"
+                                HorizontalAlignment="Left" Width="60"
+                                Background="{DynamicResource AccBrush}"
+                                CornerRadius="{DynamicResource RadiusSm}"
+                                Opacity="0.8" Visibility="Collapsed"/>
+                        <!-- 퍼센트 텍스트 -->
+                        <TextBlock x:Name="pctText"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   FontSize="{DynamicResource FontSm}"
+                                   FontFamily="{DynamicResource MonoFont}"
+                                   FontWeight="Bold"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsIndeterminate" Value="True">
+                            <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="PART_GlowRect"  Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="pctText"        Property="Visibility" Value="Collapsed"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="PART_GlowRect"
+                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                            From="-60" To="9999"
+                                            Duration="0:0:1.8"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- §11-2 Slim ProgressBar (높이 6px — 파이프라인 TPS 표시용) -->
+    <Style x:Key="ProgressSlim" TargetType="ProgressBar">
+        <Setter Property="Height"         Value="6"/>
+        <Setter Property="Minimum"        Value="0"/>
+        <Setter Property="Maximum"        Value="100"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <!-- 배경 트랙 -->
+                        <Border x:Name="PART_Track"
+                                Background="{DynamicResource BorderBrush}"
+                                CornerRadius="3"/>
+                        <!-- 진행 채움 (그라디언트) -->
+                        <Border x:Name="PART_Indicator"
+                                HorizontalAlignment="Left"
+                                CornerRadius="3">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                    <GradientStop Color="{DynamicResource Acc2Color}" Offset="0"/>
+                                    <GradientStop Color="{DynamicResource AccColor}"  Offset="0.5"/>
+                                    <GradientStop Color="{DynamicResource GreenColor}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                        <!-- Indeterminate -->
+                        <Border x:Name="PART_GlowRect"
+                                HorizontalAlignment="Left" Width="40"
+                                Background="{DynamicResource AccBrush}"
+                                CornerRadius="3"
+                                Opacity="0.9" Visibility="Collapsed">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="glowTransform"/>
+                            </Border.RenderTransform>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsIndeterminate" Value="True">
+                            <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="PART_GlowRect"  Property="Visibility" Value="Visible"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="glowTransform"
+                                            Storyboard.TargetProperty="X"
+                                            From="-40" To="9999"
+                                            Duration="0:0:1.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- §11-3 Alarm ProgressBar (상태별 색상 — HH/H/L 임계값 표시용) -->
+    <Style x:Key="ProgressAlarm" TargetType="ProgressBar"
+           BasedOn="{StaticResource ProgressSlim}">
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Border x:Name="PART_Track"
+                                Background="{DynamicResource BorderBrush}"
+                                CornerRadius="4"/>
+                        <!-- 정상 구간 (GreenBrush) -->
+                        <Border x:Name="PART_Indicator"
+                                HorizontalAlignment="Left"
+                                CornerRadius="4"
+                                Background="{DynamicResource GreenBrush}"/>
+                        <!-- 경고 오버레이 (YellowBrush — 80% 이상) -->
+                        <Border x:Name="warnOverlay"
+                                HorizontalAlignment="Left"
+                                CornerRadius="4"
+                                Background="{DynamicResource YellowBrush}"
+                                Opacity="0" Visibility="Collapsed"/>
+                        <!-- 위험 오버레이 (RedBrush — 95% 이상) -->
+                        <Border x:Name="dangerOverlay"
+                                HorizontalAlignment="Left"
+                                CornerRadius="4"
+                                Background="{DynamicResource RedBrush}"
+                                Opacity="0" Visibility="Collapsed"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

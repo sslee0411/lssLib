@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37216.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "IIoT.UI.Themes\IIoT.UI.Themes.csproj", "{9290F4D6-7A47-33B7-94A4-6BA73D9700DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Iiot.UI.Themes.Demo", "Iiot.UI.Themes.Demo\Iiot.UI.Themes.Demo.csproj", "{1E47F746-6EBB-B153-485E-92184615D294}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9290F4D6-7A47-33B7-94A4-6BA73D9700DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9290F4D6-7A47-33B7-94A4-6BA73D9700DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9290F4D6-7A47-33B7-94A4-6BA73D9700DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9290F4D6-7A47-33B7-94A4-6BA73D9700DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E47F746-6EBB-B153-485E-92184615D294}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E47F746-6EBB-B153-485E-92184615D294}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E47F746-6EBB-B153-485E-92184615D294}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E47F746-6EBB-B153-485E-92184615D294}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {599D65D2-5162-43F8-B30C-3D695CB9D3EF}
+	EndGlobalSection
+EndGlobal
