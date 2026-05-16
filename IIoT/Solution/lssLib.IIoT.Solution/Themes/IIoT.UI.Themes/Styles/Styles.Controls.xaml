@@ -308,12 +308,21 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
+                    <!--
+                        ★ SystemColors.HighlightBrush 로컬 오버라이드:
+                           WPF는 ComboBox 포커스/열림 시 ContentPresenter에
+                           SystemColors.HighlightBrush(파란 하늘색)를 자동 적용.
+                           ControlTemplate.Resources 에서 Transparent 로 재정의하면
+                           이 템플릿 범위 안에서만 시스템 색상이 차단되어
+                           selectionArea 의 CardBrush 배경이 그대로 보인다.
+                    -->
+                    <ControlTemplate.Resources>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                                         Color="Transparent"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                                         Color="Transparent"/>
+                    </ControlTemplate.Resources>
                     <Grid>
-                        <!--
-                            ★ FIX XDG0040: Border는 Child를 하나만 가질 수 있음.
-                              기존: Border(comboRoot) > Border(hoverOverlay) + Grid → Child 2개 → 오류
-                              수정: 외부 Grid로 감싸서 Border + hoverOverlay를 레이어로 겹침
-                        -->
                         <!-- 본체 테두리 레이어 -->
                         <Border x:Name="comboRoot"
                                 Background="{TemplateBinding Background}"

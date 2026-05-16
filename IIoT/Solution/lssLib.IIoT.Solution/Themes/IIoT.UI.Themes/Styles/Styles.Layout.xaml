@@ -493,4 +493,288 @@
         </Setter>
     </Style>
 
+
+    <!-- ════════════════════════════════════════════
+         §12 ─ DataGrid (헤더 컬럼 형식 컨트롤)
+              IIoTGrid       : 기본 테이블 (헤더+행+셀 전체)
+              IIoTGridHeader : 컬럼 헤더 스타일
+              IIoTGridRow    : 행 스타일 (호버/선택)
+              IIoTGridCell   : 셀 스타일
+    ════════════════════════════════════════════ -->
+
+    <!-- §12-1 ─ 컬럼 헤더 -->
+    <Style x:Key="IIoTGridHeader" TargetType="DataGridColumnHeader">
+        <Setter Property="Background"        Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Foreground"        Value="{DynamicResource Text3Brush}"/>
+        <Setter Property="FontSize"          Value="{DynamicResource FontSm}"/>
+        <Setter Property="FontWeight"        Value="Bold"/>
+        <Setter Property="FontFamily"        Value="{DynamicResource UiFont}"/>
+        <Setter Property="Padding"           Value="12,8"/>
+        <Setter Property="BorderBrush"       Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness"   Value="0,0,1,1"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Cursor"            Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridColumnHeader">
+                    <Grid>
+                        <Border x:Name="headerRoot"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    TextBlock.Foreground="{TemplateBinding Foreground}"
+                                    TextBlock.FontSize="{TemplateBinding FontSize}"
+                                    TextBlock.FontWeight="{TemplateBinding FontWeight}"
+                                    TextBlock.FontFamily="{TemplateBinding FontFamily}"/>
+                                <!-- 정렬 화살표 -->
+                                <Path x:Name="sortArrow"
+                                      Grid.Column="1"
+                                      Visibility="Collapsed"
+                                      Fill="{DynamicResource AccBrush}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Width="8" Height="5" Stretch="Fill"
+                                      Margin="4,0,0,0"
+                                      Data="M 0 5 L 4 0 L 8 5 Z"/>
+                            </Grid>
+                        </Border>
+                        <!-- 컬럼 리사이즈 그립 -->
+                        <Thumb x:Name="PART_RightHeaderGripper"
+                               HorizontalAlignment="Right" Width="4"
+                               Cursor="SizeWE" Opacity="0"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="headerRoot" Property="Background"
+                                    Value="{DynamicResource Border2Brush}"/>
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource AccBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="headerRoot" Property="Background"
+                                    Value="{DynamicResource AccFaintBrush}"/>
+                        </Trigger>
+                        <Trigger Property="SortDirection" Value="Ascending">
+                            <Setter TargetName="sortArrow" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="sortArrow" Property="Data"
+                                    Value="M 0 5 L 4 0 L 8 5 Z"/>
+                        </Trigger>
+                        <Trigger Property="SortDirection" Value="Descending">
+                            <Setter TargetName="sortArrow" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="sortArrow" Property="Data"
+                                    Value="M 0 0 L 4 5 L 8 0 Z"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- §12-2 ─ 행(Row) -->
+    <Style x:Key="IIoTGridRow" TargetType="DataGridRow">
+        <Setter Property="Background"        Value="{DynamicResource BgBrush}"/>
+        <Setter Property="Foreground"        Value="{DynamicResource TextBrush}"/>
+        <Setter Property="FontSize"          Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"        Value="{DynamicResource UiFont}"/>
+        <Setter Property="BorderThickness"   Value="0"/>
+        <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridRow">
+                    <Border x:Name="rowRoot"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <SelectiveScrollingGrid>
+                            <DataGridCellsPresenter
+                                x:Name="PART_CellsPresenter"
+                                ItemsPanel="{TemplateBinding ItemsPanel}"/>
+                        </SelectiveScrollingGrid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- 홀수 행 배경 (얼룩말 패턴) -->
+                        <Trigger Property="AlternationIndex" Value="1">
+                            <Setter TargetName="rowRoot" Property="Background"
+                                    Value="{DynamicResource SurfaceBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="rowRoot" Property="Background"
+                                    Value="{DynamicResource AccFaintBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="rowRoot" Property="Background"
+                                    Value="{DynamicResource AccBrush}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected"  Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="rowRoot" Property="Background"
+                                    Value="{DynamicResource AccBrush}"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- §12-3 ─ 셀(Cell) -->
+    <Style x:Key="IIoTGridCell" TargetType="DataGridCell">
+        <Setter Property="Background"      Value="Transparent"/>
+        <Setter Property="Foreground"      Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,0"/>
+        <Setter Property="Padding"         Value="12,7"/>
+        <Setter Property="FontSize"        Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource UiFont}"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter
+                            VerticalAlignment="Center"
+                            TextBlock.Foreground="{TemplateBinding Foreground}"
+                            TextBlock.FontSize="{TemplateBinding FontSize}"
+                            TextBlock.FontFamily="{TemplateBinding FontFamily}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- §12-4 ─ DataGrid 본체 (IIoTGrid) -->
+    <Style x:Key="IIoTGrid" TargetType="DataGrid">
+        <Setter Property="Background"               Value="{DynamicResource BgBrush}"/>
+        <Setter Property="Foreground"               Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush"              Value="{DynamicResource Border2Brush}"/>
+        <Setter Property="BorderThickness"          Value="1"/>
+        <Setter Property="GridLinesVisibility"      Value="None"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="VerticalGridLinesBrush"   Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="AlternationCount"         Value="2"/>
+        <Setter Property="RowBackground"            Value="{DynamicResource BgBrush}"/>
+        <Setter Property="AlternatingRowBackground" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="ColumnHeaderStyle"        Value="{StaticResource IIoTGridHeader}"/>
+        <Setter Property="RowStyle"                 Value="{StaticResource IIoTGridRow}"/>
+        <Setter Property="CellStyle"                Value="{StaticResource IIoTGridCell}"/>
+        <Setter Property="FontSize"                 Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"               Value="{DynamicResource UiFont}"/>
+        <Setter Property="RowHeight"                Value="36"/>
+        <Setter Property="ColumnHeaderHeight"       Value="34"/>
+        <Setter Property="AutoGenerateColumns"      Value="False"/>
+        <Setter Property="CanUserAddRows"           Value="False"/>
+        <Setter Property="CanUserDeleteRows"        Value="False"/>
+        <Setter Property="SelectionMode"            Value="Single"/>
+        <Setter Property="SelectionUnit"            Value="FullRow"/>
+        <Setter Property="IsReadOnly"               Value="True"/>
+        <Setter Property="FocusVisualStyle"         Value="{x:Null}"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+        <!-- 행 번호 헤더 숨김 -->
+        <Setter Property="HeadersVisibility"        Value="Column"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGrid">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource Radius}"
+                            ClipToBounds="True">
+                        <ScrollViewer x:Name="DG_ScrollViewer" Focusable="False">
+                            <ScrollViewer.Template>
+                                <ControlTemplate TargetType="ScrollViewer">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- 컬럼 헤더 -->
+                                        <DataGridColumnHeadersPresenter
+                                            Grid.Row="0" Grid.Column="0"
+                                            x:Name="PART_ColumnHeadersPresenter"/>
+                                        <!-- 헤더 구분선 -->
+                                        <Border Grid.Row="0" Grid.Column="0"
+                                                BorderBrush="{DynamicResource AccBrush}"
+                                                BorderThickness="0,0,0,2"
+                                                Margin="0,0,0,0"/>
+                                        <!-- 행 데이터 -->
+                                        <ScrollContentPresenter
+                                            Grid.Row="1" Grid.Column="0"
+                                            x:Name="PART_ScrollContentPresenter"/>
+                                        <!-- 수직 스크롤바 -->
+                                        <ScrollBar Grid.Row="1" Grid.Column="1"
+                                                   x:Name="PART_VerticalScrollBar"
+                                                   Orientation="Vertical"
+                                                   Value="{TemplateBinding VerticalOffset}"
+                                                   Maximum="{TemplateBinding ScrollableHeight}"
+                                                   ViewportSize="{TemplateBinding ViewportHeight}"
+                                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                                        <!-- 수평 스크롤바 -->
+                                        <ScrollBar Grid.Row="2" Grid.Column="0"
+                                                   x:Name="PART_HorizontalScrollBar"
+                                                   Orientation="Horizontal"
+                                                   Value="{TemplateBinding HorizontalOffset}"
+                                                   Maximum="{TemplateBinding ScrollableWidth}"
+                                                   ViewportSize="{TemplateBinding ViewportWidth}"
+                                                   Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </ScrollViewer.Template>
+                            <ItemsPresenter/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- §12-5 ─ Mono 폰트 셀 텍스트 (수치/주소 전용)
+              사용: DataGridTextColumn.ElementStyle="{DynamicResource IIoTGridCellMono}"
+              ElementStyle 은 TextBlock 타겟이어야 함 (DataGridCell 아님) -->
+    <Style x:Key="IIoTGridCellMono" TargetType="TextBlock">
+        <Setter Property="FontFamily"        Value="{DynamicResource MonoFont}"/>
+        <Setter Property="Foreground"        Value="{DynamicResource GreenBrush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- §12-6 ─ 상태 셀 (배지 형식) 전용 텍스트 스타일 -->
+    <Style x:Key="GridStatusGood" TargetType="TextBlock">
+        <Setter Property="Foreground"   Value="{DynamicResource GreenBrush}"/>
+        <Setter Property="FontWeight"   Value="Bold"/>
+        <Setter Property="FontFamily"   Value="{DynamicResource MonoFont}"/>
+        <Setter Property="FontSize"     Value="{DynamicResource FontSm}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="GridStatusWarn" TargetType="TextBlock"
+           BasedOn="{StaticResource GridStatusGood}">
+        <Setter Property="Foreground" Value="{DynamicResource YellowBrush}"/>
+    </Style>
+    <Style x:Key="GridStatusBad" TargetType="TextBlock"
+           BasedOn="{StaticResource GridStatusGood}">
+        <Setter Property="Foreground" Value="{DynamicResource RedBrush}"/>
+    </Style>
+
 </ResourceDictionary>

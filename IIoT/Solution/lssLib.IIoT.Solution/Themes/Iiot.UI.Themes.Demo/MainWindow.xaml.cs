@@ -33,6 +33,7 @@ public partial class MainWindow : Window
             [3] = (Tab3Btn, Tab3),
             [4] = (Tab4Btn, Tab4),
             [5] = (Tab5Btn, Tab5),
+            [6] = (Tab6Btn, Tab6),
         };
 
         // 테마 변경 이벤트 구독
@@ -114,7 +115,7 @@ public partial class MainWindow : Window
             e.Handled = true;
         }
         // 숫자 1~5 → 탭 전환
-        else if (e.Key >= Key.D1 && e.Key <= Key.D5 &&
+        else if (e.Key >= Key.D1 && e.Key <= Key.D6 &&
                  Keyboard.Modifiers == ModifierKeys.None)
         {
             SwitchTab(e.Key - Key.D0);
@@ -164,4 +165,46 @@ public partial class MainWindow : Window
         ThemeManager.ThemeChanged -= OnThemeChanged;
         base.OnClosed(e);
     }
+
+    // §8 ─ DataGrid 샘플 데이터 ───────────────────────────────
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        LoadGridSamples();
+    }
+
+    private void LoadGridSamples()
+    {
+        // 태그 수집 현황 샘플
+        TagGrid.ItemsSource = new[]
+        {
+            new TagRow("온도",     "D100", "150.3",  "°C",  "GOOD",  "Good",      "09:31:22"),
+            new TagRow("압력",     "D102", "7.42",   "bar", "GOOD",  "Good",      "09:31:22"),
+            new TagRow("속도",     "D104", "1842",   "rpm", "WARN",  "Uncertain", "09:31:20"),
+            new TagRow("전류",     "D106", "28.7",   "A",   "GOOD",  "Good",      "09:31:22"),
+            new TagRow("진동",     "D108", "---",    "mm/s","ERR",   "Bad",       "---"),
+            new TagRow("냉각수온", "D110", "32.1",   "°C",  "GOOD",  "Good",      "09:31:21"),
+        };
+
+        // 알람 이력 샘플
+        AlarmGrid.ItemsSource = new[]
+        {
+            new AlarmRow("HH", "압출기#1 › 온도",   "286.3 °C", "280.0 °C", "09:23:14", "미확인"),
+            new AlarmRow("HH", "사출기#1 › 압력",   "9.87 bar", "9.50 bar", "09:28:44", "미확인"),
+            new AlarmRow("H",  "압출기#2 › 전류",   "34.2 A",   "32.0 A",   "09:30:01", "미확인"),
+            new AlarmRow("H",  "압출기#1 › 속도",   "2100 rpm", "2000 rpm", "09:15:33", "확인"),
+            new AlarmRow("L",  "냉각수 탱크 › 수위","18.3 %",   "20.0 %",   "09:05:10", "확인"),
+        };
+    }
 }
+
+// ── 샘플 데이터 레코드 ──────────────────────────────────────
+
+internal record TagRow(
+    string Name, string Address, string Value,
+    string Unit, string Status, string Quality, string Timestamp);
+
+internal record AlarmRow(
+    string Level, string Tag, string Value,
+    string Threshold, string OccurredAt, string AckStatus);

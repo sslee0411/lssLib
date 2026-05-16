@@ -101,6 +101,10 @@
                             Style="{DynamicResource ToolbarBtn}"
                             Click="OnTabClick" Tag="5"
                             Margin="2,0"/>
+                    <Button x:Name="Tab6Btn" Content="📋  데이터 그리드"
+                            Style="{DynamicResource ToolbarBtn}"
+                            Click="OnTabClick" Tag="6"
+                            Margin="2,0"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -949,6 +953,107 @@
                         </DockPanel>
                     </Border>
                 </Grid>
+            </ScrollViewer>
+
+            <!-- ⑥ 데이터 그리드 탭 -->
+            <ScrollViewer x:Name="Tab6" Visibility="Collapsed"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24">
+
+                    <TextBlock Text="DataGrid — 헤더 컬럼 형식 컨트롤"
+                               Style="{DynamicResource CardTitle}"
+                               FontSize="14" Margin="0,0,0,4"/>
+                    <TextBlock Text="IIoTGrid 스타일 적용. 컬럼 클릭 정렬 지원. 홀수/짝수 행 교대 배경. 마우스 호버/선택 강조."
+                               Foreground="{DynamicResource Text2Brush}"
+                               FontSize="12" Margin="0,0,0,20"/>
+
+                    <!-- 태그 수집 현황 DataGrid -->
+                    <Border Style="{DynamicResource Card}" Padding="0">
+                        <StackPanel>
+                            <DockPanel Margin="14,10,14,10">
+                                <TextBlock Text="수집 태그 현황"
+                                           Style="{DynamicResource CardTitle}"
+                                           Margin="0" VerticalAlignment="Center"/>
+                                <Border DockPanel.Dock="Right"
+                                        Style="{DynamicResource BadgeGreen}">
+                                    <TextBlock Text="● 수집 중"
+                                               Style="{DynamicResource BadgeGreenText}"/>
+                                </Border>
+                            </DockPanel>
+                            <DataGrid x:Name="TagGrid"
+                                      Style="{DynamicResource IIoTGrid}"
+                                      Margin="0,0,0,0">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn
+                                        Header="Tag 이름" Width="140"
+                                        Binding="{Binding Name}"/>
+                                    <DataGridTextColumn
+                                        Header="주소" Width="80"
+                                        Binding="{Binding Address}"
+                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn
+                                        Header="현재값" Width="90"
+                                        Binding="{Binding Value}"
+                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn
+                                        Header="단위" Width="60"
+                                        Binding="{Binding Unit}"/>
+                                    <DataGridTextColumn
+                                        Header="상태" Width="70"
+                                        Binding="{Binding Status}"/>
+                                    <DataGridTextColumn
+                                        Header="품질" Width="70"
+                                        Binding="{Binding Quality}"/>
+                                    <DataGridTextColumn
+                                        Header="타임스탬프" Width="*"
+                                        Binding="{Binding Timestamp}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 알람 이력 DataGrid -->
+                    <Border Style="{DynamicResource Card}" Padding="0" Margin="0,16,0,0">
+                        <StackPanel>
+                            <DockPanel Margin="14,10,14,10">
+                                <TextBlock Text="알람 이력"
+                                           Style="{DynamicResource CardTitle}"
+                                           Margin="0" VerticalAlignment="Center"/>
+                                <Border DockPanel.Dock="Right"
+                                        Style="{DynamicResource BadgeRed}">
+                                    <TextBlock Text="7건 미확인"
+                                               Style="{DynamicResource BadgeRedText}"/>
+                                </Border>
+                            </DockPanel>
+                            <DataGrid x:Name="AlarmGrid"
+                                      Style="{DynamicResource IIoTGrid}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn
+                                        Header="등급" Width="60"
+                                        Binding="{Binding Level}"/>
+                                    <DataGridTextColumn
+                                        Header="Tag" Width="160"
+                                        Binding="{Binding Tag}"/>
+                                    <DataGridTextColumn
+                                        Header="현재값" Width="90"
+                                        Binding="{Binding Value}"
+                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn
+                                        Header="임계값" Width="90"
+                                        Binding="{Binding Threshold}"
+                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn
+                                        Header="발생 시각" Width="140"
+                                        Binding="{Binding OccurredAt}"/>
+                                    <DataGridTextColumn
+                                        Header="확인" Width="*"
+                                        Binding="{Binding AckStatus}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
             </ScrollViewer>
 
         </Grid>
