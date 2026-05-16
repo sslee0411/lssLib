@@ -1,72 +1,33 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.UI.Themes · Controls/ThemeSelectorPanel.xaml.cs
-//  역할: ThemeSelectorPanel UserControl Code-behind
-//        + XAML 변환기 (HexToColor, ThemePreviewBg, BoolToVis)
+//  역할: ThemeSelectorPanel UserControl 코드비하인드
+//
+//  ★ 컨버터 클래스는 이 파일에 두지 않는다.
+//     코드비하인드(.xaml.cs)에 정의된 보조 클래스는 같은 XAML에서
+//     참조 불가 (XAML 컴파일러 처리 순서 문제).
+//     → ThemeConverters.cs 별도 파일에 정의.
+//
 //  생성: 2025-05-16
 // ══════════════════════════════════════════════════════════
-using System.Globalization;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Media;
 namespace IIoT.UI.Themes.Controls;
 
-// ── UserControl ────────────────────────────────────────────
-
+/// <summary>
+/// 7가지 테마를 카드 형태로 표시하고 런타임 즉시 전환하는 UserControl.
+/// </summary>
 public partial class ThemeSelectorPanel : UserControl
 {
     public ThemeSelectorPanel()
     {
         InitializeComponent();
-
-        // DataContext를 자동으로 ThemeSelectorViewModel로 설정
         DataContext = new ThemeSelectorViewModel();
-    }
-}
 
-// ══════════════════════════════════════════════════════════
-//  변환기 모음
-// ══════════════════════════════════════════════════════════
-
-/// <summary>#RRGGBB 문자열 → WPF Color 변환</summary>
-public sealed class HexToColorConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        if (value is string hex)
+        // ThemeSelectorViewModel은 정적 이벤트를 구독하므로
+        // UserControl 언로드 시 반드시 Dispose 호출
+        Unloaded += (_, _) =>
         {
-            try { return (Color)ColorConverter.ConvertFromString(hex); }
-            catch { }
-        }
-        return Colors.Gray;
+            if (DataContext is IDisposable d)
+                d.Dispose();
+        };
     }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>IsDark(bool) → 프리뷰 배경색 Color 변환</summary>
-public sealed class ThemePreviewBgConverter : IMultiValueConverter
-{
-    // 어두운 테마: #111520  /  밝은 테마: #EEF1F6
-    private static readonly Color DarkBg  = Color.FromRgb(0x11, 0x15, 0x20);
-    private static readonly Color LightBg = Color.FromRgb(0xEE, 0xF1, 0xF6);
-
-    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
-        => values.Length > 0 && values[0] is bool isDark
-            ? (isDark ? DarkBg : LightBg)
-            : DarkBg;
-
-    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-
-/// <summary>bool → Visibility 변환</summary>
-public sealed class BoolToVisibilityConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => value is true ? Visibility.Visible : Visibility.Collapsed;
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        => (Visibility)value == Visibility.Visible;
 }

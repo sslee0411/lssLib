@@ -1,5 +1,5 @@
 <!-- ══════════════════════════════════════════════════════════
-     IIoT.DeviceManager · Themes/Styles.Layout.xaml
+     IIoT.UI.Themes · Styles/Styles.Layout.xaml
      역할: 패널·카드·배지·서브탭·상태표시 레이아웃 스타일
      생성: 2025-05-16
      ══════════════════════════════════════════════════════════ -->
@@ -17,7 +17,6 @@
         <Setter Property="FontWeight"   Value="Bold"/>
         <Setter Property="FontFamily"   Value="{DynamicResource UiFont}"/>
         <Setter Property="Padding"      Value="14,9"/>
-        <Setter Property="TextTransform" Value="Uppercase"/>
     </Style>
 
     <!-- ════════════════════════════════════════════
