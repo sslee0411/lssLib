@@ -69,7 +69,7 @@ public abstract class SequenceStepBase : ISequenceStep
     public abstract string StepName { get; }
 
     /// <inheritdoc/>
-    public virtual TimeSpan Delay { get; init; } = TimeSpan.Zero;
+    public virtual TimeSpan Delay { get; set; } = TimeSpan.Zero;
 
     /// <summary>최대 재시도 횟수. 0=재시도 없음 (기본값).</summary>
     public virtual int MaxRetries { get; init; } = 0;

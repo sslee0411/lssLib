@@ -272,8 +272,7 @@ public sealed class DelayStep : SequenceStepBase
     // StepName 을 init 으로 설정하기 위해 내부 필드 사용
     internal string StepName_ { get; init; } = "Delay";
     public override string StepName => StepName_;
-    public override TimeSpan Delay { get; init; } = TimeSpan.Zero;
-
+    
     protected override Task<SequenceStepResult> ExecuteCoreAsync(
         ISequenceContext context, CancellationToken ct)
     {

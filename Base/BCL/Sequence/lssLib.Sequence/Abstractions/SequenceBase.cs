@@ -26,7 +26,7 @@ public sealed class SequenceGroup
     public StepExecutionMode ExecutionMode { get; init; } = StepExecutionMode.Sequential;
 
     /// <summary>이 그룹에 속한 스텝 목록.</summary>
-    public List<ISequenceStep> Steps { get; } = [];
+    public List<ISequenceStep> Steps { get; init; } = [];
 
     /// <inheritdoc/>
     public override string ToString()
