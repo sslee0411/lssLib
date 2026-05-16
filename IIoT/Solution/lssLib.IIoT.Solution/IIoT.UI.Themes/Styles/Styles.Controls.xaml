@@ -1,0 +1,247 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.DeviceManager · Themes/Styles.Controls.xaml
+     역할: 버튼·TextBox·ComboBox·CheckBox 공통 스타일 (Dark Navy 기준)
+           모든 스타일은 DynamicResource로 테마 색상을 참조한다.
+     생성: 2025-05-16
+     ══════════════════════════════════════════════════════════ -->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ════════════════════════════════════════════
+         §1 ─ 기본 버튼 (ToolbarBtn)
+    ════════════════════════════════════════════ -->
+    <Style x:Key="ToolbarBtn" TargetType="Button">
+        <Setter Property="Background"       Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Foreground"       Value="{DynamicResource Text2Brush}"/>
+        <Setter Property="BorderBrush"      Value="{DynamicResource Border2Brush}"/>
+        <Setter Property="BorderThickness"  Value="1"/>
+        <Setter Property="Padding"          Value="12,5"/>
+        <Setter Property="FontSize"         Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"       Value="{DynamicResource UiFont}"/>
+        <Setter Property="FontWeight"       Value="SemiBold"/>
+        <Setter Property="Cursor"           Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="root" Property="Background"
+                                    Value="{DynamicResource Border2Brush}"/>
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource TextBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="root" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="root" Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §2 ─ 주 액센트 버튼 (PrimaryBtn)
+    ════════════════════════════════════════════ -->
+    <Style x:Key="PrimaryBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
+        <Setter Property="Background"  Value="{DynamicResource AccBrush}"/>
+        <Setter Property="Foreground"  Value="White"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="root" Property="Opacity" Value="0.88"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="root" Property="Opacity" Value="0.75"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="root" Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §3 ─ 위험 버튼 (DangerBtn) — 롤백, 삭제
+    ════════════════════════════════════════════ -->
+    <Style x:Key="DangerBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
+        <Setter Property="Foreground"  Value="{DynamicResource RedBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource RedFaintBrush}"/>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §4 ─ 성공 버튼 (SuccessBtn) — 확인, 연결 테스트
+    ════════════════════════════════════════════ -->
+    <Style x:Key="SuccessBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
+        <Setter Property="Foreground"  Value="{DynamicResource GreenBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GreenFaintBrush}"/>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §5 ─ 적용 버튼 (ApplyBtn) — 속성 패널 하단
+    ════════════════════════════════════════════ -->
+    <Style x:Key="ApplyBtn" TargetType="Button">
+        <Setter Property="Background"      Value="{DynamicResource AccBrush}"/>
+        <Setter Property="Foreground"      Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding"         Value="0,8"/>
+        <Setter Property="FontSize"        Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontWeight"      Value="Bold"/>
+        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource UiFont}"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="root"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="root" Property="Opacity" Value="0.88"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="root" Property="Opacity" Value="0.75"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §6 ─ 트리 소형 버튼 (TreeBtn) — + 그룹, + 장비 등
+    ════════════════════════════════════════════ -->
+    <Style x:Key="TreeBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
+        <Setter Property="Padding"   Value="7,3"/>
+        <Setter Property="FontSize"  Value="{DynamicResource FontSm}"/>
+        <Setter Property="Margin"    Value="2,0"/>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §7 ─ TextBox (PropInput) — 속성 편집 패널
+    ════════════════════════════════════════════ -->
+    <Style x:Key="PropInput" TargetType="TextBox">
+        <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource Border2Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="7,5"/>
+        <Setter Property="FontSize"        Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource UiFont}"/>
+        <Setter Property="CaretBrush"      Value="{DynamicResource TextBrush}"/>
+        <Setter Property="SelectionBrush"  Value="{DynamicResource AccBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource RadiusSm}">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="root" Property="BorderBrush"
+                                    Value="{DynamicResource AccBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="root" Property="BorderBrush"
+                                    Value="{DynamicResource Border2Brush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Mono 폰트 TextBox (주소, 수식, 수치 전용) -->
+    <Style x:Key="MonoPropInput" TargetType="TextBox" BasedOn="{StaticResource PropInput}">
+        <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §8 ─ ComboBox (PropCombo)
+    ════════════════════════════════════════════ -->
+    <Style x:Key="PropCombo" TargetType="ComboBox">
+        <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush"     Value="{DynamicResource Border2Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding"         Value="7,5"/>
+        <Setter Property="FontSize"        Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"      Value="{DynamicResource UiFont}"/>
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Background"  Value="{DynamicResource CardBrush}"/>
+                    <Setter Property="Foreground"  Value="{DynamicResource TextBrush}"/>
+                    <Setter Property="Padding"     Value="8,5"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource Border2Brush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §9 ─ CheckBox
+    ════════════════════════════════════════════ -->
+    <Style x:Key="DarkCheckBox" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+        <Setter Property="FontSize"   Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §10 ─ 구분선
+    ════════════════════════════════════════════ -->
+    <Style x:Key="DividerLine" TargetType="Separator">
+        <Setter Property="Background"   Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="Height"       Value="1"/>
+        <Setter Property="Margin"       Value="0,10"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+</ResourceDictionary>
