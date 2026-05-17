@@ -61,15 +61,18 @@ public sealed partial class ThemeSelectorViewModel : ObservableObject, IDisposab
     [RelayCommand]
     private void NextTheme()
     {
-        var next = (ThemeKind)(((int)ThemeManager.Current + 1) % ThemeManager.AllThemes.Count);
+        var list  = ThemeManager.AllThemes;
+        var idx   = list.Select((t, i) => (t, i)).First(x => x.t.Kind == ThemeManager.Current).i;
+        var next  = list[(idx + 1) % list.Count].Kind;
         SelectTheme(Themes.First(t => t.Kind == next));
     }
 
     [RelayCommand]
     private void PrevTheme()
     {
-        var count = ThemeManager.AllThemes.Count;
-        var prev  = (ThemeKind)(((int)ThemeManager.Current - 1 + count) % count);
+        var list  = ThemeManager.AllThemes;
+        var idx   = list.Select((t, i) => (t, i)).First(x => x.t.Kind == ThemeManager.Current).i;
+        var prev  = list[(idx - 1 + list.Count) % list.Count].Kind;
         SelectTheme(Themes.First(t => t.Kind == prev));
     }
 

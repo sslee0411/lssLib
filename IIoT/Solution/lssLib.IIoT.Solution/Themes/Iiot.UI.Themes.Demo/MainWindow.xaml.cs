@@ -147,6 +147,7 @@ public partial class MainWindow : Window
     {
         LogoIcon.Text = theme switch
         {
+            ThemeKind.NoTheme       => "🖥",   // 시스템 기본
             ThemeKind.DarkNavy      => "⚡",   // 전기 / 우주 제어실
             ThemeKind.SteelLight    => "🏭",   // 공장 / 산업
             ThemeKind.NeonCyber     => "🔮",   // 사이버펑크 / 네온

@@ -1,4 +1,4 @@
-﻿// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  IIoT.UI.Themes · ThemeManager.cs
 //  역할: 런타임 WPF 테마 전환 관리자 (7가지 테마)
 //        기본 테마: DarkNavy
@@ -11,13 +11,14 @@ namespace IIoT.UI.Themes;
 /// <summary>사용 가능한 7가지 테마. 기본값: DarkNavy</summary>
 public enum ThemeKind
 {
-    DarkNavy = 0,  // ① 어두운 우주 제어실 (기본 확정)
-    SteelLight = 1,  // ② 밝고 정밀한 산업용
-    NeonCyber = 2,  // ③ 사이버펑크 네온 글로우
-    WarmAmber = 3,  // ④ 황금 앰버 아날로그
-    ArcticFrost = 4,  // ⑤ 북유럽 아이스 블루
+    NoTheme       = -1, // ⓪ 무적용 — Windows 시스템 기본 (비교용)
+    DarkNavy      = 0,  // ① 어두운 우주 제어실 (기본 확정)
+    SteelLight    = 1,  // ② 밝고 정밀한 산업용
+    NeonCyber     = 2,  // ③ 사이버펑크 네온 글로우
+    WarmAmber     = 3,  // ④ 황금 앰버 아날로그
+    ArcticFrost   = 4,  // ⑤ 북유럽 아이스 블루
     TerminalGreen = 5,  // ⑥ CRT 레트로 터미널
-    CarbonElite = 6,  // ⑦ 탄소섬유 골드 럭셔리
+    CarbonElite   = 6,  // ⑦ 탄소섬유 골드 럭셔리
 }
 
 /// <summary>테마 메타 정보 (UI 선택 화면 표시용)</summary>
@@ -37,13 +38,14 @@ public static class ThemeManager
     // §2 ─ 테마 URI 매핑 ─────────────────────────────────────
     private static readonly Dictionary<ThemeKind, string> ThemeUris = new()
     {
-        [ThemeKind.DarkNavy] = Pack("Themes/Theme.DarkNavy.xaml"),
-        [ThemeKind.SteelLight] = Pack("Themes/Theme.SteelLight.xaml"),
-        [ThemeKind.NeonCyber] = Pack("Themes/Theme.NeonCyber.xaml"),
-        [ThemeKind.WarmAmber] = Pack("Themes/Theme.WarmAmber.xaml"),
-        [ThemeKind.ArcticFrost] = Pack("Themes/Theme.ArcticFrost.xaml"),
+        [ThemeKind.NoTheme]       = Pack("Themes/Theme.NoTheme.xaml"),
+        [ThemeKind.DarkNavy]      = Pack("Themes/Theme.DarkNavy.xaml"),
+        [ThemeKind.SteelLight]    = Pack("Themes/Theme.SteelLight.xaml"),
+        [ThemeKind.NeonCyber]     = Pack("Themes/Theme.NeonCyber.xaml"),
+        [ThemeKind.WarmAmber]     = Pack("Themes/Theme.WarmAmber.xaml"),
+        [ThemeKind.ArcticFrost]   = Pack("Themes/Theme.ArcticFrost.xaml"),
         [ThemeKind.TerminalGreen] = Pack("Themes/Theme.TerminalGreen.xaml"),
-        [ThemeKind.CarbonElite] = Pack("Themes/Theme.CarbonElite.xaml"),
+        [ThemeKind.CarbonElite]   = Pack("Themes/Theme.CarbonElite.xaml"),
     };
 
     // §3 ─ 공유 스타일 URI ─────────────────────────────────────
@@ -57,6 +59,7 @@ public static class ThemeManager
     // §4 ─ 테마 메타 정보 ─────────────────────────────────────
     public static readonly IReadOnlyList<ThemeInfo> AllThemes =
     [
+        new(ThemeKind.NoTheme,       "No Theme",       "시스템 기본 (비교용)",             Color.FromRgb(0x00,0x78,0xD4), IsDark: false),
         new(ThemeKind.DarkNavy,      "Dark Navy",      "어두운 우주 제어실 (기본)",        Color.FromRgb(0x4F,0x7C,0xFF), IsDark: true),
         new(ThemeKind.SteelLight,    "Steel Light",    "밝고 정밀한 산업용 (기업 SaaS)",   Color.FromRgb(0x00,0x57,0xD8), IsDark: false),
         new(ThemeKind.NeonCyber,     "Neon Cyber",     "사이버펑크 네온 글로우",           Color.FromRgb(0x00,0xFF,0xA3), IsDark: true),

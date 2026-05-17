@@ -194,309 +194,82 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §8 ─ ComboBox (PropCombo) — 완전 ControlTemplate
-              7가지 테마 전체에서 호버/선택/포커스 색상이 뚜렷하게 보이도록
-              모든 상태(Normal/Hover/Focus/Open/Disabled)를 DynamicResource 기반으로 정의.
+         §8 ─ ComboBox (PropCombo)
+              ComboBoxItem 에 ControlTemplate 직접 정의:
+              SystemColors.HighlightBrush 를 완전히 우회하여
+              모든 테마에서 IsSelected/IsMouseOver 색상이 정확히 적용됨.
     ════════════════════════════════════════════ -->
     <Style x:Key="PropCombo" TargetType="ComboBox">
-        <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
-        <Setter Property="Foreground"      Value="{DynamicResource Text2Brush}"/>
-        <Setter Property="BorderBrush"     Value="{DynamicResource Border2Brush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding"         Value="7,5"/>
-        <Setter Property="FontSize"        Value="{DynamicResource FontBase}"/>
-        <Setter Property="FontFamily"      Value="{DynamicResource UiFont}"/>
-        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-        <Setter Property="ScrollViewer.VerticalScrollBarVisibility"   Value="Auto"/>
+        <Setter Property="Background"       Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Foreground"       Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush"      Value="{DynamicResource Border2Brush}"/>
+        <Setter Property="BorderThickness"  Value="1"/>
+        <Setter Property="Padding"          Value="7,5"/>
+        <Setter Property="FontSize"         Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"       Value="{DynamicResource UiFont}"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-
-        <!-- §8-1 ─ 드롭다운 아이템 스타일 ─────────────────────
-             호버: AccFaintBrush 배경 + AccBrush 텍스트
-             선택: AccBrush 배경 + 흰 텍스트
-             → Border2Brush 호버는 어두운 테마에서 거의 안 보임 (수정)
-        ───────────────────────────────────────────────────── -->
         <Setter Property="ItemContainerStyle">
             <Setter.Value>
                 <Style TargetType="ComboBoxItem">
-                    <Setter Property="Background"   Value="{DynamicResource CardBrush}"/>
-                    <Setter Property="Foreground"   Value="{DynamicResource TextBrush}"/>
-                    <Setter Property="Padding"      Value="8,7"/>
-                    <Setter Property="FontSize"     Value="{DynamicResource FontBase}"/>
-                    <Setter Property="FontFamily"   Value="{DynamicResource UiFont}"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <Setter Property="Background"        Value="{DynamicResource CardBrush}"/>
+                    <Setter Property="Foreground"        Value="{DynamicResource TextBrush}"/>
+                    <Setter Property="Padding"           Value="8,6"/>
+                    <Setter Property="FontSize"          Value="{DynamicResource FontBase}"/>
+                    <Setter Property="FontFamily"        Value="{DynamicResource UiFont}"/>
+                    <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
+                    <!--
+                        ★ ControlTemplate 직접 정의:
+                           기본 Template 은 SystemColors 를 직접 참조하므로
+                           Style.Triggers 의 Background/Foreground 가 무시됨.
+                           Border + ContentPresenter 구조로 완전히 대체하면
+                           SystemColors 와 무관하게 DynamicResource 색상이 적용됨.
+                    -->
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
-                                <Border x:Name="itemRoot"
+                                <Border x:Name="itemBorder"
                                         Background="{TemplateBinding Background}"
-                                        Padding="{TemplateBinding Padding}">
-                                    <!--
-                                        왼쪽 강조선 — 호버/선택 상태에서만 표시
-                                        모든 테마에서 AccBrush 로 뚜렷하게 식별
-                                    -->
-                                    <Border.BorderThickness>0,0,0,0</Border.BorderThickness>
-                                    <Grid>
-                                        <!-- 왼쪽 액센트 바 -->
-                                        <Border x:Name="accentBar"
-                                                Width="3"
-                                                Background="{DynamicResource AccBrush}"
-                                                HorizontalAlignment="Left"
-                                                Opacity="0"/>
-                                        <!-- 텍스트 (왼쪽 여백 6px 확보) -->
-                                        <ContentPresenter
-                                            Margin="6,0,0,0"
-                                            TextBlock.Foreground="{TemplateBinding Foreground}"
-                                            TextBlock.FontSize="{TemplateBinding FontSize}"
-                                            TextBlock.FontFamily="{TemplateBinding FontFamily}"
-                                            VerticalAlignment="Center"/>
-                                    </Grid>
+                                        Padding="{TemplateBinding Padding}"
+                                        BorderThickness="0">
+                                    <ContentPresenter
+                                        VerticalAlignment="Center"
+                                        TextBlock.Foreground="{TemplateBinding Foreground}"
+                                        TextBlock.FontSize="{TemplateBinding FontSize}"
+                                        TextBlock.FontFamily="{TemplateBinding FontFamily}"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
-                                    <!--
-                                        아이템 상태 색상 원칙:
-                                        모든 테마에서 이미 정의된 색상만 사용.
-                                        Hover   → AccFaintBrush 배경 / Text2Brush 텍스트 / AccBrush 왼쪽 바
-                                        Selected→ AccBrush 배경     / White 텍스트
-                                        Sel+Hov → AccBrush 배경     / White 텍스트 (변화 없이 유지)
-                                    -->
-
-                                    <!-- 호버: 연한 액센트 배경 + 보조 텍스트 색상 (부드러운 강조) -->
+                                    <!-- 호버: AccFaintBrush 배경 + AccBrush 텍스트 -->
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="itemRoot"  Property="Background"
+                                        <Setter TargetName="itemBorder" Property="Background"
                                                 Value="{DynamicResource AccFaintBrush}"/>
                                         <Setter Property="Foreground"
-                                                Value="{DynamicResource Text2Brush}"/>
-                                        <Setter TargetName="accentBar" Property="Opacity" Value="1"/>
+                                                Value="{DynamicResource AccBrush}"/>
                                     </Trigger>
-
                                     <!-- 선택됨: AccBrush 배경 + 흰 텍스트 -->
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="itemRoot"  Property="Background"
+                                        <Setter TargetName="itemBorder" Property="Background"
                                                 Value="{DynamicResource AccBrush}"/>
-                                        <Setter Property="Foreground"  Value="White"/>
-                                        <Setter TargetName="accentBar" Property="Opacity" Value="0"/>
+                                        <Setter Property="Foreground" Value="White"/>
                                     </Trigger>
-
-                                    <!-- 선택 + 호버: 선택 상태 유지 (색상 변화 없음) -->
+                                    <!-- 선택 + 호버: 선택 상태 유지 -->
                                     <MultiTrigger>
                                         <MultiTrigger.Conditions>
                                             <Condition Property="IsSelected"  Value="True"/>
                                             <Condition Property="IsMouseOver" Value="True"/>
                                         </MultiTrigger.Conditions>
-                                        <Setter TargetName="itemRoot"  Property="Background"
+                                        <Setter TargetName="itemBorder" Property="Background"
                                                 Value="{DynamicResource AccBrush}"/>
-                                        <Setter Property="Foreground"  Value="White"/>
-                                        <Setter TargetName="accentBar" Property="Opacity" Value="0"/>
+                                        <Setter Property="Foreground" Value="White"/>
                                     </MultiTrigger>
+                                    <!-- 비활성 -->
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="itemBorder" Property="Opacity" Value="0.4"/>
+                                    </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
                 </Style>
-            </Setter.Value>
-        </Setter>
-
-        <!-- §8-2 ─ ComboBox 본체 ControlTemplate ────────────
-             상태별 색상 정의 (테마 고유 색상만 사용):
-             Normal  : CardBrush 배경   / Border2Brush 테두리 / Text3Brush 화살표
-             Hover   : AccFaintBrush 배경 / AccBrush 테두리    / Text2Brush 화살표
-             Focus   : CardBrush 배경   / AccBrush 테두리    / Text2Brush 화살표
-             Open    : AccFaintBrush 배경 / AccBrush 테두리    / AccBrush 화살표(▲)
-             Disabled: 전체 Opacity 0.4
-        ───────────────────────────────────────────────────── -->
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ComboBox">
-                    <Grid>
-                        <!-- 본체 테두리 레이어 -->
-                        <Border x:Name="comboRoot"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{DynamicResource RadiusSm}"/>
-
-                        <!-- 콘텐츠 레이어 (comboRoot 위에 겹침) -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="28"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!--
-                                SelectionBoxItem 표시 영역.
-                                x:Name="selectionArea" 로 트리거에서 배경 직접 제어.
-                                Normal   : CardBrush  (comboRoot 와 동일)
-                                Hover    : AccFaintBrush (테마 액센트 연배경)
-                                Open     : AccFaintBrush
-                            -->
-                            <!--
-                                ★ ContentPresenter → ContentControl 교체
-                                   ContentPresenter: Background/Foreground = inherited value
-                                     → WPF SystemColors.HighlightBrush 가 항상 우선 적용
-                                   ContentControl: Background/Foreground = local value
-                                     → local 값이 시스템 색상보다 항상 우선 → 완전 차단
-                            -->
-                            <ContentControl
-                                Grid.Column="0"
-                                x:Name="contentPresenter"
-                                Content="{TemplateBinding SelectionBoxItem}"
-                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                Margin="{TemplateBinding Padding}"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Left"
-                                Foreground="{TemplateBinding Foreground}"
-                                Background="{DynamicResource CardBrush}"
-                                FontSize="{TemplateBinding FontSize}"
-                                FontFamily="{TemplateBinding FontFamily}"
-                                BorderThickness="0"
-                                Padding="0"
-                                IsTabStop="False"
-                                Focusable="False"/>
-
-                            <!-- 화살표 (아래 ▼) -->
-                            <Path Grid.Column="1"
-                                  x:Name="arrow"
-                                  Data="M 0 0 L 5 5 L 10 0 Z"
-                                  Fill="{DynamicResource Text3Brush}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Width="10" Height="6"
-                                  Stretch="Fill"/>
-
-                            <!-- 클릭 영역 — x:Name="dropToggle" 으로 IsPressed 트리거 참조 -->
-                            <ToggleButton
-                                Grid.ColumnSpan="2"
-                                x:Name="dropToggle"
-                                IsChecked="{Binding IsDropDownOpen,
-                                    RelativeSource={RelativeSource TemplatedParent},
-                                    Mode=TwoWay}"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Focusable="False"/>
-                        </Grid>
-
-                        <!-- 드롭다운 팝업 -->
-                        <Popup x:Name="PART_Popup"
-                               IsOpen="{TemplateBinding IsDropDownOpen}"
-                               Placement="Bottom"
-                               AllowsTransparency="True"
-                               Focusable="False"
-                               PopupAnimation="Slide"
-                               MinWidth="{TemplateBinding ActualWidth}">
-                            <Border x:Name="popupBorder"
-                                    Background="{DynamicResource CardBrush}"
-                                    BorderBrush="{DynamicResource AccBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="{DynamicResource RadiusSm}"
-                                    MaxHeight="240"
-                                    Margin="0,2,0,0">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="12"
-                                                      ShadowDepth="4"
-                                                      Opacity="0.25"
-                                                      Direction="270"
-                                                      Color="#000000"/>
-                                </Border.Effect>
-                                <ScrollViewer Padding="0,4">
-                                    <ItemsPresenter/>
-                                </ScrollViewer>
-                            </Border>
-                        </Popup>
-                    </Grid>
-
-                    <ControlTemplate.Triggers>
-                        <!--
-                            ★ 색상 조화 원칙:
-                              모든 상태에서 해당 테마에 이미 정의된 색상만 사용한다.
-                              외부 색상(Acc2Brush, Border2Brush)은 테마별로 이질감이 생기므로
-                              AccFaintBrush(연한 액센트 배경) + AccBrush(메인 테두리)만 사용.
-
-                              Normal  → CardBrush 배경 / Border2Brush 테두리 / Text3Brush 화살표
-                              Hover   → AccFaintBrush 배경 / AccBrush 테두리  / Text2Brush 화살표
-                              Focus   → CardBrush 배경  / AccBrush 테두리  / Text2Brush 화살표
-                              Open    → AccFaintBrush 배경 / AccBrush 테두리  / AccBrush 화살표(▲)
-                              Disabled→ Opacity 0.4
-                        -->
-
-                        <!--
-                            Hover 상태: ToolbarBtn 과 동일한 Border2Brush 배경 사용.
-                            텍스트: AccBrush → 모든 테마에서 배경 대비 명확하게 구분됨.
-                            화살표: AccBrush → 텍스트와 통일감.
-                        -->
-                        <!--
-                            마우스 호버:
-                            ─ comboRoot/selectionArea : AccFaintBrush 배경 + AccBrush 테두리
-                            ─ 텍스트 : AccBrush (테마 고유 강조색)
-                            ─ 화살표 : AccBrush
-                        -->
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="comboRoot"        Property="Background"
-                                    Value="{DynamicResource AccFaintBrush}"/>
-                            <Setter TargetName="comboRoot"        Property="BorderBrush"
-                                    Value="{DynamicResource AccBrush}"/>
-                            <!-- ContentControl: Background/Foreground 직접 제어 (local value) -->
-                            <Setter TargetName="contentPresenter" Property="Background"
-                                    Value="{DynamicResource AccFaintBrush}"/>
-                            <Setter TargetName="contentPresenter" Property="Foreground"
-                                    Value="{DynamicResource AccBrush}"/>
-                            <Setter TargetName="arrow"            Property="Fill"
-                                    Value="{DynamicResource AccBrush}"/>
-                        </Trigger>
-
-                        <!-- 키보드 포커스: 테두리 + contentPresenter Foreground 강조 -->
-                        <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="comboRoot"        Property="BorderBrush"
-                                    Value="{DynamicResource AccBrush}"/>
-                            <Setter TargetName="contentPresenter" Property="Foreground"
-                                    Value="{DynamicResource TextBrush}"/>
-                            <Setter TargetName="contentPresenter" Property="Background"
-                                    Value="{DynamicResource CardBrush}"/>
-                            <Setter TargetName="arrow"            Property="Fill"
-                                    Value="{DynamicResource Text2Brush}"/>
-                        </Trigger>
-
-                        <!--
-                            드롭다운 열림 (IsDropDownOpen=True):
-                            ─ comboRoot     : AccFaintBrush 배경 + AccBrush 테두리
-                            ─ selectionArea : AccFaintBrush 배경 + AccBrush 테두리
-                              (SystemColors.HighlightBrush 도 테마별 AccFaintBrush 계열로
-                               재정의되어 있으므로 두 레이어가 통일됨)
-                            ─ 텍스트        : TextBrush (선명하게 보임)
-                            ─ 화살표        : AccBrush + ▲ 방향 반전
-                        -->
-                        <Trigger Property="IsDropDownOpen" Value="True">
-                            <Setter TargetName="comboRoot"        Property="Background"
-                                    Value="{DynamicResource AccFaintBrush}"/>
-                            <Setter TargetName="comboRoot"        Property="BorderBrush"
-                                    Value="{DynamicResource AccBrush}"/>
-                            <!-- ContentControl: 팝업 열림 시 AccFaintBrush 배경 + TextBrush 텍스트 -->
-                            <Setter TargetName="contentPresenter" Property="Background"
-                                    Value="{DynamicResource AccFaintBrush}"/>
-                            <Setter TargetName="contentPresenter" Property="Foreground"
-                                    Value="{DynamicResource TextBrush}"/>
-                            <Setter TargetName="arrow"            Property="Data"
-                                    Value="M 0 5 L 5 0 L 10 5 Z"/>
-                            <Setter TargetName="arrow"            Property="Fill"
-                                    Value="{DynamicResource AccBrush}"/>
-                        </Trigger>
-
-                        <!--
-                            ComboBox 는 ButtonBase 가 아니므로 IsPressed 속성 없음.
-                            클릭 피드백은 IsDropDownOpen=True 상태(열림)가 이미 담당.
-                            ToggleButton(클릭 영역) 의 IsChecked 로 Opacity 피드백만 추가.
-                        -->
-                        <Trigger SourceName="dropToggle" Property="IsPressed" Value="True">
-                            <Setter TargetName="comboRoot"     Property="Opacity" Value="0.80"/>
-                        </Trigger>
-
-                        <!-- 비활성 -->
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="comboRoot" Property="Opacity" Value="0.4"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
