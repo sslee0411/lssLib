@@ -169,4 +169,17 @@
     <sys:Double x:Key="FontXl">18</sys:Double>
     <sys:Double x:Key="FontData">22</sys:Double>  <!-- 수치 표시 전용 -->
 
+
+    <!--
+        ★ ComboBox SelectionBoxItem 하이라이트 색상 (테마 고유)
+           WPF 가 ComboBox 포커스/열림 시 자동 적용하는 SystemColors.HighlightBrush 를
+           이 테마 고유 색상으로 재정의한다.
+           HighlightBrush     : AccFaintBrush 계열 — 배경색
+           HighlightTextBrush : 이 테마의 주 텍스트색 — 글자가 보이도록 유지
+    -->
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                     Color="#1A4F7CFF"/>
+    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                     Color="#E2E8F0"/>
+
 </ResourceDictionary>
