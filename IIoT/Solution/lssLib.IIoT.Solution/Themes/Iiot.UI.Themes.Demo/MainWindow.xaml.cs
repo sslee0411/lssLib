@@ -1,10 +1,18 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.UI.Themes.Demo · MainWindow.xaml.cs
 //  역할: 테마 데모 메인 윈도우 코드비하인드
-//        - 탭 전환 (5개 섹션)
+//        - 탭 전환 (6개 섹션)
 //        - 테마 이전/다음 버튼 + 단축키 (Ctrl+T / Ctrl+Shift+T)
 //        - 테마 변경 이벤트 → 상태바 갱신
 //  생성: 2025-05-16
+//  수정: 2025-05-17 v1.4
+//    FIX §4 OnNextTheme / OnPrevTheme
+//      원인: ThemeKind.NoTheme = -1 이고 enum 최댓값 = 6(CarbonElite).
+//            기존 코드: (ThemeKind)(((int)Current + 1) % Count)
+//              Count = 8, Current = CarbonElite(6) 이면 (6+1)%8 = 7
+//              → (ThemeKind)7 은 정의되지 않은 값 → ArgumentOutOfRangeException
+//      해결: ThemeManager.AllThemes 리스트 인덱스 기반 순환으로 교체
+//            (ThemeSelectorViewModel.NextTheme 과 동일한 방식)
 // ══════════════════════════════════════════════════════════
 using System.Windows;
 using System.Windows.Controls;
@@ -81,17 +89,34 @@ public partial class MainWindow : Window
     }
 
     // §4 ─ 테마 전환 버튼 ─────────────────────────────────────
+    //
+    // ★ FIX v1.4: enum 값 산술 → AllThemes 리스트 인덱스 기반 순환
+    //
+    //   [기존 코드의 문제]
+    //   var next = (ThemeKind)(((int)ThemeManager.Current + 1) % ThemeManager.AllThemes.Count);
+    //     · NoTheme=-1, DarkNavy=0 … CarbonElite=6 (값이 연속하지 않음 — 0부터 시작 X)
+    //     · AllThemes.Count = 8
+    //     · CarbonElite(6) 에서 다음: (6+1)%8 = 7 → (ThemeKind)7 = 정의 없음
+    //     → ThemeUris.TryGetValue 실패 → ArgumentOutOfRangeException
+    //
+    //   [해결] ThemeManager.AllThemes 리스트의 인덱스로 순환
+    //     · 리스트 인덱스 0~7 을 모듈러로 순환 → 항상 유효한 ThemeKind 반환
 
     private void OnNextTheme(object sender, RoutedEventArgs e)
     {
-        var next = (ThemeKind)(((int)ThemeManager.Current + 1) % ThemeManager.AllThemes.Count);
+        var list = ThemeManager.AllThemes;
+        var idx  = list.Select((t, i) => (t, i))
+                       .FirstOrDefault(x => x.t.Kind == ThemeManager.Current).i;
+        var next = list[(idx + 1) % list.Count].Kind;
         ThemeManager.Apply(next);
     }
 
     private void OnPrevTheme(object sender, RoutedEventArgs e)
     {
-        var count = ThemeManager.AllThemes.Count;
-        var prev  = (ThemeKind)(((int)ThemeManager.Current - 1 + count) % count);
+        var list = ThemeManager.AllThemes;
+        var idx  = list.Select((t, i) => (t, i))
+                       .FirstOrDefault(x => x.t.Kind == ThemeManager.Current).i;
+        var prev = list[(idx - 1 + list.Count) % list.Count].Kind;
         ThemeManager.Apply(prev);
     }
 
@@ -114,7 +139,7 @@ public partial class MainWindow : Window
             OnPrevTheme(this, new RoutedEventArgs());
             e.Handled = true;
         }
-        // 숫자 1~5 → 탭 전환
+        // 숫자 1~6 → 탭 전환
         else if (e.Key >= Key.D1 && e.Key <= Key.D6 &&
                  Keyboard.Modifiers == ModifierKeys.None)
         {

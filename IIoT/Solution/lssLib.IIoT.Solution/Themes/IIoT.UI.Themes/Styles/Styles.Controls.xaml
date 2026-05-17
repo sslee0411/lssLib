@@ -3,6 +3,14 @@
      역할: 버튼·TextBox·ComboBox·CheckBox 공통 스타일 (Dark Navy 기준)
            모든 스타일은 DynamicResource로 테마 색상을 참조한다.
      생성: 2025-05-16
+     수정: 2025-05-17 v1.4
+       FIX §8 PropCombo — Full ControlTemplate 완전 교체
+         · PART_ToggleButton: 전체 클릭 영역 + 드롭다운 화살표 (테마별 변색)
+         · ContentPresenter: 선택 항목 텍스트
+           TextBlock.Foreground 첨부 속성 → 모든 테마에서 TextBrush 적용
+           (기존 기본 WPF 템플릿은 SystemColors.WindowTextBrush 고정 → 다크 테마 불가)
+         · PART_Popup: 드롭다운 팝업 (AccBrush 테두리, PopupAnimation=Fade)
+         · ItemContainerStyle.ControlTemplate: SystemColors.HighlightBrush 완전 우회
      ══════════════════════════════════════════════════════════ -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -195,19 +203,160 @@
 
     <!-- ════════════════════════════════════════════
          §8 ─ ComboBox (PropCombo)
-              ComboBoxItem 에 ControlTemplate 직접 정의:
-              SystemColors.HighlightBrush 를 완전히 우회하여
-              모든 테마에서 IsSelected/IsMouseOver 색상이 정확히 적용됨.
+              ★ v1.4 대대적 교체 — Full ControlTemplate 완전 정의:
+
+              [문제 원인]
+              기본 WPF ComboBox 템플릿은 선택된 항목(닫힌 상태)을
+              SystemColors.WindowTextBrush / SystemColors.WindowBrush 로 렌더링.
+              다크 테마에서 배경=어두운색, 글자=검정 → 글자 안 보임.
+
+              [해결 방법]
+              ① PART_ToggleButton : 전체 클릭 영역 + 드롭다운 화살표 구현
+                 (닫힘/열림/호버 상태별 테마 색상 적용)
+              ② ContentPresenter  : 선택 항목 텍스트 오버레이
+                 TextBlock.Foreground 첨부 속성으로 TextBrush 강제 상속
+                 → WPF 의 시스템 색상 개입 원천 차단
+              ③ PART_Popup        : 드롭다운 팝업
+                 AccBrush 테두리, PopupAnimation=Fade, 최대 200px 스크롤
+              ④ ItemContainerStyle.ControlTemplate:
+                 SystemColors.HighlightBrush 완전 우회 (변경 전과 동일)
     ════════════════════════════════════════════ -->
     <Style x:Key="PropCombo" TargetType="ComboBox">
         <Setter Property="Background"       Value="{DynamicResource CardBrush}"/>
         <Setter Property="Foreground"       Value="{DynamicResource TextBrush}"/>
         <Setter Property="BorderBrush"      Value="{DynamicResource Border2Brush}"/>
         <Setter Property="BorderThickness"  Value="1"/>
-        <Setter Property="Padding"          Value="7,5"/>
+        <Setter Property="Padding"          Value="8,5"/>
         <Setter Property="FontSize"         Value="{DynamicResource FontBase}"/>
         <Setter Property="FontFamily"       Value="{DynamicResource UiFont}"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid x:Name="templateRoot" SnapsToDevicePixels="True">
+
+                        <!-- ① PART_ToggleButton ─────────────────────────────────
+                             전체 영역을 클릭 가능하게 덮음 → 드롭다운 열기/닫기
+                             Border 안에 드롭다운 화살표 Path 배치
+                        ──────────────────────────────────────────────────────── -->
+                        <ToggleButton x:Name="PART_ToggleButton"
+                                      Focusable="False"
+                                      ClickMode="Press"
+                                      IsChecked="{Binding IsDropDownOpen,
+                                                  RelativeSource={RelativeSource TemplatedParent},
+                                                  Mode=TwoWay}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="tgBorder"
+                                            Background="{DynamicResource CardBrush}"
+                                            BorderBrush="{DynamicResource Border2Brush}"
+                                            BorderThickness="1"
+                                            CornerRadius="{DynamicResource RadiusSm}">
+                                        <!-- 드롭다운 화살표 (오른쪽 정렬) -->
+                                        <Path x:Name="arrow"
+                                              Data="M 0 0 L 4 4 L 8 0 Z"
+                                              Fill="{DynamicResource Text3Brush}"
+                                              Width="8" Height="4"
+                                              Stretch="Fill"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,8,0"
+                                              IsHitTestVisible="False"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <!-- 호버: 배경 약간 밝아짐 + 화살표 밝아짐 -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="tgBorder" Property="Background"
+                                                    Value="{DynamicResource Border2Brush}"/>
+                                            <Setter TargetName="tgBorder" Property="BorderBrush"
+                                                    Value="{DynamicResource Border2Brush}"/>
+                                            <Setter TargetName="arrow" Property="Fill"
+                                                    Value="{DynamicResource Text2Brush}"/>
+                                        </Trigger>
+                                        <!-- 드롭다운 열림: AccBrush 테두리 + 화살표 변색 -->
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="tgBorder" Property="BorderBrush"
+                                                    Value="{DynamicResource AccBrush}"/>
+                                            <Setter TargetName="arrow" Property="Fill"
+                                                    Value="{DynamicResource AccBrush}"/>
+                                        </Trigger>
+                                        <!-- 비활성: 반투명 -->
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="tgBorder" Property="Opacity" Value="0.4"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <!-- ② 선택 항목 ContentPresenter ──────────────────────
+                             PART_ToggleButton 위에 오버레이 (IsHitTestVisible=False)
+                             ★ TextBlock.Foreground 첨부 속성:
+                               WPF 상속 메커니즘으로 내부 TextBlock에 색상 전달
+                               → SystemColors 개입 없이 항상 TextBrush 적용
+                        ──────────────────────────────────────────────────────── -->
+                        <ContentPresenter x:Name="contentSite"
+                                          Margin="8,4,28,4"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Left"
+                                          IsHitTestVisible="False"
+                                          TextBlock.Foreground="{DynamicResource TextBrush}"
+                                          TextBlock.FontFamily="{DynamicResource UiFont}"
+                                          TextBlock.FontSize="{DynamicResource FontBase}"/>
+
+                        <!-- ③ PART_Popup ─────────────────────────────────────
+                             AllowsTransparency=True → CornerRadius 클리핑 정상 표시
+                             PlacementTarget=templateRoot → 콤보박스 너비로 정렬
+                             MinWidth: ElementName 바인딩으로 콤보박스 너비 동기화
+                        ──────────────────────────────────────────────────────── -->
+                        <Popup x:Name="PART_Popup"
+                               AllowsTransparency="True"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               Placement="Bottom"
+                               PlacementTarget="{Binding ElementName=templateRoot}"
+                               PopupAnimation="Fade"
+                               Focusable="False">
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource AccBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RadiusSm}"
+                                    MinWidth="{Binding ActualWidth, ElementName=templateRoot}">
+                                <ScrollViewer MaxHeight="200"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsPresenter
+                                        KeyboardNavigation.DirectionalNavigation="Contained"
+                                        SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- 비활성 전체: Opacity 감소 -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                        <!-- 그룹핑 시 가상화 스크롤 해제 -->
+                        <Trigger Property="IsGrouping" Value="True">
+                            <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <!--
+            ItemContainerStyle:
+            ★ ControlTemplate 직접 정의 — SystemColors 완전 우회
+            ★ TextBlock.Foreground 첨부 속성 → 항목 텍스트 DynamicResource 적용
+            호버: AccFaintBrush 배경 + AccBrush 텍스트
+            선택: AccBrush 배경 + 흰 텍스트
+        -->
         <Setter Property="ItemContainerStyle">
             <Setter.Value>
                 <Style TargetType="ComboBoxItem">
@@ -217,13 +366,6 @@
                     <Setter Property="FontSize"          Value="{DynamicResource FontBase}"/>
                     <Setter Property="FontFamily"        Value="{DynamicResource UiFont}"/>
                     <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
-                    <!--
-                        ★ ControlTemplate 직접 정의:
-                           기본 Template 은 SystemColors 를 직접 참조하므로
-                           Style.Triggers 의 Background/Foreground 가 무시됨.
-                           Border + ContentPresenter 구조로 완전히 대체하면
-                           SystemColors 와 무관하게 DynamicResource 색상이 적용됨.
-                    -->
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
