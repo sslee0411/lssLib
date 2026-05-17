@@ -1,7 +1,14 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.UI.Themes.Demo · MainWindow.xaml
-     역할: 7가지 테마 + 전체 컴포넌트 라이브 데모
-     생성: 2025-05-16
+     역할: 8가지 테마 + 전체 컴포넌트 라이브 데모
+     수정: 2025-05-17 v1.5
+       · 헤더 ◀▶ 버튼 → ThemePickerButton 단일 교체
+       · Tab7 "피커 버튼" 추가
+     FIX: 2025-05-17
+       · 혼합 콘텐츠 TextBlock 오류 수정 (원시 텍스트 + Run + LineBreak 혼용)
+         → 모든 코드 스니펫을 StackPanel + 개별 TextBlock 으로 교체
+         WPF BAML 컴파일러는 Run/LineBreak 와 원시 텍스트 노드 혼용 시
+         MC3501 / XLS0403 오류 발생 가능
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.UI.Themes.Demo.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,20 +22,21 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>   <!-- 상단 헤더 -->
-            <RowDefinition Height="*"/>      <!-- 메인 콘텐츠 -->
-            <RowDefinition Height="Auto"/>   <!-- 상태바 -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ══ 상단 헤더 바 ══════════════════════════════════ -->
+        <!-- ══ 상단 헤더 바 ══════════════════════════════════════════ -->
         <Border Grid.Row="0"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel Margin="16,8">
 
-                <!-- 로고 — 아이콘 색상을 AccBrush 에 연결하여 테마 전환 시 함께 변경 -->
-                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal"
+                <!-- 로고 (좌측) -->
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <Border Width="36" Height="36"
                             Background="{DynamicResource AccFaintBrush}"
@@ -46,166 +54,107 @@
                         <TextBlock Text="IIoT.UI.Themes"
                                    FontSize="14" FontWeight="Bold"
                                    Foreground="{DynamicResource AccBrush}"/>
-                        <TextBlock Text="테마 컴포넌트 데모"
+                        <TextBlock Text="테마 컴포넌트 데모 v1.5"
                                    FontSize="10"
                                    Foreground="{DynamicResource Text3Brush}"/>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- 현재 테마 표시 -->
-                <StackPanel DockPanel.Dock="Right"
-                            Orientation="Horizontal" VerticalAlignment="Center"
-                            Margin="0,0,8,0">
-                    <TextBlock Text="현재 테마: "
-                               FontSize="11"
-                               Foreground="{DynamicResource Text3Brush}"
-                               VerticalAlignment="Center"/>
-                    <TextBlock x:Name="CurrentThemeName"
-                               FontSize="11" FontWeight="Bold"
-                               Foreground="{DynamicResource AccBrush}"
-                               VerticalAlignment="Center"
-                               Margin="4,0,16,0"/>
-                    <Button Content="◀"
-                            Style="{DynamicResource ToolbarBtn}"
-                            Click="OnPrevTheme"
-                            Padding="6,4" Margin="0,0,3,0"
-                            ToolTip="이전 테마 (Ctrl+Shift+T)"/>
-                    <Button Content="▶"
-                            Style="{DynamicResource ToolbarBtn}"
-                            Click="OnNextTheme"
-                            Padding="6,4"
-                            ToolTip="다음 테마 (Ctrl+T)"/>
-                </StackPanel>
+                <!-- ★ v1.5: ThemePickerButton (우측) — 기존 ◀▶ 버튼 대체 -->
+                <uc:ThemePickerButton DockPanel.Dock="Right"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,4,0"/>
 
-                <!-- 탭 네비게이션 -->
+                <!-- 탭 네비게이션 (가운데) -->
                 <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center">
                     <Button x:Name="Tab1Btn" Content="🎨  테마 선택"
                             Style="{DynamicResource ToolbarBtn}"
-                            Click="OnTabClick" Tag="1"
-                            Margin="2,0"/>
+                            Click="OnTabClick" Tag="1" Margin="2,0"/>
                     <Button x:Name="Tab2Btn" Content="🔘  버튼 &amp; 입력"
                             Style="{DynamicResource ToolbarBtn}"
-                            Click="OnTabClick" Tag="2"
-                            Margin="2,0"/>
+                            Click="OnTabClick" Tag="2" Margin="2,0"/>
                     <Button x:Name="Tab3Btn" Content="🃏  카드 &amp; 배지"
                             Style="{DynamicResource ToolbarBtn}"
-                            Click="OnTabClick" Tag="3"
-                            Margin="2,0"/>
+                            Click="OnTabClick" Tag="3" Margin="2,0"/>
                     <Button x:Name="Tab4Btn" Content="🌲  트리 &amp; 목록"
                             Style="{DynamicResource ToolbarBtn}"
-                            Click="OnTabClick" Tag="4"
-                            Margin="2,0"/>
+                            Click="OnTabClick" Tag="4" Margin="2,0"/>
                     <Button x:Name="Tab5Btn" Content="⚙  속성 패널"
                             Style="{DynamicResource ToolbarBtn}"
-                            Click="OnTabClick" Tag="5"
-                            Margin="2,0"/>
+                            Click="OnTabClick" Tag="5" Margin="2,0"/>
                     <Button x:Name="Tab6Btn" Content="📋  데이터 그리드"
                             Style="{DynamicResource ToolbarBtn}"
-                            Click="OnTabClick" Tag="6"
-                            Margin="2,0"/>
+                            Click="OnTabClick" Tag="6" Margin="2,0"/>
+                    <Button x:Name="Tab7Btn" Content="🎛  피커 버튼"
+                            Style="{DynamicResource ToolbarBtn}"
+                            Click="OnTabClick" Tag="7" Margin="2,0"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- ══ 메인 콘텐츠 ══════════════════════════════════ -->
+        <!-- ══ 메인 콘텐츠 ══════════════════════════════════════════ -->
         <Grid Grid.Row="1">
 
             <!-- ① 테마 선택 탭 -->
             <ScrollViewer x:Name="Tab1" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="24">
-
                     <TextBlock Text="테마 선택"
                                Style="{DynamicResource CardTitle}"
                                FontSize="16" Margin="0,0,0,4"/>
-                    <TextBlock Text="카드를 클릭하면 즉시 전환됩니다. ▶ ◀ 버튼 또는 Ctrl+T / Ctrl+Shift+T 로도 순환 전환 가능합니다."
+                    <TextBlock Text="카드를 클릭하면 즉시 전환됩니다. 헤더의 ThemePickerButton 또는 Ctrl+T / Ctrl+Shift+T 로도 순환 가능합니다."
                                Foreground="{DynamicResource Text2Brush}"
                                FontSize="12" Margin="0,0,0,20"/>
-
-                    <!-- ThemeSelectorPanel UserControl -->
                     <Border Style="{DynamicResource Card}" Padding="0">
                         <uc:ThemeSelectorPanel/>
                     </Border>
-
-                    <!-- 색상 팔레트 -->
                     <TextBlock Text="현재 테마 색상 팔레트"
                                Style="{DynamicResource CardTitle}"
                                FontSize="14" Margin="0,28,0,12"/>
                     <Border Style="{DynamicResource Card}">
                         <UniformGrid Columns="7" Rows="2">
-                            <!-- Row 1: Brush 샘플 -->
-                            <Border x:Name="swatch_bg" Height="60" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource BgBrush}" ToolTip="BgBrush">
-                                <TextBlock Text="Bg" FontSize="9" Foreground="{DynamicResource TextBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            <Border Height="60" CornerRadius="4" Margin="3" Background="{DynamicResource BgBrush}"      ToolTip="BgBrush">
+                                <TextBlock Text="Bg"      FontSize="9" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
                             </Border>
-                            <Border Height="60" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource SurfaceBrush}" ToolTip="SurfaceBrush">
-                                <TextBlock Text="Surface" FontSize="9" Foreground="{DynamicResource TextBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            <Border Height="60" CornerRadius="4" Margin="3" Background="{DynamicResource SurfaceBrush}" ToolTip="SurfaceBrush">
+                                <TextBlock Text="Surface" FontSize="9" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
                             </Border>
-                            <Border Height="60" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource CardBrush}" ToolTip="CardBrush">
-                                <TextBlock Text="Card" FontSize="9" Foreground="{DynamicResource TextBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            <Border Height="60" CornerRadius="4" Margin="3" Background="{DynamicResource CardBrush}"    ToolTip="CardBrush">
+                                <TextBlock Text="Card"    FontSize="9" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
                             </Border>
-                            <Border Height="60" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource AccBrush}" ToolTip="AccBrush">
-                                <TextBlock Text="Accent" FontSize="9" Foreground="White"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            <Border Height="60" CornerRadius="4" Margin="3" Background="{DynamicResource AccBrush}"     ToolTip="AccBrush">
+                                <TextBlock Text="Accent"  FontSize="9" Foreground="White"                       HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
                             </Border>
-                            <Border Height="60" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource GreenBrush}" ToolTip="GreenBrush">
-                                <TextBlock Text="Green" FontSize="9" Foreground="White"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            <Border Height="60" CornerRadius="4" Margin="3" Background="{DynamicResource GreenBrush}"   ToolTip="GreenBrush">
+                                <TextBlock Text="Green"   FontSize="9" Foreground="White"                       HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
                             </Border>
-                            <Border Height="60" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource YellowBrush}" ToolTip="YellowBrush">
-                                <TextBlock Text="Yellow" FontSize="9" Foreground="#333"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            <Border Height="60" CornerRadius="4" Margin="3" Background="{DynamicResource YellowBrush}"  ToolTip="YellowBrush">
+                                <TextBlock Text="Yellow"  FontSize="9" Foreground="#333"                        HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
                             </Border>
-                            <Border Height="60" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource RedBrush}" ToolTip="RedBrush">
-                                <TextBlock Text="Red" FontSize="9" Foreground="White"
-                                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            <Border Height="60" CornerRadius="4" Margin="3" Background="{DynamicResource RedBrush}"     ToolTip="RedBrush">
+                                <TextBlock Text="Red"     FontSize="9" Foreground="White"                       HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
                             </Border>
-
-                            <!-- Row 2: 텍스트 색상 -->
-                            <Border Height="40" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource Border2Brush}" ToolTip="Border2Brush">
-                                <TextBlock Text="Border2" FontSize="9" Foreground="{DynamicResource TextBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Height="40" CornerRadius="4" Margin="3" Background="{DynamicResource Border2Brush}"    ToolTip="Border2Brush">
+                                <TextBlock Text="Border2"    FontSize="9" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <Border Height="40" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource BorderBrush}" ToolTip="BorderBrush">
-                                <TextBlock Text="Border" FontSize="9" Foreground="{DynamicResource TextBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Height="40" CornerRadius="4" Margin="3" Background="{DynamicResource BorderBrush}"     ToolTip="BorderBrush">
+                                <TextBlock Text="Border"     FontSize="9" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <Border Height="40" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource CardBrush}" ToolTip="TextBrush">
-                                <TextBlock Text="Text 주" FontSize="9" Foreground="{DynamicResource TextBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Height="40" CornerRadius="4" Margin="3" Background="{DynamicResource CardBrush}"       ToolTip="TextBrush">
+                                <TextBlock Text="Text 주"    FontSize="9" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <Border Height="40" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource CardBrush}" ToolTip="Acc2Brush">
-                                <TextBlock Text="Acc2" FontSize="9" Foreground="{DynamicResource Acc2Brush}"
-                                           FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Height="40" CornerRadius="4" Margin="3" Background="{DynamicResource CardBrush}"       ToolTip="Acc2Brush">
+                                <TextBlock Text="Acc2"       FontSize="9" Foreground="{DynamicResource Acc2Brush}"  FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <Border Height="40" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource GreenFaintBrush}" ToolTip="GreenFaint">
-                                <TextBlock Text="GreenFaint" FontSize="9" Foreground="{DynamicResource GreenBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Height="40" CornerRadius="4" Margin="3" Background="{DynamicResource GreenFaintBrush}" ToolTip="GreenFaint">
+                                <TextBlock Text="GreenFaint" FontSize="9" Foreground="{DynamicResource GreenBrush}"  HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <Border Height="40" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource YellowFaintBrush}" ToolTip="YellowFaint">
-                                <TextBlock Text="YellowFaint" FontSize="9" Foreground="{DynamicResource YellowBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Height="40" CornerRadius="4" Margin="3" Background="{DynamicResource YellowFaintBrush}" ToolTip="YellowFaint">
+                                <TextBlock Text="YellowFaint" FontSize="9" Foreground="{DynamicResource YellowBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <Border Height="40" CornerRadius="4" Margin="3"
-                                    Background="{DynamicResource RedFaintBrush}" ToolTip="RedFaint">
-                                <TextBlock Text="RedFaint" FontSize="9" Foreground="{DynamicResource RedBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Height="40" CornerRadius="4" Margin="3" Background="{DynamicResource RedFaintBrush}"   ToolTip="RedFaint">
+                                <TextBlock Text="RedFaint"   FontSize="9" Foreground="{DynamicResource RedBrush}"    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </UniformGrid>
                     </Border>
@@ -215,80 +164,40 @@
             <!-- ② 버튼 & 입력 탭 -->
             <ScrollViewer x:Name="Tab2" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="24">
-
-                    <!-- 버튼 섹션 -->
                     <Border Style="{DynamicResource Card}" Margin="0,0,0,16">
                         <StackPanel>
-                            <TextBlock Text="버튼 스타일 (Buttons)"
-                                       Style="{DynamicResource CardTitle}"/>
+                            <TextBlock Text="버튼 스타일 (Buttons)" Style="{DynamicResource CardTitle}"/>
                             <WrapPanel Orientation="Horizontal">
-                                <Button Content="💾  저장 (PrimaryBtn)"
-                                        Style="{DynamicResource PrimaryBtn}"
-                                        Margin="0,0,8,8"/>
-                                <Button Content="✅  확인 (SuccessBtn)"
-                                        Style="{DynamicResource SuccessBtn}"
-                                        Margin="0,0,8,8"/>
-                                <Button Content="🗑  삭제 (DangerBtn)"
-                                        Style="{DynamicResource DangerBtn}"
-                                        Margin="0,0,8,8"/>
-                                <Button Content="⚙  설정 (ToolbarBtn)"
-                                        Style="{DynamicResource ToolbarBtn}"
-                                        Margin="0,0,8,8"/>
-                                <Button Content="+ 그룹"
-                                        Style="{DynamicResource TreeBtn}"
-                                        Margin="0,0,8,8"/>
-                                <Button Content="+ 장비"
-                                        Style="{DynamicResource TreeBtn}"
-                                        Margin="0,0,8,8"/>
-                                <Button Content="비활성화됨"
-                                        Style="{DynamicResource ToolbarBtn}"
-                                        IsEnabled="False"
-                                        Margin="0,0,8,8"/>
+                                <Button Content="💾  저장 (PrimaryBtn)" Style="{DynamicResource PrimaryBtn}" Margin="0,0,8,8"/>
+                                <Button Content="✅  확인 (SuccessBtn)" Style="{DynamicResource SuccessBtn}" Margin="0,0,8,8"/>
+                                <Button Content="🗑  삭제 (DangerBtn)"  Style="{DynamicResource DangerBtn}"  Margin="0,0,8,8"/>
+                                <Button Content="⚙  설정 (ToolbarBtn)" Style="{DynamicResource ToolbarBtn}" Margin="0,0,8,8"/>
+                                <Button Content="+ 그룹" Style="{DynamicResource TreeBtn}" Margin="0,0,8,8"/>
+                                <Button Content="비활성화됨" Style="{DynamicResource ToolbarBtn}" IsEnabled="False" Margin="0,0,8,8"/>
                             </WrapPanel>
-                            <!-- 전체 너비 적용 버튼 -->
-                            <Button Content="✓  변경사항 적용 (ApplyBtn)"
-                                    Style="{DynamicResource ApplyBtn}"
-                                    Margin="0,4,0,0"/>
+                            <Button Content="✓  변경사항 적용 (ApplyBtn)" Style="{DynamicResource ApplyBtn}" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
-
-                    <!-- 입력 컨트롤 섹션 -->
                     <Grid Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition/>
+                            <ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/>
                         </Grid.ColumnDefinitions>
-
-                        <!-- TextBox -->
                         <Border Grid.Column="0" Style="{DynamicResource Card}">
                             <StackPanel>
-                                <TextBlock Text="TextBox 스타일"
-                                           Style="{DynamicResource CardTitle}"/>
+                                <TextBlock Text="TextBox 스타일" Style="{DynamicResource CardTitle}"/>
                                 <TextBlock Text="Tag 이름" Style="{DynamicResource FieldLabel}"/>
-                                <TextBox Text="온도 (Temperature)"
-                                         Style="{DynamicResource PropInput}"
-                                         Margin="0,0,0,10"/>
-                                <TextBlock Text="Modbus 주소 (MonoPropInput)"
-                                           Style="{DynamicResource FieldLabel}"/>
-                                <TextBox Text="D100"
-                                         Style="{DynamicResource MonoPropInput}"
-                                         Margin="0,0,0,10"/>
+                                <TextBox Text="온도 (Temperature)" Style="{DynamicResource PropInput}" Margin="0,0,0,10"/>
+                                <TextBlock Text="Modbus 주소 (MonoPropInput)" Style="{DynamicResource FieldLabel}"/>
+                                <TextBox Text="D100" Style="{DynamicResource MonoPropInput}" Margin="0,0,0,10"/>
                                 <TextBlock Text="포커스 상태" Style="{DynamicResource FieldLabel}"/>
-                                <TextBox Text="클릭하면 파란 테두리"
-                                         Style="{DynamicResource PropInput}"/>
+                                <TextBox Text="클릭하면 파란 테두리" Style="{DynamicResource PropInput}"/>
                             </StackPanel>
                         </Border>
-
-                        <!-- ComboBox + CheckBox -->
                         <Border Grid.Column="2" Style="{DynamicResource Card}">
                             <StackPanel>
-                                <TextBlock Text="ComboBox / CheckBox"
-                                           Style="{DynamicResource CardTitle}"/>
+                                <TextBlock Text="ComboBox / CheckBox" Style="{DynamicResource CardTitle}"/>
                                 <TextBlock Text="데이터 타입" Style="{DynamicResource FieldLabel}"/>
-                                <ComboBox Style="{DynamicResource PropCombo}"
-                                          SelectedIndex="0"
-                                          Margin="0,0,0,10">
+                                <ComboBox Style="{DynamicResource PropCombo}" SelectedIndex="0" Margin="0,0,0,10">
                                     <ComboBoxItem>Float32</ComboBoxItem>
                                     <ComboBoxItem>Int16</ComboBoxItem>
                                     <ComboBoxItem>Int32</ComboBoxItem>
@@ -296,289 +205,119 @@
                                     <ComboBoxItem>String</ComboBoxItem>
                                 </ComboBox>
                                 <TextBlock Text="변환 방식" Style="{DynamicResource FieldLabel}"/>
-                                <ComboBox Style="{DynamicResource PropCombo}"
-                                          SelectedIndex="0"
-                                          Margin="0,0,0,12">
+                                <ComboBox Style="{DynamicResource PropCombo}" SelectedIndex="0" Margin="0,0,0,12">
                                     <ComboBoxItem>Linear</ComboBoxItem>
                                     <ComboBoxItem>None</ComboBoxItem>
                                     <ComboBoxItem>Expression</ComboBoxItem>
                                 </ComboBox>
-                                <CheckBox Content="알람 사용"
-                                          Style="{DynamicResource DarkCheckBox}"
-                                          IsChecked="True" Margin="0,0,0,8"/>
-                                <CheckBox Content="가상 Tag"
-                                          Style="{DynamicResource DarkCheckBox}"/>
+                                <CheckBox Content="알람 사용" Style="{DynamicResource DarkCheckBox}" IsChecked="True" Margin="0,0,0,8"/>
+                                <CheckBox Content="가상 Tag"  Style="{DynamicResource DarkCheckBox}"/>
                             </StackPanel>
                         </Border>
                     </Grid>
-
-                    <!-- 폰트 미리보기 -->
-                    <Border Style="{DynamicResource Card}">
+                    <Border Style="{DynamicResource Card}" Margin="0,0,0,16">
                         <StackPanel>
-                            <TextBlock Text="폰트 &amp; 텍스트 계층"
-                                       Style="{DynamicResource CardTitle}"/>
-                            <TextBlock Text="주 텍스트 (TextBrush)"
-                                       Foreground="{DynamicResource TextBrush}"
-                                       FontSize="14" FontWeight="SemiBold"/>
-                            <TextBlock Text="보조 텍스트 (Text2Brush) — 설명, 레이블"
-                                       Foreground="{DynamicResource Text2Brush}"
-                                       FontSize="12" Margin="0,4,0,0"/>
-                            <TextBlock Text="흐린 텍스트 (Text3Brush) — 힌트, 타임스탬프"
-                                       Foreground="{DynamicResource Text3Brush}"
-                                       FontSize="11" Margin="0,4,0,0"/>
+                            <TextBlock Text="폰트 &amp; 텍스트 계층" Style="{DynamicResource CardTitle}"/>
+                            <TextBlock Text="주 텍스트 (TextBrush)" Foreground="{DynamicResource TextBrush}" FontSize="14" FontWeight="SemiBold"/>
+                            <TextBlock Text="보조 텍스트 (Text2Brush) — 설명, 레이블" Foreground="{DynamicResource Text2Brush}" FontSize="12" Margin="0,4,0,0"/>
+                            <TextBlock Text="흐린 텍스트 (Text3Brush) — 힌트, 타임스탬프" Foreground="{DynamicResource Text3Brush}" FontSize="11" Margin="0,4,0,0"/>
                             <TextBlock Text="150.3 °C  |  7.42 bar  |  1842 rpm"
                                        FontFamily="{DynamicResource MonoFont}"
                                        Foreground="{DynamicResource GreenBrush}"
-                                       FontSize="18" FontWeight="Bold"
-                                       Margin="0,10,0,0"/>
-                            <TextBlock Text="MonoFont — 수치 데이터 전용 (GreenBrush)"
-                                       Foreground="{DynamicResource Text3Brush}"
-                                       FontSize="10" Margin="0,2,0,0"/>
+                                       FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
                         </StackPanel>
                     </Border>
-
-                    <!-- ProgressBar 섹션 -->
-                    <Border Style="{DynamicResource Card}" Margin="0,16,0,0">
+                    <Border Style="{DynamicResource Card}">
                         <StackPanel>
-                            <TextBlock Text="ProgressBar 스타일"
-                                       Style="{DynamicResource CardTitle}"/>
-
-                            <!-- Standard -->
-                            <TextBlock Text="Standard (ProgressStandard) — 진행률 표시"
-                                       Style="{DynamicResource FieldLabel}" Margin="0,0,0,5"/>
-                            <ProgressBar Style="{DynamicResource ProgressStandard}"
-                                         Value="72" Margin="0,0,0,4"/>
-                            <ProgressBar Style="{DynamicResource ProgressStandard}"
-                                         Value="38" Margin="0,0,0,12"/>
-
-                            <!-- Slim -->
-                            <TextBlock Text="Slim (ProgressSlim) — 파이프라인 처리량"
-                                       Style="{DynamicResource FieldLabel}" Margin="0,0,0,5"/>
-                            <Grid Margin="0,0,0,4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="INPUT"
-                                           Style="{DynamicResource FieldLabel}"
-                                           VerticalAlignment="Center"/>
-                                <ProgressBar Grid.Column="1"
-                                             Style="{DynamicResource ProgressSlim}"
-                                             Value="99" VerticalAlignment="Center"/>
-                            </Grid>
-                            <Grid Margin="0,0,0,4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="SDT"
-                                           Style="{DynamicResource FieldLabel}"
-                                           VerticalAlignment="Center"/>
-                                <ProgressBar Grid.Column="1"
-                                             Style="{DynamicResource ProgressSlim}"
-                                             Value="57" VerticalAlignment="Center"/>
-                            </Grid>
-                            <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="STORE"
-                                           Style="{DynamicResource FieldLabel}"
-                                           VerticalAlignment="Center"/>
-                                <ProgressBar Grid.Column="1"
-                                             Style="{DynamicResource ProgressSlim}"
-                                             Value="22" VerticalAlignment="Center"/>
-                            </Grid>
-
-                            <!-- Indeterminate -->
-                            <TextBlock Text="Indeterminate (로딩/연결 중)"
-                                       Style="{DynamicResource FieldLabel}" Margin="0,0,0,5"/>
-                            <ProgressBar Style="{DynamicResource ProgressSlim}"
-                                         IsIndeterminate="True" Margin="0,0,0,4"/>
-                            <ProgressBar Style="{DynamicResource ProgressStandard}"
-                                         IsIndeterminate="True"/>
+                            <TextBlock Text="ProgressBar 스타일" Style="{DynamicResource CardTitle}"/>
+                            <TextBlock Text="Standard" Style="{DynamicResource FieldLabel}" Margin="0,0,0,5"/>
+                            <ProgressBar Style="{DynamicResource ProgressStandard}" Value="72" Margin="0,0,0,4"/>
+                            <ProgressBar Style="{DynamicResource ProgressStandard}" Value="38" Margin="0,0,0,12"/>
+                            <TextBlock Text="Slim (파이프라인)" Style="{DynamicResource FieldLabel}" Margin="0,0,0,5"/>
+                            <ProgressBar Style="{DynamicResource ProgressSlim}" Value="99" Margin="0,0,0,4"/>
+                            <ProgressBar Style="{DynamicResource ProgressSlim}" Value="57" Margin="0,0,0,12"/>
+                            <TextBlock Text="Indeterminate (로딩 중)" Style="{DynamicResource FieldLabel}" Margin="0,0,0,5"/>
+                            <ProgressBar Style="{DynamicResource ProgressSlim}" IsIndeterminate="True"/>
                         </StackPanel>
                     </Border>
-
                 </StackPanel>
             </ScrollViewer>
 
             <!-- ③ 카드 & 배지 탭 -->
             <ScrollViewer x:Name="Tab3" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="24">
-
-                    <!-- 카드 종류 -->
-                    <TextBlock Text="카드 스타일 (Cards)"
-                               Style="{DynamicResource CardTitle}"
-                               FontSize="14" Margin="0,0,0,12"/>
+                    <TextBlock Text="카드 스타일 (Cards)" Style="{DynamicResource CardTitle}" FontSize="14" Margin="0,0,0,12"/>
                     <UniformGrid Columns="2" Margin="0,0,0,16">
                         <Border Style="{DynamicResource Card}" Margin="0,0,8,8">
                             <StackPanel>
                                 <TextBlock Text="Card (기본)" Style="{DynamicResource CardTitle}"/>
-                                <TextBlock Text="가장 기본적인 컨텐츠 박스. 배경은 CardBrush, 테두리는 Border2Brush."
+                                <TextBlock Text="기본 컨텐츠 박스. 배경 CardBrush, 테두리 Border2Brush."
                                            Foreground="{DynamicResource Text2Brush}" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                         <Border Style="{DynamicResource CardHH}" Margin="0,0,0,8">
                             <StackPanel>
-                                <TextBlock Text="CardHH — 위험 알람" Style="{DynamicResource CardTitle}"
-                                           Foreground="{DynamicResource RedBrush}"/>
+                                <TextBlock Text="CardHH — 위험 알람" Style="{DynamicResource CardTitle}" Foreground="{DynamicResource RedBrush}"/>
                                 <TextBlock Text="왼쪽 4px 빨간 강조선. HH 알람 상세 표시에 사용."
                                            Foreground="{DynamicResource Text2Brush}" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                         <Border Style="{DynamicResource CardH}" Margin="0,0,8,8">
                             <StackPanel>
-                                <TextBlock Text="CardH — 주의 알람" Style="{DynamicResource CardTitle}"
-                                           Foreground="{DynamicResource OrangeBrush}"/>
-                                <TextBlock Text="왼쪽 4px 주황 강조선. H 알람 표시에 사용."
+                                <TextBlock Text="CardH — 주의 알람" Style="{DynamicResource CardTitle}" Foreground="{DynamicResource OrangeBrush}"/>
+                                <TextBlock Text="왼쪽 4px 주황 강조선."
                                            Foreground="{DynamicResource Text2Brush}" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                         <Border Style="{DynamicResource CardWarning}">
                             <StackPanel>
-                                <TextBlock Text="CardWarning — 경고/예측" Style="{DynamicResource CardTitle}"
-                                           Foreground="{DynamicResource YellowBrush}"/>
-                                <TextBlock Text="왼쪽 4px 노랑 강조선. 예측/경고 표시에 사용."
+                                <TextBlock Text="CardWarning — 경고/예측" Style="{DynamicResource CardTitle}" Foreground="{DynamicResource YellowBrush}"/>
+                                <TextBlock Text="왼쪽 4px 노랑 강조선."
                                            Foreground="{DynamicResource Text2Brush}" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                     </UniformGrid>
-
-                    <!-- 배지 종류 -->
                     <Border Style="{DynamicResource Card}" Margin="0,0,0,16">
                         <StackPanel>
                             <TextBlock Text="배지 (Badges)" Style="{DynamicResource CardTitle}"/>
                             <WrapPanel Orientation="Horizontal">
-                                <Border Style="{DynamicResource BadgeGreen}" Margin="0,0,8,8">
-                                    <TextBlock Text="● GOOD" Style="{DynamicResource BadgeGreenText}"/>
-                                </Border>
-                                <Border Style="{DynamicResource BadgeYellow}" Margin="0,0,8,8">
-                                    <TextBlock Text="● 경고" Style="{DynamicResource BadgeYellowText}"/>
-                                </Border>
-                                <Border Style="{DynamicResource BadgeRed}" Margin="0,0,8,8">
-                                    <TextBlock Text="● HH 알람" Style="{DynamicResource BadgeRedText}"/>
-                                </Border>
-                                <Border Style="{DynamicResource BadgeAccent}" Margin="0,0,8,8">
-                                    <TextBlock Text="● 정보" Style="{DynamicResource BadgeAccentText}"/>
-                                </Border>
-                                <Border Style="{DynamicResource BadgeGreen}" Margin="0,0,8,8">
-                                    <TextBlock Text="활성" Style="{DynamicResource BadgeGreenText}"/>
-                                </Border>
-                                <Border Style="{DynamicResource BadgeYellow}" Margin="0,0,8,8">
-                                    <TextBlock Text="미확인" Style="{DynamicResource BadgeYellowText}"/>
-                                </Border>
-                                <Border Style="{DynamicResource BadgeRed}" Margin="0,0,8,8">
-                                    <TextBlock Text="오류" Style="{DynamicResource BadgeRedText}"/>
-                                </Border>
-                                <Border Style="{DynamicResource BadgeAccent}" Margin="0,0,8,8">
-                                    <TextBlock Text="1000ms" Style="{DynamicResource BadgeAccentText}"/>
-                                </Border>
+                                <Border Style="{DynamicResource BadgeGreen}"  Margin="0,0,8,8"><TextBlock Text="● GOOD"    Style="{DynamicResource BadgeGreenText}"/></Border>
+                                <Border Style="{DynamicResource BadgeYellow}" Margin="0,0,8,8"><TextBlock Text="● 경고"    Style="{DynamicResource BadgeYellowText}"/></Border>
+                                <Border Style="{DynamicResource BadgeRed}"    Margin="0,0,8,8"><TextBlock Text="● HH 알람" Style="{DynamicResource BadgeRedText}"/></Border>
+                                <Border Style="{DynamicResource BadgeAccent}" Margin="0,0,8,8"><TextBlock Text="● 정보"    Style="{DynamicResource BadgeAccentText}"/></Border>
                             </WrapPanel>
                         </StackPanel>
                     </Border>
-
-                    <!-- 상태 점 + 통계 카드 -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-
-                        <Border Grid.Column="0" Style="{DynamicResource Card}" MinWidth="200">
-                            <StackPanel>
-                                <TextBlock Text="상태 점 (Status Dot)"
-                                           Style="{DynamicResource CardTitle}"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <Ellipse Style="{DynamicResource DotGreen}"/>
-                                    <TextBlock Text=" 정상 연결 (DotGreen)"
-                                               Foreground="{DynamicResource Text2Brush}"
-                                               FontSize="12" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <Ellipse Style="{DynamicResource DotYellow}"/>
-                                    <TextBlock Text=" 백업 전환 (DotYellow)"
-                                               Foreground="{DynamicResource Text2Brush}"
-                                               FontSize="12" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal">
-                                    <Ellipse Style="{DynamicResource DotRed}"/>
-                                    <TextBlock Text=" 연결 오류 (DotRed)"
-                                               Foreground="{DynamicResource Text2Brush}"
-                                               FontSize="12" VerticalAlignment="Center"/>
-                                </StackPanel>
+                    <UniformGrid Columns="4">
+                        <Border Style="{DynamicResource StatCard}" Margin="0,0,6,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="TPS"    Style="{DynamicResource StatLabel}"/>
+                                <TextBlock Text="847"    Style="{DynamicResource StatValue}" Foreground="{DynamicResource AccBrush}"/>
+                                <TextBlock Text="태그/초" Style="{DynamicResource StatSub}"/>
                             </StackPanel>
                         </Border>
-
-                        <UniformGrid Grid.Column="2" Columns="4">
-                            <Border Style="{DynamicResource StatCard}" Margin="0,0,6,0">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="TPS" Style="{DynamicResource StatLabel}"/>
-                                    <TextBlock Text="847" Style="{DynamicResource StatValue}"
-                                               Foreground="{DynamicResource AccBrush}"/>
-                                    <TextBlock Text="태그/초" Style="{DynamicResource StatSub}"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{DynamicResource StatCard}" Margin="0,0,6,0">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="SDT 압축" Style="{DynamicResource StatLabel}"/>
-                                    <TextBlock Text="94.3%" Style="{DynamicResource StatValue}"
-                                               Foreground="{DynamicResource GreenBrush}"/>
-                                    <TextBlock Text="저장 절감" Style="{DynamicResource StatSub}"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{DynamicResource StatCard}" Margin="0,0,6,0">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="오류율" Style="{DynamicResource StatLabel}"/>
-                                    <TextBlock Text="0.12%" Style="{DynamicResource StatValue}"
-                                               Foreground="{DynamicResource YellowBrush}"/>
-                                    <TextBlock Text="통신" Style="{DynamicResource StatSub}"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{DynamicResource StatCard}">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="활성 Tag" Style="{DynamicResource StatLabel}"/>
-                                    <TextBlock Text="142" Style="{DynamicResource StatValue}"/>
-                                    <TextBlock Text="/ 148 전체" Style="{DynamicResource StatSub}"/>
-                                </StackPanel>
-                            </Border>
-                        </UniformGrid>
-                    </Grid>
-
-                    <!-- 구분선 -->
-                    <Border Style="{DynamicResource Divider}" Margin="0,0,0,16"/>
-
-                    <!-- 스케일 미리보기 박스 -->
-                    <Border Style="{DynamicResource Card}">
-                        <StackPanel>
-                            <TextBlock Text="스케일 미리보기 (ScalePreviewBox)"
-                                       Style="{DynamicResource CardTitle}"/>
-                            <Border Style="{DynamicResource ScalePreviewBox}">
-                                <DockPanel>
-                                    <StackPanel DockPanel.Dock="Left">
-                                        <TextBlock Text="RAW 입력값"
-                                                   Style="{DynamicResource FieldLabel}"/>
-                                        <TextBox Text="2048"
-                                                 Style="{DynamicResource MonoPropInput}"
-                                                 Width="80"/>
-                                    </StackPanel>
-                                    <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
-                                        <TextBlock Text="→ Eng 변환"
-                                                   Style="{DynamicResource FieldLabel}"
-                                                   HorizontalAlignment="Right"/>
-                                        <TextBlock Text="150.0 °C"
-                                                   FontFamily="{DynamicResource MonoFont}"
-                                                   FontSize="18" FontWeight="Bold"
-                                                   Foreground="{DynamicResource GreenBrush}"
-                                                   HorizontalAlignment="Right"/>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-
+                        <Border Style="{DynamicResource StatCard}" Margin="0,0,6,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="SDT 압축" Style="{DynamicResource StatLabel}"/>
+                                <TextBlock Text="94.3%"    Style="{DynamicResource StatValue}" Foreground="{DynamicResource GreenBrush}"/>
+                                <TextBlock Text="저장 절감" Style="{DynamicResource StatSub}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{DynamicResource StatCard}" Margin="0,0,6,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="오류율" Style="{DynamicResource StatLabel}"/>
+                                <TextBlock Text="0.12%" Style="{DynamicResource StatValue}" Foreground="{DynamicResource YellowBrush}"/>
+                                <TextBlock Text="통신"  Style="{DynamicResource StatSub}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{DynamicResource StatCard}">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="활성 Tag"  Style="{DynamicResource StatLabel}"/>
+                                <TextBlock Text="142"       Style="{DynamicResource StatValue}"/>
+                                <TextBlock Text="/ 148 전체" Style="{DynamicResource StatSub}"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
                 </StackPanel>
             </ScrollViewer>
 
@@ -590,21 +329,16 @@
                         <ColumnDefinition Width="16"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-
-                    <!-- 장비 트리 -->
                     <Border Grid.Column="0" Style="{DynamicResource Card}" Padding="0">
                         <DockPanel>
                             <Border DockPanel.Dock="Top"
                                     Background="{DynamicResource CardBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="0,0,0,1"
-                                    Padding="10,8">
+                                    BorderThickness="0,0,0,1" Padding="10,8">
                                 <TextBlock Text="장비 구조 트리" Style="{DynamicResource PanelHeader}"/>
                             </Border>
-                            <StackPanel DockPanel.Dock="Top"
-                                        Orientation="Horizontal"
-                                        Background="{DynamicResource CardBrush}"
-                                        Margin="6,5">
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal"
+                                        Background="{DynamicResource CardBrush}" Margin="6,5">
                                 <Button Content="+ 그룹" Style="{DynamicResource TreeBtn}"/>
                                 <Button Content="+ 장비" Style="{DynamicResource TreeBtn}"/>
                                 <Button Content="+ Tag"  Style="{DynamicResource TreeBtn}"/>
@@ -637,22 +371,6 @@
                                                     </Border>
                                                 </StackPanel>
                                             </TreeViewItem.Header>
-                                            <TreeViewItem Style="{DynamicResource DeviceTreeItem}">
-                                                <TreeViewItem.Header>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🏷" Style="{DynamicResource TreeNodeIcon}"/>
-                                                        <TextBlock Text="온도" Style="{DynamicResource TreeNodeName}"/>
-                                                    </StackPanel>
-                                                </TreeViewItem.Header>
-                                            </TreeViewItem>
-                                            <TreeViewItem Style="{DynamicResource DeviceTreeItem}">
-                                                <TreeViewItem.Header>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🏷" Style="{DynamicResource TreeNodeIcon}"/>
-                                                        <TextBlock Text="압력" Style="{DynamicResource TreeNodeName}"/>
-                                                    </StackPanel>
-                                                </TreeViewItem.Header>
-                                            </TreeViewItem>
                                         </TreeViewItem>
                                     </TreeViewItem>
                                     <TreeViewItem Style="{DynamicResource DeviceTreeItem}">
@@ -678,30 +396,20 @@
                             </TreeView>
                         </DockPanel>
                     </Border>
-
-                    <!-- 태그 목록 + 알람 목록 -->
                     <StackPanel Grid.Column="2">
-
-                        <!-- 태그 목록 (수집 프로그램) -->
                         <Border Style="{DynamicResource Card}" Padding="0" Margin="0,0,0,16">
                             <DockPanel>
                                 <Border DockPanel.Dock="Top"
                                         Background="{DynamicResource CardBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1"
-                                        Padding="10,8">
-                                    <TextBlock Text="수집 태그 목록 (TagListRow)"
-                                               Style="{DynamicResource PanelHeader}"/>
+                                        BorderThickness="0,0,0,1" Padding="10,8">
+                                    <TextBlock Text="수집 태그 목록 (TagListRow)" Style="{DynamicResource PanelHeader}"/>
                                 </Border>
                                 <StackPanel>
                                     <Border Style="{DynamicResource TagListRow}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="8"/>
-                                                <ColumnDefinition/>
-                                                <ColumnDefinition Width="80"/>
-                                                <ColumnDefinition Width="60"/>
-                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="8"/><ColumnDefinition/><ColumnDefinition Width="80"/><ColumnDefinition Width="60"/><ColumnDefinition Width="40"/>
                                             </Grid.ColumnDefinitions>
                                             <Ellipse Grid.Column="0" Style="{DynamicResource DotGreen}"/>
                                             <TextBlock Grid.Column="1" Text="온도" Style="{DynamicResource TagName}" Margin="8,0,0,0"/>
@@ -715,53 +423,11 @@
                                     <Border Style="{DynamicResource TagListRow}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="8"/>
-                                                <ColumnDefinition/>
-                                                <ColumnDefinition Width="80"/>
-                                                <ColumnDefinition Width="60"/>
-                                                <ColumnDefinition Width="40"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Ellipse Grid.Column="0" Style="{DynamicResource DotGreen}"/>
-                                            <TextBlock Grid.Column="1" Text="압력" Style="{DynamicResource TagName}" Margin="8,0,0,0"/>
-                                            <TextBlock Grid.Column="2" Text="7.42" Style="{DynamicResource TagValue}"/>
-                                            <Border Grid.Column="3" Style="{DynamicResource BadgeGreen}" Margin="4,0">
-                                                <TextBlock Text="GOOD" Style="{DynamicResource BadgeGreenText}"/>
-                                            </Border>
-                                            <TextBlock Grid.Column="4" Text="0.3s" Style="{DynamicResource TagTimestamp}"/>
-                                        </Grid>
-                                    </Border>
-                                    <Border Style="{DynamicResource TagListRow}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="8"/>
-                                                <ColumnDefinition/>
-                                                <ColumnDefinition Width="80"/>
-                                                <ColumnDefinition Width="60"/>
-                                                <ColumnDefinition Width="40"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Ellipse Grid.Column="0" Style="{DynamicResource DotYellow}"/>
-                                            <TextBlock Grid.Column="1" Text="속도" Style="{DynamicResource TagName}" Margin="8,0,0,0"/>
-                                            <TextBlock Grid.Column="2" Text="1842" Style="{DynamicResource TagValue}"
-                                                       Foreground="{DynamicResource YellowBrush}"/>
-                                            <Border Grid.Column="3" Style="{DynamicResource BadgeYellow}" Margin="4,0">
-                                                <TextBlock Text="UNC" Style="{DynamicResource BadgeYellowText}"/>
-                                            </Border>
-                                            <TextBlock Grid.Column="4" Text="0.8s" Style="{DynamicResource TagTimestamp}"/>
-                                        </Grid>
-                                    </Border>
-                                    <Border Style="{DynamicResource TagListRow}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="8"/>
-                                                <ColumnDefinition/>
-                                                <ColumnDefinition Width="80"/>
-                                                <ColumnDefinition Width="60"/>
-                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="8"/><ColumnDefinition/><ColumnDefinition Width="80"/><ColumnDefinition Width="60"/><ColumnDefinition Width="40"/>
                                             </Grid.ColumnDefinitions>
                                             <Ellipse Grid.Column="0" Style="{DynamicResource DotRed}"/>
                                             <TextBlock Grid.Column="1" Text="진동" Style="{DynamicResource TagName}" Margin="8,0,0,0"/>
-                                            <TextBlock Grid.Column="2" Text="ERR" Style="{DynamicResource TagValue}"
-                                                       Foreground="{DynamicResource RedBrush}"/>
+                                            <TextBlock Grid.Column="2" Text="ERR" Style="{DynamicResource TagValue}" Foreground="{DynamicResource RedBrush}"/>
                                             <Border Grid.Column="3" Style="{DynamicResource BadgeRed}" Margin="4,0">
                                                 <TextBlock Text="BAD" Style="{DynamicResource BadgeRedText}"/>
                                             </Border>
@@ -771,42 +437,19 @@
                                 </StackPanel>
                             </DockPanel>
                         </Border>
-
-                        <!-- 알람 목록 -->
                         <Border Style="{DynamicResource Card}" Padding="8">
                             <StackPanel>
-                                <TextBlock Text="알람 목록 (AlarmRow)"
-                                           Style="{DynamicResource CardTitle}"/>
+                                <TextBlock Text="알람 목록 (AlarmRow)" Style="{DynamicResource CardTitle}"/>
                                 <Border Style="{DynamicResource AlarmRowHH}" Margin="0,0,0,4">
                                     <StackPanel>
                                         <DockPanel>
-                                            <TextBlock Text="압출기#1 › 온도"
-                                                       Style="{DynamicResource AlarmTagName}"/>
+                                            <TextBlock Text="압출기#1 › 온도" Style="{DynamicResource AlarmTagName}"/>
                                             <Border Style="{DynamicResource BadgeRed}" Margin="8,0,0,0">
                                                 <TextBlock Text="HH" Style="{DynamicResource BadgeRedText}"/>
                                             </Border>
                                         </DockPanel>
-                                        <TextBlock Text="286.3 °C"
-                                                   Style="{DynamicResource AlarmValue}"
-                                                   Foreground="{DynamicResource RedBrush}"/>
-                                        <TextBlock Text="09:23:14 (8분 전)"
-                                                   Style="{DynamicResource AlarmTime}"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Style="{DynamicResource AlarmRowH}">
-                                    <StackPanel>
-                                        <DockPanel>
-                                            <TextBlock Text="압출기#2 › 전류"
-                                                       Style="{DynamicResource AlarmTagName}"/>
-                                            <Border Style="{DynamicResource BadgeYellow}" Margin="8,0,0,0">
-                                                <TextBlock Text="H" Style="{DynamicResource BadgeYellowText}"/>
-                                            </Border>
-                                        </DockPanel>
-                                        <TextBlock Text="34.2 A"
-                                                   Style="{DynamicResource AlarmValue}"
-                                                   Foreground="{DynamicResource OrangeBrush}"/>
-                                        <TextBlock Text="09:30:01 (1분 전)"
-                                                   Style="{DynamicResource AlarmTime}"/>
+                                        <TextBlock Text="286.3 °C" Style="{DynamicResource AlarmValue}" Foreground="{DynamicResource RedBrush}"/>
+                                        <TextBlock Text="09:23:14 (8분 전)" Style="{DynamicResource AlarmTime}"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -819,135 +462,78 @@
             <ScrollViewer x:Name="Tab5" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                 <Grid Margin="24">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="300"/>
+                        <ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition Width="300"/>
                     </Grid.ColumnDefinitions>
-
-                    <!-- 좌: 설명 -->
                     <StackPanel Grid.Column="0">
                         <Border Style="{DynamicResource Card}" Margin="0,0,0,16">
                             <StackPanel>
-                                <TextBlock Text="속성 패널 레이아웃 데모"
-                                           Style="{DynamicResource CardTitle}"/>
-                                <TextBlock Text="실제 DeviceManager의 PropertyPanel 레이아웃과 동일한 구조입니다. 오른쪽 패널에서 Tag 속성 편집 UI를 확인하세요."
-                                           Foreground="{DynamicResource Text2Brush}"
-                                           FontSize="12" TextWrapping="Wrap"/>
+                                <TextBlock Text="속성 패널 레이아웃 데모" Style="{DynamicResource CardTitle}"/>
+                                <TextBlock Text="실제 DeviceManager 의 PropertyPanel 레이아웃과 동일한 구조입니다."
+                                           Foreground="{DynamicResource Text2Brush}" FontSize="12" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <!-- 알람 셀 -->
                         <Border Style="{DynamicResource Card}">
                             <StackPanel>
-                                <TextBlock Text="알람 임계값 편집 (AlarmCell)"
-                                           Style="{DynamicResource CardTitle}"/>
+                                <TextBlock Text="알람 임계값 편집 (AlarmCell)" Style="{DynamicResource CardTitle}"/>
                                 <UniformGrid Columns="4">
                                     <Border Style="{DynamicResource AlarmCell}" Margin="2">
                                         <StackPanel>
-                                            <TextBlock Text="HH" Style="{DynamicResource AlarmCellLabel}"
-                                                       Foreground="{DynamicResource RedBrush}"/>
-                                            <TextBox Text="280" Style="{DynamicResource AlarmCellInput}"
-                                                     Foreground="{DynamicResource RedBrush}"/>
+                                            <TextBlock Text="HH" Style="{DynamicResource AlarmCellLabel}" Foreground="{DynamicResource RedBrush}"/>
+                                            <TextBox Text="280" Style="{DynamicResource AlarmCellInput}" Foreground="{DynamicResource RedBrush}"/>
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{DynamicResource AlarmCell}" Margin="2">
                                         <StackPanel>
-                                            <TextBlock Text="H" Style="{DynamicResource AlarmCellLabel}"
-                                                       Foreground="{DynamicResource OrangeBrush}"/>
-                                            <TextBox Text="260" Style="{DynamicResource AlarmCellInput}"
-                                                     Foreground="{DynamicResource OrangeBrush}"/>
+                                            <TextBlock Text="H" Style="{DynamicResource AlarmCellLabel}" Foreground="{DynamicResource OrangeBrush}"/>
+                                            <TextBox Text="260" Style="{DynamicResource AlarmCellInput}" Foreground="{DynamicResource OrangeBrush}"/>
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{DynamicResource AlarmCell}" Margin="2">
                                         <StackPanel>
-                                            <TextBlock Text="L" Style="{DynamicResource AlarmCellLabel}"
-                                                       Foreground="{DynamicResource BlueBrush}"/>
-                                            <TextBox Text="20" Style="{DynamicResource AlarmCellInput}"
-                                                     Foreground="{DynamicResource BlueBrush}"/>
+                                            <TextBlock Text="L" Style="{DynamicResource AlarmCellLabel}" Foreground="{DynamicResource BlueBrush}"/>
+                                            <TextBox Text="20" Style="{DynamicResource AlarmCellInput}" Foreground="{DynamicResource BlueBrush}"/>
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{DynamicResource AlarmCell}" Margin="2">
                                         <StackPanel>
-                                            <TextBlock Text="LL" Style="{DynamicResource AlarmCellLabel}"
-                                                       Foreground="{DynamicResource Acc2Brush}"/>
-                                            <TextBox Text="10" Style="{DynamicResource AlarmCellInput}"
-                                                     Foreground="{DynamicResource Acc2Brush}"/>
+                                            <TextBlock Text="LL" Style="{DynamicResource AlarmCellLabel}" Foreground="{DynamicResource Acc2Brush}"/>
+                                            <TextBox Text="10" Style="{DynamicResource AlarmCellInput}" Foreground="{DynamicResource Acc2Brush}"/>
                                         </StackPanel>
                                     </Border>
                                 </UniformGrid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
-
-                    <!-- 우: 속성 편집 패널 (실제 PropertyPanel 스타일) -->
                     <Border Grid.Column="2" Style="{DynamicResource Card}" Padding="0">
                         <DockPanel>
                             <Border DockPanel.Dock="Top"
                                     Background="{DynamicResource CardBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="0,0,0,1"
-                                    Padding="14,9">
+                                    BorderThickness="0,0,0,1" Padding="14,9">
                                 <TextBlock Text="TAG 속성 편집" Style="{DynamicResource PanelHeader}"/>
                             </Border>
                             <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="14">
-                                <!-- §1 기본 정보 -->
                                 <StackPanel>
                                     <TextBlock Text="기본 정보" Style="{DynamicResource PropSectionTitle}"/>
                                     <TextBlock Text="Tag 이름" Style="{DynamicResource FieldLabel}"/>
                                     <TextBox Text="온도" Style="{DynamicResource PropInput}" Margin="0,0,0,8"/>
                                     <TextBlock Text="주소" Style="{DynamicResource FieldLabel}"/>
                                     <TextBox Text="D100" Style="{DynamicResource MonoPropInput}" Margin="0,0,0,8"/>
-                                    <Grid Margin="0,0,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/><ColumnDefinition Width="8"/><ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="데이터 타입" Style="{DynamicResource FieldLabel}"/>
-                                            <ComboBox Style="{DynamicResource PropCombo}" SelectedIndex="0">
-                                                <ComboBoxItem>Float32</ComboBoxItem>
-                                                <ComboBoxItem>Int16</ComboBoxItem>
-                                            </ComboBox>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="폴링 (ms)" Style="{DynamicResource FieldLabel}"/>
-                                            <TextBox Text="1000" Style="{DynamicResource MonoPropInput}"/>
-                                        </StackPanel>
-                                    </Grid>
-                                    <CheckBox Content="알람 사용" Style="{DynamicResource DarkCheckBox}"
-                                              IsChecked="True" Margin="0,0,0,4"/>
-                                    <CheckBox Content="가상 Tag (Virtual)" Style="{DynamicResource DarkCheckBox}"/>
-
-                                    <!-- 구분선 -->
+                                    <TextBlock Text="데이터 타입" Style="{DynamicResource FieldLabel}"/>
+                                    <ComboBox Style="{DynamicResource PropCombo}" SelectedIndex="0" Margin="0,0,0,8">
+                                        <ComboBoxItem>Float32</ComboBoxItem>
+                                        <ComboBoxItem>Int16</ComboBoxItem>
+                                    </ComboBox>
+                                    <CheckBox Content="알람 사용" Style="{DynamicResource DarkCheckBox}" IsChecked="True" Margin="0,0,0,8"/>
                                     <Border Style="{DynamicResource Divider}"/>
-
-                                    <!-- §2 스케일 -->
                                     <TextBlock Text="스케일 변환" Style="{DynamicResource PropSectionTitle}"/>
                                     <TextBlock Text="변환 방식" Style="{DynamicResource FieldLabel}"/>
-                                    <ComboBox Style="{DynamicResource PropCombo}"
-                                              SelectedIndex="0" Margin="0,0,0,8">
+                                    <ComboBox Style="{DynamicResource PropCombo}" SelectedIndex="0" Margin="0,0,0,12">
                                         <ComboBoxItem>Linear</ComboBoxItem>
                                         <ComboBoxItem>None</ComboBoxItem>
-                                        <ComboBoxItem>Expression</ComboBoxItem>
                                     </ComboBox>
-                                    <Grid Margin="0,0,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/><ColumnDefinition Width="8"/><ColumnDefinition/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Raw Min" Style="{DynamicResource FieldLabel}"/>
-                                            <TextBox Text="0" Style="{DynamicResource MonoPropInput}"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="Raw Max" Style="{DynamicResource FieldLabel}"/>
-                                            <TextBox Text="4095" Style="{DynamicResource MonoPropInput}"/>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- 구분선 -->
                                     <Border Style="{DynamicResource Divider}"/>
-
-                                    <!-- 적용 버튼 -->
-                                    <Button Content="✓  Tag 적용"
-                                            Style="{DynamicResource ApplyBtn}"/>
+                                    <Button Content="✓  Tag 적용" Style="{DynamicResource ApplyBtn}"/>
                                 </StackPanel>
                             </ScrollViewer>
                         </DockPanel>
@@ -956,109 +542,483 @@
             </ScrollViewer>
 
             <!-- ⑥ 데이터 그리드 탭 -->
-            <ScrollViewer x:Name="Tab6" Visibility="Collapsed"
-                          VerticalScrollBarVisibility="Auto">
+            <ScrollViewer x:Name="Tab6" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="24">
-
                     <TextBlock Text="DataGrid — 헤더 컬럼 형식 컨트롤"
-                               Style="{DynamicResource CardTitle}"
-                               FontSize="14" Margin="0,0,0,4"/>
-                    <TextBlock Text="IIoTGrid 스타일 적용. 컬럼 클릭 정렬 지원. 홀수/짝수 행 교대 배경. 마우스 호버/선택 강조."
-                               Foreground="{DynamicResource Text2Brush}"
-                               FontSize="12" Margin="0,0,0,20"/>
-
-                    <!-- 태그 수집 현황 DataGrid -->
+                               Style="{DynamicResource CardTitle}" FontSize="14" Margin="0,0,0,4"/>
+                    <TextBlock Text="IIoTGrid 스타일 적용. 컬럼 클릭 정렬 지원. 호버/선택 강조."
+                               Foreground="{DynamicResource Text2Brush}" FontSize="12" Margin="0,0,0,20"/>
                     <Border Style="{DynamicResource Card}" Padding="0">
                         <StackPanel>
                             <DockPanel Margin="14,10,14,10">
-                                <TextBlock Text="수집 태그 현황"
-                                           Style="{DynamicResource CardTitle}"
-                                           Margin="0" VerticalAlignment="Center"/>
-                                <Border DockPanel.Dock="Right"
-                                        Style="{DynamicResource BadgeGreen}">
-                                    <TextBlock Text="● 수집 중"
-                                               Style="{DynamicResource BadgeGreenText}"/>
+                                <TextBlock Text="수집 태그 현황" Style="{DynamicResource CardTitle}" Margin="0" VerticalAlignment="Center"/>
+                                <Border DockPanel.Dock="Right" Style="{DynamicResource BadgeGreen}">
+                                    <TextBlock Text="● 수집 중" Style="{DynamicResource BadgeGreenText}"/>
                                 </Border>
                             </DockPanel>
-                            <DataGrid x:Name="TagGrid"
-                                      Style="{DynamicResource IIoTGrid}"
-                                      Margin="0,0,0,0">
+                            <DataGrid x:Name="TagGrid" Style="{DynamicResource IIoTGrid}">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn
-                                        Header="Tag 이름" Width="140"
-                                        Binding="{Binding Name}"/>
-                                    <DataGridTextColumn
-                                        Header="주소" Width="80"
-                                        Binding="{Binding Address}"
-                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
-                                    <DataGridTextColumn
-                                        Header="현재값" Width="90"
-                                        Binding="{Binding Value}"
-                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
-                                    <DataGridTextColumn
-                                        Header="단위" Width="60"
-                                        Binding="{Binding Unit}"/>
-                                    <DataGridTextColumn
-                                        Header="상태" Width="70"
-                                        Binding="{Binding Status}"/>
-                                    <DataGridTextColumn
-                                        Header="품질" Width="70"
-                                        Binding="{Binding Quality}"/>
-                                    <DataGridTextColumn
-                                        Header="타임스탬프" Width="*"
-                                        Binding="{Binding Timestamp}"/>
+                                    <DataGridTextColumn Header="Tag 이름"  Width="140" Binding="{Binding Name}"/>
+                                    <DataGridTextColumn Header="주소"      Width="80"  Binding="{Binding Address}"   ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn Header="현재값"    Width="90"  Binding="{Binding Value}"     ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn Header="단위"      Width="60"  Binding="{Binding Unit}"/>
+                                    <DataGridTextColumn Header="상태"      Width="70"  Binding="{Binding Status}"/>
+                                    <DataGridTextColumn Header="타임스탬프" Width="*"   Binding="{Binding Timestamp}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </StackPanel>
                     </Border>
-
-                    <!-- 알람 이력 DataGrid -->
                     <Border Style="{DynamicResource Card}" Padding="0" Margin="0,16,0,0">
                         <StackPanel>
                             <DockPanel Margin="14,10,14,10">
-                                <TextBlock Text="알람 이력"
-                                           Style="{DynamicResource CardTitle}"
-                                           Margin="0" VerticalAlignment="Center"/>
-                                <Border DockPanel.Dock="Right"
-                                        Style="{DynamicResource BadgeRed}">
-                                    <TextBlock Text="7건 미확인"
-                                               Style="{DynamicResource BadgeRedText}"/>
+                                <TextBlock Text="알람 이력" Style="{DynamicResource CardTitle}" Margin="0" VerticalAlignment="Center"/>
+                                <Border DockPanel.Dock="Right" Style="{DynamicResource BadgeRed}">
+                                    <TextBlock Text="7건 미확인" Style="{DynamicResource BadgeRedText}"/>
                                 </Border>
                             </DockPanel>
-                            <DataGrid x:Name="AlarmGrid"
-                                      Style="{DynamicResource IIoTGrid}">
+                            <DataGrid x:Name="AlarmGrid" Style="{DynamicResource IIoTGrid}">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn
-                                        Header="등급" Width="60"
-                                        Binding="{Binding Level}"/>
-                                    <DataGridTextColumn
-                                        Header="Tag" Width="160"
-                                        Binding="{Binding Tag}"/>
-                                    <DataGridTextColumn
-                                        Header="현재값" Width="90"
-                                        Binding="{Binding Value}"
-                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
-                                    <DataGridTextColumn
-                                        Header="임계값" Width="90"
-                                        Binding="{Binding Threshold}"
-                                        ElementStyle="{DynamicResource IIoTGridCellMono}"/>
-                                    <DataGridTextColumn
-                                        Header="발생 시각" Width="140"
-                                        Binding="{Binding OccurredAt}"/>
-                                    <DataGridTextColumn
-                                        Header="확인" Width="*"
-                                        Binding="{Binding AckStatus}"/>
+                                    <DataGridTextColumn Header="등급"     Width="60"  Binding="{Binding Level}"/>
+                                    <DataGridTextColumn Header="Tag"      Width="160" Binding="{Binding Tag}"/>
+                                    <DataGridTextColumn Header="현재값"   Width="90"  Binding="{Binding Value}"     ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn Header="임계값"   Width="90"  Binding="{Binding Threshold}" ElementStyle="{DynamicResource IIoTGridCellMono}"/>
+                                    <DataGridTextColumn Header="발생 시각" Width="140" Binding="{Binding OccurredAt}"/>
+                                    <DataGridTextColumn Header="확인"     Width="*"   Binding="{Binding AckStatus}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </StackPanel>
                     </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ⑦ 피커 버튼 탭 (★ NEW v1.5) ─────────────────────────────
+                 ThemePickerButton 다양한 배치 시나리오 데모
+            ─────────────────────────────────────────────────────────────── -->
+            <ScrollViewer x:Name="Tab7" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24">
+
+                    <!-- 섹션 제목 -->
+                    <TextBlock Text="🎛  ThemePickerButton — 컴팩트 팝업 드롭다운"
+                               Style="{DynamicResource CardTitle}"
+                               FontSize="16" Margin="0,0,0,4"/>
+                    <TextBlock Text="클릭하면 테마 목록 팝업이 열립니다. 항목 선택 즉시 전환 · 외부 클릭 자동 닫힘 · Ctrl+T 단축키 지원"
+                               Foreground="{DynamicResource Text2Brush}"
+                               FontSize="12" Margin="0,0,0,24"/>
+
+                    <!-- ══ 1. 라이브 데모 ═══════════════════════════════ -->
+                    <TextBlock Text="① 라이브 데모"
+                               Style="{DynamicResource PropSectionTitle}"
+                               FontSize="13" Margin="0,0,0,10"/>
+
+                    <!-- 시뮬레이션 툴바 -->
+                    <Border Style="{DynamicResource Card}" Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="실제 동작하는 ThemePickerButton — DeviceManager 스타일 툴바"
+                                       Style="{DynamicResource FieldLabel}" Margin="0,0,0,10"/>
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="{DynamicResource RadiusSm}"
+                                    Padding="12,8">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Width="28" Height="28"
+                                                Background="{DynamicResource AccFaintBrush}"
+                                                BorderBrush="{DynamicResource AccBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="{DynamicResource RadiusSm}"
+                                                Margin="0,0,8,0">
+                                            <TextBlock Text="⚡" FontSize="14"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AccBrush}"/>
+                                        </Border>
+                                        <TextBlock Text="IIoT DeviceManager"
+                                                   FontSize="{DynamicResource FontBase}"
+                                                   FontWeight="Bold"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <!-- ★ ThemePickerButton (우측) -->
+                                    <uc:ThemePickerButton DockPanel.Dock="Right" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Button Content="📁 열기" Style="{DynamicResource ToolbarBtn}" Margin="2,0"/>
+                                        <Button Content="💾 저장" Style="{DynamicResource ToolbarBtn}" Margin="2,0"/>
+                                        <Button Content="▶ 배포" Style="{DynamicResource PrimaryBtn}"  Margin="2,0"/>
+                                        <Button Content="🗑 삭제" Style="{DynamicResource DangerBtn}"   Margin="2,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                            <TextBlock Text="↑ 우측 ThemePickerButton 클릭 → 테마 팝업 오픈"
+                                       FontSize="10"
+                                       FontFamily="{DynamicResource UiFont}"
+                                       Foreground="{DynamicResource Text3Brush}"
+                                       Margin="0,6,0,0"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 배치 시나리오 비교 -->
+                    <Border Style="{DynamicResource Card}" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="배치 시나리오 비교 — 3가지 사용 패턴"
+                                       Style="{DynamicResource FieldLabel}" Margin="0,0,0,14"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- A: 단독 배치 -->
+                                <StackPanel Grid.Column="0">
+                                    <Border Background="{DynamicResource AccFaintBrush}"
+                                            CornerRadius="{DynamicResource RadiusSm}"
+                                            Padding="6,2" Margin="0,0,0,8">
+                                        <TextBlock Text="A. 단독 배치"
+                                                   FontSize="{DynamicResource FontSm}"
+                                                   FontWeight="Bold"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   Foreground="{DynamicResource AccBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                    </Border>
+                                    <uc:ThemePickerButton HorizontalAlignment="Left"/>
+                                    <TextBlock Text="&lt;uc:ThemePickerButton/&gt;"
+                                               FontSize="10"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource Text3Brush}"
+                                               Margin="0,6,0,0"/>
+                                </StackPanel>
+
+                                <!-- B: 카드 안 배치 -->
+                                <StackPanel Grid.Column="2">
+                                    <Border Background="{DynamicResource GreenFaintBrush}"
+                                            CornerRadius="{DynamicResource RadiusSm}"
+                                            Padding="6,2" Margin="0,0,0,8">
+                                        <TextBlock Text="B. 카드 안 배치"
+                                                   FontSize="{DynamicResource FontSm}"
+                                                   FontWeight="Bold"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   Foreground="{DynamicResource GreenBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                    </Border>
+                                    <Border Style="{DynamicResource Card}" Padding="10,8">
+                                        <DockPanel>
+                                            <TextBlock Text="현재 테마"
+                                                       FontSize="{DynamicResource FontSm}"
+                                                       FontFamily="{DynamicResource UiFont}"
+                                                       Foreground="{DynamicResource Text2Brush}"
+                                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <uc:ThemePickerButton DockPanel.Dock="Right"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <TextBlock Text="DockPanel.Dock=&quot;Right&quot;"
+                                               FontSize="10"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource Text3Brush}"
+                                               Margin="0,6,0,0"/>
+                                </StackPanel>
+
+                                <!-- C: 설정 행 배치 -->
+                                <StackPanel Grid.Column="4">
+                                    <Border Background="{DynamicResource YellowFaintBrush}"
+                                            CornerRadius="{DynamicResource RadiusSm}"
+                                            Padding="6,2" Margin="0,0,0,8">
+                                        <TextBlock Text="C. 설정 행 배치"
+                                                   FontSize="{DynamicResource FontSm}"
+                                                   FontWeight="Bold"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   Foreground="{DynamicResource YellowBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                    </Border>
+                                    <Border Background="{DynamicResource BgBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="{DynamicResource RadiusSm}"
+                                            Padding="12,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="🎨"
+                                                       FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="인터페이스 테마"
+                                                           FontSize="{DynamicResource FontBase}"
+                                                           FontWeight="SemiBold"
+                                                           FontFamily="{DynamicResource UiFont}"
+                                                           Foreground="{DynamicResource TextBrush}"/>
+                                                <TextBlock Text="앱 전체 색상 테마를 변경합니다"
+                                                           FontSize="{DynamicResource FontSm}"
+                                                           FontFamily="{DynamicResource UiFont}"
+                                                           Foreground="{DynamicResource Text3Brush}"/>
+                                            </StackPanel>
+                                            <uc:ThemePickerButton Grid.Column="2"
+                                                                  VerticalAlignment="Center"
+                                                                  Margin="16,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Text="설정 페이지 행 스타일"
+                                               FontSize="10"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource Text3Brush}"
+                                               Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ══ 2. 구성 요소 설명 ════════════════════════════ -->
+                    <TextBlock Text="② 구성 요소"
+                               Style="{DynamicResource PropSectionTitle}"
+                               FontSize="13" Margin="0,0,0,10"/>
+                    <UniformGrid Columns="3" Margin="0,0,0,24">
+                        <Border Style="{DynamicResource Card}" Margin="0,0,8,0">
+                            <StackPanel>
+                                <Border Background="{DynamicResource AccFaintBrush}" CornerRadius="{DynamicResource RadiusSm}" Padding="8,4" Margin="0,0,0,10">
+                                    <TextBlock Text="TriggerBtn" FontSize="{DynamicResource FontSm}" FontWeight="Bold" FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource AccBrush}" HorizontalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="● 액센트 컬러 도트" Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="현재 테마 이름"     Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="▼ / ▲ 상태 화살표" Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="호버: AccBrush 테두리" Foreground="{DynamicResource Text3Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{DynamicResource Card}" Margin="0,0,8,0">
+                            <StackPanel>
+                                <Border Background="{DynamicResource GreenFaintBrush}" CornerRadius="{DynamicResource RadiusSm}" Padding="8,4" Margin="0,0,0,10">
+                                    <TextBlock Text="Popup" FontSize="{DynamicResource FontSm}" FontWeight="Bold" FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource GreenBrush}" HorizontalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="AccBrush 테두리"         Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="DropShadow 부유감"        Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="PopupAnimation=Fade"      Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="StaysOpen=False (자동 닫힘)" Foreground="{DynamicResource Text3Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{DynamicResource Card}">
+                            <StackPanel>
+                                <Border Background="{DynamicResource YellowFaintBrush}" CornerRadius="{DynamicResource RadiusSm}" Padding="8,4" Margin="0,0,0,10">
+                                    <TextBlock Text="항목 행" FontSize="{DynamicResource FontSm}" FontWeight="Bold" FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource YellowBrush}" HorizontalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="액센트 컬러 원 (22px)"    Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="이름 + 설명 텍스트"        Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="Dark / Light 배지"         Foreground="{DynamicResource Text2Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}" Margin="0,0,0,3"/>
+                                <TextBlock Text="선택: AccentHex 체크마크"  Foreground="{DynamicResource Text3Brush}" FontSize="{DynamicResource FontSm}" FontFamily="{DynamicResource UiFont}"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- ══ 3. ThemeSelectorPanel 비교 ══════════════════ -->
+                    <TextBlock Text="③ ThemeSelectorPanel 비교 (설정 화면용 대형 카드형)"
+                               Style="{DynamicResource PropSectionTitle}"
+                               FontSize="13" Margin="0,0,0,10"/>
+                    <Border Style="{DynamicResource Card}" Margin="0,0,0,24" Padding="0">
+                        <uc:ThemeSelectorPanel/>
+                    </Border>
+
+                    <!-- ══ 4. XAML 사용 방법 ════════════════════════════
+                         ★ FIX: 혼합 콘텐츠 TextBlock 대신
+                                StackPanel + 개별 TextBlock 사용
+                                (Run/LineBreak + 원시 텍스트 혼용 금지)
+                    ══════════════════════════════════════════════════════ -->
+                    <TextBlock Text="④ XAML 사용 방법"
+                               Style="{DynamicResource PropSectionTitle}"
+                               FontSize="13" Margin="0,0,0,10"/>
+                    <UniformGrid Columns="2">
+                        <!-- 다른 프로젝트에서 참조 -->
+                        <Border Style="{DynamicResource Card}" Margin="0,0,8,0">
+                            <StackPanel>
+                                <TextBlock Text="다른 WPF 프로젝트에서 사용" Style="{DynamicResource CardTitle}"/>
+
+                                <TextBlock Text="① csproj 참조 추가"
+                                           Style="{DynamicResource FieldLabel}" Margin="0,0,0,6"/>
+                                <Border Background="{DynamicResource BgBrush}"
+                                        CornerRadius="{DynamicResource RadiusSm}"
+                                        Padding="10,8" Margin="0,0,0,12">
+                                    <!-- ★ 각 줄을 별도 TextBlock 으로 분리 — 혼합 콘텐츠 오류 방지 -->
+                                    <StackPanel>
+                                        <TextBlock Text="&lt;ProjectReference Include="
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource GreenBrush}"/>
+                                        <TextBlock Text='  "..\IIoT.UI.Themes\IIoT.UI.Themes.csproj"/&gt;'
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource YellowBrush}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Text="② Window xmlns 선언 (assembly= 필수)"
+                                           Style="{DynamicResource FieldLabel}" Margin="0,0,0,6"/>
+                                <Border Background="{DynamicResource BgBrush}"
+                                        CornerRadius="{DynamicResource RadiusSm}"
+                                        Padding="10,8" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <TextBlock Text="xmlns:uc="
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource GreenBrush}"/>
+                                        <TextBlock Text='  "clr-namespace:'
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource YellowBrush}"/>
+                                        <TextBlock Text="    IIoT.UI.Themes.Controls;"
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource YellowBrush}"/>
+                                        <TextBlock Text='    assembly=IIoT.UI.Themes"'
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource YellowBrush}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Text="③ 툴바/헤더에 배치"
+                                           Style="{DynamicResource FieldLabel}" Margin="0,0,0,6"/>
+                                <Border Background="{DynamicResource BgBrush}"
+                                        CornerRadius="{DynamicResource RadiusSm}"
+                                        Padding="10,8">
+                                    <StackPanel>
+                                        <TextBlock Text="&lt;uc:ThemePickerButton"
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource AccBrush}"/>
+                                        <TextBlock Text='  DockPanel.Dock="Right"'
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource Text2Brush}"/>
+                                        <TextBlock Text='  Margin="0,0,8,0"/&gt;'
+                                                   FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                                                   Foreground="{DynamicResource Text2Brush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 설계 특징 + 단축키 -->
+                        <Border Style="{DynamicResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="설계 특징 &amp; 주의사항" Style="{DynamicResource CardTitle}"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Width="20" Height="20" CornerRadius="10"
+                                            Background="{DynamicResource AccFaintBrush}" Margin="0,0,8,0">
+                                        <TextBlock Text="1" FontSize="10" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="StaysOpen=False"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontBase}"/>
+                                        <TextBlock Text="외부 클릭 시 WPF 자동 닫힘"
+                                                   Foreground="{DynamicResource Text3Brush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontSm}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Width="20" Height="20" CornerRadius="10"
+                                            Background="{DynamicResource AccFaintBrush}" Margin="0,0,8,0">
+                                        <TextBlock Text="2" FontSize="10" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="IDisposable 자동 호출"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontBase}"/>
+                                        <TextBlock Text="Unloaded → ViewModel.Dispose()"
+                                                   Foreground="{DynamicResource Text3Brush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontSm}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Width="20" Height="20" CornerRadius="10"
+                                            Background="{DynamicResource AccFaintBrush}" Margin="0,0,8,0">
+                                        <TextBlock Text="3" FontSize="10" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="DynamicResource 전용"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontBase}"/>
+                                        <TextBlock Text="테마 전환 시 팝업도 즉시 갱신"
+                                                   Foreground="{DynamicResource Text3Brush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontSm}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                    <Border Width="20" Height="20" CornerRadius="10"
+                                            Background="{DynamicResource AccFaintBrush}" Margin="0,0,8,0">
+                                        <TextBlock Text="4" FontSize="10" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="IsNotSelected 반전 프로퍼티"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontBase}"/>
+                                        <TextBlock Text="미선택 빈공간 정렬 유지용"
+                                                   Foreground="{DynamicResource Text3Brush}"
+                                                   FontFamily="{DynamicResource UiFont}"
+                                                   FontSize="{DynamicResource FontSm}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Border Style="{DynamicResource Divider}"/>
+
+                                <TextBlock Text="키보드 단축키"
+                                           Style="{DynamicResource FieldLabel}" Margin="0,0,0,8"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <Border Style="{DynamicResource BadgeAccent}" Margin="0,0,8,0">
+                                        <TextBlock Text="Ctrl+T" Style="{DynamicResource BadgeAccentText}"/>
+                                    </Border>
+                                    <TextBlock Text="다음 테마 순환"
+                                               Foreground="{DynamicResource Text2Brush}"
+                                               FontFamily="{DynamicResource UiFont}"
+                                               FontSize="{DynamicResource FontBase}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <Border Style="{DynamicResource BadgeAccent}" Margin="0,0,8,0">
+                                        <TextBlock Text="Ctrl+Shift+T" Style="{DynamicResource BadgeAccentText}"/>
+                                    </Border>
+                                    <TextBlock Text="이전 테마 순환"
+                                               Foreground="{DynamicResource Text2Brush}"
+                                               FontFamily="{DynamicResource UiFont}"
+                                               FontSize="{DynamicResource FontBase}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Style="{DynamicResource BadgeAccent}" Margin="0,0,8,0">
+                                        <TextBlock Text="1 ~ 7" Style="{DynamicResource BadgeAccentText}"/>
+                                    </Border>
+                                    <TextBlock Text="탭 이동"
+                                               Foreground="{DynamicResource Text2Brush}"
+                                               FontFamily="{DynamicResource UiFont}"
+                                               FontSize="{DynamicResource FontBase}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
 
                 </StackPanel>
             </ScrollViewer>
 
         </Grid>
 
-        <!-- ══ 하단 상태바 ══════════════════════════════════ -->
+        <!-- ══ 하단 상태바 ══════════════════════════════════════════════ -->
         <Border Grid.Row="2"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -1067,12 +1027,12 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
                     <Ellipse Style="{DynamicResource DotGreen}" Margin="0,0,6,0"/>
-                    <TextBlock Text="IIoT.UI.Themes v1.1"
+                    <TextBlock Text="IIoT.UI.Themes v1.5"
                                Foreground="{DynamicResource Text3Brush}"
                                FontSize="10" VerticalAlignment="Center"/>
                 </StackPanel>
                 <TextBlock DockPanel.Dock="Right"
-                           Text="Ctrl+T: 다음 테마  |  Ctrl+Shift+T: 이전 테마"
+                           Text="Ctrl+T: 다음 테마  |  Ctrl+Shift+T: 이전 테마  |  숫자 1~7: 탭 이동"
                            Foreground="{DynamicResource Text3Brush}"
                            FontSize="10" VerticalAlignment="Center"/>
                 <TextBlock x:Name="StatusText"

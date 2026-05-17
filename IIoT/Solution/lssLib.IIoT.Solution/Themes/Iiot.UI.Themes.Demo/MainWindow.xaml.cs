@@ -1,18 +1,16 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.UI.Themes.Demo · MainWindow.xaml.cs
 //  역할: 테마 데모 메인 윈도우 코드비하인드
-//        - 탭 전환 (6개 섹션)
-//        - 테마 이전/다음 버튼 + 단축키 (Ctrl+T / Ctrl+Shift+T)
+//        - 탭 전환 (7개 섹션)
+//        - 단축키 (Ctrl+T / Ctrl+Shift+T) — 헤더는 ThemePickerButton 으로 대체
 //        - 테마 변경 이벤트 → 상태바 갱신
 //  생성: 2025-05-16
-//  수정: 2025-05-17 v1.4
-//    FIX §4 OnNextTheme / OnPrevTheme
-//      원인: ThemeKind.NoTheme = -1 이고 enum 최댓값 = 6(CarbonElite).
-//            기존 코드: (ThemeKind)(((int)Current + 1) % Count)
-//              Count = 8, Current = CarbonElite(6) 이면 (6+1)%8 = 7
-//              → (ThemeKind)7 은 정의되지 않은 값 → ArgumentOutOfRangeException
-//      해결: ThemeManager.AllThemes 리스트 인덱스 기반 순환으로 교체
-//            (ThemeSelectorViewModel.NextTheme 과 동일한 방식)
+//  수정: 2025-05-17 v1.5
+//    · Tab7 "피커 버튼" 추가
+//    · 헤더 ◀▶ 버튼 제거 → ThemePickerButton 으로 대체
+//      (CurrentThemeName TextBlock 제거, OnNextTheme/OnPrevTheme 는 단축키용 유지)
+//    · 단축키 범위 D1~D7 으로 확장
+//    · UpdateThemeDisplay: StatusText 만 갱신 (CurrentThemeName 제거됨)
 // ══════════════════════════════════════════════════════════
 using System.Windows;
 using System.Windows.Controls;
@@ -24,8 +22,6 @@ public partial class MainWindow : Window
 {
     // §1 ─ 필드 ──────────────────────────────────────────────
     private int _currentTab = 1;
-
-    // 탭 버튼 / 뷰 매핑 (탭 번호 → (버튼, ScrollViewer))
     private Dictionary<int, (Button Btn, UIElement View)> _tabs = null!;
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
@@ -33,7 +29,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // 탭 매핑 초기화
+        // 탭 매핑 (v1.5: Tab7 추가)
         _tabs = new()
         {
             [1] = (Tab1Btn, Tab1),
@@ -42,9 +38,10 @@ public partial class MainWindow : Window
             [4] = (Tab4Btn, Tab4),
             [5] = (Tab5Btn, Tab5),
             [6] = (Tab6Btn, Tab6),
+            [7] = (Tab7Btn, Tab7),
         };
 
-        // 테마 변경 이벤트 구독
+        // 테마 변경 이벤트 구독 → 상태바 + 로고 갱신
         ThemeManager.ThemeChanged += OnThemeChanged;
 
         // 초기 UI 갱신
@@ -68,56 +65,43 @@ public partial class MainWindow : Window
         foreach (var (num, (btn, view)) in _tabs)
         {
             var isActive = num == tab;
-
-            // 뷰 표시/숨김
             view.Visibility = isActive ? Visibility.Visible : Visibility.Collapsed;
 
-            // 활성 탭 버튼 강조 — 배경/테두리 동적 변경
             if (isActive)
             {
-                btn.Background   = Application.Current.Resources["AccFaintBrush"] as System.Windows.Media.Brush;
-                btn.BorderBrush  = Application.Current.Resources["AccBrush"] as System.Windows.Media.Brush;
-                btn.Foreground   = Application.Current.Resources["AccBrush"] as System.Windows.Media.Brush;
+                btn.Background  = Application.Current.Resources["AccFaintBrush"] as System.Windows.Media.Brush;
+                btn.BorderBrush = Application.Current.Resources["AccBrush"]      as System.Windows.Media.Brush;
+                btn.Foreground  = Application.Current.Resources["AccBrush"]      as System.Windows.Media.Brush;
             }
             else
             {
-                btn.Background   = Application.Current.Resources["CardBrush"] as System.Windows.Media.Brush;
-                btn.BorderBrush  = Application.Current.Resources["Border2Brush"] as System.Windows.Media.Brush;
-                btn.Foreground   = Application.Current.Resources["Text2Brush"] as System.Windows.Media.Brush;
+                btn.Background  = Application.Current.Resources["CardBrush"]    as System.Windows.Media.Brush;
+                btn.BorderBrush = Application.Current.Resources["Border2Brush"] as System.Windows.Media.Brush;
+                btn.Foreground  = Application.Current.Resources["Text2Brush"]   as System.Windows.Media.Brush;
             }
         }
     }
 
-    // §4 ─ 테마 전환 버튼 ─────────────────────────────────────
+    // §4 ─ 테마 순환 (단축키 전용) ───────────────────────────
     //
-    // ★ FIX v1.4: enum 값 산술 → AllThemes 리스트 인덱스 기반 순환
-    //
-    //   [기존 코드의 문제]
-    //   var next = (ThemeKind)(((int)ThemeManager.Current + 1) % ThemeManager.AllThemes.Count);
-    //     · NoTheme=-1, DarkNavy=0 … CarbonElite=6 (값이 연속하지 않음 — 0부터 시작 X)
-    //     · AllThemes.Count = 8
-    //     · CarbonElite(6) 에서 다음: (6+1)%8 = 7 → (ThemeKind)7 = 정의 없음
-    //     → ThemeUris.TryGetValue 실패 → ArgumentOutOfRangeException
-    //
-    //   [해결] ThemeManager.AllThemes 리스트의 인덱스로 순환
-    //     · 리스트 인덱스 0~7 을 모듈러로 순환 → 항상 유효한 ThemeKind 반환
+    // ★ 헤더의 ◀▶ 버튼은 v1.5 에서 ThemePickerButton 으로 교체됨.
+    //   OnNextTheme / OnPrevTheme 는 Ctrl+T / Ctrl+Shift+T 단축키 처리 전용으로 유지.
+    //   AllThemes 인덱스 기반 순환 (enum 값 산술 금지 — NoTheme=-1 로 인한 오류 방지).
 
-    private void OnNextTheme(object sender, RoutedEventArgs e)
+    private void OnNextTheme()
     {
         var list = ThemeManager.AllThemes;
         var idx  = list.Select((t, i) => (t, i))
                        .FirstOrDefault(x => x.t.Kind == ThemeManager.Current).i;
-        var next = list[(idx + 1) % list.Count].Kind;
-        ThemeManager.Apply(next);
+        ThemeManager.Apply(list[(idx + 1) % list.Count].Kind);
     }
 
-    private void OnPrevTheme(object sender, RoutedEventArgs e)
+    private void OnPrevTheme()
     {
         var list = ThemeManager.AllThemes;
         var idx  = list.Select((t, i) => (t, i))
                        .FirstOrDefault(x => x.t.Kind == ThemeManager.Current).i;
-        var prev = list[(idx - 1 + list.Count) % list.Count].Kind;
-        ThemeManager.Apply(prev);
+        ThemeManager.Apply(list[(idx - 1 + list.Count) % list.Count].Kind);
     }
 
     // §5 ─ 단축키 ─────────────────────────────────────────────
@@ -129,18 +113,18 @@ public partial class MainWindow : Window
         // Ctrl+T → 다음 테마
         if (e.Key == Key.T && Keyboard.Modifiers == ModifierKeys.Control)
         {
-            OnNextTheme(this, new RoutedEventArgs());
+            OnNextTheme();
             e.Handled = true;
         }
         // Ctrl+Shift+T → 이전 테마
         else if (e.Key == Key.T &&
                  Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
         {
-            OnPrevTheme(this, new RoutedEventArgs());
+            OnPrevTheme();
             e.Handled = true;
         }
-        // 숫자 1~6 → 탭 전환
-        else if (e.Key >= Key.D1 && e.Key <= Key.D6 &&
+        // 숫자 1~7 → 탭 전환 (v1.5: D7 추가)
+        else if (e.Key >= Key.D1 && e.Key <= Key.D7 &&
                  Keyboard.Modifiers == ModifierKeys.None)
         {
             SwitchTab(e.Key - Key.D0);
@@ -148,7 +132,7 @@ public partial class MainWindow : Window
         }
     }
 
-    // §6 ─ 테마 변경 이벤트 처리 ─────────────────────────────
+    // §6 ─ 테마 변경 이벤트 ───────────────────────────────────
 
     private void OnThemeChanged(ThemeKind theme)
     {
@@ -156,30 +140,35 @@ public partial class MainWindow : Window
         {
             UpdateThemeDisplay(theme);
             UpdateLogoIcon(theme);
+            // 탭 버튼 색상 갱신 (테마 전환 시 AccBrush 등이 바뀌므로)
             SwitchTab(_currentTab);
         });
     }
 
+    /// <summary>
+    /// 테마 변경 시 상태바 텍스트 갱신.
+    /// v1.5: 헤더의 CurrentThemeName TextBlock 은 ThemePickerButton 으로 대체됨.
+    ///        → StatusText 만 갱신.
+    /// </summary>
     private void UpdateThemeDisplay(ThemeKind theme)
     {
         var info = ThemeManager.GetInfo(theme);
-        CurrentThemeName.Text = info.DisplayName;
-        StatusText.Text       = $"{info.DisplayName} 테마 적용됨 — {info.Description}";
+        StatusText.Text = $"{info.DisplayName} 테마 적용됨 — {info.Description}";
     }
 
-    /// <summary>테마별 아이콘 이모지 교체 — 각 테마 분위기에 맞게</summary>
+    /// <summary>테마별 로고 이모지 교체</summary>
     private void UpdateLogoIcon(ThemeKind theme)
     {
         LogoIcon.Text = theme switch
         {
-            ThemeKind.NoTheme       => "🖥",   // 시스템 기본
-            ThemeKind.DarkNavy      => "⚡",   // 전기 / 우주 제어실
-            ThemeKind.SteelLight    => "🏭",   // 공장 / 산업
-            ThemeKind.NeonCyber     => "🔮",   // 사이버펑크 / 네온
-            ThemeKind.WarmAmber     => "🔥",   // 정유공장 / 불꽃
-            ThemeKind.ArcticFrost   => "❄️",   // 얼음 / 북유럽
-            ThemeKind.TerminalGreen => "💻",   // 레트로 터미널
-            ThemeKind.CarbonElite   => "💎",   // 럭셔리 / 다이아몬드
+            ThemeKind.NoTheme       => "🖥",
+            ThemeKind.DarkNavy      => "⚡",
+            ThemeKind.SteelLight    => "🏭",
+            ThemeKind.NeonCyber     => "🔮",
+            ThemeKind.WarmAmber     => "🔥",
+            ThemeKind.ArcticFrost   => "❄️",
+            ThemeKind.TerminalGreen => "💻",
+            ThemeKind.CarbonElite   => "💎",
             _                       => "⚡"
         };
     }
@@ -202,7 +191,6 @@ public partial class MainWindow : Window
 
     private void LoadGridSamples()
     {
-        // 태그 수집 현황 샘플
         TagGrid.ItemsSource = new[]
         {
             new TagRow("온도",     "D100", "150.3",  "°C",  "GOOD",  "Good",      "09:31:22"),
@@ -213,14 +201,13 @@ public partial class MainWindow : Window
             new TagRow("냉각수온", "D110", "32.1",   "°C",  "GOOD",  "Good",      "09:31:21"),
         };
 
-        // 알람 이력 샘플
         AlarmGrid.ItemsSource = new[]
         {
-            new AlarmRow("HH", "압출기#1 › 온도",   "286.3 °C", "280.0 °C", "09:23:14", "미확인"),
-            new AlarmRow("HH", "사출기#1 › 압력",   "9.87 bar", "9.50 bar", "09:28:44", "미확인"),
-            new AlarmRow("H",  "압출기#2 › 전류",   "34.2 A",   "32.0 A",   "09:30:01", "미확인"),
-            new AlarmRow("H",  "압출기#1 › 속도",   "2100 rpm", "2000 rpm", "09:15:33", "확인"),
-            new AlarmRow("L",  "냉각수 탱크 › 수위","18.3 %",   "20.0 %",   "09:05:10", "확인"),
+            new AlarmRow("HH", "압출기#1 › 온도",    "286.3 °C", "280.0 °C", "09:23:14", "미확인"),
+            new AlarmRow("HH", "사출기#1 › 압력",    "9.87 bar", "9.50 bar", "09:28:44", "미확인"),
+            new AlarmRow("H",  "압출기#2 › 전류",    "34.2 A",   "32.0 A",   "09:30:01", "미확인"),
+            new AlarmRow("H",  "압출기#1 › 속도",    "2100 rpm", "2000 rpm", "09:15:33", "확인"),
+            new AlarmRow("L",  "냉각수 탱크 › 수위", "18.3 %",   "20.0 %",   "09:05:10", "확인"),
         };
     }
 }
