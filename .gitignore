@@ -39,5 +39,8 @@ coverage/
 setupProxy.js
 setupTests.js
 
+### 특정 프로젝트/파일 강제 포함 예외 규칙 ###
+!D:/lssLib/Base/BCL/log/lssLib.Log
+
 ### 기타 불필요한 파일 ###
 public/*.cache
