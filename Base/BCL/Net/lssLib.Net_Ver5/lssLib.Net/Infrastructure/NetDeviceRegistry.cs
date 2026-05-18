@@ -37,7 +37,9 @@ namespace lssLib.Net;
 public sealed class NetDeviceRegistry
 {
     #region §1 ─ Lazy 싱글톤
-
+    /// <summary>
+    /// 레지스트리 전역 인스턴스. 처음 접근하는 순간 단 한 번 생성됩니다.
+    /// </summary>
     private static readonly Lazy<NetDeviceRegistry> _instance =
         new(() => new NetDeviceRegistry(), LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -49,7 +51,9 @@ public sealed class NetDeviceRegistry
     #endregion
 
     #region §2 ─ 필드
-
+    /// <summary>
+    /// DeviceId(int) → NetChannelBase 매핑. ConcurrentDictionary 로 스레드 안전하게 관리.
+    /// </summary>
     private readonly ConcurrentDictionary<int, NetChannelBase> _channels = new();
 
     #endregion

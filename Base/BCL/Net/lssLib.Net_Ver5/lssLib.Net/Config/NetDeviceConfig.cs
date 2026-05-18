@@ -22,19 +22,50 @@ namespace lssLib.Net;
 public abstract class NetDeviceConfig
 {
     #region §1 ─ 장비 식별
-
+    /// <summary>
+    /// 디바이스 ID. 장비별 고유 식별자 역할. 양수 권장 (0 이상).
+    /// </summary>
     public int DeviceId { get; }
+
+    /// <summary>
+    /// 디바이스 이름. 로그 및 디버깅 용도. 비어있을 수 없습니다.
+    /// </summary>
     public string DeviceName { get; }
+
+    /// <summary>
+    /// 전송 계층 유형. NetTransportType 열거형으로 구분됩니다.
+    /// </summary>
     public abstract NetTransportType TransportType { get; }
 
     #endregion
 
     #region §2 ─ 재시도
 
+    /// <summary>
+    /// 재시도 활성화 여부. 기본값: true.
+    /// * 재시도 대상은 RetryTarget 플래그로 지정합니다.
+    /// * 재시도 비활성 시 RetryTarget 설정은 무시됩니다.
+    /// </summary>
     public bool IsRetryEnabled { get; set; } = true;
+
+    /// <summary>
+    /// 재시도 동작 대상 플래그. 기본값: ConnectAndWrite.
+    /// </summary>
     public RetryTarget RetryTarget { get; set; } = RetryTarget.ConnectAndWrite;
+
+    /// <summary>
+    /// 재시도 최대 횟수. 기본값: 3회.
+    /// </summary>
     public int MaxRetries { get; set; } = 3;
+
+    /// <summary>
+    /// 재시도 간 지연 시간. 기본값: 200ms.
+    /// </summary>
     public TimeSpan RetryDelay { get; set; } = TimeSpan.FromMilliseconds(200);
+
+    /// <summary>
+    /// 재시도 시 재접속 대기 시간 적용 여부. 기본값: true.
+    /// </summary>
     public bool ReconnectBackoff { get; set; } = true;
 
     #endregion
@@ -71,32 +102,66 @@ public abstract class NetDeviceConfig
     #endregion
 
     #region §4 ─ 커맨드
-
+    /// <summary>
+    /// 읽기(Read) 커맨드 목록. 장비로 주기적으로 투입할 커맨드들을 저장합니다.
+    /// </summary>
     private readonly List<byte[]> _readCommands = [];
+
+    /// <summary>
+    /// 읽기(Read) 커맨드 목록 읽기 전용 인터페이스. 외부에서는 IReadOnlyList<byte[]> 형태로 접근됩니다.
+    /// </summary>
     public IReadOnlyList<byte[]> ReadCommands => _readCommands.AsReadOnly();
 
+    /// <summary>
+    /// 읽기(Read) 커맨드 추가 메서드. null 입력 시 ArgumentNullException이 발생합니다.
+    /// </summary>
     public void AddReadCommand(byte[] command)
     {
         ArgumentNullException.ThrowIfNull(command);
         _readCommands.Add(command);
     }
 
+    /// <summary>
+    /// 읽기(Read) 커맨드 목록 전체 삭제 메서드. ReadCommands 컬렉션은 비워지지만 null이 되지는 않습니다.
+    /// </summary>
     public void ClearReadCommands() => _readCommands.Clear();
 
     #endregion
 
     #region §5 ─ 채널 동작
 
+    /// <summary>
+    /// 주기적(ReadCommands 투입) 간격. 기본값: 100ms.
+    /// </summary>
     public TimeSpan PeriodicInterval { get; set; } = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>
+    /// 요청 타임아웃. 장비로부터 응답이 없을 때 대기하는 최대 시간입니다. 기본값: 3초.
+    /// </summary>
     public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// 하트비트 간격. 0 또는 음수로 설정 시 하트비트 비활성화. 기본값: 0 (비활성).
+    /// </summary>
     public TimeSpan HeartbeatInterval { get; set; } = TimeSpan.Zero;
+
+    /// <summary>
+    /// 하트비트 응답 대기 여부. true로 설정 시 하트비트 전송 후 응답을 기다립니다. 기본값: false.
+    /// </summary>
     public bool IsHeartbeatAcknowledged { get; set; } = false;
+
+    /// <summary>
+    /// ReceiveChannel 용량. 0으로 설정 시 무제한. 양수로 설정 시 최대 대기 메시지 수를 제한하여 메모리 과다 사용 방지. 기본값: 0 (무제한).
+    /// </summary>
     public int ReceiveChannelCapacity { get; set; } = 0;
 
     #endregion
 
     #region §6 ─ 생성자
 
+    /// <summary>
+    /// NetDeviceConfig 생성자. DeviceId와 DeviceName은 필수 매개변수입니다. DeviceName은 null 또는 공백으로 설정할 수 없습니다.
+    /// </summary>
     protected NetDeviceConfig(int deviceId, string deviceName)
     {
         if (string.IsNullOrWhiteSpace(deviceName))

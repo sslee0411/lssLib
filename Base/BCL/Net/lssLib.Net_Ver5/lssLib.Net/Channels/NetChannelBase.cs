@@ -95,15 +95,44 @@ public abstract class NetChannelBase : IAsyncDisposable
 {
     #region §1 ─ 필드
 
+    /// <summary>
+    /// 장비 설정. DeviceId/Name/Retry/Commands 포함.
+    /// </summary>
     private readonly NetDeviceConfig _cfg;
+
+    /// <summary>
+    /// 전송 계층. XxxTransport.FromConfig(cfg) 패턴 권장.
+    /// </summary>
     private readonly INetTransport _transport;
+
+    /// <summary>
+    /// 프로토콜 계층. BinaryProtocol 또는 RawProtocol.
+    /// </summary>
     private readonly INetProtocol _protocol;
 
+    /// <summary>
+    /// 통신 통계. WPF 바인딩 / 대시보드 활용.
+    /// </summary>
     private readonly NetStatistics _statistics;
+
+    /// <summary>
+    /// 연결·재접속·상태 머신 전담 클래스.
+    /// </summary>
     private readonly NetConnectionManager _connMgr;
+
+    /// <summary>
+    /// Channel[4] 우선순위 (lock 없음) + DispatchAsync → DeviceFrameReceived 이벤트 트리거.
+    /// </summary>
     private readonly NetDispatchPipeline _pipeline;
+
+    /// <summary>
+    /// 주기 Read + Heartbeat 루프 전담 클래스 (Pause/Resume 지원).
+    /// </summary>
     private readonly NetScheduler _scheduler;
 
+    /// <summary>
+    /// 채널 전체에 적용되는 취소 토큰 소스. StartAsync 시 외부 ct 와 연결하여 생성됩니다.
+    /// </summary>
     private CancellationTokenSource _cts = new();
     /// <summary>
     /// volatile: 여러 스레드에서 동시에 접근할 때 일관된 값을 보장합니다.
@@ -324,7 +353,7 @@ public abstract class NetChannelBase : IAsyncDisposable
     /// </para>
     /// <list type="number">
     ///   <item><description>IsConnected 확인 → false 이면 즉시 Fail 반환</description></item>
-    ///   <item><description>new TaskCompletionSource&lt;NetResult&gt;() 생성</description></item>
+    ///   <item><description>new TaskCompletionSource<NetResult>() 생성</description></item>
     ///   <item><description>NetPacket.CreateRequest(data, tcs, ct) → Channel[Write=1] 투입</description></item>
     ///   <item><description>tcs.Task.WaitAsync(timeoutCts.Token) 에서 대기</description></item>
     ///   <item><description>DispatchAsync 에서 WriteAsync → ReadAsync → tcs.SetResult()</description></item>

@@ -69,7 +69,7 @@ namespace lssLib.Net;
 /// <code>
 /// public class TemperatureSensorChannel : PassiveNetChannel
 /// {
-///     public event Action&lt;float&gt;? TemperatureReceived;
+///     public event Action<float> TemperatureReceived;
 ///
 ///     public TemperatureSensorChannel(SerialDeviceConfig cfg)
 ///         : base(cfg, SerialTransport.FromConfig(cfg),

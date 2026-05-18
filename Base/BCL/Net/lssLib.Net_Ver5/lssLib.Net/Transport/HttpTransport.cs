@@ -8,49 +8,6 @@ using System.Net.Http.Headers;
 
 namespace lssLib.Net;
 
-// ── Config ────────────────────────────────────────────────────────────
-
-/// <summary>HTTP REST API 통신 장비 설정.</summary>
-/// <example><code>
-/// var cfg = new HttpDeviceConfig(6, "REST-API", "http://192.168.1.10:8080")
-/// {
-///     WriteEndpoint    = "/api/command",
-///     ReadEndpoint     = "/api/status",
-///     ContentType      = "application/json",
-///     PeriodicInterval = TimeSpan.FromSeconds(1),
-///     // SequenceMode = 0 (Parallel) ← 기본값
-///     // SequenceMode = 2  → 최대 2개 동시 GET 요청 슬라이딩 윈도우
-/// };
-/// </code></example>
-public sealed class HttpDeviceConfig : NetDeviceConfig
-{
-    public override NetTransportType TransportType => NetTransportType.Http;
-
-    public string BaseUrl { get; set; }
-    public string WriteEndpoint { get; set; } = "/api/write";
-    public string ReadEndpoint { get; set; } = "/api/read";
-    public string ContentType { get; set; } = "application/octet-stream";
-    public string? BearerToken { get; set; }
-    public TimeSpan HttpTimeout { get; set; } = TimeSpan.FromSeconds(10);
-
-    public HttpDeviceConfig(int deviceId, string deviceName, string baseUrl)
-        : base(deviceId, deviceName)
-    {
-        BaseUrl = baseUrl;
-        IsRetryEnabled = true;
-        RetryTarget = RetryTarget.ConnectAndWrite;
-        SequenceMode = NetDeviceConfig.SequenceModes.Parallel;  // 0: 병렬
-        PeriodicInterval = TimeSpan.FromMilliseconds(500);
-        RequestTimeout = TimeSpan.FromSeconds(10);
-        HeartbeatInterval = TimeSpan.Zero;
-    }
-
-    public override string ToString()
-        => base.ToString() + $" | {BaseUrl}";
-}
-
-// ── Transport ─────────────────────────────────────────────────────────
-
 /// <summary>HTTP REST API 전송 계층.</summary>
 public sealed class HttpTransport : NetTransportBase
 {

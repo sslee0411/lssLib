@@ -22,14 +22,33 @@ namespace lssLib.Net;
 internal sealed class NetConnectionManager : IAsyncDisposable
 {
     #region §1 ─ 필드
-
+    /// <summary>
+    /// 전송 계층 참조. 연결·재접속·상태 관리 전담.
+    /// * NetChannelBase 에서 직접 통신하지 않고 이 클래스를 통해 간접적으로 통신 → 책임 분리 + 재접속 로직 집중 관리.
+    /// </summary>
     private readonly INetTransport _transport;
+
+    /// <summary>
+    /// 장비 설정 참조. 재접속 시도 횟수·대기 시간 계산, 이벤트 메시지 등에 사용.
+    /// </summary>
     private readonly NetDeviceConfig _cfg;
+
+    /// <summary>
+    /// 통계 참조. 오류 발생 시 기록, 재접속 성공 시 기록 → NetDeviceRegistry 통계 집계에 활용.
+    /// </summary>
     private readonly NetStatistics _stats;
 
     /// <summary>SemaphoreSlim(1,1) — 재접속 중복 실행 방지.</summary>
     private readonly SemaphoreSlim _lock = new(1, 1);
+
+    /// <summary>
+    /// 재접속 상태 플래그. HandleErrorAsync 진입 시 true → 중복 진입 방지.
+    /// </summary>
     private volatile bool _disposed;
+
+    /// <summary>
+    /// 재접속 시도 중인지 여부. UI/로그에서 재접속 진행 상황 표시 등에 활용.
+    /// </summary>
     private volatile bool _reconnecting;
 
     #endregion
@@ -50,8 +69,21 @@ internal sealed class NetConnectionManager : IAsyncDisposable
 
     #region §3 ─ 프로퍼티 / 이벤트
 
+    /// <summary>
+    /// 현재 연결 상태. NetState 열거형으로 표현 (Disconnected, Connecting, Connected, Reconnecting 등).
+    /// </summary>
     public NetState State => _transport.State;
+
+    /// <summary>
+    /// 연결 여부. State가 Connected인 경우 true. 재접속 시도 중에도 일시적으로 false → IsReconnecting 플래그로 구분.
+    /// </summary>
     public bool IsConnected => _transport.State == NetState.Connected;
+
+    /// <summary>
+    /// 재접속 시도 중 여부. 
+    /// HandleErrorAsync 진입 시 true → UI/로그에서 재접속 진행 상황 표시 등에 활용. 
+    /// 재접속 시도 중에도 State는 일시적으로 Disconnected → IsConnected와 구분하여 사용.
+    /// </summary>
     public bool IsReconnecting => _reconnecting;
 
     /// <summary>재접속 성공 시 발생. → NetScheduler.Resume() 트리거.</summary>

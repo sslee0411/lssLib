@@ -10,7 +10,7 @@ namespace lssLib.Net;
 /// </summary>
 /// <remarks>
 /// <b>우선순위:</b>
-/// Critical(0) &gt; Write(1) &gt; Read(2) &gt; Low/Heartbeat(3)
+/// Critical(0) > Write(1) >; Read(2) > Low/Heartbeat(3)
 ///
 /// <b>조립 예시 — Modbus RTU (Serial, SequenceMode=1):</b>
 /// <code>

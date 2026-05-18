@@ -1,10 +1,11 @@
 ﻿// ══════════════════════════════════════════════════════════════════════
 //  lssLib.Net · Infrastructure/NetDispatchPipeline.cs
 //  역할: 우선순위별 Channel[4] 분리 파이프라인 (lock 없음)
-//
+//   NetDispatchPipeline == INetTransport상속받아 구현된 Class 기준으로 Write Read 처리
+//   
 //  ┌─ 이 파일에 ReadAsync 가 있는 이유 (핵심 개념) ─────────────────┐
 //  │                                                                  │
-//  │  Pipeline = "Write 전담"이 아니라 "패킷 처리 전담"입니다.       │
+//  │  Pipeline = "Write 전담"이 아니라 "패킷 처리 전담"입니다.        │
 //  │                                                                  │
 //  │  패킷 종류별 처리:                                               │
 //  │                                                                  │
@@ -23,19 +24,19 @@
 //  │      → DeviceFrameReceived 이벤트                               │
 //  │                                                                  │
 //  │  ④ Passive 수신 (서버 Push / Serial DataReceived)               │
-//  │      → Pipeline 의 ProcessLoopAsync 와 무관                    │
+//  │      → Pipeline 의 ProcessLoopAsync 와 무관                     │
 //  │      → Transport.DataReceived 이벤트 → PushReceived() 경로     │
-//  │      → DispatchAsync 에서 ReadAsync 호출 없음                  │
+//  │      → DispatchAsync 에서 ReadAsync 호출 없음                   │
 //  │                                                                  │
 //  │  ★ ReadAsync 는 RequestResponse 모드 전용입니다.                │
 //  └──────────────────────────────────────────────────────────────────┘
 //
 //  ┌─ v3 vs v5 파이프라인 구조 비교 ─────────────────────────────────┐
-//  │  v3: Channel<NetPacket>(ingress) → lock + PriorityQueue → 소비자│
-//  │  v5: Channel[0]Critical ─┐                                       │
-//  │      Channel[1]Write     ├─► ProcessLoopAsync (우선순위순 TryRead)│
-//  │      Channel[2]Read      │                                       │
-//  │      Channel[3]Low       ─┘                                       │
+//  │  v3: Channel<NetPacket>(ingress) → lock + PriorityQueue → 소비자    │
+//  │  v5: Channel[0]Critical ─┐                                          │
+//  │      Channel[1]Write      ├─► ProcessLoopAsync (우선순위순 TryRead) │
+//  │      Channel[2]Read       │                                          │
+//  │      Channel[3]Low      ─┘                                          │
 //  └──────────────────────────────────────────────────────────────────┘
 // ══════════════════════════════════════════════════════════════════════
 
@@ -50,7 +51,7 @@ namespace lssLib.Net;
 /// <remarks>
 /// <para>
 /// <b>채널 인덱스 = <see cref="NetPriority"/> 값:</b>
-/// Critical(0) &gt; Write(1) &gt; Read(2) &gt; Low(3)
+/// Critical(0) > Write(1) > Read(2) > Low(3)
 /// </para>
 /// <para>
 /// 소비자 루프는 0번 채널부터 순서대로 비블로킹 TryRead 를 시도합니다.
@@ -265,6 +266,7 @@ internal sealed class NetDispatchPipeline : IAsyncDisposable
             // ──────────────────────────────────────────────────────────
             if (packet.Mode == PacketMode.Write && packet.ExpectResponse)
             {
+                // ReadAsync 에 RequestTimeout 적용 (타임아웃 시 null 반환, 예외 없음)
                 var raw = await ReadWithTimeoutAsync(ct).ConfigureAwait(false);
                 if (raw is null) return;  // 타임아웃 — 다음 패킷 처리
                 _stats.RecordReceived();
@@ -282,6 +284,7 @@ internal sealed class NetDispatchPipeline : IAsyncDisposable
             // ──────────────────────────────────────────────────────────
             if (packet.Mode == PacketMode.Request && packet.Tcs is not null)
             {
+                // ReadAsync 에 RequestTimeout 적용 (타임아웃 시 null 반환, 예외 없음)
                 var raw = await ReadWithTimeoutAsync(ct).ConfigureAwait(false);
                 if (raw is null)
                 {
@@ -306,6 +309,7 @@ internal sealed class NetDispatchPipeline : IAsyncDisposable
             // ──────────────────────────────────────────────────────────
             if (packet.Mode == PacketMode.PeriodicRead)
             {
+                // ReadAsync 에 RequestTimeout 적용 (타임아웃 시 null 반환, 예외 없음)
                 var raw = await ReadWithTimeoutAsync(ct).ConfigureAwait(false);
                 if (raw is null) return;  // 타임아웃 — 다음 주기 재시도
                 _stats.RecordReceived();

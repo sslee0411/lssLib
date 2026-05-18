@@ -34,18 +34,62 @@ namespace lssLib.Net;
 public sealed class NetStatistics
 {
     #region §1 ─ 카운터 (Interlocked 스레드 안전)
+    /// <summary>
+    /// TotalSent: WriteAsync 성공 횟수
+    /// 총 전송 성공 횟수
+    /// </summary>
+    private long _totalSent;             
 
-    private long _totalSent;             // 총 전송 성공 횟수
-    private long _totalReceived;         // 총 수신 프레임 횟수
-    private long _totalErrors;           // 총 오류 횟수 (전송 실패 + 연결 오류 등)
-    private long _totalReconnects;       // 총 재접속 성공 횟수
-    private long _totalWriteRetries;     // 총 Write 재전송 횟수
-    private long _totalResponseTimeMs;  // 총 응답 시간 누적 (ms, RequestAsync 기준)
-    private long _totalResponseCount;   // 총 응답 횟수 (평균 계산용)
-    private long _maxResponseTimeMs;    // 최대 응답 시간 (ms)
-    private volatile string _lastError = string.Empty;  // 마지막 오류 메시지
-    private volatile string _lastErrorTime = string.Empty;  // 마지막 오류 시각 (HH:mm:ss.fff)
+    /// <summary>
+    /// TotalReceived: DeviceFrameReceived 이벤트 발생 횟수 (수신 프레임 수)
+    /// 총 수신 프레임 횟수
+    /// </summary>
+    private long _totalReceived;
 
+    /// <summary>
+    /// TotalErrors: WriteAsync 실패 횟수 + 연결 오류 등 모든 오류 횟수
+    /// 총 오류 횟수 (전송 실패 + 연결 오류 등)
+    /// </summary>
+    private long _totalErrors;
+
+    /// <summary>
+    /// TotalReconnects: 재접속 성공 횟수 (NetConnectionManager.HandleErrorAsync 진입 시 기록)
+    /// 총 재접속 성공 횟수
+    /// </summary>
+    private long _totalReconnects;
+
+    /// <summary>
+    /// TotalWriteRetries: WriteAsync 재전송 횟수 (NetChannelBase.WriteAsync 실패 시 기록)
+    /// 총 Write 재전송 횟수
+    /// </summary>
+    private long _totalWriteRetries;
+
+    /// <summary>
+    /// 평균 응답 시간(ms). RequestAsync 기준.
+    /// 총 응답 시간 누적 (ms, RequestAsync 기준)
+    /// </summary>
+    private long _totalResponseTimeMs;
+
+    /// <summary>
+    /// 평균 응답 시간 계산용 카운터. RequestAsync 기준.
+    /// 총 응답 횟수 (평균 계산용)
+    /// </summary>
+    private long _totalResponseCount;
+
+    /// <summary>
+    /// 최대 응답 시간(ms). RequestAsync 기준.
+    /// </summary>
+    private long _maxResponseTimeMs;
+
+    /// <summary>
+    /// 마지막 오류 메시지 및 시각. DeviceErrorOccurred 이벤트 발생 시 기록.
+    /// </summary>
+    private volatile string _lastError = string.Empty;
+
+    /// <summary>
+    /// 마지막 오류 발생 시각 (HH:mm:ss.fff). DeviceErrorOccurred 이벤트 발생 시 기록.
+    /// </summary>
+    private volatile string _lastErrorTime = string.Empty;
     #endregion
 
     #region §2 ─ 공개 프로퍼티
@@ -98,11 +142,30 @@ public sealed class NetStatistics
 
     #region §3 ─ 내부 기록 (Infrastructure 에서만 호출)
 
+    /// <summary>
+    /// WriteAsync 성공 시 호출하여 전송 카운터를 증가시킵니다.
+    /// * <para>Interlocked.Increment: 원자적으로 1씩 증가시킵니다.</para> 
+    /// </summary>
     internal void RecordSent() => Interlocked.Increment(ref _totalSent);
+
+    /// <summary>
+    /// DeviceFrameReceived 이벤트 발생 시 호출하여 수신 카운터를 증가시킵니다.
+    /// </summary>
     internal void RecordReceived() => Interlocked.Increment(ref _totalReceived);
+
+    /// <summary>
+    /// NetConnectionManager.HandleErrorAsync 진입 시 호출하여 재접속 카운터를 증가시킵니다.
+    /// </summary>
     internal void RecordReconnect() => Interlocked.Increment(ref _totalReconnects);
+
+    /// <summary>
+    /// NetChannelBase.WriteAsync 실패 시 호출하여 Write 재전송 카운터를 증가시킵니다.
+    /// </summary>
     internal void RecordWriteRetry() => Interlocked.Increment(ref _totalWriteRetries);
 
+    /// <summary>
+    /// DeviceErrorOccurred 이벤트 발생 시 호출하여 오류 카운터를 증가시키고, 마지막 오류 메시지와 시각을 기록합니다.
+    /// </summary>
     internal void RecordError(string msg)
     {
         Interlocked.Increment(ref _totalErrors);
@@ -110,6 +173,9 @@ public sealed class NetStatistics
         _lastErrorTime = DateTime.Now.ToString("HH:mm:ss.fff");
     }
 
+    /// <summary>
+    /// RequestAsync 완료 시 호출하여 응답 시간(ms)을 기록합니다. 평균과 최대값 계산에 활용됩니다.
+    /// </summary>
     internal void RecordResponse(long elapsedMs)
     {
         Interlocked.Increment(ref _totalResponseCount);

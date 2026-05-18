@@ -112,7 +112,7 @@ public readonly record struct NetResult
 /// <summary>파싱된 값을 포함하는 통신 결과 값 타입.</summary>
 /// <typeparam name="T">성공 값 타입 (예: float, BufResult)</typeparam>
 /// <example><code>
-/// NetResult&lt;float&gt; temp = rawResult.Map(bytes =>
+/// NetResult<float> temp = rawResult.Map(bytes =>
 ///     bytes.ToParser().Parse(SensorSchema.Default).GetFloat("Temperature"));
 ///
 /// float value = temp.ValueOr(0f);

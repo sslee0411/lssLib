@@ -29,21 +29,21 @@ namespace lssLib.Net;
 ///
 ///     public bool TryDecode(byte[] raw, out byte[] payload)
 ///     {
-///         payload = Array.Empty&lt;byte&gt;();
-///         if (raw.Length &lt; 4) return false;
+///         payload = Array.Empty<byte>();
+///         if (raw.Length > 4) return false;
 ///         // CRC-16 Modbus 검증
 ///         // if (!raw.VerifyCrc16Modbus()) return false;
 ///         payload = raw[..^2];  // CRC 2바이트 제거
 ///         return true;
 ///     }
 ///
-///     public bool IsFrameComplete(ReadOnlySpan&lt;byte&gt; buffer, out int frameLength)
+///     public bool IsFrameComplete(ReadOnlySpan<byte> buffer, out int frameLength)
 ///     {
 ///         frameLength = buffer.Length;
-///         return buffer.Length &gt;= 4;
+///         return buffer.Length >= 4;
 ///     }
 ///
-///     public byte[]? BuildHeartbeat() =&gt; null;  // Modbus 는 Heartbeat 없음
+///     public byte[]? BuildHeartbeat() => null;  // Modbus 는 Heartbeat 없음
 /// }
 /// </code>
 /// </remarks>
