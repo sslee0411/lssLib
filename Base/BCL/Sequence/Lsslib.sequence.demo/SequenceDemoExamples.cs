@@ -87,7 +87,7 @@ sealed class AssertVariableStep : SequenceStepBase
 {
     public override string StepName { get; }
     private readonly string _key;
-    private readonly Func<object?, bool> _predicate;
+    private readonly Func<object?, bool> _predicate; // 검증 함수 Object 함수에 Bool 반환
     private readonly string _failMessage;
 
     public AssertVariableStep(string name, string key,
@@ -163,9 +163,11 @@ static class DemoEx01_CustomStep
         // StepIndex 자동 부여
         for (int i = 0; i < group.Steps.Count; i++)
             group.Steps[i].StepIndex = i;
-
+        // 순차 시퀀스 정의
         var sequence = new SequenceDefinition("Demo 순차 시퀀스")
-        { ContinueOnError = false };
+        { 
+            ContinueOnError = false //← Step 실패 시 시퀀스 중단 (기본값)
+        };
         sequence.AddGroup(group);
 
         Console.WriteLine($"  시퀀스: {sequence}");
@@ -224,7 +226,7 @@ static class DemoEx02_MixedGroups
         foreach (var g in new[] { g1, g2, g3 })
             foreach (var s in g.Steps)
                 s.StepIndex = idx++;
-
+        // 순차_병렬_순차 그룹을 포함하는 시퀀스 정의
         var sequence = new SequenceDefinition("혼합 그룹 시퀀스");
         sequence.AddGroup(g1).AddGroup(g2).AddGroup(g3);
 
@@ -254,24 +256,28 @@ static class DemoEx03_ContextVariable
 
         var group = new SequenceGroup { ExecutionMode = StepExecutionMode.Sequential };
         group.Steps.Add(new SetVariableStep("변수 설정", "target_temp", 85.5));
-        group.Steps.Add(new SetVariableStep("플래그 설정", "heating", true));
+        group.Steps.Add(new SetVariableStep("플래그 설정", "heating", false ));
+
         group.Steps.Add(new AssertVariableStep("온도 검증", "target_temp",
             v => v is double d && d > 80.0, "목표 온도 미달"));
         group.Steps.Add(new AssertVariableStep("플래그 검증", "heating",
             v => v is bool b && b, "가열 미시작"));
+
         group.Steps.Add(new EchoStep("완료", "모든 변수 검증 통과"));
 
         for (int i = 0; i < group.Steps.Count; i++)
             group.Steps[i].StepIndex = i;
 
         var sequence = new SequenceDefinition("변수 공유 시퀀스");
+
         sequence.AddGroup(group);
 
         var controller = new DemoController();
         var context = new DemoContext();
 
         controller.StepCompleted += r =>
-            Console.WriteLine($"  {(r.IsSuccess ? "✔" : "✘")} {r.Step.StepName}");
+            Console.WriteLine($"  {(r.IsSuccess ? "✔" : "✘")} {r.Step.StepName} " +
+                $"({r.Elapsed.TotalMilliseconds:F0}ms)");
 
         SequenceResult result = await controller.RunAsync(sequence, context, ct);
         Console.WriteLine($"  결과: {result}");
@@ -354,7 +360,7 @@ static class DemoEx05_BatchRun
         // continueOnError=false → 공정C 실패 시 공정D 실행 안 됨
         SequenceBatchResult batch = await controller.RunAllAsync(
             [seqA, seqB, seqC, seqD], context,
-            continueOnError: false, ct: ct);
+            continueOnError: true, ct: ct);
 
         Console.WriteLine($"\n  배치 결과: {batch}");
         Console.WriteLine($"  실행된 시퀀스: {batch.Results.Count}/{4}");

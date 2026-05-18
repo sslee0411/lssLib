@@ -245,6 +245,9 @@ public abstract class GroupSequenceBuilderBase<TStep, TBuilder>
 
     #region §5 ─ 헬퍼
 
+    /// <summary>
+    /// 현재 그룹이 없으면 새 그룹을 생성하여 추가합니다.
+    /// </summary>
     private void EnsureGroup()
     {
         if (_currentGroup is null)
