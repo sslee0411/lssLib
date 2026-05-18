@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Log — UML 클래스 다이어그램</title>
+<style>
+/* ── 색상 토큰 ── */
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8; --bd-tertiary:#eeeff3;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00;  --tx-danger:#b81a1a;
+  --bg-success:#e8f5e9; --bg-warning:#fff3e0;   --bg-info:#e3f2fd;    --bg-danger:#ffebee;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52; --bd-tertiary:#32334a;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d; --tx-danger:#ef9a9a;
+    --bg-success:#1a3d1e; --bg-warning:#3d2400;   --bg-info:#0d2545;   --bg-danger:#3d0d0d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;font-family:var(--mono);}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+
+/* ── 줌 컨트롤 ── */
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+
+/* ── 범례 ── */
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);font-family:var(--mono);}
+
+/* ── 뷰포트 ── */
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:1700px;min-height:1200px;}
+.bw{position:absolute;z-index:1;}
+
+/* ── UML 테이블 ── */
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:175px;line-height:1.5;}
+.uh{background:var(--bg-secondary);}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+
+/* ── 타입별 헤더 색상 ── */
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+
+.ghost{opacity:0.60;}
+.ghost .cn{opacity:0.85!important;} .ghost .mn{opacity:0.80;}
+
+/* ── SVG ── */
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+
+<h1>lssLib.Log — UML 클래스 다이어그램</h1>
+<p class="sub">비동기 로그 관리 라이브러리 · .NET 8.0 · C# 12 · BCL only</p>
+
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <span id="zlb">100%</span>
+</div>
+
+<div id="lg">
+  <div class="li"><span style="background:#dbeafe;color:#1e3a8a;border:1.5px solid #2563eb;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«interface»</span>인터페이스</div>
+  <div class="li"><span style="background:#fef3c7;color:#78350f;border:1.5px solid #d97706;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«abstract»</span>추상 클래스</div>
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>record struct</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lge" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#e040fb" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e040fb" stroke-width="2.2" marker-end="url(#lge)"/></svg>extends
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#4f8ef7" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#4f8ef7" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#lgi)"/></svg>implements
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e65100" stroke-width="1.8" stroke-dasharray="5,2" marker-end="url(#lgb)"/></svg>«builds»
+  </div>
+  <div class="li">
+    <svg width="54" height="16" style="flex-shrink:0"><defs><marker id="lgds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="14" markerHeight="12" orient="auto-start-reverse"><path d="M0 6L9 1L18 6L9 11Z" fill="#555"/></marker><marker id="lgda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker></defs><line x1="14" y1="8" x2="46" y2="8" stroke="#555" stroke-width="1.8" marker-start="url(#lgds)" marker-end="url(#lgda)"/></svg>composition
+  </div>
+</div>
+
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="1700" height="1500"></svg>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── 줌 ── */
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.3, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth)  || 1700;
+  const nh = parseFloat(cv.style.minHeight) || 1200;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+
+/* ── HTML 이스케이프 ── */
+const H = s => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/* ── 테이블 빌더 ── */
+function ctbl(kind, name, desc, members, ext, tw, ghost) {
+  tw = tw || 400; ext = ext || ''; ghost = ghost || false;
+  const bm = { interface:'bi', abstract:'ba', class:'bc', enum:'be', 'record struct':'br' };
+  const lm = { interface:'«interface»', abstract:'«abstract»', class:'«class»', enum:'«enum»', 'record struct':'«record»' };
+  const tc = { interface:'ut-interface', abstract:'ut-abstract', class:'ut-class', enum:'ut-enum', 'record struct':'ut-record' };
+  const hc = { interface:'uh-interface', abstract:'uh-abstract', class:'uh-class', enum:'uh-enum', 'record struct':'uh-record' };
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1 = 68, w2 = 162, w3 = tw - w1 - w2 - 4;
+  let rows = '';
+  members.forEach(m => {
+    if (m.s) { rows += `<tr class="sep"><td colspan="3">${m.s}</td></tr>`; return; }
+    const ab = m.mo === 'abstract', ev = m.mo === 'event';
+    const mo = (m.mo && !ev) ? `<span class="mm">${m.mo}</span>` : '';
+    rows += `<tr>
+      <td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td>
+    </tr>`;
+  });
+  const tCls = [tc[kind]||'', ghost?' ghost':''].filter(Boolean).join(' ');
+  return `<table class="ut ${tCls}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>
+    ${rows}
+  </table>`;
+}
+
+/* ══════════════════════════════════════
+   § BOXES — 클래스 정의
+   ══════════════════════════════════════ */
+const BOXES = {
+
+  /* ── Col 0: 열거형 ── */
+  'LogLevel': ctbl('enum', 'LogLevel', '로그 심각도 열거형', [
+    { t:'0', n:'Debug', d:'상세 디버그. 개발 중에만 사용 권장' },
+    { t:'1', n:'Info',  d:'일반 정보. 운영 환경 기본 레벨' },
+    { t:'2', n:'Warn',  d:'주의. 모니터링 필요' },
+    { t:'3', n:'Error', d:'오류. 기능 일부 정상 동작 안 함' },
+    { t:'4', n:'Fatal', d:'치명. 서비스 중단 수준' },
+  ], '', 340),
+
+  'LogFileFormat': ctbl('enum', 'LogFileFormat', '파일 출력 형식', [
+    { t:'0', n:'Txt',  d:'.txt 고정폭 텍스트 (기본값)' },
+    { t:'1', n:'Csv',  d:'.csv Excel·DB Import 용도' },
+    { t:'2', n:'Both', d:'.txt + .csv 동시 저장' },
+  ], '', 340),
+
+  /* ── Col 1: 데이터 모델 ── */
+  'LogData': ctbl('class', 'LogData', '로그 데이터 단위 모델', [
+    { s:'── Properties (읽기 전용)' },
+    { t:'LogLevel',  n:'Level { get; set; }',    d:'심각도 레벨' },
+    { t:'string',    n:'LevelText { get; }',      d:'DEBUG/INFO/WARN/ERROR/FATAL' },
+    { t:'string',    n:'Date { get; }',            d:'yyyy_MM_dd HH:mm:ss.fff' },
+    { t:'string',    n:'YearMonth { get; }',       d:'폴더 분류 기준 (yyyy_MM)' },
+    { t:'string',    n:'Day { get; }',             d:'폴더 분류 기준 (dd)' },
+    { t:'string',    n:'Time { get; }',            d:'시간 ms 포함 (HH:mm:ss.fff)' },
+    { t:'string',    n:'Source { get; set; }',     d:'발생 출처·파일 분류 기준' },
+    { t:'string',    n:'Contents { get; set; }',   d:'실제 로그 메시지' },
+    { s:'── Constructor' },
+    { t:'',          n:'LogData(level, source, contents)', d:'현재 시각 자동 입력' },
+    { s:'── Override' },
+    { t:'string',    n:'ToString()',               d:'Date [LevelText] Source Contents' },
+  ], '', 420),
+
+  'LogConfig': ctbl('class', 'LogConfig', '로그 매니저 설정', [
+    { s:'── Constants' },
+    { t:'int', mo:'static', n:'VALID_DAYS_MIN = 1',    d:'최소 보관 1일' },
+    { t:'int', mo:'static', n:'VALID_DAYS_MAX = 1095', d:'최대 보관 3년' },
+    { s:'── Properties' },
+    { t:'string',        n:'LogRootPath { get; set; }',       d:'저장 루트 경로 (기본: exe\\Log)' },
+    { t:'int',           n:'ValidDays { get; set; }',         d:'보관 일수 1~1095, 초과 시 예외' },
+    { t:'int',           n:'CheckHour { get; set; }',         d:'만료 삭제 기준 시각 (0~23)' },
+    { t:'bool',          n:'EnableFileOutput { get; set; }',  d:'파일 저장 여부 (기본 true)' },
+    { t:'long',          n:'MaxFileSizeBytes { get; set; }',  d:'롤링 기준 크기 (기본 10MB)' },
+    { t:'bool',          n:'EnableConsoleOutput { get; set; }',d:'VS 출력창 출력 (기본 true)' },
+    { t:'LogLevel',      n:'MinimumConsoleLevel { get; set; }',d:'출력창 최소 레벨 (기본 Debug)' },
+    { t:'LogLevel',      n:'MinimumLevel { get; set; }',      d:'큐 진입 최소 레벨 (기본 Debug)' },
+    { t:'int',           n:'ChannelCapacity { get; set; }',   d:'큐 용량 0=무제한 (기본 0)' },
+    { t:'int',           n:'MaxDisplayCount { get; set; }',   d:'UI 최대 표시 건수 (기본 1000)' },
+    { t:'LogFileFormat', n:'FileFormat { get; set; }',        d:'파일 출력 형식 (기본 Txt)' },
+  ], '', 430),
+
+  /* ── Col 2: 싱글톤 매니저 ── */
+  'LogManager': ctbl('class', 'LogManager', 'Lazy&lt;T&gt; 싱글톤 매니저 (sealed)', [
+    { s:'── Singleton' },
+    { t:'LogManager', mo:'static', n:'Instance { get; }',   d:'Lazy<T> thread-safe 싱글톤' },
+    { s:'── Properties' },
+    { t:'bool',      n:'IsRunning { get; }',                 d:'현재 실행 중 여부' },
+    { t:'LogConfig', n:'Config { get; }',                    d:'현재 설정' },
+    { s:'── Events' },
+    { t:'Action&lt;LogData&gt;', mo:'event', n:'LogAdded',   d:'로그 처리 완료 시 발행 (BG Thread)' },
+    { s:'── Start / Stop' },
+    { t:'void',   n:'Start(config = null)',                  d:'Channel 큐 + 2개 Task 구동' },
+    { t:'Task',   n:'StopAsync()',                           d:'큐 소진 후 안전 종료 (await 권장)' },
+    { t:'void',   n:'Stop()',                                d:'동기 정지 (앱 종료 시)' },
+    { s:'── AddLog (레벨별 단축 메서드)' },
+    { t:'void',   n:'AddLog(level, source, contents)',       d:'level &lt; MinimumLevel 시 즉시 버림' },
+    { t:'void',   n:'Debug(source, msg)',                    d:'LogLevel.Debug 단축' },
+    { t:'void',   n:'Info(source, msg)',                     d:'LogLevel.Info 단축' },
+    { t:'void',   n:'Warn(source, msg)',                     d:'LogLevel.Warn 단축' },
+    { t:'void',   n:'Error(source, msg)',                    d:'LogLevel.Error 단축' },
+    { t:'void',   n:'Fatal(source, msg)',                    d:'LogLevel.Fatal 단축' },
+    { s:'── AOP 래퍼 (static) — void · 동기' },
+    { t:'void',   mo:'static', n:'Execute(tryAction, catchAction, finallyAction, ...)', d:'[CallerMemberName] 자동 주입' },
+    { s:'── AOP 래퍼 (static) — void · 비동기' },
+    { t:'Task',   mo:'static', n:'ExecuteAsync(tryAction, ...)',  d:'Func<Task> 비동기 버전' },
+    { s:'── AOP 래퍼 (static) — T · 동기' },
+    { t:'T',      mo:'static', n:'Execute&lt;T&gt;(tryFunc, catchFunc, ...)',  d:'성공: tryFunc 결과 / 실패: catchFunc' },
+    { s:'── AOP 래퍼 (static) — T · 비동기' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'ExecuteAsync&lt;T&gt;(tryFunc, ...)', d:'Func<Task<T>> 비동기 버전' },
+    { s:'── 내부 (private)' },
+    { t:'Channel&lt;LogData&gt;',        n:'_channel',           d:'비동기 큐 (생산자-소비자)' },
+    { t:'CancellationTokenSource',       n:'_cts',               d:'ValidDayTask 종료 신호기' },
+    { t:'Task',                          n:'_processTask',        d:'큐 소비 Task' },
+    { t:'Task',                          n:'_validDayTask',       d:'만료 로그 관리 Task' },
+  ], '', 500),
+
+};
+
+/* ══════════════════════════════════════
+   § COL — 컬럼 분류
+   ══════════════════════════════════════ */
+const COL = {
+  0: ['LogLevel', 'LogFileFormat'],
+  1: ['LogData', 'LogConfig'],
+  2: ['LogManager'],
+};
+
+/* ══════════════════════════════════════
+   § FG — 파일 그룹 테두리
+   ══════════════════════════════════════ */
+const FG = [
+  { lbl:'lssLib.Log — 열거형', ns:['LogLevel','LogFileFormat'], color:'#dc2626' },
+  { lbl:'lssLib.Log — 데이터 모델', ns:['LogData','LogConfig'],  color:'#059669' },
+  { lbl:'lssLib.Log — 싱글톤 매니저', ns:['LogManager'],          color:'#0f766e' },
+];
+
+/* ══════════════════════════════════════
+   § CONN — 관계선
+   ══════════════════════════════════════ */
+const CONN = [
+  /* LogData → LogLevel (uses) */
+  { f:'LogData',      fe:'left',   t:'LogLevel',     te:'right',  ty:'uses', lbl:'uses' },
+  /* LogConfig → LogLevel (uses) */
+  { f:'LogConfig',    fe:'left',   t:'LogLevel',     te:'right',  ty:'uses', lbl:'uses', xoff:-18 },
+  /* LogConfig → LogFileFormat (uses) */
+  { f:'LogConfig',    fe:'left',   t:'LogFileFormat',te:'right',  ty:'uses', lbl:'uses' },
+  /* LogManager → LogConfig (composition) */
+  { f:'LogManager',   fe:'left',   t:'LogConfig',    te:'right',  ty:'comp', lbl:'1 ◆ 1' },
+  /* LogManager → LogData (builds) */
+  { f:'LogManager',   fe:'left',   t:'LogData',      te:'right',  ty:'bld',  lbl:'«creates»', xoff:18 },
+  /* LogManager → LogLevel (uses) */
+  { f:'LogManager',   fe:'left',   t:'LogLevel',     te:'right',  ty:'uses', lbl:'uses', xoff:-38 },
+  /* LogManager → LogFileFormat (uses) */
+  { f:'LogManager',   fe:'bottom', t:'LogFileFormat',te:'top',    ty:'uses', lbl:'uses' },
+];
+
+/* ── 레이아웃 상수 ── */
+const GAP_COL = 400, PAD_ROW = 80, PAD_STACK = 50, START_X = 30, START_Y = 40;
+
+const cv    = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+/* ── DOM 삽입 ── */
+Object.keys(BOXES).forEach(name => {
+  const div = document.createElement('div');
+  div.className = 'bw'; div.dataset.box = name;
+  div.style.left = '0px'; div.style.top = '0px';
+  div.innerHTML = BOXES[name];
+  cv.insertBefore(div, svgEl);
+});
+
+/* ── 위치 헬퍼 ── */
+const gb = n => { const el = cv.querySelector(`[data-box="${n}"]`); return el ? {el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight} : null; };
+const bot = n => { const b = gb(n); return b ? b.y + b.h : 0; };
+const setX = (n,x) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.left = x+'px'; };
+const setY = (n,y) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.top  = y+'px'; };
+const ri   = v => Math.round(v);
+
+/* ── X 자동 계산 ── */
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  const colW = {};
+  Object.entries(COL).forEach(([ci,ns]) => {
+    colW[ci] = Math.max(...ns.map(n => { const b=gb(n); return b?b.w:0; }));
+  });
+  const colX = {};
+  let cx = START_X;
+  Object.keys(COL).sort().forEach(ci => { colX[ci] = cx; cx += colW[ci] + GAP_COL; });
+  Object.entries(COL).forEach(([ci,ns]) => ns.forEach(n => setX(n, colX[ci])));
+
+  /* ══════════════════════════════════════
+     § ROW_LAYOUT — Y 행 배치
+     ══════════════════════════════════════ */
+  requestAnimationFrame(() => {
+    // Col 0: LogLevel, LogFileFormat — 세로 스택
+    setY('LogLevel',      START_Y);
+    setY('LogManager',    START_Y);
+
+    requestAnimationFrame(() => {
+      setY('LogFileFormat', bot('LogLevel') + PAD_STACK);
+
+      // Col 1: LogData 상단 정렬, LogConfig 는 LogData 아래
+      setY('LogData',   START_Y);
+
+      requestAnimationFrame(() => {
+        setY('LogConfig', bot('LogData') + PAD_STACK);
+
+        requestAnimationFrame(() => drawAll());
+      });
+    });
+  });
+}));
+
+/* ── SVG 관계선 그리기 ── */
+function drawAll() {
+  const pos = {};
+  cv.querySelectorAll('.bw').forEach(el => {
+    pos[el.dataset.box] = {x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW = Math.max(...Object.values(pos).map(p=>p.x+p.w)) + 80;
+  const maxH = Math.max(...Object.values(pos).map(p=>p.y+p.h)) + 100;
+  cv.style.minWidth = maxW+'px'; cv.style.minHeight = maxH+'px';
+  svgEl.setAttribute('width', maxW); svgEl.setAttribute('height', maxH);
+  const ph = document.getElementById('cv-phantom');
+  ph.style.width  = Math.ceil(maxW*zl)+'px';
+  ph.style.height = Math.ceil(maxH*zl)+'px';
+
+  /* ── SVG 마커 정의 (크기 키움 + 선명도 향상) ── */
+  svgEl.innerHTML = `<defs>
+    <marker id="me" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#e040fb" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#4f8ef7" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 6 L9 1 L18 6 L9 11 Z" fill="#555" stroke="white" stroke-width="0.5"/></marker>
+    <marker id="mda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>`;
+
+  /* ── 파일 그룹 테두리 ── */
+  FG.forEach(fg => {
+    const bs = fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length) return;
+    const pd=14, x1=Math.min(...bs.map(b=>b.x))-pd, y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,    y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect'); sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect'); sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text'); sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl; svgEl.appendChild(tx);
+  });
+
+  /* ── edge 포인트 ── */
+  function ep(b,e){
+    if(e==='top')    return [b.x+b.w/2, b.y];
+    if(e==='bottom') return [b.x+b.w/2, b.y+b.h];
+    if(e==='left')   return [b.x,        b.y+b.h/2];
+    if(e==='right')  return [b.x+b.w,    b.y+b.h/2];
+    if(e==='btl')    return [b.x+b.w*0.25, b.y+b.h];
+    if(e==='btr')    return [b.x+b.w*0.75, b.y+b.h];
+    return [b.x+b.w/2, b.y];
+  }
+
+  /* ── 관계선 스타일 ── */
+  const SY = {
+    ext:  {stroke:'#e040fb','stroke-width':2,  'marker-end':'url(#me)'},
+    impl: {stroke:'#4f8ef7','stroke-width':1.5,'stroke-dasharray':'5,3','marker-end':'url(#mi)'},
+    uses: {stroke:'#888',   'stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    bld:  {stroke:'#e65100','stroke-width':1.5,'stroke-dasharray':'5,2','marker-end':'url(#mb)'},
+    comp: {stroke:'#555',   'stroke-width':1.5,'stroke-dasharray':'4,2','marker-start':'url(#mds)','marker-end':'url(#mda)'},
+  };
+
+  /* ── 3차 베지어 커브 경로 생성 ── */
+  CONN.forEach(c => {
+    const fb=pos[c.f], tb=pos[c.t]; if(!fb||!tb) return;
+    const [sx,sy] = ep(fb,c.fe).map(ri);
+    const [tx2,ty2] = ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')    ey+=ML; else if(c.te==='bottom') ey-=ML;
+    else if(c.te==='left') ex+=ML; else if(c.te==='right') ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom'||c.fe==='btl'||c.fe==='btr') c1y+=cp;
+    else if(c.fe==='top')   c1y-=cp;
+    else if(c.fe==='right') c1x+=cp;
+    else if(c.fe==='left')  c1x-=cp;
+    if(c.te==='top')    c2y-=cp; else if(c.te==='bottom') c2y+=cp;
+    else if(c.te==='left') c2x-=cp; else if(c.te==='right') c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path'); sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});
+    svgEl.appendChild(pa);
+    if(c.lbl){
+      // 베지어 중점 계산 (t=0.5)
+      const t=0.5, it=1-t;
+      const mx=ri(it*it*it*sx + 3*it*it*t*c1x + 3*it*t*t*c2x + t*t*t*ex);
+      const my=ri(it*it*it*sy + 3*it*it*t*c1y + 3*it*t*t*c2y + t*t*t*ey);
+      // 라벨 색상은 관계선 색상에 맞춤
+      const lblCol = {ext:'#c000d8',impl:'#1a5cb8',uses:'#555',bld:'#c84000',comp:'#333'}[c.ty]||'#444';
+      const FSIZE=11, PAD_X=7, PAD_Y=3;
+      const approxW = c.lbl.length * FSIZE * 0.62 + PAD_X*2;
+      const approxH = FSIZE + PAD_Y*2;
+      // 배경 rect (흰색 fill + 관계선 색 테두리)
+      const bg=mk('rect'); sa(bg,{
+        x:mx-approxW/2, y:my-approxH/2,
+        width:approxW, height:approxH,
+        rx:4, fill:'white', stroke:lblCol,
+        'stroke-width':1.2, opacity:0.97
+      });
+      svgEl.appendChild(bg);
+      // 라벨 텍스트
+      const tl=mk('text'); sa(tl,{
+        x:mx, y:my,
+        'font-size':FSIZE, fill:lblCol,
+        'font-family':'monospace', 'font-weight':'700',
+        'text-anchor':'middle', 'dominant-baseline':'central'
+      });
+      tl.textContent=c.lbl; svgEl.appendChild(tl);
+    }
+  });
+}
+
+function mk(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function sa(el,a){ Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v)); }
+</script>
+</body>
+</html>

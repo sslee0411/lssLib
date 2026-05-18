@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Config — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8; --bd-tertiary:#eeeff3;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00; --tx-danger:#b81a1a;
+  --bg-success:#e8f5e9; --bg-warning:#fff3e0;   --bg-info:#e3f2fd;   --bg-danger:#ffebee;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52; --bd-tertiary:#32334a;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d; --tx-danger:#ef9a9a;
+    --bg-success:#1a3d1e; --bg-warning:#3d2400;   --bg-info:#0d2545;  --bg-danger:#3d0d0d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;font-family:var(--mono);}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);font-family:var(--mono);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:3600px;min-height:2400px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:175px;line-height:1.5;}
+.uh{background:var(--bg-secondary);}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+.ghost{opacity:0.60;}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+
+<h1>lssLib.Config — UML 클래스 다이어그램</h1>
+<p class="sub">설정 관리 라이브러리 · INI/JSON/XML · AES-256-GCM · Transaction/Undo/Redo · Validation · Migration · Profile · Tree · .NET 8.0 · C# 12</p>
+
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <button onclick="sz(0.36)">36%</button>
+  <span id="zlb">100%</span>
+</div>
+
+<div id="lg">
+  <div class="li"><span style="background:#dbeafe;color:#1e3a8a;border:1.5px solid #2563eb;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«interface»</span>인터페이스</div>
+  <div class="li"><span style="background:#fef3c7;color:#78350f;border:1.5px solid #d97706;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«abstract»</span>추상 클래스</div>
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>sealed record</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lge" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#e040fb" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e040fb" stroke-width="2.2" marker-end="url(#lge)"/></svg>extends
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#4f8ef7" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#4f8ef7" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#lgi)"/></svg>implements
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e65100" stroke-width="1.8" stroke-dasharray="5,2" marker-end="url(#lgb)"/></svg>«builds»
+  </div>
+  <div class="li">
+    <svg width="54" height="16" style="flex-shrink:0"><defs><marker id="lgds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="14" markerHeight="12" orient="auto-start-reverse"><path d="M0 6L9 1L18 6L9 11Z" fill="#555"/></marker><marker id="lgda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker></defs><line x1="14" y1="8" x2="46" y2="8" stroke="#555" stroke-width="1.8" marker-start="url(#lgds)" marker-end="url(#lgda)"/></svg>composition
+  </div>
+</div>
+
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="3600" height="2400"></svg>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.3, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth)  || 3600;
+  const nh = parseFloat(cv.style.minHeight) || 2400;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+
+const H = s => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function ctbl(kind, name, desc, members, ext, tw, ghost) {
+  tw = tw || 400; ext = ext || ''; ghost = ghost || false;
+  const bm = { interface:'bi', abstract:'ba', class:'bc', enum:'be', 'record struct':'br' };
+  const lm = { interface:'«interface»', abstract:'«abstract»', class:'«class»', enum:'«enum»', 'record struct':'«record»' };
+  const tc = { interface:'ut-interface', abstract:'ut-abstract', class:'ut-class', enum:'ut-enum', 'record struct':'ut-record' };
+  const hc = { interface:'uh-interface', abstract:'uh-abstract', class:'uh-class', enum:'uh-enum', 'record struct':'uh-record' };
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1 = 68, w2 = 162, w3 = tw - w1 - w2 - 4;
+  let rows = '';
+  members.forEach(m => {
+    if (m.s) { rows += `<tr class="sep"><td colspan="3">${m.s}</td></tr>`; return; }
+    const ab = m.mo === 'abstract', ev = m.mo === 'event';
+    const mo = (m.mo && !ev) ? `<span class="mm">${m.mo}</span>` : '';
+    rows += `<tr>
+      <td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td>
+    </tr>`;
+  });
+  const tCls = [tc[kind]||'', ghost?' ghost':''].filter(Boolean).join(' ');
+  return `<table class="ut ${tCls}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>
+    ${rows}
+  </table>`;
+}
+
+/* ══════════════════════════════════════
+   § BOXES
+   ══════════════════════════════════════ */
+const BOXES = {
+
+  /* ── Col 0 · Core Enums + Data ─────────────────── */
+  'ConfigFormat': ctbl('enum', 'ConfigFormat', '설정 파일 형식', [
+    { t:'0', n:'Ini',  d:'[Section] key=value 구조' },
+    { t:'1', n:'Json', d:'중첩 객체 JSON' },
+    { t:'2', n:'Xml',  d:'&lt;Config&gt; 루트 XML' },
+  ], '', 300),
+
+  'ConfigEntry': ctbl('record struct', 'ConfigEntry', '단일 설정 항목 (sealed record)', [
+    { t:'string', n:'Section { get; }',    d:'소속 섹션' },
+    { t:'string', n:'Key { get; }',         d:'항목 키' },
+    { t:'string', n:'Value { get; }',       d:'복호화된 평문 값' },
+    { t:'bool',   n:'IsEncrypted { get; }', d:'파일 저장 시 암호화 여부' },
+    { s:'── Derived' },
+    { t:'string', n:'CompositeKey { get; }',d:'SECTION::KEY 복합 조회 키' },
+    { t:'string', n:'ToString()',           d:'암호화 항목은 *** 마스킹' },
+  ], '', 380),
+
+  'ConfigStore': ctbl('class', 'ConfigStore', 'Thread-Safe 인메모리 저장소 (sealed)', [
+    { s:'── 읽기' },
+    { t:'string?',             n:'Get(section, key)',              d:'없으면 null' },
+    { t:'string',              n:'GetOr(section, key, fallback)',  d:'없으면 fallback' },
+    { t:'string',              n:'GetOrThrow(section, key)',       d:'없으면 예외' },
+    { t:'ConfigEntry?',        n:'GetEntry(section, key)',         d:'Entry 직접 반환' },
+    { t:'IReadOnlyList&lt;CE&gt;', n:'GetSection(section)',       d:'섹션 전체 목록' },
+    { t:'IReadOnlyList&lt;string&gt;', n:'GetSections()',         d:'전체 섹션 이름' },
+    { t:'bool',                n:'Contains(section, key)',         d:'키 존재 여부' },
+    { t:'int',                 n:'Count { get; }',                 d:'총 항목 수' },
+    { s:'── 쓰기' },
+    { t:'void', n:'Set(section, key, value, isEncrypted=false)',  d:'' },
+    { t:'void', n:'SetEntry(entry)',                              d:'ConfigEntry 직접 저장' },
+    { t:'bool', n:'Remove(section, key)',                         d:'키 제거' },
+    { t:'bool', n:'RemoveSection(section)',                       d:'섹션 전체 제거' },
+    { t:'void', n:'Clear()',                                      d:'' },
+    { t:'void', n:'Merge(other, overwrite=true)',                 d:'다른 Store 병합' },
+    { t:'IEnumerable&lt;CE&gt;', n:'GetAll()',                   d:'전체 열거' },
+  ], '', 460),
+
+  /* ── Col 1 · Singleton Manager ─────────────────── */
+  'ConfigManager': ctbl('class', 'ConfigManager', 'Lazy&lt;T&gt; 싱글톤 · INI/JSON/XML R/W (sealed)', [
+    { s:'── 싱글톤' },
+    { t:'ConfigManager', mo:'static', n:'Instance { get; }',  d:'Lazy&lt;T&gt; thread-safe' },
+    { t:'ConfigManager', mo:'static', n:'CreateNew()',         d:'독립 인스턴스 (테스트용)' },
+    { s:'── Properties' },
+    { t:'ConfigStore',   n:'Store { get; }',                   d:'내부 저장소 직접 접근' },
+    { s:'── Events' },
+    { t:'Action&lt;string,ConfigStore&gt;?', mo:'event', n:'ConfigChanged',       d:'파일 변경·재로드 시 (BG Thread)' },
+    { t:'Action&lt;IRL&lt;CR&gt;&gt;?',      mo:'event', n:'TransactionCommitted', d:'트랜잭션 커밋 시' },
+    { s:'── 암호화 (AES-256-GCM)' },
+    { t:'void', n:'SetPassword(password)', d:'PBKDF2-SHA256 키 파생' },
+    { t:'void', n:'SetKey(key)',           d:'원시 32바이트 키 직접 설정' },
+    { s:'── 파일 로드 / 저장' },
+    { t:'void', n:'Load(filePath, format?=null, optional=false)',   d:'동기 · 확장자 자동 감지' },
+    { t:'Task', n:'LoadAsync(filePath, format?, optional, ct)',      d:'비동기 로드' },
+    { t:'void', n:'Save(filePath?=null, format?=null)',              d:'동기 저장' },
+    { t:'Task', n:'SaveAsync(filePath?, format?, ct)',               d:'비동기 저장' },
+    { s:'── 값 읽기 / 쓰기' },
+    { t:'string?', n:'Get(section, key)',                           d:'없으면 null' },
+    { t:'string',  n:'GetOr(section, key, fallback)',               d:'없으면 fallback' },
+    { t:'int',     n:'GetInt(section, key, fallback=0)',            d:'int 변환' },
+    { t:'double',  n:'GetDouble(section, key, fallback=0.0)',       d:'double 변환' },
+    { t:'bool',    n:'GetBool(section, key, fallback=false)',       d:'"true"/"1"/"yes"/"on"→true' },
+    { t:'void',    n:'Set(section, key, value, isEncrypted)',       d:'즉시 반영' },
+    { t:'bool',    n:'Contains(section, key)',                      d:'' },
+    { t:'bool',    n:'Remove(section, key)',                        d:'' },
+    { t:'void',    n:'Clear()',                                     d:'Undo 스택도 초기화' },
+    { s:'── 트랜잭션 / Undo / Redo' },
+    { t:'ConfigTransaction',       n:'BeginTransaction()',          d:'using 블록 이탈 시 자동 Rollback' },
+    { t:'IRL&lt;ChangeRecord&gt;?',n:'Undo()',                      d:'마지막 커밋 되돌리기' },
+    { t:'IRL&lt;ChangeRecord&gt;?',n:'Redo()',                      d:'마지막 Undo 재적용' },
+    { t:'bool', n:'CanUndo { get; }',  d:'' },
+    { t:'bool', n:'CanRedo { get; }',  d:'' },
+    { t:'int',  n:'UndoDepth { get; }',d:'' },
+    { s:'── Validation' },
+    { t:'ValidationResult', n:'Validate(schema, applyDefaults=true)', d:'' },
+    { t:'void',             n:'ValidateOrThrow(schema)',               d:'실패 시 예외' },
+    { s:'── FileWatcher' },
+    { t:'void', n:'StartWatch()',          d:'마지막 로드 파일 감시 시작' },
+    { t:'void', n:'StartWatch(filePath)',  d:'지정 파일 감시 시작' },
+    { t:'void', n:'StopWatch()',           d:'모든 감시 중단' },
+  ], '', 500),
+
+  /* ── Col 2 · Transaction + Watcher ──────────────── */
+  'ChangeRecord': ctbl('record struct', 'ChangeRecord', '단일 설정 변경 기록 (sealed record)', [
+    { t:'string',  n:'Section { get; }',     d:'섹션' },
+    { t:'string',  n:'Key { get; }',          d:'키' },
+    { t:'string?', n:'OldValue { get; }',     d:'null = 키가 없었음' },
+    { t:'string?', n:'NewValue { get; }',     d:'null = 키를 제거함' },
+    { t:'bool',    n:'OldEncrypted { get; }', d:'변경 전 암호화 여부' },
+    { t:'bool',    n:'NewEncrypted { get; }', d:'변경 후 암호화 여부' },
+  ], '', 380),
+
+  'ConfigTransaction': ctbl('class', 'ConfigTransaction', '설정 변경 트랜잭션 (sealed, IDisposable)', [
+    { s:'── 변경 (Commit 전 보류)' },
+    { t:'ConfigTransaction', n:'Set(section, key, value, isEncrypted)', d:'보류 큐에 추가' },
+    { t:'ConfigTransaction', n:'Remove(section, key)',                  d:'보류 큐에 추가' },
+    { t:'int',               n:'PendingCount { get; }',                d:'보류 중인 변경 수' },
+    { t:'IRL&lt;CR&gt;',     n:'PendingChanges { get; }',              d:'보류 목록 (읽기 전용)' },
+    { s:'── Commit / Rollback' },
+    { t:'void', n:'Commit()',   d:'Store에 일괄 적용 → onCommit 콜백' },
+    { t:'void', n:'Rollback()', d:'보류 취소. Store 미변경.' },
+    { t:'void', n:'Dispose()',  d:'미커밋 시 자동 Rollback' },
+  ], '', 400),
+
+  'UndoRedoStack': ctbl('class', 'UndoRedoStack', 'Undo / Redo 스택 (sealed)', [
+    { t:'bool', n:'CanUndo { get; }',   d:'' },
+    { t:'bool', n:'CanRedo { get; }',   d:'' },
+    { t:'int',  n:'UndoDepth { get; }', d:'' },
+    { t:'int',  n:'RedoDepth { get; }', d:'' },
+    { s:'── 조작' },
+    { t:'void',              n:'Push(changes)',  d:'Redo 스택 초기화, maxDepth 유지' },
+    { t:'IRL&lt;CR&gt;?',   n:'Undo(store)',    d:'역순 복원. 불가면 null.' },
+    { t:'IRL&lt;CR&gt;?',   n:'Redo(store)',    d:'재적용. 불가면 null.' },
+    { t:'void',              n:'Clear()',        d:'스택 전체 초기화' },
+  ], '', 400),
+
+  'ConfigFileWatcher': ctbl('class', 'ConfigFileWatcher', '파일 변경 감지기 (sealed, IDisposable)', [
+    { s:'── Events' },
+    { t:'Action&lt;string&gt;?', mo:'event', n:'FileChanged', d:'300ms 디바운스 후 1회 발생' },
+    { s:'── 감시 제어' },
+    { t:'void',               n:'Watch(filePath)',       d:'파일 감시 추가' },
+    { t:'void',               n:'Unwatch(filePath)',     d:'파일 감시 제거' },
+    { t:'IRL&lt;string&gt;', n:'WatchedFiles { get; }', d:'감시 중인 파일 목록' },
+    { t:'void', n:'Pause()',   d:'감시 일시 중단' },
+    { t:'void', n:'Resume()',  d:'감시 재개' },
+    { t:'void', n:'Dispose()', d:'' },
+  ], '', 380),
+
+  /* ── Col 3 · Validation ──────────────────────────── */
+  'ConfigValueType': ctbl('enum', 'ConfigValueType', '설정값 검증 유형', [
+    { t:'0',  n:'String',        d:'임의 문자열' },
+    { t:'1',  n:'NonEmptyString',d:'비어있지 않은 문자열' },
+    { t:'2',  n:'Int',           d:'정수 (범위 검증 가능)' },
+    { t:'3',  n:'Long',          d:'정수 Long' },
+    { t:'4',  n:'Double',        d:'부동소수점' },
+    { t:'5',  n:'Bool',          d:'true/false/1/0/yes/no/on/off' },
+    { t:'6',  n:'IpAddress',     d:'IPv4 주소 형식' },
+    { t:'7',  n:'Port',          d:'포트 1~65535' },
+    { t:'8',  n:'SemVer',        d:'시맨틱 버전 (예: 1.2.3)' },
+    { t:'9',  n:'DirectoryPath', d:'디렉터리 경로 형식' },
+    { t:'10', n:'FilePath',      d:'파일 경로 형식' },
+    { t:'11', n:'Regex',         d:'정규식 패턴 검증' },
+    { t:'12', n:'Enum',          d:'허용 값 목록 중 하나' },
+    { t:'13', n:'Guid',          d:'GUID 문자열' },
+    { t:'14', n:'Cron',          d:'Cron 표현식 (5~6필드)' },
+  ], '', 340),
+
+  'ConfigFieldRule': ctbl('class', 'ConfigFieldRule', '단일 필드 검증 규칙 (sealed)', [
+    { t:'string',           n:'Section { get; init; }',          d:'섹션 이름' },
+    { t:'string',           n:'Key { get; init; }',               d:'키 이름' },
+    { t:'bool',             n:'Required { get; init; }',          d:'필수 여부' },
+    { t:'ConfigValueType',  n:'ValueType { get; init; }',         d:'기대 값 유형' },
+    { t:'double?',          n:'Min { get; init; }',               d:'숫자 최솟값' },
+    { t:'double?',          n:'Max { get; init; }',               d:'숫자 최댓값' },
+    { t:'int?',             n:'MaxLength { get; init; }',         d:'문자열 최대 길이' },
+    { t:'string?',          n:'Pattern { get; init; }',           d:'Regex 패턴' },
+    { t:'IRL&lt;string&gt;?',n:'AllowedValues { get; init; }',   d:'Enum 허용 목록' },
+    { t:'Func&lt;s,s?&gt;?',n:'CustomValidator { get; init; }',  d:'커스텀 검증 함수' },
+    { t:'string?',          n:'DefaultValue { get; init; }',      d:'키 부재 시 기본값' },
+    { t:'string?',          n:'Description { get; init; }',       d:'오류 메시지·문서용' },
+  ], '', 420),
+
+  'ConfigSchema': ctbl('class', 'ConfigSchema', '설정 스키마 빌더 (sealed)', [
+    { t:'ConfigSchema', n:'Require(section, key, type, range?, maxLength?, pattern?, ...)', d:'필수 필드 등록' },
+    { t:'ConfigSchema', n:'Optional(section, key, type, defaultValue?, range?, ...)',       d:'선택 필드 등록' },
+    { t:'ConfigSchema', n:'Custom(section, key, validator, required=true, default?)',       d:'커스텀 검증 등록' },
+    { t:'IRL&lt;CFR&gt;', n:'Rules { get; }',    d:'등록된 규칙 목록' },
+    { t:'int',            n:'Count { get; }',     d:'등록 규칙 수' },
+    { t:'IEnumerable&lt;CFR&gt;', n:'GetSection(section)', d:'섹션별 규칙 목록' },
+  ], '', 420),
+
+  'ConfigValidator': ctbl('class', 'ConfigValidator', '설정 검증 정적 헬퍼 (static)', [
+    { t:'ValidationResult', mo:'static', n:'Validate(store, schema, applyDefaults=true)', d:'스키마 기반 검증 실행' },
+  ], '', 400),
+
+  'ValidationResult': ctbl('class', 'ValidationResult', '설정 검증 결과 (sealed)', [
+    { t:'bool',              n:'IsValid { get; }',              d:'오류 0건이면 true' },
+    { t:'IRL&lt;VE&gt;',    n:'Errors { get; init; }',         d:'검증 오류 목록' },
+    { t:'IRL&lt;(s,k,dv)&gt;',n:'AppliedDefaults { get; init; }',d:'기본값 적용 목록' },
+    { t:'int',               n:'RuleCount { get; init; }',      d:'검증에 사용된 규칙 수' },
+    { t:'ValidationResult',  n:'ThrowIfInvalid()',              d:'실패 시 예외 throw' },
+    { t:'string',            n:'ToErrorText()',                 d:'오류 메시지 여러 줄 반환' },
+  ], '', 400),
+
+  'ValidationError': ctbl('record struct', 'ValidationError', '단일 검증 오류 (sealed record)', [
+    { t:'string',  n:'Section { get; }', d:'오류 발생 섹션' },
+    { t:'string',  n:'Key { get; }',      d:'오류 발생 키' },
+    { t:'string',  n:'Message { get; }',  d:'오류 메시지' },
+    { t:'string?', n:'Value { get; }',    d:'null이면 키 부재' },
+  ], '', 360),
+
+  'ConfigValidationException': ctbl('class', 'ConfigValidationException', '검증 실패 예외 (sealed)', [
+    { t:'IRL&lt;ValidationError&gt;', n:'Errors { get; }', d:'검증 오류 목록' },
+  ], '', 380),
+
+  /* ── Col 4 · Migration ───────────────────────────── */
+  'MigrationRuleType': ctbl('enum', 'MigrationRuleType', '마이그레이션 규칙 유형', [
+    { t:'0', n:'Rename',    d:'키 이름 변경 (섹션 유지)' },
+    { t:'1', n:'Move',      d:'키를 다른 섹션으로 이동' },
+    { t:'2', n:'Delete',    d:'키 삭제' },
+    { t:'3', n:'Add',       d:'키 추가 (이미 존재하면 무시)' },
+    { t:'4', n:'Transform', d:'키 값을 함수로 가공' },
+  ], '', 320),
+
+  'MigrationRule': ctbl('record struct', 'MigrationRule', '단일 마이그레이션 규칙 (sealed record)', [
+    { t:'MigrationRuleType',    n:'RuleType { get; }',     d:'규칙 유형' },
+    { t:'string',               n:'SrcSection { get; }',   d:'원본 섹션' },
+    { t:'string',               n:'SrcKey { get; }',        d:'원본 키' },
+    { t:'string?',              n:'DstSection { get; }',   d:'대상 섹션' },
+    { t:'string?',              n:'DstKey { get; }',        d:'대상 키' },
+    { t:'string?',              n:'DefaultValue { get; }', d:'Add 시 기본값' },
+    { t:'bool',                 n:'IsEncrypted { get; }',  d:'암호화 여부' },
+    { t:'Func&lt;s,s&gt;?',    n:'Transform { get; }',    d:'Transform 변환 함수' },
+  ], '', 400),
+
+  'MigrationRuleBuilder': ctbl('class', 'MigrationRuleBuilder', '마이그레이션 규칙 빌더 (sealed)', [
+    { t:'MigrationRuleBuilder', n:'Rename(section, oldKey, newKey)',                      d:'이름 변경 등록' },
+    { t:'MigrationRuleBuilder', n:'Move(srcSection, srcKey, dstSection, dstKey, isEnc)', d:'이동 등록' },
+    { t:'MigrationRuleBuilder', n:'Delete(section, key)',                                 d:'삭제 등록' },
+    { t:'MigrationRuleBuilder', n:'Add(section, key, defaultValue, isEnc=false)',         d:'추가 등록' },
+    { t:'MigrationRuleBuilder', n:'Transform(section, key, converter)',                   d:'변환 등록' },
+  ], '', 420),
+
+  'MigrationStep': ctbl('record struct', 'MigrationStep', '단일 마이그레이션 단계 (sealed record)', [
+    { t:'string',              n:'FromVersion { get; }',  d:'원본 버전' },
+    { t:'string',              n:'ToVersion { get; }',    d:'대상 버전' },
+    { t:'List&lt;MigRule&gt;', n:'AppliedRules { get; }', d:'적용된 규칙 목록' },
+  ], '', 380),
+
+  'MigrationReport': ctbl('class', 'MigrationReport', '전체 마이그레이션 결과 (sealed)', [
+    { t:'string',            n:'FromVersion { get; init; }', d:'원본 버전' },
+    { t:'string',            n:'ToVersion { get; init; }',   d:'최종 버전' },
+    { t:'IRL&lt;MS&gt;',    n:'Steps { get; init; }',        d:'적용된 단계 목록' },
+    { t:'int',               n:'TotalRulesApplied { get; }', d:'총 규칙 수' },
+    { t:'bool',              n:'HasChanges { get; }',         d:'실제 변환 여부' },
+    { t:'MigrationReport', mo:'static', n:'NoOp(version)',   d:'변경 없이 완료된 결과' },
+  ], '', 380),
+
+  'ConfigMigration': ctbl('class', 'ConfigMigration', '마이그레이션 실행기 (static)', [
+    { s:'── 등록' },
+    { t:'void', mo:'static', n:'Register(fromVer, toVer, configure)',          d:'규칙 등록 (BFS 경로 탐색)' },
+    { t:'IRL&lt;(F,T)&gt;', mo:'static', n:'RegisteredPaths { get; }',        d:'등록된 경로 목록' },
+    { t:'void', mo:'static', n:'ClearAll()',                                   d:'등록 초기화 (테스트용)' },
+    { s:'── 실행' },
+    { t:'MigrationReport', mo:'static', n:'Migrate(store, currentVer, targetVer)', d:'BFS → 순차 적용' },
+    { t:'MigrationReport', mo:'static', n:'MigrateAuto(store, targetVer, ...)',    d:'[Meta]Version 읽어 자동 실행' },
+  ], '', 420),
+
+  /* ── Col 5 · Profile + Tree ──────────────────────── */
+  'NodeType': ctbl('enum', 'NodeType', '설정 트리 노드 유형', [
+    { t:'0',  n:'Root',   d:'트리당 1개. ConfigTree 관리.' },
+    { t:'1',  n:'Group',  d:'공장·라인·사이트 등 논리적 묶음' },
+    { t:'2',  n:'Device', d:'PLC, 서버, 컨트롤러 등 물리 장비' },
+    { t:'3',  n:'Sensor', d:'온도·압력·유량 등 I/O 센서' },
+    { t:'4',  n:'Tag',    d:'PLC 주소, OPC-UA NodeId' },
+    { t:'99', n:'Other',  d:'기타 미분류 노드' },
+  ], '', 320),
+
+  'ConfigProfileDef': ctbl('record struct', 'ConfigProfileDef', '프로파일 정의 (sealed record)', [
+    { t:'string',        n:'Name { get; }',        d:'프로파일 이름' },
+    { t:'string',        n:'BaseFile { get; }',     d:'기본 설정 파일 경로 (필수)' },
+    { t:'string?',       n:'EnvFile { get; }',      d:'환경별 오버라이드 파일 (선택)' },
+    { t:'string?',       n:'LocalFile { get; }',    d:'로컬 오버라이드 파일 (optional)' },
+    { t:'ConfigFormat?', n:'Format { get; }',       d:'파일 형식 (null=자동 감지)' },
+    { t:'string?',       n:'Description { get; }',  d:'프로파일 설명' },
+  ], '', 390),
+
+  'ConfigProfileManager': ctbl('class', 'ConfigProfileManager', '환경별 프로파일 관리자 (sealed)', [
+    { s:'── Events' },
+    { t:'Action&lt;string,ConfigStore&gt;?', mo:'event', n:'ProfileSwitched', d:'프로파일 전환 시' },
+    { s:'── 정의' },
+    { t:'ConfigProfileManager', n:'Define(name, baseFile, envFile?, localFile?, format?, desc?)', d:'프로파일 정의' },
+    { t:'ConfigProfileManager', n:'DefineFromEnv(envVarName, configDir, baseFileName)',           d:'환경 변수 기반 자동 등록' },
+    { s:'── 활성화 (Base → Env → Local 3단계 병합)' },
+    { t:'ConfigStore', n:'Activate(name)',                           d:'지정 프로파일 활성화' },
+    { t:'ConfigStore', n:'ActivateFromEnv(envVarName, fallback)',    d:'환경 변수로 자동 활성화' },
+    { s:'── 상태' },
+    { t:'ConfigProfileDef?',     n:'ActiveProfile { get; }',        d:'현재 활성 프로파일' },
+    { t:'IRL&lt;string&gt;',     n:'ProfileNames { get; }',         d:'등록된 프로파일 목록' },
+    { t:'bool',                   n:'HasProfile(name)',               d:'프로파일 존재 여부' },
+  ], '', 450),
+
+  'ConfigNode': ctbl('class', 'ConfigNode', '설정 트리 단일 노드 (sealed)', [
+    { s:'── 기본 속성' },
+    { t:'string',   n:'Id { get; set; }',          d:'GUID 12자 자동 부여' },
+    { t:'string',   n:'Name { get; set; }',         d:'표시 이름' },
+    { t:'NodeType', n:'Type { get; set; }',          d:'노드 유형' },
+    { t:'string?',  n:'Description { get; set; }',  d:'' },
+    { t:'bool',     n:'Enabled { get; set; }',       d:'활성화 여부' },
+    { t:'int',      n:'Order { get; set; }',          d:'같은 부모 내 정렬 순서' },
+    { s:'── 프로퍼티 (임의 키-값)' },
+    { t:'void',    n:'SetProperty(key, value)',       d:'' },
+    { t:'string?', n:'GetProperty(key)',              d:'' },
+    { t:'string',  n:'GetPropertyOr(key, fallback)',  d:'' },
+    { s:'── 트리 구조' },
+    { t:'ConfigNode?',      n:'Parent { get; }',        d:'루트이면 null' },
+    { t:'List&lt;CN&gt;',   n:'Children { get; }',      d:'' },
+    { t:'void',             n:'AddChild(child)',          d:'순환 참조 방지' },
+    { t:'bool',             n:'RemoveChild(child)',       d:'' },
+    { t:'bool',             n:'IsRoot { get; }',          d:'' },
+    { t:'bool',             n:'IsLeaf { get; }',          d:'' },
+    { t:'int',              n:'Depth { get; }',           d:'루트=0' },
+    { s:'── 탐색 / 복제' },
+    { t:'ConfigNode?',         n:'FindById(id)',           d:'DFS' },
+    { t:'ConfigNode?',         n:'FindByName(name)',       d:'DFS, 대소문자 무시' },
+    { t:'IEnumerable&lt;CN&gt;',n:'FindAll(type)',        d:'' },
+    { t:'IEnumerable&lt;CN&gt;',n:'Flatten()',            d:'자신 포함 전체 열거' },
+    { t:'ConfigNode',          n:'DeepClone()',             d:'깊은 복사 (Parent 미포함)' },
+  ], '', 450),
+
+  'ConfigTree': ctbl('class', 'ConfigTree', '설정 트리 관리자 (sealed)', [
+    { t:'ConfigNode', n:'Root { get; }',           d:'트리 루트 노드' },
+    { t:'string',     n:'TreeName { get; set; }',  d:'트리 이름 (파일 메타)' },
+    { s:'── Events' },
+    { t:'Action&lt;CN,string&gt;?', mo:'event', n:'NodeChanged', d:'"Added"|"Removed"|"Moved"|"Modified"' },
+    { s:'── 노드 추가 (팩토리)' },
+    { t:'ConfigNode', n:'AddGroup(name, location?)',                      d:'루트에 추가' },
+    { t:'ConfigNode', n:'AddGroup(parent, name, location?)',              d:'지정 부모에 추가' },
+    { t:'ConfigNode', n:'AddDevice(parent, name, ip?, port?, protocol?)', d:'장비 노드' },
+    { t:'ConfigNode', n:'AddSensor(parent, name, address?, scale?, unit?)',d:'센서 노드' },
+    { t:'ConfigNode', n:'AddTag(parent, name, address?, dataType?)',       d:'태그 노드' },
+    { s:'── 제거 / 이동 / 탐색' },
+    { t:'bool',       n:'Remove(node)',          d:'자식 포함 제거' },
+    { t:'void',       n:'Move(node, newParent)',  d:'순환 참조 방지' },
+    { t:'ConfigNode?',n:'FindById(id)',           d:'DFS' },
+    { t:'ConfigNode?',n:'FindByName(name)',       d:'DFS' },
+    { t:'int',        n:'Count { get; }',         d:'루트 제외 총 노드 수' },
+    { s:'── 직렬화 (JSON / XML)' },
+    { t:'string', n:'ToJson()',          d:'' },
+    { t:'void',   n:'FromJson(json)',    d:'' },
+    { t:'void',   n:'LoadJson(filePath)',d:'' },
+    { t:'void',   n:'SaveJson(filePath)',d:'' },
+    { t:'string', n:'ToXml()',           d:'' },
+    { t:'void',   n:'FromXml(xml)',     d:'' },
+    { t:'void',   n:'SaveXml(filePath)',d:'' },
+    { t:'void',   n:'Clear()',          d:'루트만 남기고 초기화' },
+  ], '', 450),
+};
+
+/* ══════════════════════════════════════
+   § COL — 컬럼 분류
+   ══════════════════════════════════════ */
+const COL = {
+  0: ['ConfigFormat', 'ConfigEntry', 'ConfigStore'],
+  1: ['ConfigManager'],
+  2: ['ChangeRecord', 'ConfigTransaction', 'UndoRedoStack', 'ConfigFileWatcher'],
+  3: ['ConfigValueType', 'ConfigFieldRule', 'ConfigSchema', 'ConfigValidator', 'ValidationResult', 'ValidationError', 'ConfigValidationException'],
+  4: ['MigrationRuleType', 'MigrationRule', 'MigrationRuleBuilder', 'MigrationStep', 'MigrationReport', 'ConfigMigration'],
+  5: ['NodeType', 'ConfigProfileDef', 'ConfigProfileManager', 'ConfigNode', 'ConfigTree'],
+};
+
+/* ══════════════════════════════════════
+   § FG — 파일 그룹 테두리
+   ══════════════════════════════════════ */
+const FG = [
+  { lbl:'lssLib.Config  Core',        ns:['ConfigFormat','ConfigEntry','ConfigStore','ConfigManager'],                                                                color:'#059669' },
+  { lbl:'lssLib.Config  Transaction + Watcher', ns:['ChangeRecord','ConfigTransaction','UndoRedoStack','ConfigFileWatcher'],                                         color:'#2563eb' },
+  { lbl:'lssLib.Config  Validation',  ns:['ConfigValueType','ConfigFieldRule','ConfigSchema','ConfigValidator','ValidationResult','ValidationError','ConfigValidationException'], color:'#dc2626' },
+  { lbl:'lssLib.Config  Migration',   ns:['MigrationRuleType','MigrationRule','MigrationRuleBuilder','MigrationStep','MigrationReport','ConfigMigration'],           color:'#d97706' },
+  { lbl:'lssLib.Config  Profile + Tree', ns:['NodeType','ConfigProfileDef','ConfigProfileManager','ConfigNode','ConfigTree'],                                         color:'#7c3aed' },
+];
+
+/* ══════════════════════════════════════
+   § CONN — 관계선
+   ══════════════════════════════════════ */
+const CONN = [
+  // ── Core ──────────────────────────────────────────────────
+  { f:'ConfigManager',     fe:'left',   t:'ConfigStore',       te:'right',  ty:'comp', lbl:'1◆1' },
+  { f:'ConfigManager',     fe:'right',  t:'ConfigTransaction', te:'left',   ty:'bld',  lbl:'«creates»', xoff:-20 },
+  { f:'ConfigManager',     fe:'right',  t:'UndoRedoStack',     te:'left',   ty:'comp', lbl:'1◆1',       xoff:20 },
+  { f:'ConfigManager',     fe:'right',  t:'ConfigFileWatcher', te:'left',   ty:'comp', lbl:'1◆1',       xoff:0 },
+  { f:'ConfigStore',       fe:'top',    t:'ConfigEntry',       te:'bottom', ty:'comp', lbl:'1◆*',       xoff:-20 },
+
+  // ── Transaction (col 2 내부 수직) ───────────────────────────
+  { f:'ConfigTransaction', fe:'top',    t:'ChangeRecord',      te:'bottom', ty:'bld',  lbl:'«creates»', xoff:24 },
+  { f:'UndoRedoStack',     fe:'top',    t:'ChangeRecord',      te:'bottom', ty:'uses', lbl:'uses',      xoff:-24 },
+  { f:'ConfigTransaction', fe:'left',   t:'ConfigStore',       te:'right',  ty:'uses', lbl:'uses' },
+  { f:'UndoRedoStack',     fe:'left',   t:'ConfigStore',       te:'right',  ty:'uses', lbl:'uses', xoff:16 },
+
+  // ── Validation (col 3 내부 수직) ────────────────────────────
+  { f:'ConfigFieldRule',   fe:'top',    t:'ConfigValueType',   te:'bottom', ty:'uses', lbl:'uses',      xoff:24 },
+  { f:'ConfigSchema',      fe:'top',    t:'ConfigFieldRule',   te:'bottom', ty:'comp', lbl:'1◆*',       xoff:-24 },
+  { f:'ConfigValidator',   fe:'bottom', t:'ValidationResult',  te:'top',    ty:'bld',  lbl:'«creates»' },
+  { f:'ValidationResult',  fe:'bottom', t:'ValidationError',   te:'top',    ty:'comp', lbl:'1◆*',       xoff:-20 },
+  { f:'ValidationResult',  fe:'bottom', t:'ConfigValidationException', te:'top', ty:'uses', lbl:'throws', xoff:20 },
+
+  // ── Migration (col 4 내부 수직) ─────────────────────────────
+  { f:'MigrationRule',        fe:'top', t:'MigrationRuleType',   te:'bottom', ty:'uses', lbl:'uses',      xoff:24 },
+  { f:'MigrationRuleBuilder', fe:'top', t:'MigrationRule',       te:'bottom', ty:'bld',  lbl:'«creates»', xoff:24 },
+  { f:'MigrationStep',        fe:'top', t:'MigrationRule',       te:'bottom', ty:'uses', lbl:'uses',      xoff:-24 },
+  { f:'MigrationReport',      fe:'top', t:'MigrationStep',       te:'bottom', ty:'comp', lbl:'1◆*',       xoff:-20 },
+  { f:'ConfigMigration',      fe:'top', t:'MigrationReport',     te:'bottom', ty:'bld',  lbl:'«creates»' },
+
+  // ── Tree (col 5 내부 수직) ──────────────────────────────────
+  { f:'ConfigProfileManager', fe:'top', t:'ConfigProfileDef',  te:'bottom', ty:'uses', lbl:'uses',  xoff:-24 },
+  { f:'ConfigNode',           fe:'top', t:'NodeType',           te:'bottom', ty:'uses', lbl:'uses',  xoff:24 },
+  { f:'ConfigTree',           fe:'top', t:'ConfigNode',         te:'bottom', ty:'comp', lbl:'1◆*',  xoff:-24 },
+];
+
+/* ── 레이아웃 상수 (6컬럼이므로 GAP 축소) ── */
+const GAP_COL = 160, PAD_ROW = 80, PAD_STACK = 48, START_X = 30, START_Y = 40;
+
+const cv    = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+/* ── DOM 삽입 ── */
+Object.keys(BOXES).forEach(name => {
+  const div = document.createElement('div');
+  div.className = 'bw'; div.dataset.box = name;
+  div.style.left = '0px'; div.style.top = '0px';
+  div.innerHTML = BOXES[name];
+  cv.insertBefore(div, svgEl);
+});
+
+/* ── 위치 헬퍼 ── */
+const gb   = n => { const el = cv.querySelector(`[data-box="${n}"]`); return el ? {el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight} : null; };
+const bot  = n => { const b = gb(n); return b ? b.y + b.h : 0; };
+const setX = (n,x) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.left = x+'px'; };
+const setY = (n,y) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.top  = y+'px'; };
+const ri   = v => Math.round(v);
+
+/* ── X 자동 계산 ── */
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  const colW = {};
+  Object.entries(COL).forEach(([ci,ns]) => {
+    colW[ci] = Math.max(...ns.map(n => { const b=gb(n); return b?b.w:0; }));
+  });
+  const colX = {};
+  let cx = START_X;
+  Object.keys(COL).sort().forEach(ci => { colX[ci] = cx; cx += colW[ci] + GAP_COL; });
+  Object.entries(COL).forEach(([ci,ns]) => ns.forEach(n => setX(n, colX[ci])));
+
+  /* ══════════════════════════════════════
+     § ROW_LAYOUT — Y 행 배치 (컬럼별 수직 스택)
+     ══════════════════════════════════════ */
+  requestAnimationFrame(() => {
+    // Row 0: 각 컬럼의 첫 번째 박스
+    setY('ConfigFormat',     START_Y);
+    setY('ConfigManager',    START_Y);
+    setY('ChangeRecord',     START_Y);
+    setY('ConfigValueType',  START_Y);
+    setY('MigrationRuleType',START_Y);
+    setY('NodeType',         START_Y);
+
+    requestAnimationFrame(() => {
+      setY('ConfigEntry',       bot('ConfigFormat')      + PAD_STACK);
+      setY('ConfigTransaction', bot('ChangeRecord')      + PAD_STACK);
+      setY('ConfigFieldRule',   bot('ConfigValueType')   + PAD_STACK);
+      setY('MigrationRule',     bot('MigrationRuleType') + PAD_STACK);
+      setY('ConfigProfileDef',  bot('NodeType')          + PAD_STACK);
+
+      requestAnimationFrame(() => {
+        setY('ConfigStore',          bot('ConfigEntry')       + PAD_STACK);
+        setY('UndoRedoStack',        bot('ConfigTransaction') + PAD_STACK);
+        setY('ConfigSchema',         bot('ConfigFieldRule')   + PAD_STACK);
+        setY('MigrationRuleBuilder', bot('MigrationRule')     + PAD_STACK);
+        setY('ConfigProfileManager', bot('ConfigProfileDef')  + PAD_STACK);
+
+        requestAnimationFrame(() => {
+          setY('ConfigFileWatcher', bot('UndoRedoStack')        + PAD_STACK);
+          setY('ConfigValidator',   bot('ConfigSchema')         + PAD_STACK);
+          setY('MigrationStep',     bot('MigrationRuleBuilder') + PAD_STACK);
+          setY('ConfigNode',        bot('ConfigProfileManager') + PAD_STACK);
+
+          requestAnimationFrame(() => {
+            setY('ValidationResult', bot('ConfigValidator') + PAD_STACK);
+            setY('MigrationReport',  bot('MigrationStep')   + PAD_STACK);
+            setY('ConfigTree',       bot('ConfigNode')       + PAD_STACK);
+
+            requestAnimationFrame(() => {
+              setY('ValidationError',          bot('ValidationResult') + PAD_STACK);
+              setY('ConfigMigration',          bot('MigrationReport')  + PAD_STACK);
+
+              requestAnimationFrame(() => {
+                setY('ConfigValidationException', bot('ValidationError') + PAD_STACK);
+                requestAnimationFrame(() => drawAll());
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}));
+
+/* ── SVG 관계선 그리기 ── */
+function drawAll() {
+  const pos = {};
+  cv.querySelectorAll('.bw').forEach(el => {
+    pos[el.dataset.box] = {x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW = Math.max(...Object.values(pos).map(p=>p.x+p.w)) + 80;
+  const maxH = Math.max(...Object.values(pos).map(p=>p.y+p.h)) + 100;
+  cv.style.minWidth = maxW+'px'; cv.style.minHeight = maxH+'px';
+  svgEl.setAttribute('width', maxW); svgEl.setAttribute('height', maxH);
+  const ph = document.getElementById('cv-phantom');
+  ph.style.width  = Math.ceil(maxW*zl)+'px';
+  ph.style.height = Math.ceil(maxH*zl)+'px';
+
+  /* ── SVG 마커 정의 ── */
+  svgEl.innerHTML = `<defs>
+    <marker id="me" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#e040fb" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#4f8ef7" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 6 L9 1 L18 6 L9 11 Z" fill="#555" stroke="white" stroke-width="0.5"/></marker>
+    <marker id="mda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>`;
+
+  /* ── 파일 그룹 테두리 ── */
+  FG.forEach(fg => {
+    const bs = fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length) return;
+    const pd=14, x1=Math.min(...bs.map(b=>b.x))-pd, y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,    y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect'); sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect'); sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text'); sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl; svgEl.appendChild(tx);
+  });
+
+  /* ── edge 포인트 ── */
+  function ep(b,e){
+    if(e==='top')    return [b.x+b.w/2, b.y];
+    if(e==='bottom') return [b.x+b.w/2, b.y+b.h];
+    if(e==='left')   return [b.x,        b.y+b.h/2];
+    if(e==='right')  return [b.x+b.w,    b.y+b.h/2];
+    if(e==='btl')    return [b.x+b.w*0.25, b.y+b.h];
+    if(e==='btr')    return [b.x+b.w*0.75, b.y+b.h];
+    return [b.x+b.w/2, b.y];
+  }
+
+  /* ── 관계선 스타일 ── */
+  const SY = {
+    ext:  {stroke:'#e040fb','stroke-width':2,  'marker-end':'url(#me)'},
+    impl: {stroke:'#4f8ef7','stroke-width':1.5,'stroke-dasharray':'5,3','marker-end':'url(#mi)'},
+    uses: {stroke:'#888',   'stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    bld:  {stroke:'#e65100','stroke-width':1.5,'stroke-dasharray':'5,2','marker-end':'url(#mb)'},
+    comp: {stroke:'#555',   'stroke-width':1.5,'stroke-dasharray':'4,2','marker-start':'url(#mds)','marker-end':'url(#mda)'},
+  };
+
+  /* ── 3차 베지어 커브 경로 생성 ── */
+  CONN.forEach(c => {
+    const fb=pos[c.f], tb=pos[c.t]; if(!fb||!tb) return;
+    const [sx,sy] = ep(fb,c.fe).map(ri);
+    const [tx2,ty2] = ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')    ey+=ML; else if(c.te==='bottom') ey-=ML;
+    else if(c.te==='left') ex+=ML; else if(c.te==='right') ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom'||c.fe==='btl'||c.fe==='btr') c1y+=cp;
+    else if(c.fe==='top')   c1y-=cp;
+    else if(c.fe==='right') c1x+=cp;
+    else if(c.fe==='left')  c1x-=cp;
+    if(c.te==='top')    c2y-=cp; else if(c.te==='bottom') c2y+=cp;
+    else if(c.te==='left') c2x-=cp; else if(c.te==='right') c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path'); sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});
+    svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5, it=1-t;
+      const mx=ri(it*it*it*sx + 3*it*it*t*c1x + 3*it*t*t*c2x + t*t*t*ex);
+      const my=ri(it*it*it*sy + 3*it*it*t*c1y + 3*it*t*t*c2y + t*t*t*ey);
+      const lblCol = {ext:'#c000d8',impl:'#1a5cb8',uses:'#555',bld:'#c84000',comp:'#333'}[c.ty]||'#444';
+      const FSIZE=11, PAD_X=7, PAD_Y=3;
+      const approxW = c.lbl.length * FSIZE * 0.62 + PAD_X*2;
+      const approxH = FSIZE + PAD_Y*2;
+      const bg=mk('rect'); sa(bg,{
+        x:mx-approxW/2, y:my-approxH/2,
+        width:approxW, height:approxH,
+        rx:4, fill:'white', stroke:lblCol,
+        'stroke-width':1.2, opacity:0.97
+      });
+      svgEl.appendChild(bg);
+      const tl=mk('text'); sa(tl,{
+        x:mx, y:my,
+        'font-size':FSIZE, fill:lblCol,
+        'font-family':'monospace', 'font-weight':'700',
+        'text-anchor':'middle', 'dominant-baseline':'central'
+      });
+      tl.textContent=c.lbl; svgEl.appendChild(tl);
+    }
+  });
+}
+
+function mk(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function sa(el,a){ Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v)); }
+</script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Messaging — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8; --bd-tertiary:#eeeff3;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00; --tx-danger:#b81a1a;
+  --bg-success:#e8f5e9; --bg-warning:#fff3e0;   --bg-info:#e3f2fd;   --bg-danger:#ffebee;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52; --bd-tertiary:#32334a;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d; --tx-danger:#ef9a9a;
+    --bg-success:#1a3d1e; --bg-warning:#3d2400;   --bg-info:#0d2545;  --bg-danger:#3d0d0d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;font-family:var(--mono);}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);font-family:var(--mono);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:2000px;min-height:2200px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:175px;line-height:1.5;}
+.uh{background:var(--bg-secondary);}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+.ghost{opacity:0.60;}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+
+<h1>lssLib.Messaging — UML 클래스 다이어그램</h1>
+<p class="sub">이벤트/메시지 처리 라이브러리 · EventBus (Pub/Sub) · CommandQueue (우선순위 큐) · AsyncScheduler (지연·반복·일별) · .NET 8.0 · C# 12 · BCL only</p>
+
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <span id="zlb">100%</span>
+</div>
+
+<div id="lg">
+  <div class="li"><span style="background:#dbeafe;color:#1e3a8a;border:1.5px solid #2563eb;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«interface»</span>인터페이스</div>
+  <div class="li"><span style="background:#fef3c7;color:#78350f;border:1.5px solid #d97706;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«abstract»</span>추상 클래스</div>
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>record struct</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lge" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#e040fb" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e040fb" stroke-width="2.2" marker-end="url(#lge)"/></svg>extends
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#4f8ef7" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#4f8ef7" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#lgi)"/></svg>implements
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e65100" stroke-width="1.8" stroke-dasharray="5,2" marker-end="url(#lgb)"/></svg>«builds»
+  </div>
+  <div class="li">
+    <svg width="54" height="16" style="flex-shrink:0"><defs><marker id="lgds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="14" markerHeight="12" orient="auto-start-reverse"><path d="M0 6L9 1L18 6L9 11Z" fill="#555"/></marker><marker id="lgda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker></defs><line x1="14" y1="8" x2="46" y2="8" stroke="#555" stroke-width="1.8" marker-start="url(#lgds)" marker-end="url(#lgda)"/></svg>composition
+  </div>
+</div>
+
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="2000" height="2200"></svg>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.3, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth)  || 2000;
+  const nh = parseFloat(cv.style.minHeight) || 2200;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+
+const H = s => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function ctbl(kind, name, desc, members, ext, tw, ghost) {
+  tw = tw || 400; ext = ext || ''; ghost = ghost || false;
+  const bm = { interface:'bi', abstract:'ba', class:'bc', enum:'be', 'record struct':'br' };
+  const lm = { interface:'«interface»', abstract:'«abstract»', class:'«class»', enum:'«enum»', 'record struct':'«record»' };
+  const tc = { interface:'ut-interface', abstract:'ut-abstract', class:'ut-class', enum:'ut-enum', 'record struct':'ut-record' };
+  const hc = { interface:'uh-interface', abstract:'uh-abstract', class:'uh-class', enum:'uh-enum', 'record struct':'uh-record' };
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1 = 68, w2 = 162, w3 = tw - w1 - w2 - 4;
+  let rows = '';
+  members.forEach(m => {
+    if (m.s) { rows += `<tr class="sep"><td colspan="3">${m.s}</td></tr>`; return; }
+    const ab = m.mo === 'abstract', ev = m.mo === 'event';
+    const mo = (m.mo && !ev) ? `<span class="mm">${m.mo}</span>` : '';
+    rows += `<tr>
+      <td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td>
+    </tr>`;
+  });
+  const tCls = [tc[kind]||'', ghost?' ghost':''].filter(Boolean).join(' ');
+  return `<table class="ut ${tCls}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>
+    ${rows}
+  </table>`;
+}
+
+/* ══════════════════════════════════════
+   § BOXES
+   ══════════════════════════════════════ */
+const BOXES = {
+
+  /* ── Col 0 · EventBus ─────────────────────────────── */
+  'EventMessage': ctbl('abstract', 'EventMessage', '이벤트 메시지 기반 추상 레코드', [
+    { t:'string',   n:'MessageId { get; }',  d:'8자리 대문자 16진수 자동 부여' },
+    { t:'DateTime', n:'Timestamp { get; }',  d:'메시지 생성 시각 (로컬 시간)' },
+    { s:'── 사용자 정의 메시지 선언 예시' },
+    { t:'record',   n:'SensorDataEvent(int DeviceId, float Temp) : EventMessage', d:'' },
+    { t:'record',   n:'NetworkStatusEvent(bool IsConnected, string Host) : EventMessage', d:'' },
+  ], '', 460),
+
+  'IEventHandler': ctbl('interface', 'IEventHandler&lt;T&gt;', '클래스 기반 핸들러 인터페이스  where T : EventMessage', [
+    { t:'Task', n:'HandleAsync(T message, CancellationToken ct = default)', d:'수신 메시지 비동기 처리' },
+  ], '', 460),
+
+  'EventBus': ctbl('class', 'EventBus', 'Lazy&lt;T&gt; 싱글톤 · 타입 안전 Pub/Sub (sealed)', [
+    { s:'── 싱글톤' },
+    { t:'EventBus', mo:'static', n:'Instance { get; }',                       d:'Lazy&lt;T&gt; thread-safe' },
+    { s:'── 구독 (Subscribe) — 반환: IDisposable' },
+    { t:'IDisposable', n:'Subscribe&lt;T&gt;(Action&lt;T&gt; handler)',                     d:'동기 람다 구독' },
+    { t:'IDisposable', n:'Subscribe&lt;T&gt;(Func&lt;T,Task&gt; handler)',                  d:'비동기 람다 구독' },
+    { t:'IDisposable', n:'Subscribe&lt;T&gt;(Func&lt;T,CT,Task&gt; handler)',               d:'취소 토큰 포함 비동기 구독' },
+    { t:'IDisposable', n:'Subscribe&lt;T&gt;(IEventHandler&lt;T&gt; handler)',              d:'클래스 기반 핸들러 구독' },
+    { s:'── 발행 (Publish)' },
+    { t:'void', n:'Publish&lt;T&gt;(T message)',                                d:'동기 발행 · 순서 보장 (BG 스레드 권장)' },
+    { t:'Task', n:'PublishAsync&lt;T&gt;(T message, CancellationToken ct)',     d:'비동기 발행 · 핸들러 병렬 실행 + WhenAll' },
+    { s:'── 구독 해제' },
+    { t:'void', n:'UnsubscribeAll&lt;T&gt;()',  d:'특정 타입 전체 해제' },
+    { t:'void', n:'Clear()',                    d:'모든 구독 초기화' },
+    { s:'── 상태 조회' },
+    { t:'int', n:'GetSubscriberCount&lt;T&gt;()', d:'특정 타입 구독자 수' },
+    { t:'int', n:'TotalSubscriptions { get; }',   d:'전체 구독 수' },
+  ], '', 460),
+
+  /* ── Col 1 · CommandQueue ─────────────────────────── */
+  'CommandPriority': ctbl('enum', 'CommandPriority', '커맨드 처리 우선순위 (높은 값 = 먼저 처리)', [
+    { t:'0', n:'Low',      d:'백그라운드 정리, 통계 집계 등 지연 허용' },
+    { t:'1', n:'Normal',   d:'일반 업무 처리 (기본값)' },
+    { t:'2', n:'High',     d:'사용자 입력 응답, 즉시 피드백 필요' },
+    { t:'3', n:'Critical', d:'비상 정지, 알람, 즉각 처리 필수' },
+  ], '', 400),
+
+  'ICommand': ctbl('interface', 'ICommand', '커맨드 큐 처리 단위 인터페이스', [
+    { t:'string',          n:'CommandId { get; }',              d:'커맨드 고유 ID (8자리 대문자 16진수)' },
+    { t:'CommandPriority', n:'Priority { get; }',               d:'처리 우선순위' },
+    { t:'Task',            n:'ExecuteAsync(CancellationToken ct)', d:'커맨드 로직 비동기 실행' },
+  ], '', 400),
+
+  'CommandBase': ctbl('abstract', 'CommandBase', 'ICommand 추상 기반 클래스', [
+    { t:'string',          n:'CommandId { get; }',                    d:'8자리 GUID 자동 부여' },
+    { t:'CommandPriority', mo:'virtual',  n:'Priority { get; }',      d:'기본값: CommandPriority.Normal' },
+    { t:'Task',            mo:'abstract', n:'ExecuteAsync(CancellationToken ct)', d:'[override 필수] 커맨드 로직' },
+  ], 'ICommand', 400),
+
+  'LambdaCommand': ctbl('class', 'LambdaCommand', '람다 기반 인라인 커맨드 (sealed)', [
+    { t:'CommandPriority', mo:'override', n:'Priority { get; }', d:'생성 시 지정한 우선순위' },
+    { s:'── 팩토리 (static)' },
+    { t:'LambdaCommand', mo:'static', n:'Create(Func&lt;CT,Task&gt; action, priority=Normal)', d:'비동기 람다 커맨드 생성' },
+    { t:'LambdaCommand', mo:'static', n:'Create(Action action, priority=Normal)',             d:'동기 람다 커맨드 생성' },
+    { t:'Task',          mo:'override', n:'ExecuteAsync(CancellationToken ct)',               d:'등록된 람다 실행' },
+  ], 'CommandBase', 420),
+
+  'CommandResult': ctbl('record struct', 'CommandResult', '커맨드 단일 실행 결과 (readonly record struct)', [
+    { t:'string',     n:'CommandId { get; }',    d:'실행된 커맨드 ID' },
+    { t:'string',     n:'CommandType { get; }',  d:'커맨드 클래스 이름' },
+    { t:'bool',       n:'IsSuccess { get; }',    d:'성공 여부' },
+    { t:'TimeSpan',   n:'Elapsed { get; }',      d:'실행 소요 시간' },
+    { t:'Exception?', n:'Error { get; }',        d:'실패 시 예외 (성공 시 null)' },
+    { s:'── Derived' },
+    { t:'bool', n:'IsError { get; }',   d:'IsSuccess 반전' },
+    { t:'long', n:'ElapsedMs { get; }', d:'소요 시간 (밀리초 정수)' },
+    { t:'string', n:'ToString()',       d:'[OK] 또는 [ERR] 포맷 문자열' },
+  ], '', 400),
+
+  'CommandQueue': ctbl('class', 'CommandQueue', 'Lazy&lt;T&gt; 싱글톤 · 우선순위 비동기 큐 (sealed)', [
+    { s:'── 싱글톤' },
+    { t:'CommandQueue', mo:'static', n:'Instance { get; }', d:'Lazy&lt;T&gt; thread-safe' },
+    { s:'── Properties' },
+    { t:'int',  n:'MaxConcurrency { get; set; }', d:'동시 처리 수 (기본 1 = 순차). Start() 전 설정.' },
+    { t:'int',  n:'PendingCount { get; }',         d:'대기 중인 커맨드 수' },
+    { t:'long', n:'ProcessedCount { get; }',       d:'처리된 커맨드 누적 수' },
+    { t:'long', n:'FailedCount { get; }',          d:'실패한 커맨드 누적 수' },
+    { t:'bool', n:'IsRunning { get; }',            d:'동작 여부' },
+    { s:'── Events' },
+    { t:'Action&lt;CommandResult&gt;?', mo:'event', n:'CommandCompleted', d:'실행 완료 시 (성공·실패 모두, BG Thread)' },
+    { s:'── Start / Stop' },
+    { t:'void', n:'Start()',       d:'처리 루프 Task 구동 (IsRunning=true)' },
+    { t:'Task', n:'StopAsync()',   d:'취소 신호 후 루프 종료 대기' },
+    { s:'── 커맨드 등록' },
+    { t:'void', n:'Enqueue(ICommand command)', d:'우선순위 큐에 등록 (높은 Priority = 먼저)' },
+    { t:'void', n:'Clear()',                   d:'대기 중인 커맨드 전체 제거' },
+  ], '', 460),
+
+  /* ── Col 2 · AsyncScheduler ───────────────────────── */
+  'ScheduleOptions': ctbl('class', 'ScheduleOptions', '스케줄 작업 설정 (sealed)', [
+    { t:'string',   n:'Name { get; set; }',           d:'작업 이름 (로그·조회용)' },
+    { t:'TimeSpan', n:'InitialDelay { get; set; }',   d:'최초 실행 전 대기 (기본: Zero = 즉시)' },
+    { t:'TimeSpan', n:'Interval { get; set; }',       d:'반복 간격 (InfiniteTimeSpan = 1회)' },
+    { t:'int',      n:'MaxRuns { get; set; }',         d:'-1=무한 반복 (기본), 양수=N회 후 자동 종료' },
+    { t:'string',   n:'Category { get; set; }',        d:'로그 카테고리 (기본: "Scheduler")' },
+    { t:'bool',     n:'ContinueOnError { get; set; }', d:'예외 발생 시 계속 여부 (기본: true)' },
+    { s:'── 팩토리 (static)' },
+    { t:'ScheduleOptions', mo:'static', n:'Once(TimeSpan delay, string name="")',         d:'1회 실행 옵션' },
+    { t:'ScheduleOptions', mo:'static', n:'Recurring(TimeSpan interval, string name="")', d:'즉시 시작 무한 반복 옵션' },
+    { t:'ScheduleOptions', mo:'static', n:'DailyAt(TimeSpan timeOfDay, string name="")',  d:'매일 지정 시각 실행 옵션' },
+  ], '', 460),
+
+  'ScheduledTask': ctbl('class', 'ScheduledTask', '스케줄 작업 상태 및 제어 핸들 (sealed)', [
+    { s:'── Properties' },
+    { t:'string',     n:'TaskId { get; }',    d:'8자리 대문자 16진수 자동 부여' },
+    { t:'string',     n:'Name { get; }',       d:'ScheduleOptions.Name' },
+    { t:'string',     n:'Category { get; }',   d:'ScheduleOptions.Category' },
+    { t:'bool',       n:'IsPaused { get; }',   d:'일시 정지 여부' },
+    { t:'bool',       n:'IsCancelled { get; }',d:'취소(종료) 여부' },
+    { t:'bool',       n:'IsActive { get; }',   d:'활성 여부 (정지·취소 아님)' },
+    { t:'int',        n:'RunCount { get; }',    d:'누적 실행 횟수' },
+    { t:'DateTime?',  n:'LastRunAt { get; }',  d:'마지막 실행 시작 시각' },
+    { t:'DateTime?',  n:'NextRunAt { get; }',  d:'다음 실행 예정 시각' },
+    { t:'Exception?', n:'LastError { get; }',  d:'마지막 실행 예외 (성공 시 null)' },
+    { s:'── 제어' },
+    { t:'void', n:'Pause()',  d:'일시 정지 (현재 반복 완료 후)' },
+    { t:'void', n:'Resume()', d:'일시 정지 재개' },
+    { t:'void', n:'Cancel()', d:'완전 종료 (재개 불가)' },
+  ], '', 460),
+
+  'AsyncScheduler': ctbl('class', 'AsyncScheduler', 'Lazy&lt;T&gt; 싱글톤 · 비동기 작업 스케줄러 (sealed)', [
+    { s:'── 싱글톤' },
+    { t:'AsyncScheduler', mo:'static', n:'Instance { get; }', d:'Lazy&lt;T&gt; thread-safe' },
+    { s:'── 작업 등록 (독립 Task 루프로 실행)' },
+    { t:'ScheduledTask', n:'Schedule(Func&lt;CT,Task&gt; action, ScheduleOptions? options)', d:'비동기 작업 등록' },
+    { t:'ScheduledTask', n:'Schedule(Action action, ScheduleOptions? options)',              d:'동기 작업 등록' },
+    { s:'── 편의 메서드' },
+    { t:'ScheduledTask', n:'ScheduleOnce(TimeSpan delay, Func&lt;CT,Task&gt; action, name="")',     d:'지정 지연 후 1회 실행' },
+    { t:'ScheduledTask', n:'ScheduleRecurring(TimeSpan interval, Func&lt;CT,Task&gt; action, name="")', d:'즉시 시작 무한 반복' },
+    { t:'ScheduledTask', n:'ScheduleDailyAt(TimeSpan timeOfDay, Func&lt;CT,Task&gt; action, name="")',  d:'매일 지정 시각 실행' },
+    { s:'── 작업 제어' },
+    { t:'bool', n:'Cancel(string taskId)',  d:'특정 작업 취소' },
+    { t:'void', n:'PauseAll()',             d:'모든 작업 일시 정지' },
+    { t:'void', n:'ResumeAll()',            d:'모든 작업 재개' },
+    { t:'Task', n:'StopAsync(TimeSpan? timeout = 5s)', d:'전체 작업 취소 후 종료 대기' },
+    { s:'── 상태 조회' },
+    { t:'IRL&lt;ScheduledTask&gt;', n:'GetTasks()',           d:'모든 작업 목록 (스냅샷)' },
+    { t:'ScheduledTask?',           n:'GetTask(string taskId)', d:'TaskId로 특정 작업 조회' },
+    { t:'int',                      n:'TaskCount { get; }',    d:'등록된 작업 수' },
+  ], '', 460),
+};
+
+/* ══════════════════════════════════════
+   § COL — 컬럼 분류
+   ══════════════════════════════════════ */
+const COL = {
+  0: ['EventMessage', 'IEventHandler', 'EventBus'],
+  1: ['CommandPriority', 'ICommand', 'CommandBase', 'LambdaCommand', 'CommandResult', 'CommandQueue'],
+  2: ['ScheduleOptions', 'ScheduledTask', 'AsyncScheduler'],
+};
+
+/* ══════════════════════════════════════
+   § FG — 파일 그룹 테두리
+   ══════════════════════════════════════ */
+const FG = [
+  { lbl:'lssLib.Messaging  EventBus',      ns:['EventMessage','IEventHandler','EventBus'],                                      color:'#2563eb' },
+  { lbl:'lssLib.Messaging  CommandQueue',  ns:['CommandPriority','ICommand','CommandBase','LambdaCommand','CommandResult','CommandQueue'], color:'#059669' },
+  { lbl:'lssLib.Messaging  AsyncScheduler',ns:['ScheduleOptions','ScheduledTask','AsyncScheduler'],                             color:'#d97706' },
+];
+
+/* ══════════════════════════════════════
+   § CONN — 관계선
+   ══════════════════════════════════════ */
+const CONN = [
+  // ── EventBus (col 0 내부) ─────────────────────────────────
+  // EventBus → EventMessage (publishes/subscribes, uses)
+  { f:'EventBus',        fe:'top',    t:'EventMessage',    te:'bottom', ty:'uses', lbl:'uses',      xoff:24 },
+  // EventBus → IEventHandler (uses via Subscribe<T>)
+  { f:'EventBus',        fe:'top',    t:'IEventHandler',   te:'bottom', ty:'uses', lbl:'uses',      xoff:-24 },
+
+  // ── CommandQueue (col 1 내부) ─────────────────────────────
+  // CommandBase implements ICommand
+  { f:'CommandBase',     fe:'top',    t:'ICommand',        te:'bottom', ty:'impl', lbl:'implements', xoff:-20 },
+  // LambdaCommand extends CommandBase
+  { f:'LambdaCommand',   fe:'top',    t:'CommandBase',     te:'bottom', ty:'ext',  lbl:'extends',   xoff:20 },
+  // ICommand → CommandPriority (uses)
+  { f:'ICommand',        fe:'top',    t:'CommandPriority', te:'bottom', ty:'uses', lbl:'uses',      xoff:24 },
+  // CommandQueue → ICommand (processes - comp)
+  { f:'CommandQueue',    fe:'top',    t:'ICommand',        te:'bottom', ty:'uses', lbl:'uses',      xoff:-24 },
+  // CommandQueue builds CommandResult
+  { f:'CommandQueue',    fe:'top',    t:'CommandResult',   te:'bottom', ty:'bld',  lbl:'«creates»', xoff:0 },
+
+  // ── AsyncScheduler (col 2 내부) ───────────────────────────
+  // AsyncScheduler builds ScheduledTask
+  { f:'AsyncScheduler',  fe:'top',    t:'ScheduledTask',   te:'bottom', ty:'bld',  lbl:'«creates»', xoff:24 },
+  // AsyncScheduler uses ScheduleOptions
+  { f:'AsyncScheduler',  fe:'top',    t:'ScheduleOptions', te:'bottom', ty:'uses', lbl:'uses',      xoff:-24 },
+];
+
+/* ── 레이아웃 상수 ── */
+const GAP_COL = 300, PAD_ROW = 80, PAD_STACK = 52, START_X = 30, START_Y = 40;
+
+const cv    = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+/* ── DOM 삽입 ── */
+Object.keys(BOXES).forEach(name => {
+  const div = document.createElement('div');
+  div.className = 'bw'; div.dataset.box = name;
+  div.style.left = '0px'; div.style.top = '0px';
+  div.innerHTML = BOXES[name];
+  cv.insertBefore(div, svgEl);
+});
+
+/* ── 위치 헬퍼 ── */
+const gb   = n => { const el = cv.querySelector(`[data-box="${n}"]`); return el ? {el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight} : null; };
+const bot  = n => { const b = gb(n); return b ? b.y + b.h : 0; };
+const setX = (n,x) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.left = x+'px'; };
+const setY = (n,y) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.top  = y+'px'; };
+const ri   = v => Math.round(v);
+
+/* ── X 자동 계산 ── */
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  const colW = {};
+  Object.entries(COL).forEach(([ci,ns]) => {
+    colW[ci] = Math.max(...ns.map(n => { const b=gb(n); return b?b.w:0; }));
+  });
+  const colX = {};
+  let cx = START_X;
+  Object.keys(COL).sort().forEach(ci => { colX[ci] = cx; cx += colW[ci] + GAP_COL; });
+  Object.entries(COL).forEach(([ci,ns]) => ns.forEach(n => setX(n, colX[ci])));
+
+  /* ══════════════════════════════════════
+     § ROW_LAYOUT — Y 행 배치
+     ══════════════════════════════════════ */
+  requestAnimationFrame(() => {
+    // Row 0: 각 컬럼 첫 번째 박스
+    setY('EventMessage',    START_Y);
+    setY('CommandPriority', START_Y);
+    setY('ScheduleOptions', START_Y);
+
+    requestAnimationFrame(() => {
+      // Row 1
+      setY('IEventHandler', bot('EventMessage')    + PAD_STACK);
+      setY('ICommand',      bot('CommandPriority') + PAD_STACK);
+      setY('ScheduledTask', bot('ScheduleOptions') + PAD_STACK);
+
+      requestAnimationFrame(() => {
+        // Row 2
+        setY('EventBus',     bot('IEventHandler') + PAD_STACK);
+        setY('CommandBase',  bot('ICommand')      + PAD_STACK);
+        setY('AsyncScheduler', bot('ScheduledTask') + PAD_STACK);
+
+        requestAnimationFrame(() => {
+          // Row 3 (col 1 only)
+          setY('LambdaCommand', bot('CommandBase') + PAD_STACK);
+
+          requestAnimationFrame(() => {
+            // Row 4 (col 1 only)
+            setY('CommandResult', bot('LambdaCommand') + PAD_STACK);
+
+            requestAnimationFrame(() => {
+              // Row 5 (col 1 only)
+              setY('CommandQueue', bot('CommandResult') + PAD_STACK);
+
+              requestAnimationFrame(() => drawAll());
+            });
+          });
+        });
+      });
+    });
+  });
+}));
+
+/* ── SVG 관계선 그리기 ── */
+function drawAll() {
+  const pos = {};
+  cv.querySelectorAll('.bw').forEach(el => {
+    pos[el.dataset.box] = {x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW = Math.max(...Object.values(pos).map(p=>p.x+p.w)) + 80;
+  const maxH = Math.max(...Object.values(pos).map(p=>p.y+p.h)) + 100;
+  cv.style.minWidth = maxW+'px'; cv.style.minHeight = maxH+'px';
+  svgEl.setAttribute('width', maxW); svgEl.setAttribute('height', maxH);
+  const ph = document.getElementById('cv-phantom');
+  ph.style.width  = Math.ceil(maxW*zl)+'px';
+  ph.style.height = Math.ceil(maxH*zl)+'px';
+
+  /* ── SVG 마커 정의 ── */
+  svgEl.innerHTML = `<defs>
+    <marker id="me" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#e040fb" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#4f8ef7" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 6 L9 1 L18 6 L9 11 Z" fill="#555" stroke="white" stroke-width="0.5"/></marker>
+    <marker id="mda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>`;
+
+  /* ── 파일 그룹 테두리 ── */
+  FG.forEach(fg => {
+    const bs = fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length) return;
+    const pd=14, x1=Math.min(...bs.map(b=>b.x))-pd, y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,    y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect'); sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect'); sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text'); sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl; svgEl.appendChild(tx);
+  });
+
+  /* ── edge 포인트 ── */
+  function ep(b,e){
+    if(e==='top')    return [b.x+b.w/2, b.y];
+    if(e==='bottom') return [b.x+b.w/2, b.y+b.h];
+    if(e==='left')   return [b.x,        b.y+b.h/2];
+    if(e==='right')  return [b.x+b.w,    b.y+b.h/2];
+    if(e==='btl')    return [b.x+b.w*0.25, b.y+b.h];
+    if(e==='btr')    return [b.x+b.w*0.75, b.y+b.h];
+    return [b.x+b.w/2, b.y];
+  }
+
+  /* ── 관계선 스타일 ── */
+  const SY = {
+    ext:  {stroke:'#e040fb','stroke-width':2,  'marker-end':'url(#me)'},
+    impl: {stroke:'#4f8ef7','stroke-width':1.5,'stroke-dasharray':'5,3','marker-end':'url(#mi)'},
+    uses: {stroke:'#888',   'stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    bld:  {stroke:'#e65100','stroke-width':1.5,'stroke-dasharray':'5,2','marker-end':'url(#mb)'},
+    comp: {stroke:'#555',   'stroke-width':1.5,'stroke-dasharray':'4,2','marker-start':'url(#mds)','marker-end':'url(#mda)'},
+  };
+
+  /* ── 3차 베지어 커브 경로 생성 ── */
+  CONN.forEach(c => {
+    const fb=pos[c.f], tb=pos[c.t]; if(!fb||!tb) return;
+    const [sx,sy] = ep(fb,c.fe).map(ri);
+    const [tx2,ty2] = ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')    ey+=ML; else if(c.te==='bottom') ey-=ML;
+    else if(c.te==='left') ex+=ML; else if(c.te==='right') ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom'||c.fe==='btl'||c.fe==='btr') c1y+=cp;
+    else if(c.fe==='top')   c1y-=cp;
+    else if(c.fe==='right') c1x+=cp;
+    else if(c.fe==='left')  c1x-=cp;
+    if(c.te==='top')    c2y-=cp; else if(c.te==='bottom') c2y+=cp;
+    else if(c.te==='left') c2x-=cp; else if(c.te==='right') c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path'); sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});
+    svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5, it=1-t;
+      const mx=ri(it*it*it*sx + 3*it*it*t*c1x + 3*it*t*t*c2x + t*t*t*ex);
+      const my=ri(it*it*it*sy + 3*it*it*t*c1y + 3*it*t*t*c2y + t*t*t*ey);
+      const lblCol = {ext:'#c000d8',impl:'#1a5cb8',uses:'#555',bld:'#c84000',comp:'#333'}[c.ty]||'#444';
+      const FSIZE=11, PAD_X=7, PAD_Y=3;
+      const approxW = c.lbl.length * FSIZE * 0.62 + PAD_X*2;
+      const approxH = FSIZE + PAD_Y*2;
+      const bg=mk('rect'); sa(bg,{
+        x:mx-approxW/2, y:my-approxH/2,
+        width:approxW, height:approxH,
+        rx:4, fill:'white', stroke:lblCol,
+        'stroke-width':1.2, opacity:0.97
+      });
+      svgEl.appendChild(bg);
+      const tl=mk('text'); sa(tl,{
+        x:mx, y:my,
+        'font-size':FSIZE, fill:lblCol,
+        'font-family':'monospace', 'font-weight':'700',
+        'text-anchor':'middle', 'dominant-baseline':'central'
+      });
+      tl.textContent=c.lbl; svgEl.appendChild(tl);
+    }
+  });
+}
+
+function mk(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function sa(el,a){ Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v)); }
+</script>
+</body>
+</html>
