@@ -10,6 +10,7 @@
 
 using lssLib.Net;
 using System.Text;
+using System.Windows.Media;
 
 namespace lssLib.Net.Demo;
 
@@ -46,6 +47,7 @@ static class Ex01_TcpPassive
 
         await channel.StartAsync(ct);
         Console.WriteLine($"  연결됨 SeqMode={cfg} | Push 수신 대기...");
+        //await Task.Delay(100_000, ct); //Test
         await Task.Delay(5_000, ct);
     }
 }
@@ -86,12 +88,27 @@ static class Ex02_TcpRequestResponse
 
         // ── SequenceMode 비교 시연 ───────────────────────────────────
         Console.WriteLine("\n  [시연] SequenceMode=0 (병렬) 로 단발 요청:");
-        NetResult r = await channel.RequestAsync(READ_CMD,
-            timeout: TimeSpan.FromMilliseconds(500), ct: ct);
-        Console.WriteLine(r.IsOk
-            ? $"  → {r.Data!.Length}B 수신 완료"
-            : $"  → 실패: {r.Error!.Message}");
 
+        /* // Test
+        for (int i = 0; i < 1000; i++)
+        {
+            NetResult r = await channel.RequestAsync(READ_CMD,
+                timeout: TimeSpan.FromMilliseconds(500), ct: ct);
+            Console.WriteLine(r.IsOk
+                ? $"  {i.ToString()} → {r.Data!.Length}B 수신 완료"
+                : $"  → 실패: {r.Error!.Message}");
+
+            await Task.Delay(5_000, ct);
+        }
+        //*/
+
+        /*
+        NetResult r = await channel.RequestAsync(READ_CMD,
+                timeout: TimeSpan.FromMilliseconds(500), ct: ct);
+        Console.WriteLine(r.IsOk
+            ? $"  {i.ToString()} → {r.Data!.Length}B 수신 완료"
+            : $"  → 실패: {r.Error!.Message}");
+        */
         await Task.Delay(3_000, ct);
         var s = channel.Statistics;
         Console.WriteLine($"  통계: 전송={s.TotalSent} 수신={s.TotalReceived} 응답={s.AvgResponseMs:F1}ms");
