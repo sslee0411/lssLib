@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Retry — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8; --bd-tertiary:#eeeff3;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00; --tx-danger:#b81a1a;
+  --bg-success:#e8f5e9; --bg-warning:#fff3e0;   --bg-info:#e3f2fd;   --bg-danger:#ffebee;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52; --bd-tertiary:#32334a;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d; --tx-danger:#ef9a9a;
+    --bg-success:#1a3d1e; --bg-warning:#3d2400;   --bg-info:#0d2545;  --bg-danger:#3d0d0d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;font-family:var(--mono);}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);font-family:var(--mono);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:2400px;min-height:2200px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:185px;line-height:1.5;}
+.uh{background:var(--bg-secondary);}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+.ghost{opacity:0.60;}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+
+<h1>lssLib.Retry — UML 클래스 다이어그램</h1>
+<p class="sub">견고성 패턴 라이브러리 · UtilResult · RetryPolicy · CircuitBreaker · RateLimiter · Extension-method only · BCL only · .NET 8.0</p>
+
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <span id="zlb">100%</span>
+</div>
+
+<div id="lg">
+  <div class="li"><span style="background:#dbeafe;color:#1e3a8a;border:1.5px solid #2563eb;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«interface»</span>인터페이스</div>
+  <div class="li"><span style="background:#fef3c7;color:#78350f;border:1.5px solid #d97706;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«abstract»</span>추상 클래스</div>
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>record struct</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lge" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#e040fb" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e040fb" stroke-width="2.2" marker-end="url(#lge)"/></svg>extends
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e65100" stroke-width="1.8" stroke-dasharray="5,2" marker-end="url(#lgb)"/></svg>«creates»
+  </div>
+</div>
+
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="2400" height="2200"></svg>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.3, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth)  || 2400;
+  const nh = parseFloat(cv.style.minHeight) || 2200;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+
+const H = s => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function ctbl(kind, name, desc, members, ext, tw, ghost) {
+  tw = tw || 400; ext = ext || ''; ghost = ghost || false;
+  const bm = { interface:'bi', abstract:'ba', class:'bc', enum:'be', 'record struct':'br' };
+  const lm = { interface:'«interface»', abstract:'«abstract»', class:'«class»', enum:'«enum»', 'record struct':'«record»' };
+  const tc = { interface:'ut-interface', abstract:'ut-abstract', class:'ut-class', enum:'ut-enum', 'record struct':'ut-record' };
+  const hc = { interface:'uh-interface', abstract:'uh-abstract', class:'uh-class', enum:'uh-enum', 'record struct':'uh-record' };
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1 = 68, w2 = 172, w3 = tw - w1 - w2 - 4;
+  let rows = '';
+  members.forEach(m => {
+    if (m.s) { rows += `<tr class="sep"><td colspan="3">${m.s}</td></tr>`; return; }
+    const ab = m.mo === 'abstract', ev = m.mo === 'event';
+    const mo = (m.mo && !ev) ? `<span class="mm">${m.mo}</span>` : '';
+    rows += `<tr>
+      <td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td>
+    </tr>`;
+  });
+  const tCls = [tc[kind]||'', ghost?' ghost':''].filter(Boolean).join(' ');
+  return `<table class="ut ${tCls}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>
+    ${rows}
+  </table>`;
+}
+
+/* ══════════════════════════════════════
+   § BOXES
+   ══════════════════════════════════════ */
+const BOXES = {
+
+  /* ── Col 0 · UtilResult ───────────────────────────────────────── */
+  'UtilResult': ctbl('record struct', 'UtilResult', '값 없는 성공/실패 결과 타입 (readonly record struct)', [
+    { t:'bool',       n:'IsOk { get; }',    d:'성공 여부' },
+    { t:'Exception?', n:'Error { get; }',   d:'실패 시 원본 예외' },
+    { t:'bool',       n:'IsError { get; }', d:'!IsOk' },
+    { s:'── 결과 처리' },
+    { t:'void', n:'ThrowIfError()',         d:'실패 시 원본 예외 re-throw' },
+    { t:'void', n:'ThrowIfError&lt;TEx&gt;()', d:'특정 타입으로 캐스팅 후 re-throw' },
+  ], '', 430),
+
+  'UtilResultT': ctbl('record struct', 'UtilResult&lt;T&gt;', '값 있는 성공/실패 결과 타입 (readonly record struct)', [
+    { t:'bool',       n:'IsOk { get; }',    d:'성공 여부' },
+    { t:'T?',         n:'Value { get; }',   d:'성공 시 결과값 (실패 시 default)' },
+    { t:'Exception?', n:'Error { get; }',   d:'실패 시 원본 예외' },
+    { t:'bool',       n:'IsError { get; }', d:'!IsOk' },
+    { s:'── 결과 처리' },
+    { t:'T',    n:'Unwrap()',                   d:'성공 시 값 · 실패 시 InvalidOperationException' },
+    { t:'T',    n:'UnwrapOr(T fallback)',        d:'실패 시 fallback 반환 (예외 없음)' },
+    { t:'T',    n:'UnwrapOrElse(Func&lt;Ex?,T&gt; factory)', d:'실패 시 factory 결과 반환' },
+    { t:'void', n:'ThrowIfError()',              d:'실패 시 원본 예외 re-throw' },
+    { t:'UtilResult&lt;TOut&gt;', n:'Map&lt;TOut&gt;(Func&lt;T,TOut&gt; mapper)', d:'성공 값 변환 · 실패 그대로 전파' },
+  ], '', 450),
+
+  'UtilResults': ctbl('class', 'UtilResults', 'UtilResult 팩토리 (static)', [
+    { t:'UtilResult',    mo:'static', n:'Ok()',                d:'성공 결과 생성 (값 없음)' },
+    { t:'UtilResult&lt;T&gt;', mo:'static', n:'Ok&lt;T&gt;(T value)', d:'성공 결과 생성 (값 포함)' },
+    { t:'UtilResult',    mo:'static', n:'Fail(Exception ex)',  d:'실패 결과 생성 (값 없음)' },
+    { t:'UtilResult&lt;T&gt;', mo:'static', n:'Fail&lt;T&gt;(Exception ex)', d:'실패 결과 생성 (제네릭)' },
+  ], '', 430),
+
+  /* ── Col 1 · RetryPolicy + RetryExtensions ───────────────────── */
+  'RetryPolicy': ctbl('record struct', 'RetryPolicy', 'Retry 설정 불변 값 객체 (readonly record struct)', [
+    { t:'int',        n:'MaxAttempts',  d:'최대 시도 횟수 (기본 3)' },
+    { t:'TimeSpan?',  n:'Delay',        d:'재시도 대기 시간 (null=200ms)' },
+    { t:'bool',       n:'Backoff',      d:'지수 백오프 (Delay×2^attempt)' },
+    { t:'Action&lt;Ex,int&gt;?', n:'OnRetry', d:'재시도 직전 콜백 (exception, attemptNumber)' },
+    { s:'── 프리셋 (static readonly)' },
+    { t:'RetryPolicy', mo:'static', n:'Default',   d:'3회 · 200ms 고정' },
+    { t:'RetryPolicy', mo:'static', n:'Http',       d:'3회 · 500ms · 지수 백오프' },
+    { t:'RetryPolicy', mo:'static', n:'Database',   d:'5회 · 1s · 지수 백오프' },
+    { t:'RetryPolicy', mo:'static', n:'Immediate',  d:'3회 · 대기 없음' },
+  ], '', 450),
+
+  'RetryExtensions': ctbl('class', 'RetryExtensions', 'Retry · Timeout · 안전 실행 확장 메서드 (static)', [
+    { s:'── §1 동기 Retry' },
+    { t:'void', mo:'static', n:'Retry(this Action action, RetryPolicy? policy)',       d:'Action 재시도' },
+    { t:'T',    mo:'static', n:'Retry&lt;T&gt;(this Func&lt;T&gt; func, RetryPolicy? policy)', d:'Func&lt;T&gt; 재시도' },
+    { s:'── §2 비동기 Retry' },
+    { t:'Task',    mo:'static', n:'RetryAsync(this Func&lt;Task&gt; action, policy, ct)',       d:'OperationCanceledException 즉시 전파' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'RetryAsync&lt;T&gt;(this Func&lt;Task&lt;T&gt;&gt; func, policy, ct)', d:'' },
+    { s:'── §3 조건부 Retry' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'RetryOnAsync&lt;T,TEx&gt;(this Func&lt;Task&lt;T&gt;&gt; func, policy, ct)', d:'TEx 타입만 재시도' },
+    { s:'── §4 Timeout 래퍼' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'WithTimeout&lt;T&gt;(this Func&lt;CT,Task&lt;T&gt;&gt; func, timeout, name?)', d:'초과 시 TimeoutException' },
+    { t:'Task',    mo:'static', n:'WithTimeout(this Func&lt;CT,Task&gt; action, timeout, name?)', d:'' },
+    { s:'── §5 Retry + Timeout 조합' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'RetryWithTimeout&lt;T&gt;(func, policy, perAttemptTimeout, totalTimeout)', d:'이중 타임아웃' },
+    { s:'── §6 안전 실행 (UtilResult 반환)' },
+    { t:'bool',           mo:'static', n:'TryExecute(this Action, out Exception? error)',     d:'false 반환 시 error 주입' },
+    { t:'T?',             mo:'static', n:'TryExecute&lt;T&gt;(this Func&lt;T&gt;, out Exception? error)', d:'' },
+    { t:'Task&lt;UtilResult&gt;',   mo:'static', n:'TryExecuteAsync(this Func&lt;Task&gt; action)', d:'' },
+    { t:'Task&lt;UtilResult&lt;T&gt;&gt;', mo:'static', n:'TryExecuteAsync&lt;T&gt;(this Func&lt;Task&lt;T&gt;&gt; func)', d:'' },
+  ], '', 490),
+
+  /* ── Col 2 · CircuitBreaker ──────────────────────────────────── */
+  'CircuitState': ctbl('enum', 'CircuitState', '회로 차단기 상태', [
+    { t:'0', n:'Closed',   d:'정상 동작 · 실패 횟수 누적 중' },
+    { t:'1', n:'Open',     d:'회로 열림 · 모든 요청 즉시 거부' },
+    { t:'2', n:'HalfOpen', d:'복구 테스트 중 · 제한된 요청만 허용' },
+  ], '', 400),
+
+  'CircuitBreakerPolicy': ctbl('record struct', 'CircuitBreakerPolicy', '회로 차단기 설정 불변 값 객체 (readonly record struct)', [
+    { t:'int',        n:'FailureThreshold',          d:'Open 전환까지 연속 실패 횟수 (기본 5)' },
+    { t:'TimeSpan?',  n:'OpenDuration',               d:'Open 상태 유지 시간 (null=30s)' },
+    { t:'int',        n:'HalfOpenSuccessThreshold',   d:'Closed 전환 성공 횟수 (기본 1)' },
+    { t:'Action&lt;CS,CS&gt;?', n:'OnStateChanged',  d:'상태 전이 콜백 (이전→새 상태)' },
+    { s:'── 상태 전이' },
+    { t:'', n:'Closed ─(실패≥Threshold)──► Open',            d:'' },
+    { t:'', n:'Open ─(OpenDuration 경과)──► HalfOpen',         d:'' },
+    { t:'', n:'HalfOpen ─(성공≥HalfOpenSuccess)──► Closed',   d:'' },
+    { t:'', n:'HalfOpen ─(실패)──► Open (즉시 재차단)',        d:'' },
+    { s:'── 프리셋 (static readonly)' },
+    { t:'CircuitBreakerPolicy', mo:'static', n:'Default', d:'5회 실패 → 30s Open' },
+    { t:'CircuitBreakerPolicy', mo:'static', n:'Strict',  d:'3회 실패 → 1min · HalfOpen 2회' },
+    { t:'CircuitBreakerPolicy', mo:'static', n:'Lenient', d:'10회 실패 → 10s Open' },
+  ], '', 450),
+
+  'CircuitBreakerState': ctbl('class', 'CircuitBreakerState', '회로 차단기 런타임 상태 (sealed · 공유 인스턴스)', [
+    { s:'── 공개 프로퍼티' },
+    { t:'CircuitState', n:'Current { get; }',             d:'현재 회로 상태 (스레드 안전)' },
+    { t:'int',          n:'FailureCount { get; }',         d:'누적 연속 실패 횟수' },
+    { t:'DateTime',     n:'OpenedAt { get; }',             d:'회로 열린 시각 (Open 아니면 MinValue)' },
+    { t:'TimeSpan',     n:'RemainingOpenDuration { get; }',d:'Open 잔여 시간 (Closed/HalfOpen=Zero)' },
+    { s:'── 수동 제어' },
+    { t:'void', n:'Reset()', d:'강제 Closed 복귀 (점검 완료 후 수동 재개)' },
+    { t:'void', n:'Trip()',  d:'강제 Open 전환 (점검·배포 예방적 차단)' },
+  ], '', 450),
+
+  'CircuitBreakerExtensions': ctbl('class', 'CircuitBreakerExtensions', '회로 차단기 실행 확장 메서드 (static)', [
+    { s:'── §1 비동기 실행' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'ExecuteAsync&lt;T&gt;(this Func&lt;CT,Task&lt;T&gt;&gt; func, CircuitBreakerState state, ct)', d:'Open=즉시 throw' },
+    { t:'Task',     mo:'static', n:'ExecuteAsync(this Func&lt;CT,Task&gt; action, state, ct)',                    d:'' },
+    { s:'── §2 CB + Retry 조합' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'ExecuteWithRetryAsync&lt;T&gt;(func, circuitBreaker, RetryPolicy?, ct)', d:'Open=즉시 throw (재시도 없음)' },
+    { s:'── §3 안전 실행 (UtilResult 반환)' },
+    { t:'Task&lt;UtilResult&lt;T&gt;&gt;', mo:'static', n:'TryExecuteAsync&lt;T&gt;(func, state, ct)',            d:'Open 포함 모든 예외를 UtilResult로' },
+  ], '', 490),
+
+  'CircuitBreakerOpenException': ctbl('class', 'CircuitBreakerOpenException', '회로 Open 시 throw (sealed)', [
+    { t:'CircuitState', n:'State { get; }',            d:'예외 발생 시 회로 상태 스냅샷' },
+    { t:'TimeSpan',     n:'RemainingDuration { get; }',d:'Open 잔여 시간' },
+  ], 'Exception', 400),
+
+  /* ── Col 3 · RateLimiter ─────────────────────────────────────── */
+  'RateLimiterPolicy': ctbl('record struct', 'RateLimiterPolicy', '속도 제한 설정 불변 값 객체 (readonly record struct · 슬라이딩 윈도우)', [
+    { t:'int',      n:'MaxRequests',     d:'윈도우 내 최대 허용 요청 수' },
+    { t:'TimeSpan', n:'Window',          d:'윈도우 시간 범위' },
+    { t:'bool',     n:'ThrowOnExceeded', d:'초과 시 throw (기본 true, false=default 반환)' },
+    { s:'── 팩토리 (static)' },
+    { t:'RateLimiterPolicy', mo:'static', n:'PerSecond(int max)',  d:'초당 max회' },
+    { t:'RateLimiterPolicy', mo:'static', n:'PerMinute(int max)',  d:'분당 max회' },
+    { t:'RateLimiterPolicy', mo:'static', n:'PerHour(int max)',    d:'시간당 max회' },
+    { t:'RateLimiterPolicy', mo:'static', n:'PerDay(int max)',     d:'일당 max회' },
+    { s:'── 프리셋 (static readonly)' },
+    { t:'RateLimiterPolicy', mo:'static', n:'ApiDefault',    d:'분당 60회 · REST API 기본' },
+    { t:'RateLimiterPolicy', mo:'static', n:'Strict',        d:'초당 10회 · 처리량 민감 경로' },
+    { t:'RateLimiterPolicy', mo:'static', n:'Lenient',       d:'시간당 1,000회 · 배치 처리' },
+    { t:'RateLimiterPolicy', mo:'static', n:'LoginAttempt',  d:'분당 5회 · 보안 강화 경로' },
+  ], '', 450),
+
+  'RateLimiterState': ctbl('class', 'RateLimiterState', '속도 제한 런타임 상태 (sealed · 슬라이딩 윈도우 · 공유 인스턴스)', [
+    { t:'RateLimiterPolicy', n:'Policy { get; }',          d:'설정된 속도 제한 정책' },
+    { t:'int',      n:'Available { get; }',                d:'현재 윈도우 내 남은 허용 횟수' },
+    { t:'int',      n:'Used { get; }',                     d:'현재 윈도우 내 사용된 횟수' },
+    { t:'DateTime', n:'NextAvailableAt { get; }',          d:'다음 슬롯 예상 시각 (여유 있으면 UtcNow)' },
+  ], '', 440),
+
+  'RateLimiterExtensions': ctbl('class', 'RateLimiterExtensions', '속도 제한 실행 확장 메서드 (static)', [
+    { s:'── §1 비동기 실행 (즉시 실행 또는 즉시 거부)' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'ExecuteAsync&lt;T&gt;(this Func&lt;CT,Task&lt;T&gt;&gt; func, RateLimiterState limiter, ct)', d:'초과=throw or default' },
+    { t:'Task',     mo:'static', n:'ExecuteAsync(this Func&lt;CT,Task&gt; action, limiter, ct)',           d:'' },
+    { s:'── §2 대기 후 실행' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'ExecuteWithWaitAsync&lt;T&gt;(func, limiter, TimeSpan? maxWait, ct)', d:'슬롯 대기 · 초과=TimeoutException' },
+    { s:'── §3 안전 실행 (UtilResult 반환)' },
+    { t:'Task&lt;UtilResult&lt;T&gt;&gt;', mo:'static', n:'TryExecuteAsync&lt;T&gt;(func, limiter, ct)', d:'한도 초과 포함 모든 예외 → UtilResult' },
+    { s:'── §4 CB + RL 조합 (RL 먼저 확인 → CB)' },
+    { t:'Task&lt;T&gt;', mo:'static', n:'ExecuteAsync&lt;T&gt;(func, RateLimiterState limiter, CircuitBreakerState circuitBreaker, ct)', d:'RL 초과=즉시 throw' },
+  ], '', 500),
+
+  'RateLimitExceededException': ctbl('class', 'RateLimitExceededException', '속도 제한 초과 시 throw (sealed)', [
+    { t:'RateLimiterPolicy', n:'Policy { get; }',        d:'초과된 속도 제한 정책' },
+    { t:'DateTime',          n:'NextAvailableAt { get; }',d:'다음 허용 예상 시각 (UTC)' },
+  ], 'Exception', 400),
+};
+
+/* ══════════════════════════════════════
+   § COL
+   ══════════════════════════════════════ */
+const COL = {
+  0: ['UtilResult', 'UtilResultT', 'UtilResults'],
+  1: ['RetryPolicy', 'RetryExtensions'],
+  2: ['CircuitState', 'CircuitBreakerPolicy', 'CircuitBreakerState', 'CircuitBreakerExtensions', 'CircuitBreakerOpenException'],
+  3: ['RateLimiterPolicy', 'RateLimiterState', 'RateLimiterExtensions', 'RateLimitExceededException'],
+};
+
+/* ══════════════════════════════════════
+   § FG
+   ══════════════════════════════════════ */
+const FG = [
+  { lbl:'lssLib.Retry  UtilResult',     ns:['UtilResult','UtilResultT','UtilResults'],                                                                    color:'#7c3aed' },
+  { lbl:'lssLib.Retry  RetryPolicy',    ns:['RetryPolicy','RetryExtensions'],                                                                              color:'#2563eb' },
+  { lbl:'lssLib.Retry  CircuitBreaker', ns:['CircuitState','CircuitBreakerPolicy','CircuitBreakerState','CircuitBreakerExtensions','CircuitBreakerOpenException'], color:'#dc2626' },
+  { lbl:'lssLib.Retry  RateLimiter',    ns:['RateLimiterPolicy','RateLimiterState','RateLimiterExtensions','RateLimitExceededException'],                  color:'#d97706' },
+];
+
+/* ══════════════════════════════════════
+   § CONN
+   ══════════════════════════════════════ */
+const CONN = [
+  // UtilResults → UtilResult / UtilResult<T> (creates)
+  { f:'UtilResults', fe:'top', t:'UtilResult',  te:'bottom', ty:'bld', lbl:'«creates»', xoff:-24 },
+  { f:'UtilResults', fe:'top', t:'UtilResultT', te:'bottom', ty:'bld', lbl:'«creates»', xoff:24  },
+
+  // RetryExtensions → RetryPolicy (uses)
+  { f:'RetryExtensions', fe:'top', t:'RetryPolicy', te:'bottom', ty:'uses', lbl:'uses', xoff:0 },
+  // RetryExtensions → UtilResult (creates via TryExecuteAsync)
+  { f:'RetryExtensions', fe:'left', t:'UtilResults', te:'right', ty:'bld', lbl:'«creates»', xoff:0 },
+
+  // CircuitBreakerExtensions → CircuitBreakerState (uses)
+  { f:'CircuitBreakerExtensions', fe:'top', t:'CircuitBreakerState', te:'bottom', ty:'uses', lbl:'uses', xoff:-20 },
+  // CircuitBreakerExtensions → RetryPolicy (uses in ExecuteWithRetry)
+  { f:'CircuitBreakerExtensions', fe:'left', t:'RetryPolicy', te:'right', ty:'uses', lbl:'uses', xoff:0 },
+  // CircuitBreakerExtensions → UtilResult (creates)
+  { f:'CircuitBreakerExtensions', fe:'left', t:'UtilResults', te:'right', ty:'bld', lbl:'«creates»', xoff:30 },
+  // CircuitBreakerState → CircuitBreakerPolicy (uses)
+  { f:'CircuitBreakerState', fe:'top', t:'CircuitBreakerPolicy', te:'bottom', ty:'uses', lbl:'uses', xoff:20 },
+  // CircuitBreakerState → CircuitState (uses)
+  { f:'CircuitBreakerState', fe:'top', t:'CircuitState', te:'bottom', ty:'uses', lbl:'uses', xoff:-20 },
+  // CircuitBreakerOpenException → CircuitBreakerState (uses)
+  { f:'CircuitBreakerOpenException', fe:'top', t:'CircuitBreakerState', te:'bottom', ty:'uses', lbl:'uses', xoff:0 },
+
+  // RateLimiterState → RateLimiterPolicy (uses)
+  { f:'RateLimiterState', fe:'top', t:'RateLimiterPolicy', te:'bottom', ty:'uses', lbl:'uses', xoff:0 },
+  // RateLimiterExtensions → RateLimiterState (uses)
+  { f:'RateLimiterExtensions', fe:'top', t:'RateLimiterState', te:'bottom', ty:'uses', lbl:'uses', xoff:-20 },
+  // RateLimiterExtensions → CircuitBreakerState (cross: col3→col2)
+  { f:'RateLimiterExtensions', fe:'left', t:'CircuitBreakerState', te:'right', ty:'uses', lbl:'uses', xoff:0 },
+  // RateLimiterExtensions → UtilResult (creates)
+  { f:'RateLimiterExtensions', fe:'left', t:'UtilResults', te:'right', ty:'bld', lbl:'«creates»', xoff:-30 },
+  // RateLimitExceededException → RateLimiterState (uses)
+  { f:'RateLimitExceededException', fe:'top', t:'RateLimiterState', te:'bottom', ty:'uses', lbl:'uses', xoff:0 },
+];
+
+const GAP_COL = 280, PAD_STACK = 50, START_X = 30, START_Y = 40;
+
+const cv    = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+Object.keys(BOXES).forEach(name => {
+  const div = document.createElement('div');
+  div.className = 'bw'; div.dataset.box = name;
+  div.style.left = '0px'; div.style.top = '0px';
+  div.innerHTML = BOXES[name];
+  cv.insertBefore(div, svgEl);
+});
+
+const gb   = n => { const el = cv.querySelector(`[data-box="${n}"]`); return el ? {el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight} : null; };
+const bot  = n => { const b = gb(n); return b ? b.y + b.h : 0; };
+const setX = (n,x) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.left = x+'px'; };
+const setY = (n,y) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.top  = y+'px'; };
+const ri   = v => Math.round(v);
+
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  const colW = {};
+  Object.entries(COL).forEach(([ci,ns]) => {
+    colW[ci] = Math.max(...ns.map(n => { const b=gb(n); return b?b.w:0; }));
+  });
+  const colX = {};
+  let cx = START_X;
+  Object.keys(COL).sort().forEach(ci => { colX[ci] = cx; cx += colW[ci] + GAP_COL; });
+  Object.entries(COL).forEach(([ci,ns]) => ns.forEach(n => setX(n, colX[ci])));
+
+  requestAnimationFrame(() => {
+    // Row 0
+    setY('UtilResult',       START_Y);
+    setY('RetryPolicy',      START_Y);
+    setY('CircuitState',     START_Y);
+    setY('RateLimiterPolicy',START_Y);
+
+    requestAnimationFrame(() => {
+      // Row 1
+      setY('UtilResultT',          bot('UtilResult')        + PAD_STACK);
+      setY('RetryExtensions',      bot('RetryPolicy')       + PAD_STACK);
+      setY('CircuitBreakerPolicy', bot('CircuitState')      + PAD_STACK);
+      setY('RateLimiterState',     bot('RateLimiterPolicy') + PAD_STACK);
+
+      requestAnimationFrame(() => {
+        // Row 2
+        setY('UtilResults',              bot('UtilResultT')          + PAD_STACK);
+        setY('CircuitBreakerState',      bot('CircuitBreakerPolicy') + PAD_STACK);
+        setY('RateLimiterExtensions',    bot('RateLimiterState')     + PAD_STACK);
+
+        requestAnimationFrame(() => {
+          // Row 3
+          setY('CircuitBreakerExtensions',    bot('CircuitBreakerState') + PAD_STACK);
+          setY('RateLimitExceededException',  bot('RateLimiterExtensions') + PAD_STACK);
+
+          requestAnimationFrame(() => {
+            // Row 4
+            setY('CircuitBreakerOpenException', bot('CircuitBreakerExtensions') + PAD_STACK);
+
+            requestAnimationFrame(() => drawAll());
+          });
+        });
+      });
+    });
+  });
+}));
+
+function drawAll() {
+  const pos = {};
+  cv.querySelectorAll('.bw').forEach(el => {
+    pos[el.dataset.box] = {x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW = Math.max(...Object.values(pos).map(p=>p.x+p.w)) + 80;
+  const maxH = Math.max(...Object.values(pos).map(p=>p.y+p.h)) + 100;
+  cv.style.minWidth = maxW+'px'; cv.style.minHeight = maxH+'px';
+  svgEl.setAttribute('width', maxW); svgEl.setAttribute('height', maxH);
+  const ph = document.getElementById('cv-phantom');
+  ph.style.width  = Math.ceil(maxW*zl)+'px';
+  ph.style.height = Math.ceil(maxH*zl)+'px';
+
+  svgEl.innerHTML = `<defs>
+    <marker id="me" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#e040fb" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#4f8ef7" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 6 L9 1 L18 6 L9 11 Z" fill="#555" stroke="white" stroke-width="0.5"/></marker>
+    <marker id="mda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>`;
+
+  FG.forEach(fg => {
+    const bs = fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length) return;
+    const pd=14, x1=Math.min(...bs.map(b=>b.x))-pd, y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,    y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect'); sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect'); sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text'); sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl; svgEl.appendChild(tx);
+  });
+
+  function ep(b,e){
+    if(e==='top')    return [b.x+b.w/2, b.y];
+    if(e==='bottom') return [b.x+b.w/2, b.y+b.h];
+    if(e==='left')   return [b.x,        b.y+b.h/2];
+    if(e==='right')  return [b.x+b.w,    b.y+b.h/2];
+    return [b.x+b.w/2, b.y];
+  }
+
+  const SY = {
+    ext:  {stroke:'#e040fb','stroke-width':2,  'marker-end':'url(#me)'},
+    impl: {stroke:'#4f8ef7','stroke-width':1.5,'stroke-dasharray':'5,3','marker-end':'url(#mi)'},
+    uses: {stroke:'#888',   'stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    bld:  {stroke:'#e65100','stroke-width':1.5,'stroke-dasharray':'5,2','marker-end':'url(#mb)'},
+    comp: {stroke:'#555',   'stroke-width':1.5,'stroke-dasharray':'4,2','marker-start':'url(#mds)','marker-end':'url(#mda)'},
+  };
+
+  CONN.forEach(c => {
+    const fb=pos[c.f], tb=pos[c.t]; if(!fb||!tb) return;
+    const [sx,sy] = ep(fb,c.fe).map(ri);
+    const [tx2,ty2] = ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')    ey+=ML; else if(c.te==='bottom') ey-=ML;
+    else if(c.te==='left') ex+=ML; else if(c.te==='right') ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom') c1y+=cp; else if(c.fe==='top')   c1y-=cp;
+    else if(c.fe==='right') c1x+=cp; else if(c.fe==='left')  c1x-=cp;
+    if(c.te==='top')    c2y-=cp; else if(c.te==='bottom') c2y+=cp;
+    else if(c.te==='left') c2x-=cp; else if(c.te==='right') c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path'); sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});
+    svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5, it=1-t;
+      const mx=ri(it*it*it*sx + 3*it*it*t*c1x + 3*it*t*t*c2x + t*t*t*ex);
+      const my=ri(it*it*it*sy + 3*it*it*t*c1y + 3*it*t*t*c2y + t*t*t*ey);
+      const lblCol = {ext:'#c000d8',impl:'#1a5cb8',uses:'#555',bld:'#c84000',comp:'#333'}[c.ty]||'#444';
+      const FSIZE=11, PAD_X=7, PAD_Y=3;
+      const approxW = c.lbl.length * FSIZE * 0.62 + PAD_X*2;
+      const approxH = FSIZE + PAD_Y*2;
+      const bg=mk('rect'); sa(bg,{x:mx-approxW/2,y:my-approxH/2,width:approxW,height:approxH,rx:4,fill:'white',stroke:lblCol,'stroke-width':1.2,opacity:0.97});
+      svgEl.appendChild(bg);
+      const tl=mk('text'); sa(tl,{x:mx,y:my,'font-size':FSIZE,fill:lblCol,'font-family':'monospace','font-weight':'700','text-anchor':'middle','dominant-baseline':'central'});
+      tl.textContent=c.lbl; svgEl.appendChild(tl);
+    }
+  });
+}
+
+function mk(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function sa(el,a){ Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v)); }
+</script>
+</body>
+</html>
