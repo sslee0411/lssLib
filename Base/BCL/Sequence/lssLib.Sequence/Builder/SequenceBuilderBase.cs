@@ -28,7 +28,7 @@ namespace lssLib.Sequence;
 /// <code>
 /// // lssLib.Net 단일 장비 빌더
 /// public sealed class NetSequenceBuilder
-///     : SequenceBuilderBase&lt;NetSequenceStepBase, NetSequenceBuilder&gt;
+///     : SequenceBuilderBase<NetSequenceStepBase, NetSequenceBuilder>
 /// {
 ///     private readonly int _defaultDeviceId;
 ///
@@ -143,7 +143,7 @@ public abstract class SequenceBuilderBase<TStep, TBuilder>
 /// <b>파생 클래스 구현 패턴:</b>
 /// <code>
 /// public sealed class NetGroupSequenceBuilder
-///     : GroupSequenceBuilderBase&lt;NetSequenceStepBase, NetGroupSequenceBuilder&gt;
+///     : GroupSequenceBuilderBase<NetSequenceStepBase, NetGroupSequenceBuilder>
 /// {
 ///     public NetGroupSequenceBuilder(string name) : base(name) { }
 ///

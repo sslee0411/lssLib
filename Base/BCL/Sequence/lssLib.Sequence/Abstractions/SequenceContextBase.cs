@@ -41,9 +41,9 @@ namespace lssLib.Sequence;
 /// // DB 시퀀스에서
 /// public sealed class DbSequenceContext : SequenceContextBase
 /// {
-///     private readonly Dictionary&lt;int, DbConnection&gt; _connections;
+///     private readonly Dictionary<int, DbConnection> _connections;
 ///
-///     public DbSequenceContext(Dictionary&lt;int, DbConnection&gt; conns)
+///     public DbSequenceContext(Dictionary<int, DbConnection> conns)
 ///         => _connections = conns;
 ///
 ///     protected override object? GetDeviceCore(int deviceId)

@@ -46,7 +46,7 @@ namespace lssLib.Sequence;
 ///     private readonly string _message;
 ///     public LogStep(string message) => _message = message;
 ///
-///     public Task&lt;SequenceStepResult&gt; ExecuteAsync(
+///     public Task<SequenceStepResult> ExecuteAsync(
 ///         ISequenceContext context, CancellationToken ct)
 ///     {
 ///         context.Log(_message);

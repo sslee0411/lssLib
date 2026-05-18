@@ -77,7 +77,7 @@ public interface ISequenceContext
     /// context.SetVariable("motor_speed", 1500);
     ///
     /// // 다음 스텝에서 읽기
-    /// int speed = context.GetVariable&lt;int&gt;("motor_speed");
+    /// int speed = context.GetVariable<int>("motor_speed");
     /// </code></example>
     /// </summary>
     void SetVariable(string key, object? value);

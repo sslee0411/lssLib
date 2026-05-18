@@ -25,7 +25,7 @@ namespace lssLib.Sequence;
 ///     public byte[]  Data     { get; init; } = [];
 ///     public NetPriority Priority { get; init; } = NetPriority.Write;
 ///
-///     protected override async Task&lt;SequenceStepResult&gt; ExecuteCoreAsync(
+///     protected override async Task<SequenceStepResult> ExecuteCoreAsync(
 ///         ISequenceContext context, CancellationToken ct)
 ///     {
 ///         var channel = context.GetDevice(DeviceId) as NetChannelBase;
@@ -45,7 +45,7 @@ namespace lssLib.Sequence;
 ///     public string Url    { get; init; } = string.Empty;
 ///     public string Method { get; init; } = "GET";
 ///
-///     protected override async Task&lt;SequenceStepResult&gt; ExecuteCoreAsync(
+///     protected override async Task<SequenceStepResult> ExecuteCoreAsync(
 ///         ISequenceContext context, CancellationToken ct)
 ///     {
 ///         using var http = new HttpClient();
