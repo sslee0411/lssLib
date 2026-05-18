@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Net v5.1 — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8; --bd-tertiary:#eeeff3;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00; --tx-danger:#b81a1a;
+  --bg-success:#e8f5e9; --bg-warning:#fff3e0;   --bg-info:#e3f2fd;   --bg-danger:#ffebee;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52; --bd-tertiary:#32334a;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d; --tx-danger:#ef9a9a;
+    --bg-success:#1a3d1e; --bg-warning:#3d2400;   --bg-info:#0d2545;  --bg-danger:#3d0d0d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;font-family:var(--mono);}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);font-family:var(--mono);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:3600px;min-height:3000px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:175px;line-height:1.5;}
+.uh{background:var(--bg-secondary);}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+.ghost{opacity:0.60;}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+
+<h1>lssLib.Net v5.1 — UML 클래스 다이어그램</h1>
+<p class="sub">통신 모듈 · TCP/Serial/UDP/SharedMem/NamedPipe/HTTP/WebSocket/MQTT/Virtual · SequenceMode(v5.1) · Channel[4] 우선순위 파이프라인 · .NET 8.0 · C# 12</p>
+
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <button onclick="sz(0.36)">36%</button>
+  <button onclick="sz(0.25)">25%</button>
+  <span id="zlb">100%</span>
+</div>
+
+<div id="lg">
+  <div class="li"><span style="background:#dbeafe;color:#1e3a8a;border:1.5px solid #2563eb;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«interface»</span>인터페이스</div>
+  <div class="li"><span style="background:#fef3c7;color:#78350f;border:1.5px solid #d97706;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«abstract»</span>추상 클래스</div>
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>record struct</div>
+  <div class="li"><svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lge" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#e040fb" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e040fb" stroke-width="2.2" marker-end="url(#lge)"/></svg>extends</div>
+  <div class="li"><svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#4f8ef7" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#4f8ef7" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#lgi)"/></svg>implements</div>
+  <div class="li"><svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses</div>
+  <div class="li"><svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e65100" stroke-width="1.8" stroke-dasharray="5,2" marker-end="url(#lgb)"/></svg>«builds»</div>
+  <div class="li"><svg width="54" height="16" style="flex-shrink:0"><defs><marker id="lgds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="14" markerHeight="12" orient="auto-start-reverse"><path d="M0 6L9 1L18 6L9 11Z" fill="#555"/></marker><marker id="lgda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker></defs><line x1="14" y1="8" x2="46" y2="8" stroke="#555" stroke-width="1.8" marker-start="url(#lgds)" marker-end="url(#lgda)"/></svg>composition</div>
+</div>
+
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="3600" height="3000"></svg>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.2, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth)  || 3600;
+  const nh = parseFloat(cv.style.minHeight) || 3000;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+
+const H = s => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function ctbl(kind, name, desc, members, ext, tw, ghost) {
+  tw = tw || 400; ext = ext || ''; ghost = ghost || false;
+  const bm = { interface:'bi', abstract:'ba', class:'bc', enum:'be', 'record struct':'br' };
+  const lm = { interface:'«interface»', abstract:'«abstract»', class:'«class»', enum:'«enum»', 'record struct':'«record»' };
+  const tc = { interface:'ut-interface', abstract:'ut-abstract', class:'ut-class', enum:'ut-enum', 'record struct':'ut-record' };
+  const hc = { interface:'uh-interface', abstract:'uh-abstract', class:'uh-class', enum:'uh-enum', 'record struct':'uh-record' };
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1 = 68, w2 = 162, w3 = tw - w1 - w2 - 4;
+  let rows = '';
+  members.forEach(m => {
+    if (m.s) { rows += `<tr class="sep"><td colspan="3">${m.s}</td></tr>`; return; }
+    const ab = m.mo === 'abstract', ev = m.mo === 'event';
+    const mo = (m.mo && !ev) ? `<span class="mm">${m.mo}</span>` : '';
+    rows += `<tr>
+      <td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td>
+    </tr>`;
+  });
+  const tCls = [tc[kind]||'', ghost?' ghost':''].filter(Boolean).join(' ');
+  return `<table class="ut ${tCls}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>
+    ${rows}
+  </table>`;
+}
+
+const BOXES = {
+
+  /* ══ Col 0 · Core Enums ══════════════════════════════════════════════ */
+  'NetMode': ctbl('enum', 'NetMode', '통신 형태', [
+    { t:'0', n:'Passive',         d:'수동 수신 (DataReceived 이벤트 기반)' },
+    { t:'1', n:'RequestResponse', d:'요청-응답 (ReadCommands 주기 전송)' },
+  ], '', 300),
+
+  'NetState': ctbl('enum', 'NetState', '전송 계층 연결 상태', [
+    { t:'0', n:'Disconnected', d:'연결 끊김 · 초기 상태' },
+    { t:'1', n:'Connecting',   d:'연결 시도 중' },
+    { t:'2', n:'Connected',    d:'연결됨 (IsConnected=true 유일)' },
+    { t:'3', n:'Reconnecting', d:'재접속 대기 (지수 백오프 구간)' },
+    { t:'4', n:'Error',        d:'오류 · 복구 불가' },
+    { t:'5', n:'Disposed',     d:'Dispose 완료' },
+  ], '', 300),
+
+  'NetPriority': ctbl('enum', 'NetPriority', '통신 패킷 처리 우선순위 (값 작을수록 먼저)', [
+    { t:'0', n:'Critical', d:'Write 실패 재전송 · 비상 정지 (큐 선점)' },
+    { t:'1', n:'Write',    d:'WriteAsync / RequestAsync 기본값' },
+    { t:'2', n:'Read',     d:'주기 Read 루프 자동 생성 (외부 불필요)' },
+    { t:'3', n:'Low',      d:'Heartbeat · 진단 (공백 시만 전송)' },
+  ], '', 310),
+
+  'RetryTarget': ctbl('enum', 'RetryTarget', '재시도 동작 대상 [Flags]', [
+    { t:'0',   n:'None',           d:'재시도 없음' },
+    { t:'1<<0',n:'Connect',        d:'접속 실패 시 재시도' },
+    { t:'1<<1',n:'Write',          d:'쓰기 실패 시 재접속 후 Critical 재투입' },
+    { t:'0x3', n:'ConnectAndWrite',d:'Connect + Write (기본 권장값)' },
+    { t:'=CW', n:'All',            d:'ConnectAndWrite 와 동일' },
+  ], '', 310),
+
+  'NetTransportType': ctbl('enum', 'NetTransportType', '전송 계층 종류 (9가지)', [
+    { t:'0', n:'Tcp',         d:'TCP 클라이언트 · 가장 범용' },
+    { t:'1', n:'Serial',      d:'COM 포트 (RS-232/RS-485/Modbus RTU)' },
+    { t:'2', n:'Udp',         d:'UDP 비연결 · 브로드캐스트 포함' },
+    { t:'3', n:'SharedMemory',d:'동일 PC IPC · 초저지연' },
+    { t:'4', n:'NamedPipe',   d:'Named Pipe (동일 호스트/네트워크)' },
+    { t:'5', n:'Http',        d:'HTTP REST API (POST/GET)' },
+    { t:'6', n:'WebSocket',   d:'실시간 양방향 WS' },
+    { t:'7', n:'Mqtt',        d:'IoT 경량 메시징 (BCL TCP 직접 구현)' },
+    { t:'8', n:'Virtual',     d:'인메모리 테스트·시뮬레이터' },
+  ], '', 310),
+
+  'SharedMemoryRole': ctbl('enum', 'SharedMemoryRole', '공유 메모리 역할', [
+    { t:'0', n:'Writer', d:'데이터 기록 프로세스 (CreateOrOpen)' },
+    { t:'1', n:'Reader', d:'데이터 읽기 프로세스 (OpenExisting)' },
+  ], '', 300),
+
+  /* ══ Col 1 · Results ═════════════════════════════════════════════════ */
+  'NetResult': ctbl('record struct', 'NetResult', '통신 작업 결과 값 타입 (readonly record struct)', [
+    { t:'bool',       n:'IsOk { get; init; }',   d:'성공 여부' },
+    { t:'bool',       n:'IsError { get; }',        d:'!IsOk' },
+    { t:'byte[]?',    n:'Data { get; init; }',     d:'성공 시 수신 디코딩 페이로드' },
+    { t:'Exception?', n:'Error { get; init; }',    d:'실패 시 원본 예외' },
+    { t:'DateTime',   n:'Timestamp { get; init; }',d:'결과 생성 시각' },
+    { s:'── 팩토리 (static)' },
+    { t:'NetResult', mo:'static', n:'Ok(byte[] data)',       d:'수신 데이터 포함 성공' },
+    { t:'NetResult', mo:'static', n:'OkEmpty()',             d:'페이로드 없는 성공' },
+    { t:'NetResult', mo:'static', n:'Fail(Exception error)', d:'예외 포함 실패' },
+    { t:'NetResult', mo:'static', n:'Fail(string message)',  d:'메시지 실패' },
+    { s:'── 편의 메서드' },
+    { t:'byte[]',  n:'DataOr(byte[] fallback)',         d:'실패 시 fallback 반환 (예외 없음)' },
+    { t:'void',    n:'ThrowIfError()',                   d:'실패 시 예외 re-throw (스택 보존)' },
+    { t:'NetResult&lt;T&gt;', n:'Map&lt;T&gt;(Func&lt;byte[],T&gt; mapper)', d:'성공 값 타입 변환' },
+  ], '', 400),
+
+  'NetResultT': ctbl('record struct', 'NetResult&lt;T&gt;', '파싱된 값 포함 통신 결과 (readonly record struct)', [
+    { t:'bool',       n:'IsOk { get; init; }',    d:'' },
+    { t:'bool',       n:'IsError { get; }',         d:'' },
+    { t:'T?',         n:'Value { get; init; }',     d:'성공 시 파싱된 값' },
+    { t:'Exception?', n:'Error { get; init; }',     d:'' },
+    { t:'NetResult&lt;T&gt;', mo:'static', n:'Ok(T value)',           d:'' },
+    { t:'NetResult&lt;T&gt;', mo:'static', n:'Fail(Exception error)', d:'' },
+    { t:'T',    n:'ValueOr(T fallback)',             d:'실패 시 fallback' },
+    { t:'void', n:'ThrowIfError()',                  d:'' },
+  ], '', 400),
+
+  /* ══ Col 2 · Config ══════════════════════════════════════════════════ */
+  'NetDeviceConfig': ctbl('abstract', 'NetDeviceConfig', '장비 설정 추상 베이스 v5.1 (4 인터페이스 → 단일 클래스)', [
+    { s:'── §1 장비 식별' },
+    { t:'int',    n:'DeviceId { get; }',   d:'장비 고유 ID' },
+    { t:'string', n:'DeviceName { get; }', d:'장비 이름 (로그 Source)' },
+    { t:'NetTransportType', mo:'abstract', n:'TransportType { get; }', d:'[override 필수]' },
+    { s:'── §2 재시도' },
+    { t:'bool',        n:'IsRetryEnabled { get; set; }',  d:'재시도 활성화 (기본 true)' },
+    { t:'RetryTarget', n:'RetryTarget { get; set; }',     d:'재시도 대상 (기본 ConnectAndWrite)' },
+    { t:'int',         n:'MaxRetries { get; set; }',      d:'최대 횟수 (0=무제한, 기본 3)' },
+    { t:'TimeSpan',    n:'RetryDelay { get; set; }',      d:'재시도 지연 (기본 200ms)' },
+    { t:'bool',        n:'ReconnectBackoff { get; set; }',d:'지수 백오프 (기본 true)' },
+    { s:'── §3 SequenceMode (v5.1)' },
+    { t:'int', n:'SequenceMode { get; set; }', d:'0=Parallel / 1=Sequential / N=Window(N≥2)' },
+    { s:'── §4 ReadCommands' },
+    { t:'IRL&lt;byte[]&gt;', n:'ReadCommands { get; }',        d:'주기 Read 커맨드 목록' },
+    { t:'void', n:'AddReadCommand(byte[] command)',              d:'' },
+    { t:'void', n:'ClearReadCommands()',                         d:'' },
+    { s:'── §5 채널 동작' },
+    { t:'TimeSpan', n:'PeriodicInterval { get; set; }',   d:'Read 투입 간격 (기본 100ms)' },
+    { t:'TimeSpan', n:'RequestTimeout { get; set; }',     d:'요청 타임아웃 (기본 3s)' },
+    { t:'TimeSpan', n:'HeartbeatInterval { get; set; }',  d:'Heartbeat 간격 (Zero=비활성)' },
+    { t:'bool',     n:'IsHeartbeatAcknowledged { get; set; }', d:'Heartbeat ACK 수신 여부' },
+  ], '', 430),
+
+  'TcpDeviceConfig': ctbl('class', 'TcpDeviceConfig', 'TCP 장비 설정 (SequenceMode=Parallel)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType',     d:'→ Tcp' },
+    { t:'string',   n:'Host { get; set; }',           d:'IP 주소' },
+    { t:'int',      n:'Port { get; set; }',            d:'포트 번호' },
+    { t:'TimeSpan', n:'ConnectTimeout { get; set; }',  d:'연결 타임아웃 (기본 5s)' },
+  ], 'NetDeviceConfig', 320),
+
+  'SerialDeviceConfig': ctbl('class', 'SerialDeviceConfig', 'Serial 장비 설정 (SequenceMode=Sequential)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType', d:'→ Serial' },
+    { t:'string', n:'PortName { get; set; }', d:'COM 포트 이름 (예: "COM3")' },
+    { t:'int',    n:'BaudRate { get; set; }', d:'통신 속도' },
+    { t:'Parity', n:'Parity { get; set; }',   d:'패리티 (기본 None)' },
+  ], 'NetDeviceConfig', 320),
+
+  'UdpDeviceConfig': ctbl('class', 'UdpDeviceConfig', 'UDP 장비 설정 (SequenceMode=Parallel)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType',   d:'→ Udp' },
+    { t:'string', n:'RemoteHost { get; set; }', d:'원격 IP / 브로드캐스트' },
+    { t:'int',    n:'RemotePort { get; set; }', d:'원격 포트' },
+    { t:'int',    n:'LocalPort { get; set; }',  d:'로컬 수신 포트 (0=자동)' },
+  ], 'NetDeviceConfig', 320),
+
+  'SharedMemDeviceConfig': ctbl('class', 'SharedMemDeviceConfig', '공유 메모리 IPC 설정 (Parallel)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType',  d:'→ SharedMemory' },
+    { t:'string',           n:'MapName { get; set; }',          d:'공유 메모리 맵 이름' },
+    { t:'SharedMemoryRole', n:'Role { get; set; }',             d:'Writer / Reader' },
+    { t:'long',             n:'MapSize { get; set; }',          d:'크기 bytes (기본 64KB)' },
+  ], 'NetDeviceConfig', 320),
+
+  'NamedPipeDeviceConfig': ctbl('class', 'NamedPipeDeviceConfig', 'Named Pipe IPC 설정 (Sequential)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType',    d:'→ NamedPipe' },
+    { t:'string', n:'ServerName { get; set; }', d:'"." = 로컬 PC' },
+    { t:'string', n:'PipeName { get; set; }',   d:'파이프 이름' },
+  ], 'NetDeviceConfig', 320),
+
+  'HttpDeviceConfig': ctbl('class', 'HttpDeviceConfig', 'HTTP REST API 설정 (Parallel)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType',      d:'→ Http' },
+    { t:'string', n:'BaseUrl { get; set; }',        d:'기본 URL' },
+    { t:'string', n:'WriteEndpoint { get; set; }',  d:'쓰기 엔드포인트 (POST)' },
+    { t:'string', n:'ReadEndpoint { get; set; }',   d:'읽기 엔드포인트 (GET)' },
+    { t:'string', n:'ContentType { get; set; }',    d:'' },
+  ], 'NetDeviceConfig', 320),
+
+  'WebSocketDeviceConfig': ctbl('class', 'WebSocketDeviceConfig', 'WebSocket 설정 (Parallel)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType', d:'→ WebSocket' },
+    { t:'string',   n:'Url { get; set; }',            d:'WebSocket URL (ws://)' },
+    { t:'string?',  n:'SubProtocol { get; set; }',    d:'서브 프로토콜' },
+    { t:'TimeSpan', n:'ConnectTimeout { get; set; }', d:'기본 5s' },
+  ], 'NetDeviceConfig', 320),
+
+  'MqttDeviceConfig': ctbl('class', 'MqttDeviceConfig', 'MQTT 3.1.1 설정 (Parallel, BCL TCP)', [
+    { t:'NetTransportType', mo:'override', n:'TransportType',     d:'→ Mqtt' },
+    { t:'string',  n:'BrokerHost { get; set; }',     d:'브로커 호스트' },
+    { t:'int',     n:'BrokerPort { get; set; }',     d:'포트 (기본 1883)' },
+    { t:'string?', n:'SubscribeTopic { get; set; }', d:'구독 토픽' },
+    { t:'string',  n:'PublishTopic { get; set; }',   d:'발행 토픽' },
+  ], 'NetDeviceConfig', 320),
+
+  'VirtualDeviceConfig': ctbl('class', 'VirtualDeviceConfig', '가상 Transport 설정 (Parallel, 테스트)', [
+    { t:'NetTransportType',    mo:'override', n:'TransportType', d:'→ Virtual' },
+    { t:'VirtualTransportHub', n:'Hub { get; }',     d:'인메모리 허브 참조' },
+    { t:'bool',                n:'IsServer { get; }',d:'서버/클라이언트 역할' },
+  ], 'NetDeviceConfig', 320),
+
+  /* ══ Col 3 · Contracts + Protocol + Transport Base ═══════════════════ */
+  'INetTransport': ctbl('interface', 'INetTransport', '전송 계층 인터페이스 (IAsyncDisposable)', [
+    { t:'NetState', n:'State { get; }',           d:'현재 연결 상태' },
+    { s:'── Events (BG Thread)' },
+    { t:'Action&lt;NetState&gt;?', mo:'event', n:'StateChanged', d:'상태 변경 시' },
+    { t:'Action&lt;byte[]&gt;?',   mo:'event', n:'DataReceived', d:'원시 데이터 수신 (Passive)' },
+    { s:'── Methods' },
+    { t:'Task',              n:'ConnectAsync(ct)',          d:'' },
+    { t:'Task',              n:'DisconnectAsync(ct)',       d:'끊긴 상태여도 예외 없음' },
+    { t:'Task',              n:'WriteAsync(byte[] data, ct)',d:'인코딩 완료 바이트 전송' },
+    { t:'Task&lt;byte[]&gt;',n:'ReadAsync(int length, ct)', d:'고정 길이 수신' },
+    { t:'Task&lt;byte[]&gt;',n:'ReadAsync(CancellationToken ct)', d:'프레임 1개 수신' },
+  ], '', 420),
+
+  'INetProtocol': ctbl('interface', 'INetProtocol', '프로토콜 계층 인터페이스', [
+    { t:'byte[]',  n:'Encode(byte[] payload)',                              d:'페이로드 → 전송 프레임 (헤더·CRC)' },
+    { t:'bool',    n:'TryDecode(byte[] raw, out byte[] payload)',           d:'원시 바이트 → 페이로드 (CRC 검증)' },
+    { t:'bool',    n:'IsFrameComplete(ReadOnlySpan&lt;byte&gt; buf, out int len)', d:'스트림 프레임 경계 탐색' },
+    { t:'byte[]?', n:'BuildHeartbeat()',                                    d:'Heartbeat 프레임 (null=건너뜀)' },
+  ], '', 420),
+
+  'BinaryProtocol': ctbl('class', 'BinaryProtocol', 'STX/FC/LEN/DATA/CRC-32 표준 바이너리 프레임', [
+    { s:'── 프레임: [STX:1B][FC:1B][LEN:2B BE][DATA:NB][CRC32:4B LE]' },
+    { t:'byte[]',  mo:'override', n:'Encode(byte[] payload)',                    d:'' },
+    { t:'bool',    mo:'override', n:'TryDecode(byte[] raw, out byte[] payload)', d:'CRC-32 검증 포함' },
+    { t:'bool',    mo:'override', n:'IsFrameComplete(ReadOnlySpan&lt;byte&gt;, out int)', d:'' },
+    { t:'byte[]?', mo:'override', n:'BuildHeartbeat()',                          d:'빈 페이로드 프레임 반환' },
+  ], 'INetProtocol', 400),
+
+  'RawProtocol': ctbl('class', 'RawProtocol', 'pass-through · 인코딩·CRC 없음 (UDP/Modbus RTU)', [
+    { t:'byte[]',  mo:'override', n:'Encode(byte[] payload)', d:'payload 그대로 반환' },
+    { t:'bool',    mo:'override', n:'TryDecode(...)',          d:'비어있지 않으면 항상 true' },
+    { t:'bool',    mo:'override', n:'IsFrameComplete(...)',    d:'데이터 있으면 항상 complete' },
+    { t:'byte[]?', mo:'override', n:'BuildHeartbeat()',        d:'null 반환 (비활성)' },
+  ], 'INetProtocol', 380),
+
+  'NetTransportBase': ctbl('abstract', 'NetTransportBase', 'INetTransport 공통 구현 추상 베이스 (상속 권장)', [
+    { t:'string',   n:'LogSource { get; set; }',                   d:'로그 Source 식별자 (DeviceName 자동)' },
+    { t:'NetState', n:'State { get; protected set; }',             d:'StateChanged 이벤트 자동 발생' },
+    { s:'── 추상 메서드 [override 필수]' },
+    { t:'Task',              mo:'abstract', n:'ConnectCoreAsync(ct)',    d:'소켓/포트 연결' },
+    { t:'Task',              mo:'abstract', n:'DisconnectCoreAsync(ct)', d:'소켓/포트 닫기' },
+    { t:'Task',              mo:'abstract', n:'WriteCoreAsync(data,ct)', d:'바이트 전송' },
+    { t:'Task&lt;byte[]&gt;',mo:'abstract', n:'ReadCoreAsync(length,ct)',d:'고정 길이 수신' },
+    { s:'── 선택 오버라이드' },
+    { t:'Task&lt;byte[]&gt;',mo:'virtual',  n:'ReadFrameCoreAsync(ct)',  d:'프레임 단위 (기본 4096B)' },
+    { t:'void',              mo:'virtual',  n:'DisposeCore()',            d:'관리 리소스 해제' },
+    { s:'── 파생 클래스 헬퍼' },
+    { t:'void', n:'RaiseDataReceived(byte[] data)', d:'Passive 수신 → DataReceived 이벤트' },
+  ], 'INetTransport', 440),
+
+  /* ══ Col 4 · Transport Implementations ══════════════════════════════ */
+  'TcpTransport': ctbl('class', 'TcpTransport', 'TCP 클라이언트 전송 계층 (sealed)', [
+    { t:'TcpTransport', mo:'static', n:'FromConfig(TcpDeviceConfig cfg, bool enablePassiveReceive=false)', d:'권장 팩토리' },
+    { t:'', n:'enablePassiveReceive: true → PassiveReceiveLoopAsync 활성화', d:'' },
+  ], 'NetTransportBase', 360),
+
+  'SerialTransport': ctbl('class', 'SerialTransport', 'COM 포트 직렬 전송 계층 (sealed)', [
+    { t:'SerialTransport', mo:'static', n:'FromConfig(SerialDeviceConfig cfg)', d:'DataBits/Parity/Timeout 자동 적용' },
+    { t:'', n:'SerialPort.DataReceived → RaiseDataReceived (Passive)', d:'' },
+  ], 'NetTransportBase', 340),
+
+  'UdpTransport': ctbl('class', 'UdpTransport', 'UDP 전송 계층 (sealed)', [
+    { t:'UdpTransport', mo:'static', n:'FromConfig(UdpDeviceConfig cfg, bool enablePassiveReceive=false)', d:'' },
+  ], 'NetTransportBase', 340),
+
+  'SharedMemoryTransport': ctbl('class', 'SharedMemoryTransport', '공유 메모리 IPC 전송 계층 (sealed)', [
+    { t:'SharedMemoryTransport', mo:'static', n:'FromConfig(SharedMemDeviceConfig cfg)', d:'[Flag:4B][Length:4B][Data:NB]' },
+    { t:'', n:'Reader: 5ms 폴링 → Flag=1 감지 → RaiseDataReceived', d:'' },
+  ], 'NetTransportBase', 340),
+
+  'NamedPipeTransport': ctbl('class', 'NamedPipeTransport', 'Named Pipe 클라이언트 전송 계층 (sealed)', [
+    { t:'NamedPipeTransport', mo:'static', n:'FromConfig(NamedPipeDeviceConfig cfg, bool enablePassiveReceive=false)', d:'' },
+  ], 'NetTransportBase', 360),
+
+  'HttpTransport': ctbl('class', 'HttpTransport', 'HTTP REST API 전송 계층 (sealed)', [
+    { t:'HttpTransport', mo:'static', n:'FromConfig(HttpDeviceConfig cfg)', d:'static shared HttpClient 사용' },
+  ], 'NetTransportBase', 320),
+
+  'WebSocketTransport': ctbl('class', 'WebSocketTransport', 'WebSocket 전송 계층 (sealed)', [
+    { t:'WebSocketTransport', mo:'static', n:'FromConfig(WebSocketDeviceConfig cfg, bool enablePassiveReceive=false)', d:'' },
+  ], 'NetTransportBase', 360),
+
+  'MqttTransport': ctbl('class', 'MqttTransport', 'MQTT 3.1.1 전송 계층 (sealed, BCL TCP 직접 구현)', [
+    { t:'MqttTransport', mo:'static', n:'FromConfig(MqttDeviceConfig cfg)', d:'CONNECT/SUBSCRIBE/PUBLISH 직접 구현' },
+  ], 'NetTransportBase', 340),
+
+  'VirtualTransport': ctbl('class', 'VirtualTransport', '인메모리 가상 전송 계층 (sealed)', [
+    { t:'VirtualTransport', mo:'static', n:'FromConfig(VirtualDeviceConfig cfg, bool enablePassiveReceive=false)', d:'' },
+    { t:'Task', n:'InjectAsync(byte[] data, ct)', d:'시뮬레이터 — 반대편 채널에 직접 주입' },
+  ], 'NetTransportBase', 360),
+
+  'VirtualTransportHub': ctbl('class', 'VirtualTransportHub', '두 VirtualTransport 연결 인메모리 허브', [
+    { t:'string', n:'Name { get; }', d:'허브 이름' },
+    { t:'VirtualTransportHub', mo:'static', n:'Create(string name)', d:'팩토리' },
+    { s:'── 내부 Channel<byte[]>' },
+    { t:'Channel&lt;byte[]&gt;', n:'ServerToClient', d:'서버→클라이언트 방향' },
+    { t:'Channel&lt;byte[]&gt;', n:'ClientToServer', d:'클라이언트→서버 방향' },
+  ], '', 340),
+
+  /* ══ Col 5 · Channels + Infrastructure ══════════════════════════════ */
+  'NetChannelBase': ctbl('abstract', 'NetChannelBase', '통신 채널 추상 오케스트레이터 v5.1 (IAsyncDisposable)', [
+    { s:'── 프로퍼티' },
+    { t:'NetMode',   mo:'abstract', n:'Mode { get; }',        d:'[override 필수] 통신 형태' },
+    { t:'int',       n:'DeviceId { get; }',                    d:'장비 고유 ID' },
+    { t:'string',    n:'DeviceName { get; }',                  d:'장비 이름' },
+    { t:'NetState',  n:'State { get; }',                       d:'현재 연결 상태' },
+    { t:'bool',      n:'IsConnected { get; }',                 d:'모든 통신 동작의 진입 조건' },
+    { t:'NetStatistics', n:'Statistics { get; }',              d:'WPF 바인딩 / 대시보드 활용' },
+    { s:'── 이벤트 (BG Thread — WPF: Dispatcher 필수)' },
+    { t:'Action&lt;int,byte[]&gt;?',    mo:'event', n:'DeviceFrameReceived', d:'프레임 수신·디코딩 완료' },
+    { t:'Action&lt;int,NetState&gt;?',  mo:'event', n:'DeviceStateChanged',  d:'연결 상태 변경' },
+    { t:'Action&lt;int,Exception&gt;?', mo:'event', n:'DeviceErrorOccurred', d:'오류·재접속 진행 통보' },
+    { s:'── 메서드' },
+    { t:'Task', mo:'virtual', n:'StartAsync(CancellationToken ct)', d:'연결→파이프라인→스케줄러 구동' },
+    { t:'Task', mo:'virtual', n:'StopAsync()',                       d:'큐 소진 후 안전 종료' },
+    { t:'Task', n:'WriteAsync(byte[] data, NetPriority priority, bool expectResponse, ct)', d:'Fire-and-forget' },
+    { t:'Task&lt;NetResult&gt;', n:'RequestAsync(byte[] requestData, TimeSpan? timeout, ct)', d:'요청-응답 (TCS)' },
+    { t:'IAsyncEnumerable&lt;byte[]&gt;', n:'ReadAllAsync(CancellationToken ct)', d:'Passive 수신 비동기 열거' },
+    { s:'── 내부 구성 (생성자 주입)' },
+    { t:'NetConnectionManager', n:'_connMgr',   d:'연결·재접속·상태 머신' },
+    { t:'NetDispatchPipeline',  n:'_pipeline',  d:'Channel[4] 우선순위 파이프라인' },
+    { t:'NetScheduler',         n:'_scheduler', d:'주기 Read + Heartbeat (Pause/Resume)' },
+    { t:'NetStatistics',        n:'_stats',     d:'통신 통계 수집' },
+  ], '', 480),
+
+  'PassiveNetChannel': ctbl('class', 'PassiveNetChannel', '수동 수신 채널 (장비가 먼저 Push)', [
+    { t:'NetMode', mo:'override', n:'Mode { get; }',  d:'→ NetMode.Passive' },
+    { t:'', n:'PassiveNetChannel(cfg, transport, protocol, autoRegister)',  d:'TCP: enablePassiveReceive=true 필수' },
+  ], 'NetChannelBase', 420),
+
+  'RequestResponseChannel': ctbl('class', 'RequestResponseChannel', '요청-응답 채널 (ReadCommands 주기 전송)', [
+    { t:'NetMode', mo:'override', n:'Mode { get; }', d:'→ NetMode.RequestResponse' },
+    { t:'', n:'RequestResponseChannel(cfg, transport, protocol, autoRegister)', d:'WriteAsync·RequestAsync 가능' },
+  ], 'NetChannelBase', 420),
+
+  'NetConnectionManager': ctbl('class', 'NetConnectionManager', '연결·재접속·상태 머신 전담 (internal sealed, IAsyncDisposable)', [
+    { t:'NetState', n:'State { get; }',          d:'Transport.State 위임' },
+    { t:'bool',     n:'IsConnected { get; }',     d:'State == Connected' },
+    { t:'bool',     n:'IsReconnecting { get; }',  d:'재접속 진행 중 여부' },
+    { s:'── Events' },
+    { t:'Action?',              mo:'event', n:'Reconnected',        d:'재접속 성공 → Scheduler.Resume() 트리거' },
+    { t:'Action&lt;int,Ex&gt;?',mo:'event', n:'ErrorOccurred',      d:'오류 발생 시' },
+    { t:'Action&lt;int,s,d&gt;?',mo:'event', n:'ReconnectProgress', d:'(시도번호, max, 대기초) 진행 통보' },
+    { s:'── Methods' },
+    { t:'Task', n:'ConnectAsync(ct)',                                d:'초기 접속 (지수 백오프)' },
+    { t:'Task', n:'HandleErrorAsync(ex, retryPayload, onReconnected, ct)', d:'오류→재접속 (SemaphoreSlim 중복 방지)' },
+  ], '', 440),
+
+  'NetDispatchPipeline': ctbl('class', 'NetDispatchPipeline', 'Channel[4] 우선순위 파이프라인 (internal sealed, IAsyncDisposable)', [
+    { s:'── Critical(0) > Write(1) > Read(2) > Low(3) 순 TryRead' },
+    { t:'Action&lt;int,byte[]&gt;?', mo:'event', n:'FrameReceived', d:'디코딩 완료 (Passive / PeriodicRead)' },
+    { t:'ValueTask', n:'EnqueueAsync(NetPacket packet, ct)',    d:'우선순위 채널에 패킷 투입' },
+    { t:'IAsyncEnumerable&lt;byte[]&gt;', n:'ReadAllAsync(ct)',d:'수신 채널 비동기 열거' },
+    { t:'void',  n:'PushReceived(byte[] raw)',                  d:'Passive 수신 (Transport.DataReceived 경로)' },
+    { t:'void',  n:'Start(ct)',                                  d:'소비자 루프 시작 (50ms WhenAny 대기)' },
+    { t:'Task',  n:'StopAsync()',                                d:'채널 닫기 + 루프 종료 대기' },
+  ], '', 440),
+
+  'NetScheduler': ctbl('class', 'NetScheduler', '주기 Read + Heartbeat 루프 전담 (internal sealed)', [
+    { t:'void', n:'Start(ct)',   d:'PeriodicRead + Heartbeat 루프 병렬 시작' },
+    { t:'void', n:'Pause()',     d:'재접속 시 OnStateChanged 에서 자동 호출' },
+    { t:'void', n:'Resume()',    d:'재접속 성공 후 Reconnected 이벤트에서 자동 호출' },
+    { t:'Task', n:'WaitAsync()', d:'루프 종료 대기' },
+    { s:'── SequenceMode 별 동작 (v5.1)' },
+    { t:'0', n:'Parallel:   Task.WhenAll(ReadCommands)',      d:'TCP/UDP/HTTP 기본' },
+    { t:'1', n:'Sequential: foreach 순서대로',                d:'RS-485/Modbus RTU 필수' },
+    { t:'N', n:'Window(N):  SemaphoreSlim(N) 슬라이딩',      d:'멀티드롭 최적화' },
+  ], '', 420),
+
+  'NetStatistics': ctbl('class', 'NetStatistics', '장비별 통신 통계 (sealed, Interlocked 스레드 안전)', [
+    { t:'long',   n:'TotalSent { get; }',         d:'전송 성공 횟수' },
+    { t:'long',   n:'TotalReceived { get; }',      d:'수신 프레임 횟수' },
+    { t:'long',   n:'TotalErrors { get; }',        d:'총 오류 횟수' },
+    { t:'long',   n:'TotalReconnects { get; }',    d:'재접속 성공 횟수' },
+    { t:'long',   n:'TotalWriteRetries { get; }',  d:'Write 재전송 횟수' },
+    { t:'double', n:'AvgResponseMs { get; }',      d:'평균 응답 시간 (RequestAsync 기준)' },
+    { t:'long',   n:'MaxResponseMs { get; }',      d:'최대 응답 시간' },
+    { t:'string', n:'LastError { get; }',           d:'마지막 오류 메시지' },
+    { t:'void',   n:'Reset()',                      d:'카운터 초기화' },
+    { t:'NetStatisticsSnapshot', n:'Snapshot()',   d:'불변 스냅샷 (WPF DataGrid용)' },
+  ], '', 420),
+
+  'NetStatisticsSnapshot': ctbl('record struct', 'NetStatisticsSnapshot', '통계 불변 스냅샷 (sealed record, DataGrid 바인딩용)', [
+    { t:'long',     n:'TotalSent { get; }',      d:'' },
+    { t:'long',     n:'TotalReceived { get; }',   d:'' },
+    { t:'long',     n:'TotalErrors { get; }',     d:'' },
+    { t:'double',   n:'AvgResponseMs { get; }',   d:'' },
+    { t:'long',     n:'MaxResponseMs { get; }',   d:'' },
+    { t:'string',   n:'LastError { get; }',        d:'' },
+    { t:'DateTime', n:'StartedAt { get; }',        d:'통계 수집 시작 시각' },
+    { t:'TimeSpan', n:'Elapsed { get; }',          d:'경과 시간' },
+  ], '', 380),
+
+  'NetDeviceRegistry': ctbl('class', 'NetDeviceRegistry', 'Lazy&lt;T&gt; 싱글톤 · 전체 장비 채널 관리 (sealed)', [
+    { t:'NetDeviceRegistry', mo:'static', n:'Instance { get; }', d:'Lazy<T> thread-safe 싱글톤' },
+    { s:'── 등록 / 해제' },
+    { t:'void', n:'Register(NetChannelBase channel)',    d:'DeviceId 중복 시 예외' },
+    { t:'bool', n:'Unregister(int deviceId)',             d:'' },
+    { t:'void', n:'Clear()',                              d:'StopAllAsync 후 권장' },
+    { s:'── 조회' },
+    { t:'NetChannelBase?',    n:'Get(int deviceId)',      d:'' },
+    { t:'NetChannelBase?',    n:'GetByName(string name)', d:'대소문자 무시' },
+    { t:'IEnumerable&lt;NCB&gt;', n:'GetAll()',           d:'전체 열거' },
+    { t:'IEnumerable&lt;NCB&gt;', n:'GetConnected()',     d:'연결된 채널만' },
+    { t:'int', n:'Count { get; }',           d:'등록 장비 수' },
+    { t:'int', n:'ConnectedCount { get; }',  d:'연결된 장비 수' },
+    { s:'── 일괄 제어' },
+    { t:'Task', n:'StartAllAsync(ct)',                   d:'전체 동시 시작' },
+    { t:'Task', n:'StopAllAsync()',                      d:'전체 Dispose' },
+    { t:'Task', n:'BroadcastAsync(data, priority, ct)',  d:'연결된 전체에 동시 전송 (비상 정지)' },
+    { s:'── 진단' },
+    { t:'IEnumerable&lt;NetDeviceStatus&gt;', n:'GetStatusAll()', d:'WPF DataGrid 바인딩용' },
+  ], '', 450),
+
+  'NetDeviceStatus': ctbl('record struct', 'NetDeviceStatus', '장비 상태 요약 스냅샷 (sealed record)', [
+    { t:'int',    n:'DeviceId { get; }',      d:'' },
+    { t:'string', n:'DeviceName { get; }',    d:'' },
+    { t:'NetState',n:'State { get; }',        d:'' },
+    { t:'bool',   n:'IsConnected { get; }',   d:'' },
+    { t:'long',   n:'TotalSent { get; }',     d:'' },
+    { t:'long',   n:'TotalReceived { get; }', d:'' },
+    { t:'double', n:'AvgResponseMs { get; }', d:'' },
+    { t:'string', n:'LastError { get; }',      d:'' },
+  ], '', 360),
+};
+
+const COL = {
+  0: ['NetMode','NetState','NetPriority','RetryTarget','NetTransportType','SharedMemoryRole'],
+  1: ['NetResult','NetResultT'],
+  2: ['NetDeviceConfig','TcpDeviceConfig','SerialDeviceConfig','UdpDeviceConfig','SharedMemDeviceConfig','NamedPipeDeviceConfig','HttpDeviceConfig','WebSocketDeviceConfig','MqttDeviceConfig','VirtualDeviceConfig'],
+  3: ['INetTransport','INetProtocol','BinaryProtocol','RawProtocol','NetTransportBase'],
+  4: ['TcpTransport','SerialTransport','UdpTransport','SharedMemoryTransport','NamedPipeTransport','HttpTransport','WebSocketTransport','MqttTransport','VirtualTransport','VirtualTransportHub'],
+  5: ['NetChannelBase','PassiveNetChannel','RequestResponseChannel','NetConnectionManager','NetDispatchPipeline','NetScheduler','NetStatistics','NetStatisticsSnapshot','NetDeviceRegistry','NetDeviceStatus'],
+};
+
+const FG = [
+  { lbl:'lssLib.Net  Core Enums',     ns:['NetMode','NetState','NetPriority','RetryTarget','NetTransportType','SharedMemoryRole'], color:'#dc2626' },
+  { lbl:'lssLib.Net  Results',         ns:['NetResult','NetResultT'],                                                              color:'#7c3aed' },
+  { lbl:'lssLib.Net  Config ×9',       ns:['NetDeviceConfig','TcpDeviceConfig','SerialDeviceConfig','UdpDeviceConfig','SharedMemDeviceConfig','NamedPipeDeviceConfig','HttpDeviceConfig','WebSocketDeviceConfig','MqttDeviceConfig','VirtualDeviceConfig'], color:'#059669' },
+  { lbl:'lssLib.Net  Contracts + Protocol + Transport Base', ns:['INetTransport','INetProtocol','BinaryProtocol','RawProtocol','NetTransportBase'], color:'#2563eb' },
+  { lbl:'lssLib.Net  Transport ×9',    ns:['TcpTransport','SerialTransport','UdpTransport','SharedMemoryTransport','NamedPipeTransport','HttpTransport','WebSocketTransport','MqttTransport','VirtualTransport','VirtualTransportHub'], color:'#d97706' },
+  { lbl:'lssLib.Net  Channel + Infrastructure', ns:['NetChannelBase','PassiveNetChannel','RequestResponseChannel','NetConnectionManager','NetDispatchPipeline','NetScheduler','NetStatistics','NetStatisticsSnapshot','NetDeviceRegistry','NetDeviceStatus'], color:'#0f766e' },
+];
+
+const CONN = [
+  // ── Config 상속 (col 2 내부 수직, xoff 팬아웃) ─────────────────────
+  { f:'TcpDeviceConfig',        fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:-100 },
+  { f:'SerialDeviceConfig',     fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:-75  },
+  { f:'UdpDeviceConfig',        fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:-50  },
+  { f:'SharedMemDeviceConfig',  fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:-25  },
+  { f:'NamedPipeDeviceConfig',  fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:0    },
+  { f:'HttpDeviceConfig',       fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:25   },
+  { f:'WebSocketDeviceConfig',  fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:50   },
+  { f:'MqttDeviceConfig',       fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:75   },
+  { f:'VirtualDeviceConfig',    fe:'top', t:'NetDeviceConfig', te:'bottom', ty:'ext', lbl:'extends', xoff:100  },
+
+  // ── Protocol 구현 (col 3 내부) ─────────────────────────────────────
+  { f:'BinaryProtocol',  fe:'top', t:'INetProtocol', te:'bottom', ty:'impl', lbl:'implements', xoff:-24 },
+  { f:'RawProtocol',     fe:'top', t:'INetProtocol', te:'bottom', ty:'impl', lbl:'implements', xoff:24  },
+  { f:'NetTransportBase',fe:'top', t:'INetTransport',te:'bottom', ty:'impl', lbl:'implements', xoff:0   },
+
+  // ── Transport 상속 (col 4 → col 3, fe:left → te:right) ─────────────
+  { f:'TcpTransport',          fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:-90 },
+  { f:'SerialTransport',       fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:-60 },
+  { f:'UdpTransport',          fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:-30 },
+  { f:'SharedMemoryTransport', fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:0   },
+  { f:'NamedPipeTransport',    fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:30  },
+  { f:'HttpTransport',         fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:60  },
+  { f:'WebSocketTransport',    fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:90  },
+  { f:'MqttTransport',         fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:-45 },
+  { f:'VirtualTransport',      fe:'left', t:'NetTransportBase', te:'right', ty:'ext', lbl:'extends', xoff:45  },
+
+  // ── Channel 상속 (col 5 내부) ──────────────────────────────────────
+  { f:'PassiveNetChannel',       fe:'top', t:'NetChannelBase', te:'bottom', ty:'ext', lbl:'extends', xoff:-24 },
+  { f:'RequestResponseChannel',  fe:'top', t:'NetChannelBase', te:'bottom', ty:'ext', lbl:'extends', xoff:24  },
+
+  // ── NetChannelBase → 인터페이스 (col 5 → col 3) ───────────────────
+  { f:'NetChannelBase', fe:'left', t:'INetTransport',  te:'right', ty:'uses', lbl:'uses', xoff:20  },
+  { f:'NetChannelBase', fe:'left', t:'INetProtocol',   te:'right', ty:'uses', lbl:'uses', xoff:-20 },
+
+  // ── NetDeviceRegistry → NetChannelBase (col 5 내부) ──────────────
+  { f:'NetDeviceRegistry', fe:'top', t:'NetChannelBase', te:'bottom', ty:'comp', lbl:'1◆*', xoff:0 },
+
+  // ── NetStatistics → Snapshot (col 5 내부) ─────────────────────────
+  { f:'NetStatistics', fe:'bottom', t:'NetStatisticsSnapshot', te:'top', ty:'bld', lbl:'«creates»' },
+];
+
+const GAP_COL = 120, PAD_ROW = 80, PAD_STACK = 44, START_X = 30, START_Y = 40;
+
+const cv    = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+Object.keys(BOXES).forEach(name => {
+  const div = document.createElement('div');
+  div.className = 'bw'; div.dataset.box = name;
+  div.style.left = '0px'; div.style.top = '0px';
+  div.innerHTML = BOXES[name];
+  cv.insertBefore(div, svgEl);
+});
+
+const gb   = n => { const el = cv.querySelector(`[data-box="${n}"]`); return el ? {el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight} : null; };
+const bot  = n => { const b = gb(n); return b ? b.y + b.h : 0; };
+const setX = (n,x) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.left = x+'px'; };
+const setY = (n,y) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.top  = y+'px'; };
+const ri   = v => Math.round(v);
+
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  const colW = {};
+  Object.entries(COL).forEach(([ci,ns]) => {
+    colW[ci] = Math.max(...ns.map(n => { const b=gb(n); return b?b.w:0; }));
+  });
+  const colX = {};
+  let cx = START_X;
+  Object.keys(COL).sort().forEach(ci => { colX[ci] = cx; cx += colW[ci] + GAP_COL; });
+  Object.entries(COL).forEach(([ci,ns]) => ns.forEach(n => setX(n, colX[ci])));
+
+  requestAnimationFrame(() => {
+    // Step 0: 각 컬럼 첫 번째 박스
+    setY('NetMode',         START_Y); // col 0
+    setY('NetResult',       START_Y); // col 1
+    setY('NetDeviceConfig', START_Y); // col 2
+    setY('INetTransport',   START_Y); // col 3
+    setY('TcpTransport',    START_Y); // col 4
+    setY('NetChannelBase',  START_Y); // col 5
+
+    requestAnimationFrame(() => {
+      // Step 1
+      setY('NetState',          bot('NetMode')         + PAD_STACK);
+      setY('NetResultT',        bot('NetResult')        + PAD_STACK);
+      setY('TcpDeviceConfig',   bot('NetDeviceConfig') + PAD_STACK);
+      setY('INetProtocol',      bot('INetTransport')   + PAD_STACK);
+      setY('SerialTransport',   bot('TcpTransport')    + PAD_STACK);
+      setY('PassiveNetChannel', bot('NetChannelBase')  + PAD_STACK);
+
+      requestAnimationFrame(() => {
+        // Step 2
+        setY('NetPriority',          bot('NetState')          + PAD_STACK);
+        setY('SerialDeviceConfig',   bot('TcpDeviceConfig')   + PAD_STACK);
+        setY('BinaryProtocol',       bot('INetProtocol')      + PAD_STACK);
+        setY('UdpTransport',         bot('SerialTransport')   + PAD_STACK);
+        setY('RequestResponseChannel', bot('PassiveNetChannel') + PAD_STACK);
+
+        requestAnimationFrame(() => {
+          // Step 3
+          setY('RetryTarget',           bot('NetPriority')        + PAD_STACK);
+          setY('UdpDeviceConfig',       bot('SerialDeviceConfig') + PAD_STACK);
+          setY('RawProtocol',           bot('BinaryProtocol')     + PAD_STACK);
+          setY('SharedMemoryTransport', bot('UdpTransport')       + PAD_STACK);
+          setY('NetConnectionManager',  bot('RequestResponseChannel') + PAD_STACK);
+
+          requestAnimationFrame(() => {
+            // Step 4
+            setY('NetTransportType',       bot('RetryTarget')            + PAD_STACK);
+            setY('SharedMemDeviceConfig',  bot('UdpDeviceConfig')        + PAD_STACK);
+            setY('NetTransportBase',       bot('RawProtocol')            + PAD_STACK);
+            setY('NamedPipeTransport',     bot('SharedMemoryTransport')  + PAD_STACK);
+            setY('NetDispatchPipeline',    bot('NetConnectionManager')   + PAD_STACK);
+
+            requestAnimationFrame(() => {
+              // Step 5
+              setY('SharedMemoryRole',      bot('NetTransportType')      + PAD_STACK);
+              setY('NamedPipeDeviceConfig', bot('SharedMemDeviceConfig') + PAD_STACK);
+              setY('HttpTransport',         bot('NamedPipeTransport')    + PAD_STACK);
+              setY('NetScheduler',          bot('NetDispatchPipeline')   + PAD_STACK);
+
+              requestAnimationFrame(() => {
+                // Step 6
+                setY('HttpDeviceConfig',    bot('NamedPipeDeviceConfig') + PAD_STACK);
+                setY('WebSocketTransport',  bot('HttpTransport')         + PAD_STACK);
+                setY('NetStatistics',       bot('NetScheduler')          + PAD_STACK);
+
+                requestAnimationFrame(() => {
+                  // Step 7
+                  setY('WebSocketDeviceConfig', bot('HttpDeviceConfig')   + PAD_STACK);
+                  setY('MqttTransport',          bot('WebSocketTransport') + PAD_STACK);
+                  setY('NetStatisticsSnapshot',  bot('NetStatistics')      + PAD_STACK);
+
+                  requestAnimationFrame(() => {
+                    // Step 8
+                    setY('MqttDeviceConfig', bot('WebSocketDeviceConfig') + PAD_STACK);
+                    setY('VirtualTransport', bot('MqttTransport')         + PAD_STACK);
+                    setY('NetDeviceRegistry',bot('NetStatisticsSnapshot') + PAD_STACK);
+
+                    requestAnimationFrame(() => {
+                      // Step 9
+                      setY('VirtualDeviceConfig', bot('MqttDeviceConfig')  + PAD_STACK);
+                      setY('VirtualTransportHub', bot('VirtualTransport')  + PAD_STACK);
+                      setY('NetDeviceStatus',     bot('NetDeviceRegistry') + PAD_STACK);
+
+                      requestAnimationFrame(() => drawAll());
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}));
+
+function drawAll() {
+  const pos = {};
+  cv.querySelectorAll('.bw').forEach(el => {
+    pos[el.dataset.box] = {x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW = Math.max(...Object.values(pos).map(p=>p.x+p.w)) + 80;
+  const maxH = Math.max(...Object.values(pos).map(p=>p.y+p.h)) + 100;
+  cv.style.minWidth = maxW+'px'; cv.style.minHeight = maxH+'px';
+  svgEl.setAttribute('width', maxW); svgEl.setAttribute('height', maxH);
+  const ph = document.getElementById('cv-phantom');
+  ph.style.width  = Math.ceil(maxW*zl)+'px';
+  ph.style.height = Math.ceil(maxH*zl)+'px';
+
+  svgEl.innerHTML = `<defs>
+    <marker id="me" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#e040fb" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#4f8ef7" stroke-width="2" stroke-linejoin="round"/></marker>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="mds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 6 L9 1 L18 6 L9 11 Z" fill="#555" stroke="white" stroke-width="0.5"/></marker>
+    <marker id="mda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>`;
+
+  FG.forEach(fg => {
+    const bs = fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length) return;
+    const pd=14, x1=Math.min(...bs.map(b=>b.x))-pd, y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,    y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect'); sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect'); sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text'); sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl; svgEl.appendChild(tx);
+  });
+
+  function ep(b,e){
+    if(e==='top')    return [b.x+b.w/2, b.y];
+    if(e==='bottom') return [b.x+b.w/2, b.y+b.h];
+    if(e==='left')   return [b.x,        b.y+b.h/2];
+    if(e==='right')  return [b.x+b.w,    b.y+b.h/2];
+    return [b.x+b.w/2, b.y];
+  }
+
+  const SY = {
+    ext:  {stroke:'#e040fb','stroke-width':2,  'marker-end':'url(#me)'},
+    impl: {stroke:'#4f8ef7','stroke-width':1.5,'stroke-dasharray':'5,3','marker-end':'url(#mi)'},
+    uses: {stroke:'#888',   'stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    bld:  {stroke:'#e65100','stroke-width':1.5,'stroke-dasharray':'5,2','marker-end':'url(#mb)'},
+    comp: {stroke:'#555',   'stroke-width':1.5,'stroke-dasharray':'4,2','marker-start':'url(#mds)','marker-end':'url(#mda)'},
+  };
+
+  CONN.forEach(c => {
+    const fb=pos[c.f], tb=pos[c.t]; if(!fb||!tb) return;
+    const [sx,sy] = ep(fb,c.fe).map(ri);
+    const [tx2,ty2] = ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')    ey+=ML; else if(c.te==='bottom') ey-=ML;
+    else if(c.te==='left') ex+=ML; else if(c.te==='right') ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom') c1y+=cp; else if(c.fe==='top')   c1y-=cp;
+    else if(c.fe==='right') c1x+=cp; else if(c.fe==='left')  c1x-=cp;
+    if(c.te==='top')    c2y-=cp; else if(c.te==='bottom') c2y+=cp;
+    else if(c.te==='left') c2x-=cp; else if(c.te==='right') c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path'); sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});
+    svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5, it=1-t;
+      const mx=ri(it*it*it*sx + 3*it*it*t*c1x + 3*it*t*t*c2x + t*t*t*ex);
+      const my=ri(it*it*it*sy + 3*it*it*t*c1y + 3*it*t*t*c2y + t*t*t*ey);
+      const lblCol = {ext:'#c000d8',impl:'#1a5cb8',uses:'#555',bld:'#c84000',comp:'#333'}[c.ty]||'#444';
+      const FSIZE=11, PAD_X=7, PAD_Y=3;
+      const approxW = c.lbl.length * FSIZE * 0.62 + PAD_X*2;
+      const approxH = FSIZE + PAD_Y*2;
+      const bg=mk('rect'); sa(bg,{x:mx-approxW/2,y:my-approxH/2,width:approxW,height:approxH,rx:4,fill:'white',stroke:lblCol,'stroke-width':1.2,opacity:0.97});
+      svgEl.appendChild(bg);
+      const tl=mk('text'); sa(tl,{x:mx,y:my,'font-size':FSIZE,fill:lblCol,'font-family':'monospace','font-weight':'700','text-anchor':'middle','dominant-baseline':'central'});
+      tl.textContent=c.lbl; svgEl.appendChild(tl);
+    }
+  });
+}
+
+function mk(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function sa(el,a){ Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v)); }
+</script>
+</body>
+</html>
