@@ -360,7 +360,7 @@ static class DemoEx05_BatchRun
         // continueOnError=false → 공정C 실패 시 공정D 실행 안 됨
         SequenceBatchResult batch = await controller.RunAllAsync(
             [seqA, seqB, seqC, seqD], context,
-            continueOnError: true, ct: ct);
+            continueOnError: false, ct: ct);
 
         Console.WriteLine($"\n  배치 결과: {batch}");
         Console.WriteLine($"  실행된 시퀀스: {batch.Results.Count}/{4}");
