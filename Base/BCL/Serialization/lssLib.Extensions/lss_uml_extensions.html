@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Extensions — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:3400px;min-height:2400px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:200px;line-height:1.5;}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+<h1>lssLib.Extensions — UML 클래스 다이어그램</h1>
+<p class="sub">확장 메서드 전용 · Scale / Text / CRC / JSON/XML/CSV 직렬화 · BCL + System.Text.Json · .NET 8.0</p>
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <button onclick="sz(0.36)">36%</button>
+  <span id="zlb">100%</span>
+</div>
+<div id="lg">
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>static class (확장 메서드)</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>record / record struct</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e65100" stroke-width="1.8" stroke-dasharray="5,2" marker-end="url(#lgb)"/></svg>«creates»
+  </div>
+</div>
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="3400" height="2400"></svg>
+  </div>
+</div>
+<script>
+'use strict';
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.2, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth) || 3400;
+  const nh = parseFloat(cv.style.minHeight) || 2400;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+const H = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function ctbl(kind, name, desc, members, ext, tw) {
+  tw = tw||400; ext = ext||'';
+  const bm={interface:'bi',abstract:'ba',class:'bc',enum:'be','record struct':'br',record:'br'};
+  const lm={interface:'«interface»',abstract:'«abstract»',class:'«class»',enum:'«enum»','record struct':'«record»',record:'«record»'};
+  const tc={interface:'ut-interface',abstract:'ut-abstract',class:'ut-class',enum:'ut-enum','record struct':'ut-record',record:'ut-record'};
+  const hc={interface:'uh-interface',abstract:'uh-abstract',class:'uh-class',enum:'uh-enum','record struct':'uh-record',record:'uh-record'};
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1=68, w2=175, w3=tw-w1-w2-4;
+  let rows='';
+  members.forEach(m=>{
+    if(m.s){rows+=`<tr class="sep"><td colspan="3">${m.s}</td></tr>`;return;}
+    const ab=m.mo==='abstract', ev=m.mo==='event';
+    const mo=(m.mo&&!ev)?`<span class="mm">${m.mo}</span>`:'';
+    rows+=`<tr><td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td></tr>`;
+  });
+  return `<table class="ut ${tc[kind]||''}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>${rows}</table>`;
+}
+
+const BOXES = {
+
+/* ── Col 0 · ScaleMode · ScaleResult ────────────────────────── */
+'ScaleMode': ctbl('enum','ScaleMode','범위 초과 처리 방식 · MapDetail 에서 사용',[
+  {t:'0',n:'Extend',d:'외삽 (기본) — 범위 밖도 수식 그대로 계산'},
+  {t:'1',n:'Clamp', d:'클램프 — 출력 범위로 제한'},
+  {t:'2',n:'Wrap',  d:'순환 — 입력 범위 내에서 반복'},
+],'',340),
+
+'ScaleResult': ctbl('record','ScaleResult','MapDetail 변환 결과 record',[
+  {t:'double',n:'Input { get; }',  d:'원본 입력값'},
+  {t:'double',n:'Output { get; }', d:'변환된 출력값'},
+  {t:'bool',  n:'Clamped { get; }',d:'클램프 적용 여부'},
+  {t:'bool',  n:'Wrapped { get; }',d:'순환 적용 여부'},
+  {t:'string',n:'Message { get; }',d:'상태 메시지'},
+  {t:'bool',  n:'IsNormal { get; }',d:'!Clamped && !Wrapped'},
+],'',360),
+
+/* ── Col 1 · ScaleExtensions ─────────────────────────────────── */
+'ScaleExtensions': ctbl('class','ScaleExtensions','수치 변환 확장 메서드 (static) · double/float/int/decimal 오버로드',[
+  {s:'── §1 MapTo — 핵심 선형 변환'},
+  {t:'double', mo:'static',n:'MapTo(this double x, inMin, inMax, outMin, outMax, bool clamp=false)',d:'(x-inMin)×(outMax-outMin)/(inMax-inMin)+outMin'},
+  {t:'float',  mo:'static',n:'MapTo(this float x, ...)',d:'단정밀도 · 임베디드 센서'},
+  {t:'double', mo:'static',n:'MapTo(this int x, ...)',d:'ADC 원시값 → double'},
+  {t:'decimal',mo:'static',n:'MapTo(this decimal x, ...)',d:'금융/정밀 계산'},
+  {t:'double', mo:'static',n:'MapTo&lt;T&gt;(this T x, ...)',d:'범용 숫자 타입 (Convert.ToDouble)'},
+  {t:'ScaleResult',mo:'static',n:'MapDetail(this double x, ..., ScaleMode mode)',d:'Clamped/Wrapped 여부 포함 상세 결과'},
+  {s:'── §2 Normalize / Denormalize'},
+  {t:'double', mo:'static',n:'Normalize(this double x, double min, double max, bool clamp=false)',d:'→ [0.0, 1.0]'},
+  {t:'float',  mo:'static',n:'Normalize(this float, float min, float max, clamp)',d:''},
+  {t:'decimal',mo:'static',n:'Normalize(this decimal, decimal min, max, clamp)',d:''},
+  {t:'double', mo:'static',n:'Denormalize(this double t, double min, double max)',d:'[0,1] → [min, max]'},
+  {t:'float',  mo:'static',n:'Denormalize(this float t, float min, max)',d:''},
+  {t:'decimal',mo:'static',n:'Denormalize(this decimal t, decimal min, max)',d:''},
+  {s:'── §3 Lerp / InverseLerp'},
+  {t:'double', mo:'static',n:'Lerp(this double t, double from, double to)',d:'t=0→from · t=1→to · 외삽 허용'},
+  {t:'float',  mo:'static',n:'Lerp(this float t, float from, float to)',d:''},
+  {t:'decimal',mo:'static',n:'Lerp(this decimal t, decimal from, decimal to)',d:''},
+  {t:'double', mo:'static',n:'InverseLerp(this double v, double from, double to)',d:'v가 [from,to]에서 몇 %인지 → 0~1'},
+  {t:'float',  mo:'static',n:'InverseLerp(this float v, float from, float to)',d:''},
+  {t:'decimal',mo:'static',n:'InverseLerp(this decimal v, decimal from, decimal to)',d:''},
+  {s:'── §4 Clamp / DeadZone'},
+  {t:'double', mo:'static',n:'Clamp(this double x, double min, double max)',d:'[min, max] 범위 제한'},
+  {t:'float',  mo:'static',n:'Clamp(this float x, float min, float max)',d:''},
+  {t:'int',    mo:'static',n:'Clamp(this int x, int min, int max)',d:''},
+  {t:'decimal',mo:'static',n:'Clamp(this decimal x, decimal min, decimal max)',d:''},
+  {t:'double', mo:'static',n:'DeadZone(this double x, double deadZone, double maxInput=1.0)',d:'|x|<deadZone → 0, 그 외 재매핑'},
+  {t:'float',  mo:'static',n:'DeadZone(this float x, float deadZone, float maxInput)',d:''},
+  {s:'── §5 Piecewise — 비선형 센서 보정'},
+  {t:'double', mo:'static',n:'Piecewise(this double x, double[] breakpoints, double[] outputValues)',d:'구간별 선형 보간 · NTC 센서 보정'},
+  {t:'decimal',mo:'static',n:'Piecewise(this decimal x, decimal[] breakpoints, decimal[] outputValues)',d:'금융 구간 계산'},
+  {s:'── §6 Wrap · Threshold'},
+  {t:'double', mo:'static',n:'Wrap(this double x, double min, double max)',d:'[min,max] 순환 · 360도 각도'},
+  {t:'double', mo:'static',n:'Threshold(this double x, double threshold, double low=0, high=1)',d:'임계값 ON/OFF'},
+  {s:'── §7 SmoothStep / SmootherStep — S커브 보간'},
+  {t:'double', mo:'static',n:'SmoothStep(this double t, double from, double to)',d:'3차식: 3t²-2t³ · 시작/끝 미분=0'},
+  {t:'float',  mo:'static',n:'SmoothStep(this float t, float from, float to)',d:''},
+  {t:'double', mo:'static',n:'SmootherStep(this double t, double from, double to)',d:'5차식: 6t⁵-15t⁴+10t³ · 더 부드러움'},
+  {t:'float',  mo:'static',n:'SmootherStep(this float t, float from, float to)',d:''},
+  {s:'── §8 Hysteresis — 노이즈 방지 임계값'},
+  {t:'bool',   mo:'static',n:'Hysteresis(this double x, ref bool prevState, double low, double high)',d:'x>high→true, x<low→false, 사이→이전 유지'},
+  {t:'bool',   mo:'static',n:'Hysteresis(this float x, ref bool prevState, float low, float high)',d:'float 오버로드'},
+  {t:'bool',   mo:'static',n:'HysteresisPure(this double x, bool prevState, double low, double high)',d:'순수 함수 · LINQ/Aggregate 호환 (ref 없음)'},
+],'',510),
+
+/* ── Col 2 · Ieee754Info · Ieee754InfoD ─────────────────────── */
+'Ieee754Info': ctbl('record','Ieee754Info','float IEEE 754 내부 구조 분해 결과 · Analyze() 반환',[
+  {t:'float',  n:'Value { get; }',    d:'원본 float 값'},
+  {t:'string', n:'Hex { get; }',      d:'"0x4048F5C3" 형식'},
+  {t:'string', n:'Bin { get; }',      d:'32비트 이진 문자열'},
+  {t:'uint',   n:'Sign { get; }',     d:'부호 비트 (0/1)'},
+  {t:'int',    n:'Exponent { get; }', d:'지수 (편향 제거)'},
+  {t:'uint',   n:'Mantissa { get; }', d:'가수 (23비트)'},
+  {t:'bool',   n:'IsNaN { get; }',    d:''},
+  {t:'bool',   n:'IsInfinity { get; }',d:''},
+  {t:'bool',   n:'IsZero { get; }',   d:''},
+],'',380),
+
+'Ieee754InfoD': ctbl('record','Ieee754InfoD','double IEEE 754 내부 구조 분해 결과 · Analyze() 반환',[
+  {t:'double', n:'Value { get; }',    d:'원본 double 값'},
+  {t:'string', n:'Hex { get; }',      d:'"0x400921FB54442D18" 형식'},
+  {t:'string', n:'Bin { get; }',      d:'64비트 이진 문자열'},
+  {t:'ulong',  n:'Sign { get; }',     d:'부호 비트 (0/1)'},
+  {t:'int',    n:'Exponent { get; }', d:'지수 (편향 제거)'},
+  {t:'ulong',  n:'Mantissa { get; }', d:'가수 (52비트)'},
+  {t:'bool',   n:'IsNaN { get; }',    d:''},
+  {t:'bool',   n:'IsInfinity { get; }',d:''},
+  {t:'bool',   n:'IsZero { get; }',   d:''},
+],'',380),
+
+/* ── Col 3 · TypeParserExtensions ──────────────────────────── */
+'TypeParserExtensions': ctbl('class','TypeParserExtensions','자료형 파싱 string 확장 메서드 (static) · 접두사 자동 인식 0x/0b/0o',[
+  {s:'── §1 정수 파싱'},
+  {t:'byte',   mo:'static',n:'ToByte(this string s)',d:'0x/0b/0o 자동 인식'},
+  {t:'sbyte',  mo:'static',n:'ToSByte(this string s)',d:''},
+  {t:'short',  mo:'static',n:'ToInt16(this string s)',d:''},
+  {t:'ushort', mo:'static',n:'ToUInt16(this string s)',d:''},
+  {t:'int',    mo:'static',n:'ToInt32(this string s)',d:'"0xFF"→255, "0b11111111"→255, "0o377"→255'},
+  {t:'uint',   mo:'static',n:'ToUInt32(this string s)',d:''},
+  {t:'long',   mo:'static',n:'ToInt64(this string s)',d:''},
+  {t:'ulong',  mo:'static',n:'ToUInt64(this string s)',d:''},
+  {s:'── §2 실수 파싱'},
+  {t:'float',  mo:'static',n:'ToFloat(this string s)',d:'"0x3F800000"→1.0f (IEEE 754 비트 재해석)'},
+  {t:'double', mo:'static',n:'ToDouble(this string s)',d:'"0x400921FB54442D18"→π'},
+  {t:'decimal',mo:'static',n:'ToDecimal(this string s)',d:'28~29자리 정밀 · HEX 재해석 없음'},
+  {t:'bool',   mo:'static',n:'ToBool(this string s)',d:'"true"/"1"/"yes"/"on"/"y" → true'},
+  {s:'── §3 HEX 변환'},
+  {t:'byte[]', mo:'static',n:'ToBytes(this string hex)',d:'공백/하이픈/0x 자동 제거'},
+  {t:'string', mo:'static',n:'ToHex(this float v, bool prefix=true)',d:'"0x4048F5C3" · IEEE 754'},
+  {t:'string', mo:'static',n:'ToHex(this double v, bool prefix=true)',d:'16자리 HEX'},
+  {t:'string', mo:'static',n:'ToHex(this int/uint/byte/ushort v)',d:'정수 HEX 변환'},
+  {s:'── §4 2진수 변환'},
+  {t:'int',    mo:'static',n:'ToInt32FromBin(this string bin)',d:'"0b1010" → 10'},
+  {t:'string', mo:'static',n:'ToBinString(this int v, int digits=32, bool prefix=true)',d:'"0b00001010"'},
+  {t:'string', mo:'static',n:'ToBinString(this byte v, bool prefix=true)',d:'8자리'},
+  {t:'string', mo:'static',n:'ToBinString(this byte[] bytes, string sep=" ")',d:'바이트 배열 → 이진 문자열'},
+  {s:'── §5 IEEE 754 분석'},
+  {t:'Ieee754Info', mo:'static',n:'Analyze(this float v)',d:'Sign/Exp/Mantissa 분해'},
+  {t:'Ieee754InfoD',mo:'static',n:'Analyze(this double v)',d:'64비트 분해'},
+  {s:'── §6 검증'},
+  {t:'bool',mo:'static',n:'IsValidHex(this string s)',d:'유효한 HEX 문자열 여부'},
+  {t:'bool',mo:'static',n:'IsValidBin(this string s)',d:'유효한 2진수 문자열 여부'},
+  {t:'bool',mo:'static',n:'IsValidNumber(this string s)',d:'HEX/BIN/DEC 모두 지원'},
+  {s:'── §7 TryParse / ParseOr'},
+  {t:'bool',mo:'static',n:'TryParse&lt;T&gt;(this string s, out T result)',d:'실패 시 예외 없음 · T = byte~decimal/bool'},
+  {t:'T',  mo:'static',n:'ParseOr&lt;T&gt;(this string s, T fallback=default)',d:'실패 시 기본값 반환'},
+],'',500),
+
+/* ── Col 4 · SerializerExtensions ──────────────────────────── */
+'SerializerExtensions': ctbl('class','SerializerExtensions','JSON/XML/CSV 직렬화 object 확장 메서드 (static) · System.Text.Json',[
+  {s:'── §1 JSON · System.Text.Json'},
+  {t:'string', mo:'static',n:'ToJson&lt;T&gt;(this T obj, JsonSerializerOptions? opt=null)',d:'WriteIndented=true · 한글 인코딩 허용'},
+  {t:'T?',     mo:'static',n:'FromJson&lt;T&gt;(this string json, opt?)',d:'대소문자 무관'},
+  {t:'Task',   mo:'static',n:'SaveJsonAsync&lt;T&gt;(this T obj, string path, opt?)',d:'비동기 파일 저장'},
+  {t:'Task&lt;T?&gt;',mo:'static',n:'LoadJsonAsync&lt;T&gt;(this string path, opt?)',d:'비동기 파일 로드'},
+  {s:'── §2 XML · XmlSerializer'},
+  {t:'string', mo:'static',n:'ToXml&lt;T&gt;(this T obj, bool indent=true)',d:'XmlSerializer 기반'},
+  {t:'T?',     mo:'static',n:'FromXml&lt;T&gt;(this string xml)',d:''},
+  {t:'void',   mo:'static',n:'SaveXml&lt;T&gt;(this T obj, string path, bool indent=true)',d:'동기 파일 저장'},
+  {t:'T?',     mo:'static',n:'LoadXml&lt;T&gt;(this string path)',d:''},
+  {s:'── §3 CSV · 반사(Reflection) 기반'},
+  {t:'string', mo:'static',n:'ToCsv&lt;T&gt;(this IEnumerable&lt;T&gt; data, string delim=",", bool header=true)',d:'decimal 정밀도 유지 · 따옴표 이스케이프'},
+  {t:'List&lt;T&gt;',mo:'static',n:'FromCsv&lt;T&gt;(this string csv, string delim=",")',d:'decimal 특수 처리 · T : new()'},
+  {t:'Task',   mo:'static',n:'SaveCsvAsync&lt;T&gt;(this IEnumerable&lt;T&gt;, string path, delim)',d:'비동기 파일 저장 (UTF-8 BOM 없음)'},
+  {t:'Task&lt;List&lt;T&gt;&gt;',mo:'static',n:'LoadCsvAsync&lt;T&gt;(this string path, delim)',d:'비동기 파일 로드'},
+],'',490),
+
+/* ── Col 5 · CrcExtensions ──────────────────────────────────── */
+'CrcExtensions': ctbl('class','CrcExtensions','byte[] CRC/Checksum 확장 메서드 (static) · offset/length 부분 범위 지원',[
+  {s:'── §1 CRC-8'},
+  {t:'byte',mo:'static',n:'Crc8(this byte[] d, int offset=0, int? length=null)',d:'다항식 0x07 · Dallas/Maxim 1-Wire'},
+  {t:'byte',mo:'static',n:'Crc8Custom(this byte[] d, byte poly, byte init=0, ...)',d:'커스텀 다항식'},
+  {t:'byte',mo:'static',n:'Crc8Sht(this byte[] d)',d:'Sensirion SHT3x/SHT4x 전용 · poly=0x31 init=0xFF'},
+  {s:'── §2 CRC-16'},
+  {t:'ushort',mo:'static',n:'Crc16(this byte[] d, offset, length?)',d:'IBM 0x8005 · 산업용 통신/USB/Serial'},
+  {t:'ushort',mo:'static',n:'Crc16Ccitt(this byte[] d, ushort init=0, offset, length?)',d:'0x1021 · BLE/XMODEM/SD카드 · init=0xFFFF'},
+  {t:'ushort',mo:'static',n:'Crc16Modbus(this byte[] d, offset, length?)',d:'0xA001 반전 · Modbus RTU 전용 · init=0xFFFF'},
+  {s:'── §3 CRC-32'},
+  {t:'uint',mo:'static',n:'Crc32(this byte[] d, int offset=0, int? length=null)',d:'0xEDB88320 · ZIP/Ethernet/PNG'},
+  {s:'── §4 Sum / XOR / Fletcher'},
+  {t:'byte',  mo:'static',n:'Sum8(this byte[] d, offset, length?)',d:'합산 하위 8비트'},
+  {t:'byte',  mo:'static',n:'Sum8Twos(this byte[] d, ...)',d:'2의 보수 · Append 시 Sum8()==0x00'},
+  {t:'ushort',mo:'static',n:'Sum16(this byte[] d, ...)',d:'합산 하위 16비트'},
+  {t:'byte',  mo:'static',n:'Xor(this byte[] d, ...)',d:'XOR 합산 · NMEA 0183 GPS'},
+  {t:'ushort',mo:'static',n:'Fletcher16(this byte[] d, ...)',d:'TCP/IP 네트워크 · CRC보다 빠름'},
+  {s:'── §5 CRC-32 Append / Verify'},
+  {t:'byte[]',mo:'static',n:'AppendCrc32(this byte[] d)',d:'데이터 뒤 CRC-32 4바이트 LE 추가'},
+  {t:'bool',  mo:'static',n:'VerifyCrc32(this byte[] d)',d:'마지막 4바이트 CRC-32 검증'},
+  {s:'── §6 파일 CRC-32'},
+  {t:'Task&lt;uint&gt;',mo:'static',n:'Crc32File(this string path)',d:'파일 전체 CRC-32 비동기 계산'},
+  {s:'── §7 HEX 포맷 유틸'},
+  {t:'string',mo:'static',n:'ToHexDump(this byte[] d, string sep=" ")',d:'"AA 01 00 0C" 형식'},
+],'',490),
+};
+
+const COL = {
+  0: ['ScaleMode','ScaleResult'],
+  1: ['ScaleExtensions'],
+  2: ['Ieee754Info','Ieee754InfoD'],
+  3: ['TypeParserExtensions'],
+  4: ['SerializerExtensions'],
+  5: ['CrcExtensions'],
+};
+
+const FG = [
+  { lbl:'lssLib.Extensions  Scale',      ns:['ScaleMode','ScaleResult','ScaleExtensions'],        color:'#2563eb' },
+  { lbl:'lssLib.Extensions  Text/Type',  ns:['Ieee754Info','Ieee754InfoD','TypeParserExtensions'], color:'#d97706' },
+  { lbl:'lssLib.Extensions  Serializer', ns:['SerializerExtensions'],                             color:'#059669' },
+  { lbl:'lssLib.Extensions  CRC',        ns:['CrcExtensions'],                                    color:'#dc2626' },
+];
+
+const CONN = [
+  // ScaleExtensions →«creates»→ ScaleResult
+  { f:'ScaleExtensions', fe:'left', t:'ScaleResult', te:'right', ty:'bld', lbl:'«creates»', xoff:0 },
+  // ScaleExtensions → ScaleMode (uses)
+  { f:'ScaleExtensions', fe:'left', t:'ScaleMode', te:'right', ty:'uses', lbl:'uses', xoff:30 },
+  // TypeParserExtensions →«creates»→ Ieee754Info
+  { f:'TypeParserExtensions', fe:'left', t:'Ieee754Info', te:'right', ty:'bld', lbl:'«creates»', xoff:-20 },
+  // TypeParserExtensions →«creates»→ Ieee754InfoD
+  { f:'TypeParserExtensions', fe:'left', t:'Ieee754InfoD', te:'right', ty:'bld', lbl:'«creates»', xoff:20 },
+];
+
+const GAP_COL=160, PAD_STACK=50, START_X=30, START_Y=40;
+const cv = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+Object.keys(BOXES).forEach(name=>{
+  const div=document.createElement('div');
+  div.className='bw'; div.dataset.box=name;
+  div.style.left='0px'; div.style.top='0px';
+  div.innerHTML=BOXES[name];
+  cv.insertBefore(div,svgEl);
+});
+
+const gb=n=>{const el=cv.querySelector(`[data-box="${n}"]`);return el?{el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight}:null;};
+const bot=n=>{const b=gb(n);return b?b.y+b.h:0;};
+const setX=(n,x)=>{const el=cv.querySelector(`[data-box="${n}"]`);if(el)el.style.left=x+'px';};
+const setY=(n,y)=>{const el=cv.querySelector(`[data-box="${n}"]`);if(el)el.style.top=y+'px';};
+const ri=v=>Math.round(v);
+
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const colW={};
+  Object.entries(COL).forEach(([ci,ns])=>{
+    colW[ci]=Math.max(...ns.map(n=>{const b=gb(n);return b?b.w:0;}));
+  });
+  const colX={};
+  let cx=START_X;
+  Object.keys(COL).sort().forEach(ci=>{colX[ci]=cx;cx+=colW[ci]+GAP_COL;});
+  Object.entries(COL).forEach(([ci,ns])=>ns.forEach(n=>setX(n,colX[ci])));
+
+  requestAnimationFrame(()=>{
+    setY('ScaleMode',START_Y);
+    setY('ScaleExtensions',START_Y);
+    setY('Ieee754Info',START_Y);
+    setY('TypeParserExtensions',START_Y);
+    setY('SerializerExtensions',START_Y);
+    setY('CrcExtensions',START_Y);
+
+    requestAnimationFrame(()=>{
+      setY('ScaleResult',bot('ScaleMode')+PAD_STACK);
+      setY('Ieee754InfoD',bot('Ieee754Info')+PAD_STACK);
+
+      requestAnimationFrame(()=>drawAll());
+    });
+  });
+}));
+
+function drawAll(){
+  const pos={};
+  cv.querySelectorAll('.bw').forEach(el=>{
+    pos[el.dataset.box]={x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW=Math.max(...Object.values(pos).map(p=>p.x+p.w))+80;
+  const maxH=Math.max(...Object.values(pos).map(p=>p.y+p.h))+100;
+  cv.style.minWidth=maxW+'px'; cv.style.minHeight=maxH+'px';
+  svgEl.setAttribute('width',maxW); svgEl.setAttribute('height',maxH);
+  const ph=document.getElementById('cv-phantom');
+  ph.style.width=Math.ceil(maxW*zl)+'px';
+  ph.style.height=Math.ceil(maxH*zl)+'px';
+
+  svgEl.innerHTML=`<defs>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker>
+    <marker id="mb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker>
+  </defs>`;
+
+  FG.forEach(fg=>{
+    const bs=fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length)return;
+    const pd=14,x1=Math.min(...bs.map(b=>b.x))-pd,y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect');sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect');sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text');sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl;svgEl.appendChild(tx);
+  });
+
+  function ep(b,e){
+    if(e==='top')return[b.x+b.w/2,b.y];
+    if(e==='bottom')return[b.x+b.w/2,b.y+b.h];
+    if(e==='left')return[b.x,b.y+b.h/2];
+    if(e==='right')return[b.x+b.w,b.y+b.h/2];
+    return[b.x+b.w/2,b.y];
+  }
+  const SY={
+    uses:{stroke:'#888','stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    bld:{stroke:'#e65100','stroke-width':1.5,'stroke-dasharray':'5,2','marker-end':'url(#mb)'},
+  };
+  CONN.forEach(c=>{
+    const fb=pos[c.f],tb=pos[c.t];if(!fb||!tb)return;
+    const [sx,sy]=ep(fb,c.fe).map(ri);
+    const [tx2,ty2]=ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')ey+=ML;else if(c.te==='bottom')ey-=ML;
+    else if(c.te==='left')ex+=ML;else if(c.te==='right')ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom')c1y+=cp;else if(c.fe==='top')c1y-=cp;
+    else if(c.fe==='right')c1x+=cp;else if(c.fe==='left')c1x-=cp;
+    if(c.te==='top')c2y-=cp;else if(c.te==='bottom')c2y+=cp;
+    else if(c.te==='left')c2x-=cp;else if(c.te==='right')c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path');sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5,it=1-t;
+      const mx=ri(it*it*it*sx+3*it*it*t*c1x+3*it*t*t*c2x+t*t*t*ex);
+      const my=ri(it*it*it*sy+3*it*it*t*c1y+3*it*t*t*c2y+t*t*t*ey);
+      const lblCol={uses:'#555',bld:'#c84000'}[c.ty]||'#444';
+      const FSIZE=11,PAD_X=7,PAD_Y=3;
+      const aw=c.lbl.length*FSIZE*0.62+PAD_X*2,ah=FSIZE+PAD_Y*2;
+      const bg=mk('rect');sa(bg,{x:mx-aw/2,y:my-ah/2,width:aw,height:ah,rx:4,fill:'white',stroke:lblCol,'stroke-width':1.2,opacity:0.97});svgEl.appendChild(bg);
+      const tl=mk('text');sa(tl,{x:mx,y:my,'font-size':FSIZE,fill:lblCol,'font-family':'monospace','font-weight':'700','text-anchor':'middle','dominant-baseline':'central'});
+      tl.textContent=c.lbl;svgEl.appendChild(tl);
+    }
+  });
+}
+function mk(tag){return document.createElementNS('http://www.w3.org/2000/svg',tag);}
+function sa(el,a){Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v));}
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Utils — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:3600px;min-height:2800px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:200px;line-height:1.5;}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+@media (prefers-color-scheme: dark){
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+<h1>lssLib.Utils — UML 클래스 다이어그램</h1>
+<p class="sub">범용 유틸리티 · Extension-method only · No abstractions · [GeneratedRegex] · BCL only · .NET 8.0</p>
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <button onclick="sz(0.36)">36%</button>
+  <span id="zlb">100%</span>
+</div>
+<div id="lg">
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>static class (확장 메서드 / 유틸)</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+</div>
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="3600" height="2800"></svg>
+  </div>
+</div>
+<script>
+'use strict';
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.2, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth) || 3600;
+  const nh = parseFloat(cv.style.minHeight) || 2800;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+const H = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function ctbl(kind, name, desc, members, ext, tw) {
+  tw = tw||400; ext = ext||'';
+  const bm={class:'bc'};
+  const lm={class:'«class»'};
+  const tc={class:'ut-class'};
+  const hc={class:'uh-class'};
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1=68, w2=185, w3=tw-w1-w2-4;
+  let rows='';
+  members.forEach(m=>{
+    if(m.s){rows+=`<tr class="sep"><td colspan="3">${m.s}</td></tr>`;return;}
+    const ab=m.mo==='abstract', ev=m.mo==='event';
+    const mo=(m.mo&&!ev)?`<span class="mm">${m.mo}</span>`:'';
+    rows+=`<tr><td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td></tr>`;
+  });
+  return `<table class="ut ${tc[kind]||'ut-class'}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh-class'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Return</td><td>Member</td><td>Notes</td></tr>${rows}</table>`;
+}
+
+const BOXES = {
+
+/* ── Col 0 · Guard ───────────────────────────────────────────── */
+'Guard': ctbl('class','Guard','인수 선행 검증 유틸리티 (static) · CallerArgumentExpression · 체이닝 가능',[
+  {s:'── §1 Null 검증'},
+  {t:'T',  mo:'static',n:'NotNull&lt;T&gt;(T? value, string? paramName)',d:'null → ArgumentNullException · 참조 타입'},
+  {t:'T',  mo:'static',n:'NotNull&lt;T&gt;(T? value, string? paramName)',d:'null → ArgumentNullException · Nullable&lt;T&gt; 언박싱'},
+  {s:'── §2 문자열 검증'},
+  {t:'string',mo:'static',n:'NotEmpty(string? value, string? paramName)',d:'null/"" → ArgumentException · 공백 허용'},
+  {t:'string',mo:'static',n:'NotWhiteSpace(string? value, string? paramName)',d:'null/""/공백 모두 → ArgumentException'},
+  {s:'── §3 배열 검증'},
+  {t:'T[]',mo:'static',n:'NotEmpty&lt;T&gt;(T[]? array, string? paramName)',d:'null/빈배열 → ArgumentException · BufferParser 진입 전'},
+  {s:'── §4 수치 범위 검증'},
+  {t:'T',mo:'static',n:'Range&lt;T&gt;(T value, T min, T max, string? paramName)',d:'[min,max] 이탈 → ArgumentOutOfRangeException · IComparable&lt;T&gt;'},
+  {t:'T',mo:'static',n:'NotNegative&lt;T&gt;(T value, string? paramName)',d:'0 미만 → throw · 0 허용 (RingBuffer 크기 등)'},
+  {t:'T',mo:'static',n:'Positive&lt;T&gt;(T value, string? paramName)',d:'0 이하 → throw · 0 불허 (BufferWriter 용량 등)'},
+  {s:'── §5 조건 검증'},
+  {t:'void',mo:'static',n:'That(bool condition, string? message, string? expression)',d:'false → ArgumentException · expression 자동 캡처'},
+],'',480),
+
+/* ── Col 1 · StringPatterns · StringExtensions ─────────────── */
+'StringPatterns': ctbl('class','StringPatterns','[GeneratedRegex] 컴파일 타임 Regex 저장소 (static partial · internal)',[
+  {s:'── 컴파일 타임 생성 패턴 ([GeneratedRegex])'},
+  {t:'Regex',mo:'static',n:'SnakeCasePattern()',d:'PascalCase/camelCase → snake_case · ([A-Z])'},
+  {t:'Regex',mo:'static',n:'CamelCasePattern()',d:'snake_case/kebab-case 구분자 뒤 첫 글자 · [_\\-]([a-zA-Z])'},
+  {t:'Regex',mo:'static',n:'HexOnlyPattern()',d:'순수 HEX 검증 · ^[0-9A-Fa-f]+$'},
+  {t:'Regex',mo:'static',n:'DigitsOnlyPattern()',d:'순수 숫자 검증 · ^\\d+$'},
+  {t:'Regex',mo:'static',n:'EmailPattern()',d:'기본 이메일 형식 · ^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'},
+],'',450),
+
+'StringExtensions': ctbl('class','StringExtensions','문자열 조작·변환·파싱·인코딩 확장 메서드 (static) · StringPatterns 위임',[
+  {s:'── §1 값 존재 판단'},
+  {t:'bool',  mo:'static',n:'HasValue(this string? s)',d:'!IsNullOrWhiteSpace — 실질적 값 여부'},
+  {t:'string',mo:'static',n:'OrDefault(this string? s, string fallback="")',d:'값 없으면 fallback 반환 · 설정 기본값 처리'},
+  {s:'── §2 케이스·포맷 변환'},
+  {t:'string',mo:'static',n:'ToSnakeCase(this string s)',d:'PascalCase→snake_case · DB 컬럼명 변환'},
+  {t:'string',mo:'static',n:'ToCamelCase(this string s)',d:'snake_case→camelCase · JSON 키 변환'},
+  {t:'string',mo:'static',n:'Capitalize(this string s)',d:'첫 글자 대문자 · 나머지 유지'},
+  {t:'string',mo:'static',n:'Truncate(this string s, int maxLength, string suffix="…")',d:'길이 초과 시 잘라내고 접미사 추가'},
+  {t:'string',mo:'static',n:'Repeat(this string s, int count)',d:'"─".Repeat(40) — 로그 구분선'},
+  {t:'string',mo:'static',n:'PadLeftTo(this string s, int totalWidth, char padChar=" ")',d:'고정폭 프레임 ID "00001024"'},
+  {s:'── §3 검색·비교 (대소문자 무시)'},
+  {t:'bool',mo:'static',n:'ContainsIgnoreCase(this string s, string value)',d:''},
+  {t:'bool',mo:'static',n:'StartsWithIgnoreCase(this string s, string value)',d:''},
+  {t:'bool',mo:'static',n:'EndsWithIgnoreCase(this string s, string value)',d:''},
+  {t:'bool',mo:'static',n:'EqualsIgnoreCase(this string? s, string? other)',d:'null-safe · 양쪽 모두 null → true'},
+  {t:'bool',mo:'static',n:'IsAnyOf(this string s, params string[] candidates)',d:'복수 후보 중 일치 여부 · 파일 확장자 분기'},
+  {s:'── §4 안전 파싱 (실패 시 null · 예외 없음)'},
+  {t:'int?',    mo:'static',n:'ToIntOrNull(this string? s)',d:'int.TryParse 래퍼'},
+  {t:'long?',   mo:'static',n:'ToLongOrNull(this string? s)',d:''},
+  {t:'double?', mo:'static',n:'ToDoubleOrNull(this string? s)',d:'InvariantCulture 고정 · "3.14" 항상 정상'},
+  {t:'decimal?',mo:'static',n:'ToDecimalOrNull(this string? s)',d:'28~29자리 정밀 · lssLib.Binary decimal 정합성'},
+  {t:'bool?',   mo:'static',n:'ToBoolOrNull(this string? s)',d:'"true/1/yes/on"→true · "false/0/no/off"→false'},
+  {s:'── §5 인코딩·바이트 변환'},
+  {t:'byte[]', mo:'static',n:'ToUtf8Bytes(this string s)',d:'UTF-8 인코딩'},
+  {t:'string', mo:'static',n:'ToUtf8String(this byte[] bytes)',d:'UTF-8 디코딩'},
+  {t:'string', mo:'static',n:'ToBase64(this string s)',d:'HTTP Basic 인증 헤더 등'},
+  {t:'string?',mo:'static',n:'FromBase64(this string s)',d:'실패 시 null (예외 없음)'},
+  {t:'string', mo:'static',n:'ToHex(this byte[] bytes, bool spaced=false)',d:'lssLib.Binary HexDump 포맷 "AA BB CC"'},
+  {t:'byte[]', mo:'static',n:'FromHex(this string hex)',d:'공백/하이픈 자동 제거 → BufferParser 전달'},
+  {s:'── §6 정규식 유틸'},
+  {t:'bool',    mo:'static',n:'IsDigitsOnly(this string s)',d:'DigitsOnlyPattern() 위임'},
+  {t:'bool',    mo:'static',n:'IsEmail(this string s)',d:'EmailPattern() 위임'},
+  {t:'bool',    mo:'static',n:'IsMatch(this string s, string pattern, RegexOptions options)',d:'일회성 패턴 · 반복 호출 시 StringPatterns 권장'},
+  {t:'string?', mo:'static',n:'MatchGroup(this string s, string pattern, int groupIndex=1, options)',d:'첫 번째 캡처 그룹 반환 · 장치 응답 파싱'},
+  {t:'IEnumerable&lt;string&gt;',mo:'static',n:'ToLines(this string s)',d:'CR/LF/CRLF 모두 지원'},
+  {t:'IEnumerable&lt;string&gt;',mo:'static',n:'ToNonEmptyLines(this string s)',d:'빈 줄 제거 · INI 파싱'},
+],'',520),
+
+/* ── Col 2 · DateTimeExtensions ─────────────────────────────── */
+'DateTimeExtensions': ctbl('class','DateTimeExtensions','DateTime·TimeSpan 포맷·변환·범위 판단 (static) · CultureInfo.InvariantCulture 고정',[
+  {s:'── §1 표준 포맷 문자열'},
+  {t:'string',mo:'static',n:'ToIsoDate(this DateTime dt)',d:'"yyyy-MM-dd" · 날짜별 로그 디렉터리명'},
+  {t:'string',mo:'static',n:'ToTimeString(this DateTime dt)',d:'"HH:mm:ss"'},
+  {t:'string',mo:'static',n:'ToIsoDateTime(this DateTime dt)',d:'"yyyy-MM-dd HH:mm:ss" · 로그 타임스탬프'},
+  {t:'string',mo:'static',n:'ToIso8601Utc(this DateTime dt)',d:'"yyyy-MM-ddTHH:mm:ss.fffZ" · REST API/JSON'},
+  {t:'string',mo:'static',n:'ToFileStamp(this DateTime dt)',d:'"yyyyMMdd_HHmmss" · 세션 덤프 파일명 · lssLib 규칙'},
+  {t:'string',mo:'static',n:'ToMsStamp(this DateTime dt)',d:'"yyyyMMddHHmmssfff" · 밀리초 포함 고유 ID'},
+  {s:'── §2 Unix Epoch 양방향 변환'},
+  {t:'DateTime',mo:'static',n:'FromUnixSeconds(this long s)',d:'Unix 초 → DateTime UTC'},
+  {t:'DateTime',mo:'static',n:'FromUnixMilliseconds(this long ms)',d:'Unix 밀리초 → DateTime UTC'},
+  {t:'long',    mo:'static',n:'ToUnixSeconds(this DateTime dt)',d:'DateTime → Unix 초'},
+  {t:'long',    mo:'static',n:'ToUnixMilliseconds(this DateTime dt)',d:'DateTime → Unix 밀리초'},
+  {s:'── §3 날짜 경계·범위 판단'},
+  {t:'DateTime',mo:'static',n:'StartOfDay(this DateTime dt)',d:'해당 날짜 00:00:00.0000000'},
+  {t:'DateTime',mo:'static',n:'EndOfDay(this DateTime dt)',d:'해당 날짜 23:59:59.9999999'},
+  {t:'DateTime',mo:'static',n:'StartOfWeek(this DateTime dt)',d:'해당 주 월요일 · ISO 8601'},
+  {t:'DateTime',mo:'static',n:'StartOfMonth(this DateTime dt)',d:'해당 월 1일 00:00:00'},
+  {t:'DateTime',mo:'static',n:'EndOfMonth(this DateTime dt)',d:'해당 월 마지막 틱'},
+  {t:'bool',    mo:'static',n:'IsBetween(this DateTime dt, DateTime from, DateTime to)',d:'경계값 포함 · 오늘 수신 프레임 필터'},
+  {t:'bool',    mo:'static',n:'IsWeekday(this DateTime dt)',d:'월~금 = true'},
+  {t:'bool',    mo:'static',n:'IsWeekend(this DateTime dt)',d:'토~일 = true'},
+  {s:'── §4 상대 시간 (한국어)'},
+  {t:'string',mo:'static',n:'ToRelativeKo(this DateTime dt)',d:'"N초/분/시간/일/주 전" · 30일↑ → ToIsoDate()'},
+  {s:'── §5 TimeSpan 유틸'},
+  {t:'string',mo:'static',n:'ToDisplay(this TimeSpan ts)',d:'"hh:mm:ss.fff" · Stopwatch.Elapsed 로그'},
+  {t:'long',  mo:'static',n:'ToMs(this TimeSpan ts)',d:'총 밀리초 정수 · 타임아웃 비교'},
+  {s:'── §6 안전 파싱'},
+  {t:'DateTime?',mo:'static',n:'TryParseDateTime(this string? s, string format="yyyy-MM-dd HH:mm:ss")',d:'실패 시 null'},
+  {t:'DateTime?',mo:'static',n:'TryParseAny(this string? s, params string[] formats)',d:'다중 포맷 순서대로 시도 · 외부 시스템 혼재 날짜'},
+],'',510),
+
+/* ── Col 3 · FileExtensions ─────────────────────────────────── */
+'FileExtensions': ctbl('class','FileExtensions','파일·디렉터리 처리 확장 메서드 (static) · 쓰기=디렉터리 자동 생성+경로 반환(체이닝)',[
+  {s:'── §1 경로 조작'},
+  {t:'bool',  mo:'static',n:'FileExists(this string path)',d:'File.Exists 래퍼'},
+  {t:'bool',  mo:'static',n:'DirExists(this string path)',d:'Directory.Exists 래퍼'},
+  {t:'string',mo:'static',n:'GetExt(this string path)',d:'".bin" 형식 (점 포함)'},
+  {t:'string',mo:'static',n:'GetFileNameNoExt(this string path)',d:'"frame" (확장자 없는 파일명)'},
+  {t:'string',mo:'static',n:'GetFileName(this string path)',d:'"frame.bin" (확장자 포함)'},
+  {t:'string',mo:'static',n:'GetDir(this string path)',d:'상위 디렉터리 경로'},
+  {t:'string',mo:'static',n:'WithTimestamp(this string path, DateTime? at, string format="yyyyMMdd_HHmmss")',d:'"session_20240401_143000.bin" · lssLib 세션 덤프 네이밍'},
+  {t:'string',mo:'static',n:'ToUniquePath(this string path)',d:'동일 경로 존재 시 "_1","_2"... 접미사 충돌 방지'},
+  {s:'── §2 디렉터리 자동 보장 (체이닝 전 삽입)'},
+  {t:'string',mo:'static',n:'EnsureDir(this string path)',d:'파일 경로의 상위 디렉터리 생성 후 경로 반환'},
+  {t:'string',mo:'static',n:'EnsureDirSelf(this string dir)',d:'경로 자체가 디렉터리일 때 생성 후 반환'},
+  {s:'── §3 파일 읽기'},
+  {t:'string',           mo:'static',n:'ReadText(this string path, Encoding? enc)',d:'UTF-8 기본 · lssLib.Extensions TextExtensions 연계'},
+  {t:'Task&lt;string&gt;',    mo:'static',n:'ReadTextAsync(this string path, enc?, CancellationToken)',d:''},
+  {t:'byte[]',           mo:'static',n:'ReadBytes(this string path)',d:'→ BufferParser 직접 전달 가능'},
+  {t:'Task&lt;byte[]&gt;',   mo:'static',n:'ReadBytesAsync(this string path, CancellationToken)',d:''},
+  {t:'IEnumerable&lt;string&gt;',mo:'static',n:'ReadLines(this string path, Encoding? enc)',d:'지연 읽기 · 대용량 파일 메모리 절약'},
+  {s:'── §4 파일 쓰기 (경로 반환 → 체이닝)'},
+  {t:'string',         mo:'static',n:'WriteText(this string path, string content, Encoding?)',d:'덮어씀 · 상위 디렉터리 자동 생성'},
+  {t:'Task&lt;string&gt;',mo:'static',n:'WriteTextAsync(this string path, string content, enc?, ct)',d:''},
+  {t:'string',         mo:'static',n:'WriteBytes(this string path, byte[] data)',d:'BufferWriter.ToArray() 직접 전달 · AppendCrc32 포함'},
+  {t:'Task&lt;string&gt;',mo:'static',n:'WriteBytesAsync(this string path, byte[] data, CancellationToken)',d:''},
+  {t:'string',         mo:'static',n:'AppendLine(this string path, string line, Encoding?)',d:'파일 끝에 줄 추가 · 날짜별 로그 누적'},
+  {s:'── §5 파일 메타데이터'},
+  {t:'long',     mo:'static',n:'GetSize(this string path)',d:'바이트 수 · 없으면 -1'},
+  {t:'string',   mo:'static',n:'GetSizeDisplay(this string path)',d:'"1.4 MB" · B/KB/MB/GB 자동 · 없으면 "N/A"'},
+  {t:'DateTime?',mo:'static',n:'GetLastModified(this string path)',d:'마지막 수정 시각 · 설정 변경 감지'},
+  {s:'── §6 디렉터리 열거'},
+  {t:'IEnumerable&lt;string&gt;',mo:'static',n:'EnumerateFiles(this string dir, string pattern="*", bool recursive)',d:'디렉터리 없어도 예외 없이 빈 열거 반환'},
+  {t:'IEnumerable&lt;string&gt;',mo:'static',n:'EnumerateByExt(this string dir, string ext, bool recursive)',d:'".bin" 확장자 필터'},
+  {t:'IEnumerable&lt;string&gt;',mo:'static',n:'EnumerateByDate(this string dir, string pattern, bool recursive)',d:'최신순 정렬 · 최신 N개 유지/오래된 파일 정리'},
+  {s:'── §7 안전 삭제·복사·이동'},
+  {t:'bool',  mo:'static',n:'TryDelete(this string path)',d:'예외 없음 · 없으면 false · finally 정리'},
+  {t:'string',mo:'static',n:'CopyTo(this string source, string dest, bool overwrite=true)',d:'대상 디렉터리 자동 생성 · dest 반환 (체이닝)'},
+  {t:'string',mo:'static',n:'MoveTo(this string source, string dest, bool overwrite=true)',d:'아카이브 이동 · dest 반환 (체이닝)'},
+],'',510),
+};
+
+const COL = {
+  0: ['Guard'],
+  1: ['StringPatterns','StringExtensions'],
+  2: ['DateTimeExtensions'],
+  3: ['FileExtensions'],
+};
+
+const FG = [
+  { lbl:'lssLib.Utils  Guard',        ns:['Guard'],                             color:'#dc2626' },
+  { lbl:'lssLib.Utils  String',       ns:['StringPatterns','StringExtensions'], color:'#2563eb' },
+  { lbl:'lssLib.Utils  DateTime',     ns:['DateTimeExtensions'],                color:'#d97706' },
+  { lbl:'lssLib.Utils  File',         ns:['FileExtensions'],                    color:'#059669' },
+];
+
+const CONN = [
+  { f:'StringExtensions', fe:'top', t:'StringPatterns', te:'bottom', ty:'uses', lbl:'uses', xoff:0 },
+];
+
+const GAP_COL=160, PAD_STACK=50, START_X=30, START_Y=40;
+const cv = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+Object.keys(BOXES).forEach(name=>{
+  const div=document.createElement('div');
+  div.className='bw'; div.dataset.box=name;
+  div.style.left='0px'; div.style.top='0px';
+  div.innerHTML=BOXES[name];
+  cv.insertBefore(div,svgEl);
+});
+
+const gb=n=>{const el=cv.querySelector(`[data-box="${n}"]`);return el?{el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight}:null;};
+const bot=n=>{const b=gb(n);return b?b.y+b.h:0;};
+const setX=(n,x)=>{const el=cv.querySelector(`[data-box="${n}"]`);if(el)el.style.left=x+'px';};
+const setY=(n,y)=>{const el=cv.querySelector(`[data-box="${n}"]`);if(el)el.style.top=y+'px';};
+const ri=v=>Math.round(v);
+
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const colW={};
+  Object.entries(COL).forEach(([ci,ns])=>{
+    colW[ci]=Math.max(...ns.map(n=>{const b=gb(n);return b?b.w:0;}));
+  });
+  const colX={};
+  let cx=START_X;
+  Object.keys(COL).sort().forEach(ci=>{colX[ci]=cx;cx+=colW[ci]+GAP_COL;});
+  Object.entries(COL).forEach(([ci,ns])=>ns.forEach(n=>setX(n,colX[ci])));
+
+  requestAnimationFrame(()=>{
+    setY('Guard',           START_Y);
+    setY('StringPatterns',  START_Y);
+    setY('DateTimeExtensions', START_Y);
+    setY('FileExtensions',  START_Y);
+
+    requestAnimationFrame(()=>{
+      setY('StringExtensions', bot('StringPatterns') + PAD_STACK);
+      requestAnimationFrame(()=>drawAll());
+    });
+  });
+}));
+
+function drawAll(){
+  const pos={};
+  cv.querySelectorAll('.bw').forEach(el=>{
+    pos[el.dataset.box]={x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW=Math.max(...Object.values(pos).map(p=>p.x+p.w))+80;
+  const maxH=Math.max(...Object.values(pos).map(p=>p.y+p.h))+100;
+  cv.style.minWidth=maxW+'px'; cv.style.minHeight=maxH+'px';
+  svgEl.setAttribute('width',maxW); svgEl.setAttribute('height',maxH);
+  const ph=document.getElementById('cv-phantom');
+  ph.style.width=Math.ceil(maxW*zl)+'px';
+  ph.style.height=Math.ceil(maxH*zl)+'px';
+
+  svgEl.innerHTML=`<defs>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker>
+  </defs>`;
+
+  FG.forEach(fg=>{
+    const bs=fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length)return;
+    const pd=14,x1=Math.min(...bs.map(b=>b.x))-pd,y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect');sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect');sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text');sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl;svgEl.appendChild(tx);
+  });
+
+  function ep(b,e){
+    if(e==='top')return[b.x+b.w/2,b.y];
+    if(e==='bottom')return[b.x+b.w/2,b.y+b.h];
+    if(e==='left')return[b.x,b.y+b.h/2];
+    if(e==='right')return[b.x+b.w,b.y+b.h/2];
+    return[b.x+b.w/2,b.y];
+  }
+  const SY={
+    uses:{stroke:'#888','stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+  };
+  CONN.forEach(c=>{
+    const fb=pos[c.f],tb=pos[c.t];if(!fb||!tb)return;
+    const [sx,sy]=ep(fb,c.fe).map(ri);
+    const [tx2,ty2]=ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')ey+=ML;else if(c.te==='bottom')ey-=ML;
+    else if(c.te==='left')ex+=ML;else if(c.te==='right')ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom')c1y+=cp;else if(c.fe==='top')c1y-=cp;
+    else if(c.fe==='right')c1x+=cp;else if(c.fe==='left')c1x-=cp;
+    if(c.te==='top')c2y-=cp;else if(c.te==='bottom')c2y+=cp;
+    else if(c.te==='left')c2x-=cp;else if(c.te==='right')c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path');sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5,it=1-t;
+      const mx=ri(it*it*it*sx+3*it*it*t*c1x+3*it*t*t*c2x+t*t*t*ex);
+      const my=ri(it*it*it*sy+3*it*it*t*c1y+3*it*t*t*c2y+t*t*t*ey);
+      const lblCol='#555';
+      const FSIZE=11,PAD_X=7,PAD_Y=3;
+      const aw=c.lbl.length*FSIZE*0.62+PAD_X*2,ah=FSIZE+PAD_Y*2;
+      const bg=mk('rect');sa(bg,{x:mx-aw/2,y:my-ah/2,width:aw,height:ah,rx:4,fill:'white',stroke:lblCol,'stroke-width':1.2,opacity:0.97});svgEl.appendChild(bg);
+      const tl=mk('text');sa(tl,{x:mx,y:my,'font-size':FSIZE,fill:lblCol,'font-family':'monospace','font-weight':'700','text-anchor':'middle','dominant-baseline':'central'});
+      tl.textContent=c.lbl;svgEl.appendChild(tl);
+    }
+  });
+}
+function mk(tag){return document.createElementNS('http://www.w3.org/2000/svg',tag);}
+function sa(el,a){Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v));}
+</script>
+</body>
+</html>

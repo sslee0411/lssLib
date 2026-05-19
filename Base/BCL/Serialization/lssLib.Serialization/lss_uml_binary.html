@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Binary — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:4200px;min-height:2800px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:200px;line-height:1.5;}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+<h1>lssLib.Binary — UML 클래스 다이어그램</h1>
+<p class="sub">바이너리 파싱/직렬화 · Node-RED buffer-parser 호환 · 확장 메서드 전용 아키텍처 · BCL only · .NET 8.0</p>
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <button onclick="sz(0.36)">36%</button>
+  <span id="zlb">100%</span>
+</div>
+<div id="lg">
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>record/record struct</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e65100" stroke-width="1.8" stroke-dasharray="5,2" marker-end="url(#lgb)"/></svg>«creates»
+  </div>
+  <div class="li">
+    <svg width="54" height="16" style="flex-shrink:0"><defs><marker id="lgds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="14" markerHeight="12" orient="auto-start-reverse"><path d="M0 6L9 1L18 6L9 11Z" fill="#555"/></marker><marker id="lgda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker></defs><line x1="14" y1="8" x2="46" y2="8" stroke="#555" stroke-width="1.8" marker-start="url(#lgds)" marker-end="url(#lgda)"/></svg>composition
+  </div>
+</div>
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="4200" height="2800"></svg>
+  </div>
+</div>
+<script>
+'use strict';
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.2, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth) || 4200;
+  const nh = parseFloat(cv.style.minHeight) || 2800;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+const H = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function ctbl(kind, name, desc, members, ext, tw) {
+  tw = tw||400; ext = ext||'';
+  const bm={interface:'bi',abstract:'ba',class:'bc',enum:'be','record struct':'br',record:'br'};
+  const lm={interface:'«interface»',abstract:'«abstract»',class:'«class»',enum:'«enum»','record struct':'«record»',record:'«record»'};
+  const tc={interface:'ut-interface',abstract:'ut-abstract',class:'ut-class',enum:'ut-enum','record struct':'ut-record',record:'ut-record'};
+  const hc={interface:'uh-interface',abstract:'uh-abstract',class:'uh-class',enum:'uh-enum','record struct':'uh-record',record:'uh-record'};
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1=68, w2=175, w3=tw-w1-w2-4;
+  let rows='';
+  members.forEach(m=>{
+    if(m.s){rows+=`<tr class="sep"><td colspan="3">${m.s}</td></tr>`;return;}
+    const ab=m.mo==='abstract', ev=m.mo==='event';
+    const mo=(m.mo&&!ev)?`<span class="mm">${m.mo}</span>`:'';
+    rows+=`<tr><td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td></tr>`;
+  });
+  return `<table class="ut ${tc[kind]||''}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>${rows}</table>`;
+}
+
+const BOXES = {
+
+/* ── Col 0 · BufType ─────────────────────────────────────────── */
+'BufType': ctbl('enum','BufType','버퍼 필드 타입 · Node-RED buffer-parser 호환',[
+  {s:'── 정수 (Integer)'},
+  {t:'0',n:'Int8 / UInt8',d:'1B · 부호 있음/없음'},
+  {t:'',n:'Int16BE/LE · UInt16BE/LE',d:'2B · Big/Little Endian'},
+  {t:'',n:'Int32BE/LE · UInt32BE/LE',d:'4B · BE/LE'},
+  {t:'',n:'Int64BE/LE · UInt64BE/LE',d:'8B · BE/LE'},
+  {s:'── 실수 (IEEE 754)'},
+  {t:'',n:'FloatBE / FloatLE',d:'4B · 단정밀도 BE/LE'},
+  {t:'',n:'DoubleBE / DoubleLE',d:'8B · 배정밀도 BE/LE'},
+  {s:'── 고정소수점 (.NET decimal 128-bit)'},
+  {t:'',n:'DecimalLE / DecimalBE',d:'16B · 정밀도 28~29자리'},
+  {s:'── 논리/비트'},
+  {t:'',n:'Bool',d:'1B · 0=false'},
+  {t:'',n:'Bit',d:'1비트 · Size=비트인덱스 0~7'},
+  {s:'── 문자열 (Size B)'},
+  {t:'',n:'StringAscii / StringUtf8',d:'ASCII / UTF-8'},
+  {t:'',n:'StringHex / StringBase64',d:'HEX / Base64 문자열'},
+  {s:'── 원시'},
+  {t:'',n:'Raw',d:'byte[] 그대로 · Size B'},
+  {s:'── 배열 (Size = 원소 수)'},
+  {t:'',n:'Int8~UInt32 BEArray/LEArray',d:'Size × 1/2/4B'},
+  {t:'',n:'FloatBEArray / FloatLEArray',d:'Size × 4B'},
+  {t:'',n:'DoubleBEArray / DoubleLEArray',d:'Size × 8B'},
+  {t:'★',n:'DecimalLEArray / DecimalBEArray',d:'Size × 16B · decimal 배열'},
+],'',380),
+
+/* ── Col 1 · BufSchema · Field · FieldDto ───────────────────── */
+'SchemaField': ctbl('record','BufSchema.Field','스키마 필드 정의 (inner record, sealed)',[
+  {t:'string',n:'Name { get; }',d:'필드 이름'},
+  {t:'BufType',n:'Type { get; }',d:'데이터 타입'},
+  {t:'int',   n:'Offset { get; }',d:'버퍼 내 시작 바이트 위치'},
+  {t:'int',   n:'Size { get; }',d:'배열 원소 수 / 문자열 바이트 수'},
+],'',360),
+
+'SchemaFieldDto': ctbl('record','BufSchema.FieldDto','JSON 직렬화용 DTO (inner record)',[
+  {t:'string',n:'Name { get; init; }',d:''},
+  {t:'string',n:'Type { get; init; }',d:'BufType 이름 문자열'},
+  {t:'int',   n:'Offset { get; init; }',d:''},
+  {t:'int',   n:'Size { get; init; }',d:'기본값 1'},
+],'',360),
+
+'BufSchema': ctbl('class','BufSchema','버퍼 파싱 스키마 빌더 (sealed) · Add/Then 체이닝',[
+  {t:'IRL&lt;Field&gt;',n:'Fields { get; }',d:'등록된 필드 목록 (읽기 전용)'},
+  {t:'int',n:'Count { get; }',d:'등록된 필드 수'},
+  {t:'int',n:'TotalBytes { get; }',d:'스키마 총 바이트 수'},
+  {s:'── 필드 추가 (체이닝)'},
+  {t:'BufSchema',n:'Add(string name, BufType type, int offset, int size=1)',d:'offset 직접 지정'},
+  {t:'BufSchema',n:'Then(string name, BufType type, int size=1)',d:'offset 자동 계산 (이전 필드 직후)'},
+  {s:'── 조회'},
+  {t:'Field?',n:'GetField(string name)',d:'대소문자 무관'},
+  {t:'bool',  n:'Contains(string name)',d:''},
+  {t:'BufSchema',n:'Clone()',d:'스키마 복제 (독립 확장용)'},
+  {s:'── JSON 동적 로드'},
+  {t:'string',    mo:'static',n:'FromJson(string json)',d:'JSON → 스키마'},
+  {t:'BufSchema', mo:'static',n:'FromFields(IEnumerable&lt;FieldDto&gt; defs)',d:''},
+  {t:'string',n:'ToJson()',d:'스키마 → JSON'},
+  {s:'── 유틸 (static)'},
+  {t:'int',mo:'static',n:'FieldBytes(Field f)',d:'필드가 소비하는 바이트 수'},
+],'',450),
+
+/* ── Col 2 · BufResult · DecimalInfo ────────────────────────── */
+'BufResult': ctbl('class','BufResult','스키마 파싱 결과 (sealed) · BufferParser.Parse() 반환',[
+  {s:'── 기본 접근'},
+  {t:'T',    n:'Get&lt;T&gt;(string name)',d:'정확한 타입 지정 (불일치 시 InvalidCastException)'},
+  {t:'T',    n:'GetOr&lt;T&gt;(string name, T fallback)',d:'실패 시 기본값 반환 (예외 없음)'},
+  {t:'T',    n:'GetOrThrow&lt;T&gt;(string name, string errorMsg)',d:'없으면 InvalidOperationException'},
+  {s:'── 편의 메서드 (타입 자동 변환) ★권장'},
+  {t:'int',    n:'GetInt(string name)',d:'byte/short/int 모두 → int'},
+  {t:'float',  n:'GetFloat(string name)',d:'정수형 포함 → float'},
+  {t:'double', n:'GetDouble(string name)',d:'→ double'},
+  {t:'decimal',n:'GetDecimal(string name)',d:'금융/정밀값 · ushort→decimal 자동'},
+  {t:'string', n:'GetString(string name)',d:'모든 타입 → 포맷 문자열'},
+  {t:'byte[]', n:'GetRaw(string name)',d:'Raw/UInt8Array 전용'},
+  {s:'── 무결성 확인'},
+  {t:'bool',n:'IsAllOk { get; }',d:'모든 필드 오류 없으면 true'},
+  {t:'bool',n:'HasError(string name)',d:'해당 필드 파싱 오류 여부'},
+  {t:'bool',n:'Has(string name)',d:'필드 존재 여부'},
+  {t:'IEnumerable&lt;string&gt;',n:'ErrorFields { get; }',d:'오류 필드 이름 목록'},
+  {s:'── 접근자'},
+  {t:'object',n:'this[string name] { get; }',d:'인덱서'},
+  {t:'IEnumerable&lt;string&gt;',n:'Keys { get; }',d:''},
+  {t:'int',n:'Count { get; }',d:''},
+  {s:'── 출력'},
+  {t:'string',n:'ToString()',d:'전체 필드 "이름 = 값" 목록'},
+  {t:'string',n:'ToDump(string fieldName, int bytesPerLine=16)',d:'byte[] HexDump (주소+HEX+ASCII)'},
+],'',460),
+
+'DecimalInfo': ctbl('record','DecimalInfo','decimal 내부 구조 분해 결과 · Decompose() 반환',[
+  {t:'decimal',n:'Value { get; }',d:'원본 decimal 값'},
+  {t:'bool',   n:'IsNegative { get; }',d:'부호 (bit31)'},
+  {t:'int',    n:'Scale { get; }',d:'소수점 자릿수 0~28 (bits16-23)'},
+  {t:'ulong',  n:'Lo96 { get; }',d:'하위 64비트 정수'},
+  {t:'uint',   n:'Hi96 { get; }',d:'상위 32비트 정수'},
+  {t:'int[]',  n:'Bits { get; }',d:'GetBits [lo, mid, hi, flags]'},
+],'',400),
+
+/* ── Col 3 · BufferParser · BinaryExtensions ─────────────────── */
+'BufferParser': ctbl('class','BufferParser','Node-RED 호환 바이너리 파서 (sealed) · 체이닝 훅 지원',[
+  {t:'int',n:'Length { get; }',d:'버퍼 전체 바이트 수'},
+  {s:'── 팩토리 (static)'},
+  {t:'BufferParser',mo:'static',n:'From(byte[] raw)',d:'byte[] → 파서'},
+  {t:'BufferParser',mo:'static',n:'FromHex(string hex)',d:'HEX 문자열 (공백/하이픈/0x 자동 제거)'},
+  {t:'BufferParser',mo:'static',n:'FromBase64(string b64)',d:''},
+  {t:'BufferParser',mo:'static',n:'FromSpan(ReadOnlySpan&lt;byte&gt; s)',d:''},
+  {s:'── 정수 읽기'},
+  {t:'sbyte/byte',n:'ReadInt8(o) / ReadUInt8(o)',d:'1B'},
+  {t:'short/ushort',n:'ReadInt16BE/LE(o) / ReadUInt16BE/LE(o)',d:'2B BE/LE'},
+  {t:'int/uint',n:'ReadInt32BE/LE(o) / ReadUInt32BE/LE(o)',d:'4B BE/LE'},
+  {t:'long/ulong',n:'ReadInt64BE/LE(o) / ReadUInt64BE/LE(o)',d:'8B BE/LE'},
+  {s:'── 실수/decimal 읽기'},
+  {t:'float', n:'ReadFloatBE/LE(int o)',d:'4B BE/LE · IEEE 754'},
+  {t:'double',n:'ReadDoubleBE/LE(int o)',d:'8B BE/LE'},
+  {t:'★decimal',n:'ReadDecimalLE/BE(int o)',d:'16B LE/BE · 정밀도 28~29자리'},
+  {s:'── 논리/비트/문자열'},
+  {t:'bool',n:'ReadBool(int o)',d:'0≠false'},
+  {t:'bool',n:'ReadBit(int o, int bit)',d:'bit=0(LSB)~7(MSB)'},
+  {t:'byte',n:'ReadBitField(int o, byte mask)',d:'비트 마스크 추출'},
+  {t:'string',n:'ReadStringAscii/Utf8/Hex/Base64(o,n)',d:'\0 자동 제거'},
+  {s:'── 배열/Raw'},
+  {t:'T[]',n:'ReadInt16/UInt16/Float/DoubleBEArray(o,c)',d:''},
+  {t:'★decimal[]',n:'ReadDecimalLE/BEArray(int o, int c)',d:'c개 × 16B'},
+  {t:'byte[]',n:'ReadRaw(int o, int n)',d:''},
+  {t:'ReadOnlySpan&lt;byte&gt;',n:'ReadSpan(int o, int n)',d:'zero-copy'},
+  {s:'── 스키마 파싱'},
+  {t:'BufResult',n:'Parse(BufSchema schema)',d:'오류 필드는 "[ERR:...]" 문자열 저장'},
+  {s:'── 훅 이벤트 (BinaryExtensions 에서 주입)'},
+  {t:'Action?',mo:'event',n:'HookBefore',d:'(offset, size, typeName)'},
+  {t:'Action?',mo:'event',n:'HookAfter',d:'(offset, size, typeName, value)'},
+  {t:'Action?',mo:'event',n:'HookParsed',d:'(BufResult, BufSchema)'},
+  {t:'Func?',n:'Preprocessor',d:'byte[]→byte[] 전처리 함수'},
+  {s:'── 유틸'},
+  {t:'string',n:'ToHex(string sep=" ")',d:'전체 버퍼 HEX'},
+],'',480),
+
+'BinaryExtensions': ctbl('class','BinaryExtensions','byte[]/BufferParser/Struct/decimal 확장 메서드 (static)',[
+  {s:'── §1 byte[]/string → BufferParser'},
+  {t:'BufferParser',mo:'static',n:'ToParser(this byte[] bytes)',d:''},
+  {t:'BufferParser',mo:'static',n:'ToParser(this string hex)',d:'HEX 문자열'},
+  {s:'── §2 BufferParser 훅 체이닝'},
+  {t:'BufferParser',mo:'static',n:'WithLog(this BufferParser bp, Action&lt;string&gt; log)',d:'읽기 로그 주입'},
+  {t:'BufferParser',mo:'static',n:'WithHook(bp, onBefore, onAfter)',d:'커스텀 콜백'},
+  {t:'BufferParser',mo:'static',n:'OnParseDone(bp, Action&lt;BufResult,BufSchema&gt;)',d:'파싱 완료 콜백'},
+  {t:'BufferParser',mo:'static',n:'WithXorDecrypt(bp, byte key)',d:'XOR 복호화 전처리'},
+  {t:'BufferParser',mo:'static',n:'WithPreprocess(bp, Func&lt;byte[],byte[]&gt;)',d:'커스텀 전처리'},
+  {t:'BufferParser',mo:'static',n:'WithOffset(bp, int baseOffset)',d:'슬라이딩 윈도우'},
+  {t:'BufferParser',mo:'static',n:'WithStats(bp, Dictionary&lt;string,int&gt;)',d:'타입별 호출 횟수'},
+  {s:'── §3 byte[] Endian 읽기'},
+  {t:'short/ushort',mo:'static',n:'ReadInt16BE/LE(this byte[], int o)',d:'2B 직접 읽기'},
+  {t:'uint',mo:'static',n:'ReadUInt32BE/LE(this byte[], int o)',d:'4B'},
+  {t:'float',mo:'static',n:'ReadFloatBE/LE(this byte[], int o)',d:'4B'},
+  {t:'★decimal',mo:'static',n:'ReadDecimalLE/BE(this byte[], int o)',d:'16B LE/BE'},
+  {s:'── §4 값 → byte[] 변환'},
+  {t:'byte[]',mo:'static',n:'ToBigEndianBytes(this short/ushort/int/uint/long)',d:''},
+  {s:'── §5 decimal ↔ byte[]'},
+  {t:'byte[]',mo:'static',n:'ToBytes(this decimal value)',d:'16B LE (GetBits 직렬화)'},
+  {t:'byte[]',mo:'static',n:'ToBigEndianBytes(this decimal value)',d:'16B BE'},
+  {t:'byte[]',mo:'static',n:'ToLEBytes(this decimal[] values)',d:'count×16B LE'},
+  {t:'byte[]',mo:'static',n:'ToBEBytes(this decimal[] values)',d:'count×16B BE'},
+  {t:'decimal[]',mo:'static',n:'ToDecimalLEArray(this byte[], offset, count)',d:'복원'},
+  {t:'decimal[]',mo:'static',n:'ToDecimalBEArray(this byte[], offset, count)',d:'복원'},
+  {s:'── §6 decimal 분해'},
+  {t:'DecimalInfo',mo:'static',n:'Decompose(this decimal value)',d:'부호·Scale·내부 정수 분해'},
+  {s:'── §7 byte[] 유틸'},
+  {t:'string',mo:'static',n:'ToHexString(this byte[], string sep=" ")',d:'HEX 문자열'},
+  {t:'ushort',mo:'static',n:'SwapEndian/ToNetworkOrder(this ushort/uint)',d:'Endian 변환'},
+  {s:'── §8 Struct 확장'},
+  {t:'T',mo:'static',n:'To&lt;T&gt;(this byte[], int offset=0)',d:'byte[]→Struct (Marshal)'},
+  {t:'T',mo:'static',n:'ToStruct&lt;T&gt;(this ReadOnlySpan&lt;byte&gt;)',d:'zero-copy'},
+  {t:'byte[]',mo:'static',n:'ToBytes&lt;T&gt;(this T structure)',d:'Struct→byte[]'},
+  {t:'string',mo:'static',n:'Dump&lt;T&gt;(this T structure)',d:'HEX덤프+필드목록 (디버그)'},
+  {t:'bool',mo:'static',n:'ByteEquals&lt;T&gt;(this T a, T b)',d:'바이트 단위 동등 비교'},
+],'',490),
+
+/* ── Col 4 · BufferWriter · StreamParser ────────────────────── */
+'BufferWriter': ctbl('class','BufferWriter','바이너리 프레임 빌더 (sealed) · BufferParser 의 쓰기 방향',[
+  {t:'int',n:'Length { get; }',d:'현재 기록된 바이트 수'},
+  {s:'── 팩토리 (static)'},
+  {t:'BufferWriter',mo:'static',n:'Create(int capacity=64)',d:''},
+  {s:'── 정수 쓰기 (체이닝)'},
+  {t:'BufferWriter',n:'WriteInt8/UInt8(v)',d:'1B'},
+  {t:'BufferWriter',n:'WriteInt16BE/LE / WriteUInt16BE/LE(v)',d:'2B'},
+  {t:'BufferWriter',n:'WriteInt32BE/LE / WriteUInt32BE/LE(v)',d:'4B'},
+  {t:'BufferWriter',n:'WriteInt64BE/LE / WriteUInt64BE/LE(v)',d:'8B'},
+  {s:'── 실수/decimal 쓰기'},
+  {t:'BufferWriter',n:'WriteFloatBE/LE(float v)',d:'4B IEEE 754'},
+  {t:'BufferWriter',n:'WriteDoubleBE/LE(double v)',d:'8B'},
+  {t:'★BufferWriter',n:'WriteDecimalLE/BE(decimal v)',d:'16B · GetBits LE/BE'},
+  {t:'★BufferWriter',n:'WriteDecimalLEArray/BEArray(decimal[] values)',d:'count×16B'},
+  {s:'── 문자열/원시'},
+  {t:'BufferWriter',n:'WriteBool(bool v)',d:'1B · true=1'},
+  {t:'BufferWriter',n:'WriteStringAscii/Utf8(string s, int fixedLen=0)',d:'\0 패딩'},
+  {t:'BufferWriter',n:'WriteRaw(byte[] data)',d:''},
+  {t:'BufferWriter',n:'WritePad(int count, byte value=0x00)',d:'예약/패딩'},
+  {s:'── 특정 위치 덮어쓰기 (Patch)'},
+  {t:'BufferWriter',n:'PatchByte(int offset, byte value)',d:'체크섬 사후 삽입'},
+  {t:'BufferWriter',n:'PatchUInt16BE(int offset, ushort value)',d:'Length 필드 채우기'},
+  {s:'── 결과 반환'},
+  {t:'byte[]',       n:'ToBytes()',d:''},
+  {t:'BufferParser', n:'ToParser()',d:'왕복 검증용 · 즉시 파싱 가능'},
+  {t:'string',       n:'ToHex(string sep=" ")',d:''},
+],'',450),
+
+'StreamParser': ctbl('class','StreamParser','TCP/Serial 수신 버퍼 STX 프레임 탐색기 (sealed) · 일회성',[
+  {t:'int',n:'Position { get; }',d:'현재 스캔 위치 (절대 offset)'},
+  {t:'int',n:'Length { get; }',d:'전체 버퍼 길이'},
+  {t:'int',n:'Remaining { get; }',d:'현재 위치 ~ 끝 남은 바이트'},
+  {s:'── 생성'},
+  {t:'',n:'StreamParser(byte[] data, int startPos=0)',d:''},
+  {s:'── 프레임 탐색'},
+  {t:'bool',n:'FindNext(byte stx, int frameLen, out int offset)',d:'고정 길이 프레임 · STX 탐색'},
+  {t:'bool',n:'FindNext(byte[] stxBytes, frameLen, out int offset, out byte foundStx)',d:'다중 STX 패턴'},
+  {s:'── 슬라이스/이동'},
+  {t:'byte[]',n:'Slice(int offset, int length)',d:'프레임 복사 반환'},
+  {t:'void', n:'Advance(int newPos)',d:'스캔 위치 이동 (처리 후)'},
+  {t:'void', n:'Skip(int delta)',d:'현재 위치에서 delta 앞으로'},
+  {s:'── 검사/직접 읽기'},
+  {t:'bool',   n:'HasBytes(int offset, int length)',d:'가변 길이 수신 완료 확인'},
+  {t:'ushort', n:'ReadUInt16BE(int offset)',d:'Length 필드 미리 확인'},
+  {t:'byte',   n:'ReadByte(int offset)',d:'STX 확인'},
+  {t:'string', n:'ToHex(string sep=" ")',d:''},
+],'',450),
+
+/* ── Col 5 · RingBuffer ─────────────────────────────────────── */
+'RingBuffer': ctbl('class','RingBuffer','TCP/Serial 수신 스트림 순환 버퍼 (sealed) · 지속 수신-파싱 분리',[
+  {t:'int', n:'Capacity { get; }',d:'버퍼 전체 용량 (바이트)'},
+  {t:'int', n:'Count { get; }',d:'현재 저장된 바이트 수'},
+  {t:'int', n:'Available { get; }',d:'Capacity - Count'},
+  {t:'bool',n:'HasData { get; }',d:'저장 데이터 여부'},
+  {s:'── 생성'},
+  {t:'',n:'RingBuffer(int capacity, bool threadSafe=false)',d:'threadSafe=lock 기반'},
+  {s:'── Write'},
+  {t:'void', n:'Write(byte[] data, int offset=0, int? count=null)',d:'오버플로우 시 예외'},
+  {t:'void', n:'WriteByte(byte value)',d:'단일 바이트'},
+  {t:'bool', n:'TryWrite(byte[] data, ...)',d:'공간 부족 시 false (예외 없음)'},
+  {s:'── Read / Peek'},
+  {t:'byte[]',n:'Read(int count)',d:'소비 (읽고 제거)'},
+  {t:'byte[]',n:'Peek(int count)',d:'소비 없이 미리 보기'},
+  {t:'byte', n:'PeekByte(int offset=0)',d:'특정 offset 바이트 미리 보기'},
+  {s:'── 프레임 추출 ★핵심'},
+  {t:'bool',n:'TryReadFrame(byte stx, int length, out byte[] frame)',d:'고정 길이 · STX 이전 쓰레기 자동 제거'},
+  {t:'bool',n:'TryReadVariableFrame(byte stx, int lengthOffset, int lengthSize, bool bigEndian, int overhead, out byte[] frame)',d:'가변 길이 · Length 필드 자동 읽기'},
+  {s:'── 유틸'},
+  {t:'int',  n:'SkipTo(byte stx)',d:'STX 이전 데이터 버림 (재동기화)'},
+  {t:'void', n:'Clear()',d:'버퍼 완전 초기화'},
+  {t:'string',n:'ToHex(string sep=" ")',d:'현재 버퍼 HEX (소비 없음)'},
+],'',480),
+
+/* ── Col 6 · Diff ────────────────────────────────────────────── */
+'DiffResult': ctbl('record','DiffResult','두 버퍼 비교 결과 · BufferDiff.Compare() 반환',[
+  {t:'int',   n:'LengthA / LengthB { get; }',d:'비교 버퍼 A/B 길이'},
+  {t:'int',   n:'ChangedCount { get; }',d:'변경된 바이트 수'},
+  {t:'bool',  n:'HasChanges { get; }',d:'변경 여부'},
+  {t:'bool',  n:'IsIdentical { get; }',d:'완전 동일 여부'},
+  {t:'double',n:'Similarity { get; }',d:'유사도 0.0~1.0'},
+  {t:'IRL&lt;int&gt;',n:'ChangedOffsets { get; }',d:'변경된 offset 목록'},
+  {t:'IRL&lt;(int,byte,byte)&gt;',n:'Patches { get; }',d:'(offset, oldVal, newVal)'},
+  {t:'string',n:'ToPatchString()',d:'변경 내용 텍스트 요약'},
+],'',400),
+
+'FieldDiffEntry': ctbl('record','FieldDiffEntry','필드 단위 비교 항목',[
+  {t:'string',n:'Name { get; }',d:'필드 이름'},
+  {t:'int',   n:'Offset / Size { get; }',d:''},
+  {t:'byte[]',n:'ValA / ValB { get; }',d:'비교 버퍼 A/B 해당 필드 바이트'},
+  {t:'string',n:'Status { get; }',d:'"동일" | "변경"'},
+  {t:'bool',  n:'IsChanged { get; }',d:'Status == "변경"'},
+],'',400),
+
+'FieldDiffResult': ctbl('class','FieldDiffResult','스키마 기반 필드 비교 결과 (sealed)',[
+  {t:'IRL&lt;FieldDiffEntry&gt;',n:'ChangedFields { get; }',d:'변경된 필드 목록'},
+  {t:'IRL&lt;FieldDiffEntry&gt;',n:'SameFields { get; }',d:'동일한 필드 목록'},
+  {t:'bool',n:'HasChanges { get; }',d:'변경 여부'},
+  {t:'bool',n:'HasFieldChanged(string fieldName)',d:'특정 필드 변경 여부'},
+  {t:'IEnumerable&lt;string&gt;',n:'ChangedFieldNames { get; }',d:''},
+  {t:'string',n:'Summary { get; }',d:'요약 문자열'},
+],'',420),
+
+'BufferDiff': ctbl('class','BufferDiff','버퍼 비교/차이 분석/패치 정적 클래스',[
+  {s:'── 전체 비교 (static)'},
+  {t:'DiffResult',mo:'static',n:'Compare(byte[] a, byte[] b)',d:'바이트 단위 비교 · Patches 포함'},
+  {t:'bool',      mo:'static',n:'IsEqual(byte[] a, byte[] b)',d:'완전 동일 여부'},
+  {t:'double',    mo:'static',n:'Similarity(byte[] a, byte[] b)',d:'유사도 0.0~1.0'},
+  {s:'── 마스킹 비교 (확장 메서드)'},
+  {t:'bool',mo:'static',n:'MaskedEquals(this byte[] a, byte[] b, int[] ignoreOffsets)',d:'CRC/타임스탬프 제외'},
+  {t:'bool',mo:'static',n:'MaskedEquals(this byte[], byte[], BufSchema, string[] ignoreFields)',d:'스키마 기반 마스킹'},
+  {s:'── 스키마 필드 단위 비교 (static)'},
+  {t:'FieldDiffResult',mo:'static',n:'CompareFields(byte[] a, byte[] b, BufSchema schema, string[]? ignoreFields)',d:'어떤 필드 변경됐는지 이름으로'},
+  {s:'── 패치 적용 (static)'},
+  {t:'byte[]',mo:'static',n:'ApplyPatches(byte[] source, DiffResult diff)',d:'diff 적용 → B 버퍼 재현'},
+  {t:'byte[]',mo:'static',n:'CommonBytes(byte[] a, byte[] b)',d:'공통 바이트 반환'},
+],'',470),
+};
+
+const COL = {
+  0: ['BufType'],
+  1: ['SchemaField','SchemaFieldDto','BufSchema'],
+  2: ['BufResult','DecimalInfo'],
+  3: ['BufferParser','BinaryExtensions'],
+  4: ['BufferWriter','StreamParser'],
+  5: ['RingBuffer'],
+  6: ['DiffResult','FieldDiffEntry','FieldDiffResult','BufferDiff'],
+};
+
+const FG = [
+  { lbl:'lssLib.Binary  Schema',     ns:['BufType','SchemaField','SchemaFieldDto','BufSchema'],    color:'#dc2626' },
+  { lbl:'lssLib.Binary  Result',     ns:['BufResult','DecimalInfo'],                               color:'#7c3aed' },
+  { lbl:'lssLib.Binary  Parser',     ns:['BufferParser','BinaryExtensions'],                       color:'#2563eb' },
+  { lbl:'lssLib.Binary  Writer+Stream',ns:['BufferWriter','StreamParser'],                         color:'#d97706' },
+  { lbl:'lssLib.Binary  RingBuffer', ns:['RingBuffer'],                                            color:'#059669' },
+  { lbl:'lssLib.Binary  Diff',       ns:['DiffResult','FieldDiffEntry','FieldDiffResult','BufferDiff'], color:'#0891b2' },
+];
+
+const CONN = [
+  // BufSchema ◆→ Field (comp)
+  { f:'BufSchema', fe:'top', t:'SchemaField', te:'bottom', ty:'comp', lbl:'1◆*', xoff:0 },
+  // SchemaField → BufType (uses)
+  { f:'SchemaField', fe:'left', t:'BufType', te:'right', ty:'uses', lbl:'uses', xoff:0 },
+  // BufSchema → BufType (uses)
+  { f:'BufSchema', fe:'left', t:'BufType', te:'right', ty:'uses', lbl:'uses', xoff:20 },
+  // BufferParser → BufSchema (uses)
+  { f:'BufferParser', fe:'left', t:'BufSchema', te:'right', ty:'uses', lbl:'uses', xoff:0 },
+  // BufferParser →«creates»→ BufResult
+  { f:'BufferParser', fe:'left', t:'BufResult', te:'right', ty:'bld', lbl:'«creates»', xoff:0 },
+  // BinaryExtensions → BufferParser (extends/uses)
+  { f:'BinaryExtensions', fe:'top', t:'BufferParser', te:'bottom', ty:'uses', lbl:'extends', xoff:0 },
+  // BinaryExtensions →«creates»→ DecimalInfo
+  { f:'BinaryExtensions', fe:'right', t:'DecimalInfo', te:'left', ty:'bld', lbl:'«creates»', xoff:0 },
+  // BufferWriter →«creates»→ BufferParser (ToParser)
+  { f:'BufferWriter', fe:'left', t:'BufferParser', te:'right', ty:'bld', lbl:'ToParser()', xoff:0 },
+  // BufferDiff →«creates»→ DiffResult
+  { f:'BufferDiff', fe:'top', t:'DiffResult', te:'bottom', ty:'bld', lbl:'«creates»', xoff:-20 },
+  // BufferDiff →«creates»→ FieldDiffResult
+  { f:'BufferDiff', fe:'top', t:'FieldDiffResult', te:'bottom', ty:'bld', lbl:'«creates»', xoff:20 },
+  // FieldDiffResult ◆→ FieldDiffEntry
+  { f:'FieldDiffResult', fe:'top', t:'FieldDiffEntry', te:'bottom', ty:'comp', lbl:'1◆*', xoff:0 },
+];
+
+const GAP_COL=160, PAD_STACK=50, START_X=30, START_Y=40;
+const cv = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+Object.keys(BOXES).forEach(name=>{
+  const div=document.createElement('div');
+  div.className='bw'; div.dataset.box=name;
+  div.style.left='0px'; div.style.top='0px';
+  div.innerHTML=BOXES[name];
+  cv.insertBefore(div,svgEl);
+});
+
+const gb=n=>{const el=cv.querySelector(`[data-box="${n}"]`);return el?{el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight}:null;};
+const bot=n=>{const b=gb(n);return b?b.y+b.h:0;};
+const setX=(n,x)=>{const el=cv.querySelector(`[data-box="${n}"]`);if(el)el.style.left=x+'px';};
+const setY=(n,y)=>{const el=cv.querySelector(`[data-box="${n}"]`);if(el)el.style.top=y+'px';};
+const ri=v=>Math.round(v);
+
+requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  const colW={};
+  Object.entries(COL).forEach(([ci,ns])=>{
+    colW[ci]=Math.max(...ns.map(n=>{const b=gb(n);return b?b.w:0;}));
+  });
+  const colX={};
+  let cx=START_X;
+  Object.keys(COL).sort().forEach(ci=>{colX[ci]=cx;cx+=colW[ci]+GAP_COL;});
+  Object.entries(COL).forEach(([ci,ns])=>ns.forEach(n=>setX(n,colX[ci])));
+
+  requestAnimationFrame(()=>{
+    setY('BufType',START_Y);
+    setY('SchemaField',START_Y);
+    setY('BufResult',START_Y);
+    setY('BufferParser',START_Y);
+    setY('BufferWriter',START_Y);
+    setY('RingBuffer',START_Y);
+    setY('DiffResult',START_Y);
+
+    requestAnimationFrame(()=>{
+      setY('SchemaFieldDto',bot('SchemaField')+PAD_STACK);
+      setY('DecimalInfo',bot('BufResult')+PAD_STACK);
+      setY('BinaryExtensions',bot('BufferParser')+PAD_STACK);
+      setY('StreamParser',bot('BufferWriter')+PAD_STACK);
+      setY('FieldDiffEntry',bot('DiffResult')+PAD_STACK);
+
+      requestAnimationFrame(()=>{
+        setY('BufSchema',bot('SchemaFieldDto')+PAD_STACK);
+        setY('FieldDiffResult',bot('FieldDiffEntry')+PAD_STACK);
+
+        requestAnimationFrame(()=>{
+          setY('BufferDiff',bot('FieldDiffResult')+PAD_STACK);
+          requestAnimationFrame(()=>drawAll());
+        });
+      });
+    });
+  });
+}));
+
+function drawAll(){
+  const pos={};
+  cv.querySelectorAll('.bw').forEach(el=>{
+    pos[el.dataset.box]={x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW=Math.max(...Object.values(pos).map(p=>p.x+p.w))+80;
+  const maxH=Math.max(...Object.values(pos).map(p=>p.y+p.h))+100;
+  cv.style.minWidth=maxW+'px'; cv.style.minHeight=maxH+'px';
+  svgEl.setAttribute('width',maxW); svgEl.setAttribute('height',maxH);
+  const ph=document.getElementById('cv-phantom');
+  ph.style.width=Math.ceil(maxW*zl)+'px';
+  ph.style.height=Math.ceil(maxH*zl)+'px';
+
+  svgEl.innerHTML=`<defs>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker>
+    <marker id="mb" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2L10 6L1 10" fill="none" stroke="#e65100" stroke-width="2.5" stroke-linecap="round"/></marker>
+    <marker id="mds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 6L9 1L18 6L9 11Z" fill="#555"/></marker>
+    <marker id="mda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2L10 6L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker>
+  </defs>`;
+
+  FG.forEach(fg=>{
+    const bs=fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length)return;
+    const pd=14,x1=Math.min(...bs.map(b=>b.x))-pd,y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect');sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect');sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text');sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl;svgEl.appendChild(tx);
+  });
+
+  function ep(b,e){
+    if(e==='top')return[b.x+b.w/2,b.y];
+    if(e==='bottom')return[b.x+b.w/2,b.y+b.h];
+    if(e==='left')return[b.x,b.y+b.h/2];
+    if(e==='right')return[b.x+b.w,b.y+b.h/2];
+    return[b.x+b.w/2,b.y];
+  }
+  const SY={
+    uses:{stroke:'#888','stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    bld:{stroke:'#e65100','stroke-width':1.5,'stroke-dasharray':'5,2','marker-end':'url(#mb)'},
+    comp:{stroke:'#555','stroke-width':1.5,'stroke-dasharray':'4,2','marker-start':'url(#mds)','marker-end':'url(#mda)'},
+  };
+  CONN.forEach(c=>{
+    const fb=pos[c.f],tb=pos[c.t];if(!fb||!tb)return;
+    const [sx,sy]=ep(fb,c.fe).map(ri);
+    const [tx2,ty2]=ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')ey+=ML;else if(c.te==='bottom')ey-=ML;
+    else if(c.te==='left')ex+=ML;else if(c.te==='right')ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom')c1y+=cp;else if(c.fe==='top')c1y-=cp;
+    else if(c.fe==='right')c1x+=cp;else if(c.fe==='left')c1x-=cp;
+    if(c.te==='top')c2y-=cp;else if(c.te==='bottom')c2y+=cp;
+    else if(c.te==='left')c2x-=cp;else if(c.te==='right')c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path');sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5,it=1-t;
+      const mx=ri(it*it*it*sx+3*it*it*t*c1x+3*it*t*t*c2x+t*t*t*ex);
+      const my=ri(it*it*it*sy+3*it*it*t*c1y+3*it*t*t*c2y+t*t*t*ey);
+      const lblCol={uses:'#555',bld:'#c84000',comp:'#333'}[c.ty]||'#444';
+      const FSIZE=11,PAD_X=7,PAD_Y=3;
+      const aw=c.lbl.length*FSIZE*0.62+PAD_X*2,ah=FSIZE+PAD_Y*2;
+      const bg=mk('rect');sa(bg,{x:mx-aw/2,y:my-ah/2,width:aw,height:ah,rx:4,fill:'white',stroke:lblCol,'stroke-width':1.2,opacity:0.97});svgEl.appendChild(bg);
+      const tl=mk('text');sa(tl,{x:mx,y:my,'font-size':FSIZE,fill:lblCol,'font-family':'monospace','font-weight':'700','text-anchor':'middle','dominant-baseline':'central'});
+      tl.textContent=c.lbl;svgEl.appendChild(tl);
+    }
+  });
+}
+function mk(tag){return document.createElementNS('http://www.w3.org/2000/svg',tag);}
+function sa(el,a){Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v));}
+</script>
+</body>
+</html>
