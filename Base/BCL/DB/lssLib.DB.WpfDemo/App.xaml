@@ -1,0 +1,91 @@
+<Application x:Class="lssLib.DB.WpfDemo.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+
+        <!-- ── 공통 색상 ── -->
+        <SolidColorBrush x:Key="BrushPrimary"    Color="#2B579A"/>
+        <SolidColorBrush x:Key="BrushAccent"     Color="#217346"/>
+        <SolidColorBrush x:Key="BrushError"      Color="#C00000"/>
+        <SolidColorBrush x:Key="BrushBg"         Color="#F5F5F5"/>
+        <SolidColorBrush x:Key="BrushPanel"      Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BrushBorder"     Color="#CCCCCC"/>
+        <SolidColorBrush x:Key="BrushTextSub"    Color="#666666"/>
+
+        <!-- ── 공통 버튼 스타일 ── -->
+        <Style x:Key="BtnPrimary" TargetType="Button">
+            <Setter Property="Background"   Value="{StaticResource BrushPrimary}"/>
+            <Setter Property="Foreground"   Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"      Value="14,6"/>
+            <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1A4580"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#AAAAAA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BtnSuccess" TargetType="Button"
+               BasedOn="{StaticResource BtnPrimary}">
+            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#165230"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BtnDanger" TargetType="Button"
+               BasedOn="{StaticResource BtnPrimary}">
+            <Setter Property="Background" Value="{StaticResource BrushError}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#8B0000"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ── 공통 TextBox 스타일 ── -->
+        <Style x:Key="TxtInput" TargetType="TextBox">
+            <Setter Property="BorderBrush"      Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness"  Value="1"/>
+            <Setter Property="Padding"          Value="6,4"/>
+            <Setter Property="FontSize"         Value="12"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ── 공통 GroupBox 스타일 ── -->
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin"           Value="0,4"/>
+            <Setter Property="Padding"          Value="8"/>
+            <Setter Property="BorderBrush"      Value="{StaticResource BrushBorder}"/>
+            <Setter Property="FontWeight"       Value="SemiBold"/>
+        </Style>
+
+        <!-- ── 상태바 텍스트 스타일 ── -->
+        <Style x:Key="TxtStatus" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSub}"/>
+            <Setter Property="Padding"    Value="6,2"/>
+        </Style>
+
+    </Application.Resources>
+</Application>
