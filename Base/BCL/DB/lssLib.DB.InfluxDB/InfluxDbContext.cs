@@ -453,12 +453,10 @@ public sealed class InfluxDbContext : DbContextBase
     // ─────────────────────────────────────────────────────────────────
 
     /// <inheritdoc/>
-    public new async ValueTask DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         await CloseAsync().ConfigureAwait(false);
         await base.DisposeAsync().ConfigureAwait(false);
     }
-    // public override async ValueTask DisposeAsync() ->
-    // public new async ValueTask DisposeAsync() 로 수정함
 
 }

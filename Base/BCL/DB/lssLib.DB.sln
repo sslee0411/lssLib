@@ -7,6 +7,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB", "lssLib.DB\lssL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.InfluxDB", "lssLib.DB.InfluxDB\lssLib.DB.InfluxDB.csproj", "{9C01BA05-2A68-4668-A601-106944E0D624}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.MsSQL", "lssLib.DB.MsSQL\lssLib.DB.MsSQL.csproj", "{CA4362AA-9BDE-4B84-832A-2293EB4C1FA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.Oracle", "lssLib.DB.Oracle\lssLib.DB.Oracle.csproj", "{C6BAABE6-BD21-4565-8BBE-0455E7F4EC4A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.MySql", "lssLib.DB.MySql\lssLib.DB.MySql.csproj", "{2C27DAE6-2044-45DB-BC8B-695B1F19B676}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.Sqlite", "lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj", "{01460CD4-5307-4948-A0EA-DD30E1234F0A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +29,22 @@ Global
 		{9C01BA05-2A68-4668-A601-106944E0D624}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C01BA05-2A68-4668-A601-106944E0D624}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C01BA05-2A68-4668-A601-106944E0D624}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA4362AA-9BDE-4B84-832A-2293EB4C1FA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA4362AA-9BDE-4B84-832A-2293EB4C1FA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA4362AA-9BDE-4B84-832A-2293EB4C1FA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA4362AA-9BDE-4B84-832A-2293EB4C1FA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6BAABE6-BD21-4565-8BBE-0455E7F4EC4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6BAABE6-BD21-4565-8BBE-0455E7F4EC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6BAABE6-BD21-4565-8BBE-0455E7F4EC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6BAABE6-BD21-4565-8BBE-0455E7F4EC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C27DAE6-2044-45DB-BC8B-695B1F19B676}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C27DAE6-2044-45DB-BC8B-695B1F19B676}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C27DAE6-2044-45DB-BC8B-695B1F19B676}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C27DAE6-2044-45DB-BC8B-695B1F19B676}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01460CD4-5307-4948-A0EA-DD30E1234F0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01460CD4-5307-4948-A0EA-DD30E1234F0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01460CD4-5307-4948-A0EA-DD30E1234F0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01460CD4-5307-4948-A0EA-DD30E1234F0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

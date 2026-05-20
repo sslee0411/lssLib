@@ -391,8 +391,11 @@ public abstract class DbContextBase : IDbContext
 
     // §11 ─ IAsyncDisposable
     // ─────────────────────────────────────────────────────────────────
-    /// <inheritdoc/>
-    public async ValueTask DisposeAsync()
+    /// <remarks>
+    /// virtual 선언으로 파생 클래스에서 override 가능.
+    /// 파생 클래스 override 시 base.DisposeAsync() 호출 필수.
+    /// </remarks>
+    public async virtual ValueTask DisposeAsync()
     {
         if (_disposed) return;
         _disposed = true;
