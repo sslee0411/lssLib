@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.DB — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8; --bd-tertiary:#eeeff3;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00; --tx-danger:#b81a1a;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52; --bd-tertiary:#32334a;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d; --tx-danger:#ef9a9a;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:6000px;min-height:3000px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:175px;line-height:1.5;}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+<h1>lssLib.DB — UML 클래스 다이어그램</h1>
+<p class="sub">Core + Contracts + Abstractions + 5 Providers (InfluxDB / MsSql / Oracle / MySQL / SQLite) · .NET 8.0 · C# 12</p>
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <button onclick="sz(0.36)">36%</button>
+  <span id="zlb">100%</span>
+</div>
+<div id="lg">
+  <div class="li"><span style="background:#dbeafe;color:#1e3a8a;border:1.5px solid #2563eb;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«interface»</span>인터페이스</div>
+  <div class="li"><span style="background:#fef3c7;color:#78350f;border:1.5px solid #d97706;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«abstract»</span>추상 클래스</div>
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li"><span style="background:#ede9fe;color:#3b0764;border:1.5px solid #7c3aed;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«record»</span>record/record struct</div>
+  <div class="li">
+    <svg width="42" height="14" style="flex-shrink:0"><defs><marker id="lge" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="white" stroke="#e040fb" stroke-width="1.5"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#e040fb" stroke-width="2" marker-end="url(#lge)"/></svg>extends
+  </div>
+  <div class="li">
+    <svg width="42" height="14" style="flex-shrink:0"><defs><marker id="lgi" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="white" stroke="#4f8ef7" stroke-width="1.5"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#4f8ef7" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgi)"/></svg>implements
+  </div>
+  <div class="li">
+    <svg width="42" height="14" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 1L9 5L0 9" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"/></marker></defs><line x1="0" y1="7" x2="28" y2="7" stroke="#888" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+</div>
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="6000" height="3000"></svg>
+  </div>
+</div>
+<script>
+'use strict';
+let zl = 0.52;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.2, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = 'scale(' + zl + ')';
+  const nw = parseFloat(cv.style.minWidth)  || 6000;
+  const nh = parseFloat(cv.style.minHeight) || 3000;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+const H = s => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function ctbl(kind, name, desc, members, ext, tw) {
+  tw = tw || 400; ext = ext || '';
+  const bm = { interface:'bi', abstract:'ba', class:'bc', enum:'be', 'record struct':'br', record:'br' };
+  const lm = { interface:'«interface»', abstract:'«abstract»', class:'«class»', enum:'«enum»', 'record struct':'«record»', record:'«record»' };
+  const tc = { interface:'ut-interface', abstract:'ut-abstract', class:'ut-class', enum:'ut-enum', 'record struct':'ut-record', record:'ut-record' };
+  const hc = { interface:'uh-interface', abstract:'uh-abstract', class:'uh-class', enum:'uh-enum', 'record struct':'uh-record', record:'uh-record' };
+  const ex = ext ? ' <span class="cex">: ' + H(ext) + '</span>' : '';
+  const w1 = 72, w2 = 170, w3 = tw - w1 - w2 - 4;
+  let rows = '';
+  members.forEach(function(m) {
+    if (m.s) { rows += '<tr class="sep"><td colspan="3">' + m.s + '</td></tr>'; return; }
+    const ab = m.mo === 'abstract', ev = m.mo === 'event';
+    const mo = (m.mo && !ev) ? '<span class="mm">' + m.mo + '</span>' : '';
+    rows += '<tr><td style="width:' + w1 + 'px" class="' + (ev ? 'ev' : 'mt') + (ab ? ' mab' : '') + '">' + H(m.t || '') + '</td>' +
+      '<td style="width:' + w2 + 'px" class="mn' + (ab ? ' mab' : '') + '">' + mo + H(m.n) + '</td>' +
+      '<td style="width:' + w3 + 'px" class="md">' + (m.d || '') + '</td></tr>';
+  });
+  return '<table class="ut ' + (tc[kind] || 'ut-class') + '" style="width:' + tw + 'px">' +
+    '<tr class="' + (hc[kind] || 'uh-class') + '"><td colspan="3">' +
+    '<span class="bx ' + (bm[kind] || 'bc') + '">' + (lm[kind] || kind) + '</span>' +
+    '<span class="cn"> ' + H(name) + '</span>' + ex +
+    '<span class="ct"> ' + desc + '</span></td></tr>' +
+    '<tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>' + rows + '</table>';
+}
+
+const BOXES = {
+  // ── Col 0: Core Enums ──────────────────────────────────────────────
+  'DbProviderType': ctbl('enum','DbProviderType','지원 DB 종류',[
+    {t:'0',n:'InfluxDB',d:'InfluxDB v2.0 시계열 DB'},
+    {t:'1',n:'MsSql',d:'Microsoft SQL Server'},
+    {t:'2',n:'Oracle',d:'Oracle Database'},
+    {t:'3',n:'MySql',d:'MySQL / MariaDB'},
+    {t:'4',n:'Sqlite',d:'SQLite 파일 기반'},
+  ],'',240),
+
+  'DbResultStatus': ctbl('enum','DbResultStatus','DB 실행 결과 상태',[
+    {t:'0',n:'Ok',d:'성공'},
+    {t:'1',n:'Fail',d:'실패'},
+    {t:'2',n:'Error',d:'예외 발생'},
+    {t:'3',n:'Timeout',d:'연결 없음 / 타임아웃'},
+  ],'',240),
+
+  'DbErrorCode': ctbl('enum','DbErrorCode','DB 실행 오류 코드',[
+    {s:'── 연결'},
+    {t:'1001',n:'ConnectionFailed',d:'연결 실패'},
+    {t:'1002',n:'ConnectionTimeout',d:'연결 타임아웃'},
+    {t:'1003',n:'InvalidConnectionString',d:'연결 문자열 오류'},
+    {s:'── 쿼리/실행'},
+    {t:'2001',n:'InvalidQuery',d:'SQL 문법 오류'},
+    {t:'2002',n:'CommandTimeout',d:'실행 타임아웃'},
+    {t:'2003',n:'InvalidParameter',d:'파라미터 오류'},
+    {t:'2004',n:'SpNotFound',d:'SP 없음'},
+    {s:'── 트랜잭션'},
+    {t:'3001',n:'TransactionFailed',d:'트랜잭션 시작 실패'},
+    {t:'3002',n:'CommitFailed',d:'커밋 실패'},
+    {t:'3003',n:'RollbackFailed',d:'롤백 실패'},
+    {s:'── 데이터'},
+    {t:'4001',n:'DuplicateKey',d:'중복 키 오류'},
+    {t:'4002',n:'ForeignKeyViolation',d:'외래 키 제약 위반'},
+    {t:'5001',n:'SpReturnError',d:'SP 반환 코드 오류'},
+    {s:'── InfluxDB 전용'},
+    {t:'6001',n:'FluxQueryError',d:'Flux 쿼리 오류'},
+    {t:'6002',n:'LineProtocolError',d:'Line Protocol 오류'},
+    {t:'6003',n:'BucketNotFound',d:'버킷 없음'},
+  ],'',265),
+
+  'DbParamType': ctbl('enum','DbParamType','DB 파라미터 값 타입',[
+    {t:'Auto',n:'Auto',d:'자동 추론 (.NET 타입 기반)'},
+    {s:'── 문자열'},
+    {t:'',n:'VarChar / Char / Text',d:'가변/고정/대용량 문자열'},
+    {s:'── 정수'},
+    {t:'',n:'TinyInt / SmallInt / Int / BigInt',d:'1/2/4/8바이트'},
+    {s:'── 실수'},
+    {t:'',n:'Float / Double / Decimal',d:'단/배정도 / 고정소수점'},
+    {s:'── 날짜/시간'},
+    {t:'',n:'Date / DateTime / DateTimeOffset',d:''},
+    {s:'── 기타'},
+    {t:'',n:'Boolean / Guid / Binary',d:'논리 / GUID / BLOB'},
+    {s:'── InfluxDB 전용'},
+    {t:'InfluxTag',n:'InfluxTag',d:'인덱싱 문자열'},
+    {t:'InfluxField',n:'InfluxField',d:'측정값'},
+    {t:'InfluxTimestamp',n:'InfluxTimestamp',d:'타임스탬프'},
+    {s:'── SP 전용'},
+    {t:'Cursor',n:'Cursor',d:'Oracle RefCursor / MSSQL 결과셋'},
+  ],'',265),
+
+  'QueryOp': ctbl('enum','QueryOp','WHERE 절 비교 연산자',[
+    {t:'0',n:'Eq',d:'= (같음)'},
+    {t:'1',n:'NotEq',d:'!= (다름)'},
+    {t:'2',n:'Gt',d:'> (초과)'},
+    {t:'3',n:'GtEq',d:'>= (이상)'},
+    {t:'4',n:'Lt',d:'< (미만)'},
+    {t:'5',n:'LtEq',d:'<= (이하)'},
+    {t:'6',n:'Contains',d:"LIKE '%val%'"},
+    {t:'7',n:'StartsWith',d:"LIKE 'val%'"},
+    {t:'8',n:'EndsWith',d:"LIKE '%val'"},
+    {t:'9',n:'IsNull',d:'IS NULL'},
+    {t:'10',n:'IsNotNull',d:'IS NOT NULL'},
+  ],'',248),
+
+  // ── Col 1: Core Configs & Value Types ─────────────────────────────
+  'DbConfigBase': ctbl('abstract','DbConfigBase','DB 연결 설정 기반 (abstract record)',[
+    {t:'DbProviderType',n:'ProviderType { get; init; }',d:'DB 종류'},
+    {t:'int',n:'CommandTimeoutSec { get; init; }',d:'커맨드 타임아웃 (기본 30초)'},
+    {t:'int',n:'ConnectTimeoutSec { get; init; }',d:'연결 타임아웃 (기본 15초)'},
+    {t:'int',n:'MaxRetry { get; init; }',d:'최대 재시도 횟수 (기본 3)'},
+    {t:'int',n:'RetryDelayMs { get; init; }',d:'재시도 간격 ms (기본 500)'},
+    {t:'void',mo:'virtual',n:'Validate()',d:'설정 유효성 검사 · 파생에서 override'},
+  ],'',370),
+
+  'RelationalDbConfig': ctbl('record','RelationalDbConfig','관계형 DB 공통 설정 (sealed record) · MSSQL/Oracle/MySQL/SQLite',[
+    {t:'string',n:'ConnectionString { get; init; }',d:'ADO.NET 연결 문자열'},
+    {t:'',n:'ctor(providerType, connectionString, timeoutSec)',d:''},
+    {t:'void',mo:'override',n:'Validate()',d:'ConnectionString 비어있으면 throw'},
+  ],'DbConfigBase',370),
+
+  'InfluxDbConfig': ctbl('record','InfluxDbConfig','InfluxDB v2.0 연결 설정 (sealed record)',[
+    {t:'string',n:'Url { get; init; }',d:'서버 URL (http://localhost:8086)'},
+    {t:'string',n:'Token { get; init; }',d:'API 인증 토큰'},
+    {t:'string',n:'Org { get; init; }',d:'조직 이름'},
+    {t:'string',n:'Bucket { get; init; }',d:'기본 버킷 이름'},
+    {t:'',n:'ctor(url, token, org, bucket, timeoutSec)',d:''},
+    {t:'void',mo:'override',n:'Validate()',d:'URL/Token/Org/Bucket 검증'},
+  ],'DbConfigBase',370),
+
+  'DbConfigException': ctbl('class','DbConfigException','DB 설정 오류 예외 (sealed)',[
+    {t:'DbProviderType',n:'ProviderType { get; }',d:'오류 발생 Provider'},
+    {t:'',n:'ctor(providerType, message)',d:'"[{provider}] 설정 오류: {msg}"'},
+  ],'Exception',340),
+
+  'DbParam': ctbl('record struct','DbParam','DB 파라미터 범용 래퍼 (readonly record struct)',[
+    {t:'string',n:'Name { get; init; }',d:'파라미터 이름'},
+    {t:'object?',n:'Value { get; init; }',d:'파라미터 값'},
+    {t:'ParameterDirection',n:'Direction { get; init; }',d:'Input / Output / InOut'},
+    {t:'DbParamType',n:'ParamType { get; init; }',d:'값 타입'},
+    {t:'int',n:'Size { get; init; }',d:'최대 크기 (0 = 자동)'},
+    {s:'── 팩토리 (static)'},
+    {t:'DbParam',mo:'static',n:'In(name, value, type, size)',d:'Input 파라미터 생성'},
+    {t:'DbParam',mo:'static',n:'Out(name, type, size)',d:'Output 파라미터 생성'},
+    {t:'DbParam',mo:'static',n:'InOut(name, value, type, size)',d:'InputOutput 생성'},
+    {t:'DbParam[]',mo:'static',n:'StandardSp(inData)',d:'IN_DATA / OUT_RETURNCODE / OUT_RETURNMSG / OUT_CURSOR'},
+  ],'',370),
+
+  'DbResultT': ctbl('record struct','DbResult&lt;T&gt;','DB 실행 결과 범용 값 타입 (readonly record struct)',[
+    {t:'bool',n:'IsOk { get; init; }',d:'성공 여부'},
+    {t:'DbResultStatus',n:'Status { get; init; }',d:'Ok / Fail / Error / Timeout'},
+    {t:'T?',n:'Value { get; init; }',d:'결과 데이터'},
+    {t:'string',n:'Message { get; init; }',d:'결과 메시지'},
+    {t:'Exception?',n:'Exception { get; init; }',d:'발생 예외'},
+    {t:'long',n:'ElapsedMs { get; init; }',d:'실행 소요 시간 ms'},
+    {s:'── 팩토리 (static)'},
+    {t:'DbResult&lt;T&gt;',mo:'static',n:'Ok(value, elapsedMs)',d:'성공 결과 생성'},
+    {t:'DbResult&lt;T&gt;',mo:'static',n:'Fail(message, elapsedMs)',d:'실패 결과 생성'},
+    {t:'DbResult&lt;T&gt;',mo:'static',n:'Error(exception, elapsedMs)',d:'예외 결과 생성'},
+    {t:'DbResult&lt;T&gt;',mo:'static',n:'Timeout(message, elapsedMs)',d:'타임아웃 결과 생성'},
+  ],'',370),
+
+  'SpResult': ctbl('record','SpResult','SP 실행 결과 (sealed record) · OUT 패턴 표준화',[
+    {t:'string',n:'ReturnCode { get; init; }',d:'"1" = 성공, 그 외 실패'},
+    {t:'string',n:'ReturnMessage { get; init; }',d:'DB 반환 메시지'},
+    {t:'DataTable?',n:'Table { get; init; }',d:'OUT_CURSOR 결과셋'},
+    {t:'bool',n:'IsSuccess { get; }',d:'ReturnCode == "1" 여부'},
+    {s:'── 팩토리 (static)'},
+    {t:'SpResult',mo:'static',n:'Ok(message, table)',d:'성공 (ReturnCode="1")'},
+    {t:'SpResult',mo:'static',n:'Fail(code, message)',d:'실패'},
+  ],'',370),
+
+  'DbException': ctbl('class','DbException','DB 실행 전용 예외 (sealed)',[
+    {t:'DbErrorCode',n:'ErrorCode { get; }',d:'오류 코드'},
+    {t:'DbProviderType',n:'ProviderType { get; }',d:'오류 발생 Provider'},
+    {t:'string',n:'CommandText { get; }',d:'실행 중이던 SQL / SP'},
+    {s:'── 팩토리 (static)'},
+    {t:'DbException',mo:'static',n:'ConnectionFailed(provider, inner)',d:'연결 실패'},
+    {t:'DbException',mo:'static',n:'CommandTimeout(provider, sql)',d:'타임아웃'},
+    {t:'DbException',mo:'static',n:'SpReturnError(provider, sp, code, msg)',d:'SP 반환 오류'},
+    {t:'DbException',mo:'static',n:'LineProtocolError(detail)',d:'InfluxDB 전용'},
+  ],'Exception',370),
+
+  // ── Col 2: Contracts ───────────────────────────────────────────────
+  'IDbContext': ctbl('interface','IDbContext','DB 연결·트랜잭션·실행 생명주기 계약 : IAsyncDisposable',[
+    {s:'── 상태 조회'},
+    {t:'ConnectionState',n:'State { get; }',d:'현재 연결 상태'},
+    {t:'bool',n:'IsInTransaction { get; }',d:'트랜잭션 진행 여부'},
+    {t:'DbProviderType',n:'ProviderType { get; }',d:'Provider 종류'},
+    {s:'── 연결 관리'},
+    {t:'Task',n:'OpenAsync(ct)',d:'DB 연결 열기'},
+    {t:'Task',n:'CloseAsync()',d:'DB 연결 닫기'},
+    {s:'── 트랜잭션'},
+    {t:'Task',n:'BeginTransactionAsync(ct)',d:'트랜잭션 시작'},
+    {t:'Task',n:'CommitAsync()',d:'트랜잭션 커밋'},
+    {t:'Task',n:'RollbackAsync()',d:'트랜잭션 롤백'},
+    {s:'── 실행'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'ExecuteAsync(sql, type, ps, ct)',d:'DML → 영향 행 수'},
+    {t:'Task&lt;DbResult&lt;DataTable&gt;&gt;',n:'QueryTableAsync(sql, type, ps, ct)',d:'SELECT → DataTable'},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',n:'CallSpAsync(spName, ps, ct)',d:'SP 실행 (표준 패턴)'},
+  ],'',430),
+
+  'IRepositoryT': ctbl('interface','IRepository&lt;T&gt;','Generic CRUD Repository 계약',[
+    {s:'── 조회'},
+    {t:'Task&lt;DbResult&lt;List&lt;T&gt;&gt;&gt;',n:'QueryAsync(sql, ps, ct)',d:'SQL → 엔티티 목록'},
+    {t:'Task&lt;DbResult&lt;T?&gt;&gt;',n:'QuerySingleAsync(sql, ps, ct)',d:'SQL → 단건 엔티티'},
+    {t:'Task&lt;DbResult&lt;TScalar?&gt;&gt;',n:'QueryScalarAsync&lt;TScalar&gt;(sql, ps, ct)',d:'SQL → 스칼라 값'},
+    {s:'── 실행'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'ExecuteAsync(sql, ps, ct)',d:'DML 실행'},
+    {s:'── SP 실행'},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',n:'CallSpAsync(spName, ps, ct)',d:'SP → SpResult'},
+    {t:'Task&lt;DbResult&lt;List&lt;T&gt;&gt;&gt;',n:'CallSpQueryAsync(spName, ps, ct)',d:'SP OUT_CURSOR → List&lt;T&gt;'},
+    {s:'── 배치 트랜잭션'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'ExecuteBatchAsync(commands, ct)',d:'여러 SQL → 트랜잭션 묶음'},
+  ],'',430),
+
+  'IQueryBuilder': ctbl('interface','IQueryBuilder','코드 기반 쿼리 빌더 계약 + QueryOp 열거형',[
+    {s:'── SELECT 절'},
+    {t:'IQueryBuilder',n:'From(tableName)',d:'대상 테이블 지정'},
+    {t:'IQueryBuilder',n:'Select(params columns)',d:'조회 컬럼 지정 · 생략 시 SELECT *'},
+    {s:'── WHERE 절'},
+    {t:'IQueryBuilder',n:'Where(column, op, value)',d:'AND 조건 추가'},
+    {t:'IQueryBuilder',n:'OrWhere(column, op, value)',d:'OR 조건 추가'},
+    {t:'IQueryBuilder',n:'WhereIn(column, values)',d:'IN 조건 추가'},
+    {s:'── ORDER / LIMIT'},
+    {t:'IQueryBuilder',n:'OrderBy(column, ascending)',d:'ORDER BY 절 추가'},
+    {t:'IQueryBuilder',n:'Limit(count)',d:'TOP / LIMIT / ROWNUM'},
+    {s:'── INSERT / UPDATE / DELETE'},
+    {t:'IQueryBuilder',n:'Insert/Value/Update/Set/Delete(...)',d:'DML 빌더 메서드'},
+    {s:'── 빌드'},
+    {t:'(string, DbParam[])',n:'Build()',d:'SELECT SQL + 파라미터 생성'},
+    {t:'(string, DbParam[])',n:'BuildInsert()',d:'INSERT SQL 생성'},
+    {t:'(string, DbParam[])',n:'BuildUpdate()',d:'UPDATE SQL 생성'},
+    {t:'(string, DbParam[])',n:'BuildDelete()',d:'DELETE SQL 생성'},
+    {t:'IQueryBuilder',n:'Reset()',d:'빌더 상태 초기화'},
+  ],'',430),
+
+  'DbHelper': ctbl('class','DbHelper','OracleHelper + OracleDB 패턴 범용화 정적 헬퍼 (static) · IDbConnection 직접 사용',[
+    {s:'── 설정 (static)'},
+    {t:'int',mo:'static',n:'DefaultCommandTimeoutSec',d:'기본 180초'},
+    {t:'Action?',mo:'static',n:'ExtraInfoHandler / ExtraErrorHandler',d:'추가 로그 핸들러 등록'},
+    {s:'── 파라미터 캐시'},
+    {t:'void',mo:'static',n:'CacheParameterSet(connStr, cmd, ps)',d:'SP 파라미터 캐싱'},
+    {t:'DbParam[]?',mo:'static',n:'GetCachedParameterSet(connStr, cmd)',d:'캐시 조회 (복사본 반환)'},
+    {t:'void',mo:'static',n:'ClearCache()',d:'전체 캐시 삭제'},
+    {s:'── ADO.NET 실행 (동기)'},
+    {t:'int',mo:'static',n:'ExecuteNonQuery(conn, type, sql, ps)',d:'영향 행 수 반환'},
+    {t:'DataSet',mo:'static',n:'ExecuteDataset(conn, type, sql, ps)',d:'DataSet 반환'},
+    {t:'DataTable',mo:'static',n:'ExecuteDataTable(conn, type, sql, ps)',d:'DataTable 반환'},
+    {t:'IDataReader',mo:'static',n:'ExecuteReader(conn, type, sql, ps)',d:'CloseConnection 방식'},
+    {s:'── SP 실행 (OracleDB.CallProc 범용화)'},
+    {t:'DbResult&lt;SpResult&gt;',mo:'static',n:'CallSp(conn, spName, ps)',d:'OUT_RETURNCODE/MSG/CURSOR 추출'},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',mo:'static',n:'CallSpAsync(conn, spName, ps, ct)',d:'비동기 래퍼'},
+    {t:'DbResult&lt;SpResult&gt;',mo:'static',n:'CallSpArgs(conn, spName, args)',d:'가변인수 → IN_DATA 자동 조립 (CallProc1)'},
+    {s:'── DataSearch'},
+    {t:'DataTable',mo:'static',n:'DataSearch(source, filterExpression)',d:'DataTable.Select() 필터링 (OracleDB.DataSearch)'},
+  ],'',430),
+
+  // ── Col 3: Abstractions ────────────────────────────────────────────
+  'DbContextBase': ctbl('abstract','DbContextBase','IDbContext 공통 구현 · 연결·재시도·트랜잭션·로그 기반 클래스',[
+    {s:'── 보호 프로퍼티'},
+    {t:'DbConfigBase',n:'Config { get; }',d:'DB 연결 설정'},
+    {t:'IDbConnection?',n:'Connection { get; }',d:'현재 열린 DB 연결'},
+    {t:'IDbTransaction?',n:'Transaction { get; }',d:'현재 트랜잭션'},
+    {s:'── IDbContext 구현 (자동 처리)'},
+    {t:'ConnectionState',n:'State { get; }',d:''},
+    {t:'bool',n:'IsInTransaction { get; }',d:''},
+    {t:'Task',n:'OpenAsync(ct)',d:'재시도(MaxRetry) + 로그 포함'},
+    {t:'Task',n:'CloseAsync()',d:''},
+    {t:'Task',n:'BeginTransactionAsync/CommitAsync/RollbackAsync',d:'SemaphoreSlim 보호'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'ExecuteAsync(sql, type, ps, ct)',d:'예외 → DbResult.Error 자동 변환'},
+    {t:'Task&lt;DbResult&lt;DataTable&gt;&gt;',n:'QueryTableAsync(sql, type, ps, ct)',d:''},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',n:'CallSpAsync(spName, ps, ct)',d:''},
+    {s:'── 추상 메서드 (파생 클래스 필수 구현)'},
+    {t:'IDbConnection',mo:'abstract',n:'CreateConnection()',d:'Provider별 연결 객체 생성'},
+    {t:'Task',mo:'virtual',n:'OpenConnectionAsync(conn, ct)',d:'비동기 연결 열기'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',mo:'abstract',n:'ExecuteCoreAsync(sql, type, ps, ct)',d:'SQL 실행 구현'},
+    {t:'Task&lt;DbResult&lt;DataTable&gt;&gt;',mo:'abstract',n:'QueryTableCoreAsync(sql, type, ps, ct)',d:'SELECT 구현'},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',mo:'abstract',n:'CallSpCoreAsync(spName, ps, ct)',d:'SP 실행 구현'},
+    {s:'── 보호 로그'},
+    {t:'void',mo:'virtual',n:'Log / LogWarn / LogError(message)',d:'lssLib.Log 연동 (주석 처리 — 필요 시 활성화)'},
+    {s:'── IAsyncDisposable'},
+    {t:'ValueTask',mo:'virtual',n:'DisposeAsync()',d:'Rollback + Close + Dispose'},
+  ],'IDbContext',460),
+
+  'RepositoryBaseT': ctbl('abstract','RepositoryBase&lt;T&gt;','IRepository&lt;T&gt; 공통 구현 · CRUD·RowMapper·배치 트랜잭션',[
+    {t:'',n:'ctor(context: IDbContext, mapper: RowMapper&lt;T&gt;)',d:''},
+    {s:'── 보호 프로퍼티'},
+    {t:'IDbContext',n:'Context { get; }',d:'내부 DB 컨텍스트'},
+    {s:'── IRepository&lt;T&gt; 구현'},
+    {t:'Task&lt;DbResult&lt;List&lt;T&gt;&gt;&gt;',n:'QueryAsync(sql, ps, ct)',d:'DataTable → RowMapper → List&lt;T&gt;'},
+    {t:'Task&lt;DbResult&lt;T?&gt;&gt;',n:'QuerySingleAsync(sql, ps, ct)',d:'첫 행 → T?'},
+    {t:'Task&lt;DbResult&lt;TScalar?&gt;&gt;',n:'QueryScalarAsync&lt;TScalar&gt;(sql, ps, ct)',d:'첫 열 값 변환'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'ExecuteAsync(sql, ps, ct)',d:'DML → 영향 행 수'},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',n:'CallSpAsync(spName, ps, ct)',d:'SP → SpResult'},
+    {t:'Task&lt;DbResult&lt;List&lt;T&gt;&gt;&gt;',n:'CallSpQueryAsync(spName, ps, ct)',d:'SP OUT_CURSOR → RowMapper → List&lt;T&gt;'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'ExecuteBatchAsync(commands, ct)',d:'실패 시 자동 롤백'},
+  ],'IRepository&lt;T&gt;',460),
+
+  'QueryBuilderBase': ctbl('abstract','QueryBuilderBase','IQueryBuilder 공통 구현 · WHERE·ORDER·파라미터 누적',[
+    {s:'── 추상 프로퍼티 (파생 필수 구현)'},
+    {t:'string',mo:'abstract',n:'ParamPrefix { get; }',d:'"@" (MSSQL/MySQL/SQLite) / ":" (Oracle)'},
+    {t:'string',mo:'abstract',n:'BuildSelectPrefix(limit)',d:'"SELECT TOP N" / "SELECT"'},
+    {t:'string',mo:'abstract',n:'BuildLimitClause(count)',d:'"LIMIT N" / "AND ROWNUM &lt;=N" / ""'},
+    {s:'── IQueryBuilder 공통 구현'},
+    {t:'IQueryBuilder',n:'From / Select / Where / OrWhere / WhereIn',d:'FROM·WHERE 절 누적'},
+    {t:'IQueryBuilder',n:'OrderBy(column, ascending)',d:'ORDER BY 추가'},
+    {t:'IQueryBuilder',n:'Limit(count)',d:'제한 행 수 지정'},
+    {t:'IQueryBuilder',n:'Insert/Value/Update/Set/Delete',d:'DML 빌더'},
+    {t:'(string, DbParam[])',n:'Build / BuildInsert / BuildUpdate / BuildDelete',d:'SQL + 파라미터 배열 생성'},
+    {t:'IQueryBuilder',n:'Reset()',d:'내부 상태 초기화'},
+    {s:'── 내부 (private)'},
+    {t:'',n:'AppendWhere(sql, ps, ref idx)',d:'WHERE 절 + IN 절 + LIKE 자동 처리'},
+  ],'IQueryBuilder',460),
+
+  // ── Col 4: InfluxDB Provider ───────────────────────────────────────
+  'InfluxDbContext': ctbl('class','InfluxDbContext','InfluxDB v2.0 DbContext · Flux쿼리 / LineProtocol쓰기 / 버킷관리 (sealed)',[
+    {t:'DbProviderType',n:'ProviderType',d:'DbProviderType.InfluxDB'},
+    {s:'── 연결 (IDbConnection 불사용 — InfluxDBClient 직접 관리)'},
+    {t:'ConnectionState',n:'State { get; }',d:'내부 상태 직접 관리'},
+    {t:'Task',n:'OpenAsync(ct)',d:'InfluxDBClient 생성 + PingAsync Health Check'},
+    {t:'Task',n:'CloseAsync()',d:'Client.Dispose()'},
+    {s:'── Flux 쿼리 전용'},
+    {t:'Task&lt;DbResult&lt;DataTable&gt;&gt;',n:'QueryFluxAsync(fluxQuery, ct)',d:'FluxTable → DataTable 변환'},
+    {t:'Task&lt;DbResult&lt;List&lt;T&gt;&gt;&gt;',n:'QueryFluxAsync&lt;T&gt;(flux, ct)',d:'InfluxDB.Client 자동 매핑'},
+    {s:'── Line Protocol 쓰기'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'WriteLineProtocolAsync(line, precision, ct)',d:'단건 쓰기'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'WriteBatchAsync(lines, precision, ct)',d:'배치 쓰기'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'WriteAsync(builder, precision, ct)',d:'LineProtocolBuilder 전달'},
+    {s:'── 버킷 / Health'},
+    {t:'Task&lt;bool&gt;',n:'PingAsync()',d:'서버 Health Check'},
+    {t:'Task&lt;bool&gt;',n:'BucketExistsAsync(name, ct)',d:'버킷 존재 확인'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'CreateBucketAsync(name, retentionHours, ct)',d:'버킷 생성'},
+    {s:'── InfluxDB 미지원 명시 (Fail 반환)'},
+    {t:'',n:'ExecuteCoreAsync / QueryTableCoreAsync / CallSpCoreAsync',d:'NotSupported → DbResult.Fail'},
+  ],'DbContextBase',430),
+
+  'InfluxRepositoryT': ctbl('class','InfluxRepository&lt;T&gt;','InfluxDB Repository · RowMapper + Flux + LineProtocol (sealed)',[
+    {t:'',n:'ctor(context: InfluxDbContext, mapper: RowMapper&lt;T&gt;)',d:''},
+    {s:'── Flux 쿼리 → 엔티티'},
+    {t:'Task&lt;DbResult&lt;List&lt;T&gt;&gt;&gt;',n:'QueryFluxAsync(fluxQuery, ct)',d:'DataTable → RowMapper → List&lt;T&gt;'},
+    {s:'── 쓰기 간편 API'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'WriteAsync(measurement, tags, fields, time, ...)',d:'튜플 배열로 간편 쓰기'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'WriteAsync(builder, precision, ct)',d:'Builder 직접 전달'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'WriteBatchAsync(builders, precision, ct)',d:'Builder 목록 배치'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'WriteBatchAsync(lineProtocols, precision, ct)',d:'문자열 목록 배치'},
+  ],'RepositoryBase&lt;T&gt;',430),
+
+  'LineProtocolBuilder': ctbl('class','LineProtocolBuilder','InfluxDB Line Protocol 빌더 · Measurement/Tag/Field/Timestamp 조립 (sealed)',[
+    {t:'',n:'ctor(measurement)',d:'Measurement 이름 지정 (빈 문자열 → throw)'},
+    {s:'── Tag (인덱싱 문자열 — GROUP BY / 필터 기준)'},
+    {t:'LineProtocolBuilder',n:'Tag(key, value)',d:'Tag 추가 · 빈 값 자동 무시'},
+    {s:'── Field (측정값)'},
+    {t:'LineProtocolBuilder',n:'Field(key, double)',d:'Float/Double 측정값'},
+    {t:'LineProtocolBuilder',n:'Field(key, long/int)',d:'Integer (접미사 i 자동)'},
+    {t:'LineProtocolBuilder',n:'Field(key, string)',d:'문자열 (쌍따옴표 자동)'},
+    {t:'LineProtocolBuilder',n:'Field(key, bool)',d:'Boolean'},
+    {t:'LineProtocolBuilder',n:'Field(key, object?)',d:'타입 자동 분기'},
+    {s:'── Timestamp'},
+    {t:'LineProtocolBuilder',n:'Timestamp(DateTime)',d:'Local 자동 UTC 변환 → 나노초'},
+    {t:'LineProtocolBuilder',n:'Timestamp(DateTimeOffset)',d:'ToUnixTimeMilliseconds × 1e6'},
+    {t:'LineProtocolBuilder',n:'Timestamp(long nanoseconds)',d:'나노초 직접 지정'},
+    {s:'── Build'},
+    {t:'string',n:'Build()',d:'Line Protocol 문자열 생성 · Tag 정렬 자동'},
+    {t:'string',mo:'static',n:'BuildBatch(lines)',d:'여러 Line을 \\n으로 연결'},
+  ],'',420),
+
+  // ── Col 5: MsSql Provider ─────────────────────────────────────────
+  'MsSqlDbContext': ctbl('class','MsSqlDbContext','MSSQL DbContext · Microsoft.Data.SqlClient 기반 (sealed)',[
+    {t:'DbProviderType',n:'ProviderType',d:'DbProviderType.MsSql'},
+    {t:'IDbConnection',mo:'override',n:'CreateConnection()',d:'new SqlConnection(connStr)'},
+    {t:'Task',mo:'override',n:'OpenConnectionAsync(conn, ct)',d:'SqlConnection.OpenAsync()'},
+    {s:'── MSSQL 전용 — BulkInsert (SqlBulkCopy)'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'BulkInsertAsync(table, data, batchSize, ct)',d:'수천~수만 건 대량 삽입 · 트랜잭션 자동 연동'},
+  ],'DbContextBase',410),
+
+  'MsSqlRepositoryT': ctbl('class','MsSqlRepository&lt;T&gt;','MSSQL Repository · RepositoryBase + BulkInsert 확장 (sealed)',[
+    {t:'',n:'ctor(context: MsSqlDbContext, mapper)',d:''},
+    {s:'── MSSQL 전용 — BulkInsert'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'BulkInsertAsync(table, DataTable, batch, ct)',d:'DataTable 직접 전달'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'BulkInsertAsync(table, entities, toRow, cols, batch, ct)',d:'엔티티 목록 → DataTable 자동 변환 후 삽입'},
+  ],'RepositoryBase&lt;T&gt;',410),
+
+  'MsSqlQueryBuilder': ctbl('class','MsSqlQueryBuilder','MSSQL 쿼리 빌더 · SELECT TOP N / @Param (sealed)',[
+    {t:'string',mo:'override',n:'ParamPrefix { get; }',d:'"@"'},
+    {t:'string',mo:'override',n:'BuildSelectPrefix(limit)',d:'limit? "SELECT TOP {N}" : "SELECT"'},
+    {t:'string',mo:'override',n:'BuildLimitClause(count)',d:'string.Empty (TOP N 방식이므로 후행 절 없음)'},
+  ],'QueryBuilderBase',410),
+
+  // ── Col 6: Oracle Provider ────────────────────────────────────────
+  'OracleDbContext': ctbl('class','OracleDbContext','Oracle DbContext · OracleDB.CallProc 패턴 현대화 (sealed)',[
+    {t:'DbProviderType',n:'ProviderType',d:'DbProviderType.Oracle'},
+    {t:'IDbConnection',mo:'override',n:'CreateConnection()',d:'new OracleConnection(connStr)'},
+    {t:'Task',mo:'override',n:'OpenConnectionAsync(conn, ct)',d:'OracleConnection.OpenAsync()'},
+    {s:'── Oracle 전용 — CallSpArgs (OracleDB.CallProc1 계승)'},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',n:'CallSpArgsAsync(spName, ct, args)',d:'가변인수 → "SELECT \'A\',\'B\' FROM DUAL" 자동 조립'},
+    {s:'── Oracle 전용 — SpMutiSave (Sp_MutiSave 계승)'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'SpMutiSaveAsync(dt, spName, where, cols, ct)',d:'DataTable 행 필터 후 SP 일괄 저장 · 트랜잭션 포함'},
+  ],'DbContextBase',440),
+
+  'OracleRepositoryT': ctbl('class','OracleRepository&lt;T&gt;','Oracle Repository · CRUD + Oracle 전용 SP 확장 (sealed)',[
+    {t:'',n:'ctor(context: OracleDbContext, mapper)',d:''},
+    {s:'── Oracle 전용 확장'},
+    {t:'Task&lt;DbResult&lt;SpResult&gt;&gt;',n:'CallSpArgsAsync(spName, ct, args)',d:'가변인수 SP → SpResult'},
+    {t:'Task&lt;DbResult&lt;List&lt;T&gt;&gt;&gt;',n:'CallSpArgsQueryAsync(spName, ct, args)',d:'가변인수 SP → List&lt;T&gt;'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'SpMutiSaveAsync(dt, sp, where, cols, ct)',d:'DataTable 조건 필터 후 SP 일괄 저장'},
+  ],'RepositoryBase&lt;T&gt;',440),
+
+  'OracleQueryBuilder': ctbl('class','OracleQueryBuilder','Oracle 쿼리 빌더 · :ParamName / ROWNUM LIMIT (sealed)',[
+    {t:'string',mo:'override',n:'ParamPrefix { get; }',d:'":"'},
+    {t:'string',mo:'override',n:'BuildSelectPrefix(limit)',d:'"SELECT"'},
+    {t:'string',mo:'override',n:'BuildLimitClause(count)',d:'"AND ROWNUM &lt;= {count}" (WHERE 절 후행)'},
+  ],'QueryBuilderBase',440),
+
+  // ── Col 7: MySql Provider ─────────────────────────────────────────
+  'MySqlDbContext': ctbl('class','MySqlDbContext','MySQL/MariaDB DbContext · MySqlConnector 완전 비동기 (sealed)',[
+    {t:'DbProviderType',n:'ProviderType',d:'DbProviderType.MySql'},
+    {t:'IDbConnection',mo:'override',n:'CreateConnection()',d:'new MySqlConnection(connStr)'},
+    {t:'Task',mo:'override',n:'OpenConnectionAsync(conn, ct)',d:'MySqlConnection.OpenAsync()'},
+  ],'DbContextBase',390),
+
+  'MySqlRepositoryT': ctbl('class','MySqlRepository&lt;T&gt;','MySQL Repository · RepositoryBase CRUD 전용 (sealed)',[
+    {t:'',n:'ctor(context: MySqlDbContext, mapper)',d:'추가 확장 없음 — RepositoryBase 공통 CRUD 사용'},
+  ],'RepositoryBase&lt;T&gt;',390),
+
+  'MySqlQueryBuilder': ctbl('class','MySqlQueryBuilder','MySQL 쿼리 빌더 · @ParamName / LIMIT N (sealed)',[
+    {t:'string',mo:'override',n:'ParamPrefix { get; }',d:'"@"'},
+    {t:'string',mo:'override',n:'BuildSelectPrefix(limit)',d:'"SELECT"'},
+    {t:'string',mo:'override',n:'BuildLimitClause(count)',d:'"LIMIT {count}" (SELECT 후행)'},
+  ],'QueryBuilderBase',390),
+
+  // ── Col 8: SQLite Provider ────────────────────────────────────────
+  'SqliteDbContext': ctbl('class','SqliteDbContext','SQLite DbContext · 파일 기반 경량 DB · SP 미지원 (sealed)',[
+    {t:'DbProviderType',n:'ProviderType',d:'DbProviderType.Sqlite'},
+    {t:'IDbConnection',mo:'override',n:'CreateConnection()',d:'new SqliteConnection(connStr)'},
+    {s:'── SQLite 전용 — 테이블 초기화'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'EnsureTableAsync(createSql, ct)',d:'CREATE TABLE IF NOT EXISTS'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'EnsureTablesAsync(sqls, ct)',d:'여러 테이블 한 번에 초기화'},
+    {s:'── SQLite 전용 — PRAGMA'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'SetPragmaAsync(pragma, value, ct)',d:'journal_mode=WAL / foreign_keys=ON 등'},
+    {t:'Task&lt;string&gt;',n:'GetPragmaAsync(pragma, ct)',d:'PRAGMA 값 조회'},
+    {s:'── 파일 정보'},
+    {t:'string',n:'DbFilePath { get; }',d:'Data Source 경로 추출'},
+    {t:'bool',n:'DbFileExists { get; }',d:'DB 파일 존재 여부'},
+    {s:'── SP 미지원'},
+    {t:'',n:'CallSpCoreAsync → Fail',d:'"SQLite는 SP 미지원"'},
+  ],'DbContextBase',400),
+
+  'SqliteRepositoryT': ctbl('class','SqliteRepository&lt;T&gt;','SQLite Repository · RepositoryBase + Upsert 확장 (sealed)',[
+    {t:'',n:'ctor(context: SqliteDbContext, mapper)',d:''},
+    {s:'── SQLite 전용 확장'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'UpsertAsync(table, columns, ct)',d:'INSERT OR REPLACE · 중복 시 교체'},
+    {t:'Task&lt;DbResult&lt;int&gt;&gt;',n:'InsertIgnoreAsync(table, columns, ct)',d:'INSERT OR IGNORE · 중복 시 무시'},
+  ],'RepositoryBase&lt;T&gt;',400),
+
+  'SqliteQueryBuilder': ctbl('class','SqliteQueryBuilder','SQLite 쿼리 빌더 · @ParamName / LIMIT N (sealed)',[
+    {t:'string',mo:'override',n:'ParamPrefix { get; }',d:'"@" ($, : 도 동작)'},
+    {t:'string',mo:'override',n:'BuildSelectPrefix(limit)',d:'"SELECT"'},
+    {t:'string',mo:'override',n:'BuildLimitClause(count)',d:'"LIMIT {count}"'},
+  ],'QueryBuilderBase',400),
+};
+
+const COL = {
+  0: ['DbProviderType','DbResultStatus','DbErrorCode','DbParamType','QueryOp'],
+  1: ['DbConfigBase','RelationalDbConfig','InfluxDbConfig','DbConfigException','DbParam','DbResultT','SpResult','DbException'],
+  2: ['IDbContext','IRepositoryT','IQueryBuilder','DbHelper'],
+  3: ['DbContextBase','RepositoryBaseT','QueryBuilderBase'],
+  4: ['InfluxDbContext','InfluxRepositoryT','LineProtocolBuilder'],
+  5: ['MsSqlDbContext','MsSqlRepositoryT','MsSqlQueryBuilder'],
+  6: ['OracleDbContext','OracleRepositoryT','OracleQueryBuilder'],
+  7: ['MySqlDbContext','MySqlRepositoryT','MySqlQueryBuilder'],
+  8: ['SqliteDbContext','SqliteRepositoryT','SqliteQueryBuilder'],
+};
+
+const FG = [
+  { lbl:'lssLib.DB  Core Enums', ns:['DbProviderType','DbResultStatus','DbErrorCode','DbParamType','QueryOp'], color:'#dc2626' },
+  { lbl:'lssLib.DB  Core Types', ns:['DbConfigBase','RelationalDbConfig','InfluxDbConfig','DbConfigException','DbParam','DbResultT','SpResult','DbException'], color:'#7c3aed' },
+  { lbl:'lssLib.DB  Contracts', ns:['IDbContext','IRepositoryT','IQueryBuilder'], color:'#2563eb' },
+  { lbl:'lssLib.DB  Abstractions + Helper', ns:['DbContextBase','RepositoryBaseT','QueryBuilderBase','DbHelper'], color:'#d97706' },
+  { lbl:'lssLib.DB.InfluxDB', ns:['InfluxDbContext','InfluxRepositoryT','LineProtocolBuilder'], color:'#0891b2' },
+  { lbl:'lssLib.DB.MsSql', ns:['MsSqlDbContext','MsSqlRepositoryT','MsSqlQueryBuilder'], color:'#059669' },
+  { lbl:'lssLib.DB.Oracle', ns:['OracleDbContext','OracleRepositoryT','OracleQueryBuilder'], color:'#e85c00' },
+  { lbl:'lssLib.DB.MySql', ns:['MySqlDbContext','MySqlRepositoryT','MySqlQueryBuilder'], color:'#0077c0' },
+  { lbl:'lssLib.DB.Sqlite', ns:['SqliteDbContext','SqliteRepositoryT','SqliteQueryBuilder'], color:'#7c5700' },
+];
+
+const CONN = [
+  // ── 설정 상속 (Col 1 내부 세로)
+  { f:'RelationalDbConfig', fe:'top', t:'DbConfigBase', te:'bottom', ty:'ext', lbl:'extends', xoff:-18 },
+  { f:'InfluxDbConfig',     fe:'top', t:'DbConfigBase', te:'bottom', ty:'ext', lbl:'extends', xoff:18 },
+
+  // ── 추상 클래스 → 계약 implements (Col 3 → Col 2 수평)
+  { f:'DbContextBase',   fe:'left', t:'IDbContext',   te:'right', ty:'impl', lbl:'implements' },
+  { f:'RepositoryBaseT', fe:'left', t:'IRepositoryT', te:'right', ty:'impl', lbl:'implements' },
+  { f:'QueryBuilderBase',fe:'left', t:'IQueryBuilder', te:'right', ty:'impl', lbl:'implements' },
+
+  // ── InfluxDB Provider → 추상 클래스 extends (Col 4 → Col 3)
+  { f:'InfluxDbContext',   fe:'left', t:'DbContextBase',    te:'right', ty:'ext', lbl:'extends' },
+  { f:'InfluxRepositoryT', fe:'left', t:'RepositoryBaseT',  te:'right', ty:'ext', lbl:'extends' },
+
+  // ── MsSql Provider → 추상 클래스 (Col 5 → Col 3)
+  { f:'MsSqlDbContext',   fe:'left', t:'DbContextBase',   te:'right', ty:'ext', lbl:'extends' },
+  { f:'MsSqlRepositoryT', fe:'left', t:'RepositoryBaseT', te:'right', ty:'ext', lbl:'extends' },
+  { f:'MsSqlQueryBuilder',fe:'left', t:'QueryBuilderBase',te:'right', ty:'ext', lbl:'extends' },
+
+  // ── Oracle Provider → 추상 클래스 (Col 6 → Col 3)
+  { f:'OracleDbContext',   fe:'left', t:'DbContextBase',   te:'right', ty:'ext', lbl:'extends' },
+  { f:'OracleRepositoryT', fe:'left', t:'RepositoryBaseT', te:'right', ty:'ext', lbl:'extends' },
+  { f:'OracleQueryBuilder',fe:'left', t:'QueryBuilderBase',te:'right', ty:'ext', lbl:'extends' },
+
+  // ── MySql Provider → 추상 클래스 (Col 7 → Col 3)
+  { f:'MySqlDbContext',   fe:'left', t:'DbContextBase',   te:'right', ty:'ext', lbl:'extends' },
+  { f:'MySqlRepositoryT', fe:'left', t:'RepositoryBaseT', te:'right', ty:'ext', lbl:'extends' },
+  { f:'MySqlQueryBuilder',fe:'left', t:'QueryBuilderBase',te:'right', ty:'ext', lbl:'extends' },
+
+  // ── SQLite Provider → 추상 클래스 (Col 8 → Col 3)
+  { f:'SqliteDbContext',   fe:'left', t:'DbContextBase',   te:'right', ty:'ext', lbl:'extends' },
+  { f:'SqliteRepositoryT', fe:'left', t:'RepositoryBaseT', te:'right', ty:'ext', lbl:'extends' },
+  { f:'SqliteQueryBuilder',fe:'left', t:'QueryBuilderBase',te:'right', ty:'ext', lbl:'extends' },
+
+  // ── InfluxDB 내부 — LineProtocolBuilder 사용
+  { f:'InfluxDbContext',   fe:'bottom', t:'LineProtocolBuilder', te:'top', ty:'uses', lbl:'uses' },
+  { f:'InfluxRepositoryT', fe:'bottom', t:'LineProtocolBuilder', te:'top', ty:'uses', lbl:'uses' },
+
+  // ── DbHelper → IDbContext uses
+  { f:'DbHelper', fe:'left', t:'IDbContext', te:'right', ty:'uses', lbl:'uses' },
+];
+
+const GAP_COL = 110, PAD_STACK = 50, START_X = 30, START_Y = 40;
+
+const cv = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+Object.keys(BOXES).forEach(function(name) {
+  const div = document.createElement('div');
+  div.className = 'bw'; div.dataset.box = name;
+  div.style.left = '0px'; div.style.top = '0px';
+  div.innerHTML = BOXES[name];
+  cv.insertBefore(div, svgEl);
+});
+
+const gb = function(n) { const el = cv.querySelector('[data-box="' + n + '"]'); return el ? {el:el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight} : null; };
+const bot = function(n) { const b = gb(n); return b ? b.y + b.h : 0; };
+const setX = function(n,x) { const el = cv.querySelector('[data-box="' + n + '"]'); if(el) el.style.left = x+'px'; };
+const setY = function(n,y) { const el = cv.querySelector('[data-box="' + n + '"]'); if(el) el.style.top = y+'px'; };
+const ri = function(v) { return Math.round(v); };
+
+requestAnimationFrame(function() { requestAnimationFrame(function() {
+  const colW = {};
+  Object.entries(COL).forEach(function([ci,ns]) {
+    colW[ci] = Math.max.apply(null, ns.map(function(n) { const b=gb(n); return b?b.w:0; }));
+  });
+  const colX = {};
+  let cx = START_X;
+  Object.keys(COL).sort().forEach(function(ci) { colX[ci] = cx; cx += colW[ci] + GAP_COL; });
+  Object.entries(COL).forEach(function([ci,ns]) { ns.forEach(function(n) { setX(n, colX[ci]); }); });
+
+  // Row 0: 각 컬럼 첫 번째 항목
+  ['DbProviderType','DbConfigBase','IDbContext','DbContextBase',
+   'InfluxDbContext','MsSqlDbContext','OracleDbContext','MySqlDbContext','SqliteDbContext'
+  ].forEach(function(n) { setY(n, START_Y); });
+
+  requestAnimationFrame(function() {
+    setY('DbResultStatus',   bot('DbProviderType')   + PAD_STACK);
+    setY('RelationalDbConfig', bot('DbConfigBase')   + PAD_STACK);
+    setY('IRepositoryT',     bot('IDbContext')        + PAD_STACK);
+    setY('RepositoryBaseT',  bot('DbContextBase')     + PAD_STACK);
+    setY('InfluxRepositoryT', bot('InfluxDbContext')  + PAD_STACK);
+    setY('MsSqlRepositoryT',  bot('MsSqlDbContext')   + PAD_STACK);
+    setY('OracleRepositoryT', bot('OracleDbContext')  + PAD_STACK);
+    setY('MySqlRepositoryT',  bot('MySqlDbContext')   + PAD_STACK);
+    setY('SqliteRepositoryT', bot('SqliteDbContext')  + PAD_STACK);
+
+    requestAnimationFrame(function() {
+      setY('DbErrorCode',      bot('DbResultStatus')    + PAD_STACK);
+      setY('InfluxDbConfig',   bot('RelationalDbConfig') + PAD_STACK);
+      setY('IQueryBuilder',    bot('IRepositoryT')       + PAD_STACK);
+      setY('QueryBuilderBase', bot('RepositoryBaseT')    + PAD_STACK);
+      setY('LineProtocolBuilder', bot('InfluxRepositoryT') + PAD_STACK);
+      setY('MsSqlQueryBuilder',   bot('MsSqlRepositoryT')  + PAD_STACK);
+      setY('OracleQueryBuilder',  bot('OracleRepositoryT') + PAD_STACK);
+      setY('MySqlQueryBuilder',   bot('MySqlRepositoryT')  + PAD_STACK);
+      setY('SqliteQueryBuilder',  bot('SqliteRepositoryT') + PAD_STACK);
+
+      requestAnimationFrame(function() {
+        setY('DbParamType',      bot('DbErrorCode')   + PAD_STACK);
+        setY('DbConfigException', bot('InfluxDbConfig') + PAD_STACK);
+        setY('DbHelper',         bot('IQueryBuilder')  + PAD_STACK);
+
+        requestAnimationFrame(function() {
+          setY('QueryOp', bot('DbParamType') + PAD_STACK);
+          setY('DbParam', bot('DbConfigException') + PAD_STACK);
+
+          requestAnimationFrame(function() {
+            setY('DbResultT', bot('DbParam') + PAD_STACK);
+
+            requestAnimationFrame(function() {
+              setY('SpResult', bot('DbResultT') + PAD_STACK);
+
+              requestAnimationFrame(function() {
+                setY('DbException', bot('SpResult') + PAD_STACK);
+                requestAnimationFrame(function() { drawAll(); });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}); });
+
+function drawAll() {
+  const pos = {};
+  cv.querySelectorAll('.bw').forEach(function(el) {
+    pos[el.dataset.box] = {x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW = Math.max.apply(null, Object.values(pos).map(function(p){return p.x+p.w;})) + 80;
+  const maxH = Math.max.apply(null, Object.values(pos).map(function(p){return p.y+p.h;})) + 100;
+  cv.style.minWidth = maxW+'px'; cv.style.minHeight = maxH+'px';
+  svgEl.setAttribute('width', maxW); svgEl.setAttribute('height', maxH);
+  const ph = document.getElementById('cv-phantom');
+  ph.style.width  = Math.ceil(maxW*zl)+'px';
+  ph.style.height = Math.ceil(maxH*zl)+'px';
+
+  svgEl.innerHTML = '<defs>' +
+    '<marker id="me" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">' +
+    '<path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#e040fb" stroke-width="2" stroke-linejoin="round"/></marker>' +
+    '<marker id="mi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">' +
+    '<path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#4f8ef7" stroke-width="2" stroke-linejoin="round"/></marker>' +
+    '<marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">' +
+    '<path d="M1 2 L10 6 L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker>' +
+    '</defs>';
+
+  FG.forEach(function(fg) {
+    const bs = fg.ns.map(function(n){return pos[n];}).filter(Boolean); if(!bs.length) return;
+    const pd=14, x1=Math.min.apply(null,bs.map(function(b){return b.x;}))-pd, y1=Math.min.apply(null,bs.map(function(b){return b.y;}))-pd;
+    const x2=Math.max.apply(null,bs.map(function(b){return b.x+b.w;}))+pd, y2=Math.max.apply(null,bs.map(function(b){return b.y+b.h;}))+pd;
+    const rc=mk('rect'); sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect'); sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text'); sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl; svgEl.appendChild(tx);
+  });
+
+  function ep(b,e){
+    if(e==='top')    return [b.x+b.w/2, b.y];
+    if(e==='bottom') return [b.x+b.w/2, b.y+b.h];
+    if(e==='left')   return [b.x,        b.y+b.h/2];
+    if(e==='right')  return [b.x+b.w,    b.y+b.h/2];
+    return [b.x+b.w/2, b.y];
+  }
+
+  const SY = {
+    ext:  {stroke:'#e040fb','stroke-width':2,  'marker-end':'url(#me)'},
+    impl: {stroke:'#4f8ef7','stroke-width':1.5,'stroke-dasharray':'5,3','marker-end':'url(#mi)'},
+    uses: {stroke:'#888',   'stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+  };
+
+  CONN.forEach(function(c) {
+    const fb=pos[c.f], tb=pos[c.t]; if(!fb||!tb) return;
+    const ep1=ep(fb,c.fe), ep2=ep(tb,c.te);
+    const sx=ri(ep1[0]), sy=ri(ep1[1]);
+    const tx2=ri(ep2[0]), ty2=ri(ep2[1]);
+    const ML=18;
+    let ex=tx2, ey=ty2;
+    if(c.te==='top')    ey+=ML; else if(c.te==='bottom') ey-=ML;
+    else if(c.te==='left') ex+=ML; else if(c.te==='right') ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff, c1y=sy, c2x=ex+xoff, c2y=ey;
+    if(c.fe==='bottom') c1y+=cp; else if(c.fe==='top') c1y-=cp;
+    else if(c.fe==='right') c1x+=cp; else if(c.fe==='left') c1x-=cp;
+    if(c.te==='top') c2y-=cp; else if(c.te==='bottom') c2y+=cp;
+    else if(c.te==='left') c2x-=cp; else if(c.te==='right') c2x+=cp;
+    const d='M'+sx+' '+sy+' C'+ri(c1x)+' '+ri(c1y)+' '+ri(c2x)+' '+ri(c2y)+' '+ex+' '+ey;
+    const pa=mk('path'); sa(pa,{d:d,fill:'none',...(SY[c.ty]||SY.uses)});
+    svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5, it=1-t;
+      const mx=ri(it*it*it*sx+3*it*it*t*c1x+3*it*t*t*c2x+t*t*t*ex);
+      const my=ri(it*it*it*sy+3*it*it*t*c1y+3*it*t*t*c2y+t*t*t*ey);
+      const lblCol={ext:'#c000d8',impl:'#1a5cb8',uses:'#555'}[c.ty]||'#555';
+      const FSIZE=11, PAD_X=7, PAD_Y=3;
+      const aw=c.lbl.length*FSIZE*0.62+PAD_X*2, ah=FSIZE+PAD_Y*2;
+      const bg=mk('rect'); sa(bg,{x:mx-aw/2,y:my-ah/2,width:aw,height:ah,rx:4,fill:'white',stroke:lblCol,'stroke-width':1.2,opacity:0.97});
+      svgEl.appendChild(bg);
+      const tl=mk('text'); sa(tl,{x:mx,y:my,'font-size':FSIZE,fill:lblCol,'font-family':'monospace','font-weight':'700','text-anchor':'middle','dominant-baseline':'central'});
+      tl.textContent=c.lbl; svgEl.appendChild(tl);
+    }
+  });
+}
+
+function mk(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function sa(el,a){ Object.entries(a).forEach(function([k,v]){el.setAttribute(k,v);}); }
+
+sz(0.52);
+</script>
+</body>
+</html>
