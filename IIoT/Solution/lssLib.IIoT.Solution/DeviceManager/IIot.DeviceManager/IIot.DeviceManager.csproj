@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+
+	<!-- ★ Phase 0: WPF 공유 테마 라이브러리 참조 -->
+    <ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+  </ItemGroup>
+	
+<ItemGroup>
+    <!-- ★ Phase 0: MVVM 툴킷 -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <!-- DI 컨테이너 -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>
