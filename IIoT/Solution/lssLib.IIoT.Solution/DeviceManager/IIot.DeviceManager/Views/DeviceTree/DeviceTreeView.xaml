@@ -17,7 +17,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.DeviceTree"
+    xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+    xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.DeviceTree;assembly=IIot.DeviceManager"
     mc:Ignorable="d"
     d:DesignHeight="600" d:DesignWidth="280"
     d:DataContext="{d:DesignInstance vm:DeviceTreeViewModel, IsDesignTimeCreatable=False}">
@@ -110,7 +111,7 @@
         </DataTemplate>
 
         <!-- ═══ Group ═══ -->
-        <HierarchicalDataTemplate DataType="{x:Type vm:GroupNodeViewModel}"
+        <HierarchicalDataTemplate DataType="{x:Type vm::GroupNodeViewModel}"
                                    ItemsSource="{Binding Children}">
             <ContentPresenter ContentTemplate="{StaticResource NodeHeaderTemplate}"
                               Content="{Binding}"/>
@@ -371,40 +372,25 @@
                         </MultiTrigger>
                     </Style.Triggers>
 
-                    <!-- 컨텍스트 메뉴 -->
+                    <!-- 3. ContextMenu 설정 (정상 구조) -->
                     <Setter Property="ContextMenu">
                         <Setter.Value>
-                            <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
-                                         RelativeSource={RelativeSource Self}}">
-                                <MenuItem Header="✏️ 이름 변경"
-                                          Command="{Binding BeginEditCommand}"/>
+                            <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                <MenuItem Header="✏️ 이름 변경" Command="{Binding BeginEditCommand}"/>
                                 <Separator/>
-                                <MenuItem Header="📁 하위 그룹 추가"
-                                          Command="{Binding DataContext.AddGroupCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="📟 장비 추가"
-                                          Command="{Binding DataContext.AddDeviceCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="⚙️ PLC 추가"
-                                          Command="{Binding DataContext.AddPlcCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="🏷️ 태그 추가"
-                                          Command="{Binding DataContext.AddTagCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                <MenuItem Header="📁 하위 그룹 추가" Command="{Binding DataContext.AddGroupCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                <MenuItem Header="📟 장비 추가" Command="{Binding DataContext.AddDeviceCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                <MenuItem Header="⚙️ PLC 추가" Command="{Binding DataContext.AddPlcCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                <MenuItem Header="🏷️ 태그 추가" Command="{Binding DataContext.AddTagCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
                                 <Separator/>
-                                <MenuItem Header="▲ 위로 이동"
-                                          Command="{Binding DataContext.MoveUpCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="▼ 아래로 이동"
-                                          Command="{Binding DataContext.MoveDownCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                <MenuItem Header="▲ 위로 이동" Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                <MenuItem Header="▼ 아래로 이동" Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
                                 <Separator/>
-                                <MenuItem Header="🗑 삭제"
-                                          Command="{Binding DataContext.DeleteNodeCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                <MenuItem Header="🗑 삭제" Command="{Binding DataContext.DeleteNodeCommand, RelativeSource={RelativeSource AncestorType=TreeView}}"/>
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>
+                    <!-- 여기서 정상적으로 Setter가 닫혀야 함 -->
 
                     <!-- 더블클릭 → 인라인 편집 시작 -->
                     <EventSetter Event="MouseDoubleClick"
