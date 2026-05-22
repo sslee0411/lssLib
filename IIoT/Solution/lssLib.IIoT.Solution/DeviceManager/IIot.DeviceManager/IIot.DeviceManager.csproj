@@ -9,7 +9,7 @@
 		<!--
 		  ★ Fix3: RootNamespace 명시
 		     미설정 시 MSBuild 가 csproj 파일명(IIot.DeviceManager)을 기준으로
-		     EmbeddedResource 이름 생성 → "IIot.DeviceManager.Config.device.json.sample"
+		     EmbeddedResource 이름 생성 → "IIoT.DeviceManager.Config.device.json.sample"
 		     ConfigInitializer 의 ResourcePrefix("IIoT.DeviceManager.Config.") 와 불일치
 		     → RootNamespace 를 명시하여 두 곳 모두 "IIoT.DeviceManager" 로 통일
 		-->

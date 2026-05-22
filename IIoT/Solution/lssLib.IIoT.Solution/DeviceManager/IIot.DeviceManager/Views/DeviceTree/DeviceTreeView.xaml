@@ -3,6 +3,11 @@
   IIoT.DeviceManager · DeviceTreeView.xaml
   역할: 장비 트리 뷰 — Group/Device/PLC/Tag 계층 표시 + CRUD 툴바
   생성: 2025-05-22
+  수정: 2025-05-22 — XDG0008 수정
+        ① BasedOn="{StaticResource BaseTreeViewItemStyle}" 제거
+           → 디자인타임 미로드 테마 키 의존성 제거 (XDG0008 주원인)
+        ② 잘못된 리소스 키 전면 교체 (README 기준)
+           TextPrimaryBrush→TextBrush, AccentBrush→AccBrush 등
  ══════════════════════════════════════════════════════════
 -->
 <UserControl
@@ -18,56 +23,77 @@
 
     <UserControl.Resources>
 
-        <!-- ── 노드 공통: 인라인 편집 트리거 ── -->
-        <Style x:Key="NodeEditableTextStyle" TargetType="TextBlock">
+        <!--
+        ★ 올바른 리소스 키 (IIoT.UI.Themes README 기준)
+        ════════════════════════════════════════════
+        TextBrush     주 텍스트
+        Text2Brush    보조 텍스트
+        Text3Brush    흐린 텍스트
+        AccBrush      주 액센트
+        BgBrush       페이지 배경
+        SurfaceBrush  패널/사이드바
+        CardBrush     카드/컨텐츠 박스
+        BorderBrush   구분선(연함)
+        RedBrush      위험/오류
+        GhostBtn / SecondaryBtn  버튼 스타일
+        ★ StaticResource 절대 금지 — DynamicResource 전용
+        ════════════════════════════════════════════
+        -->
+
+        <!-- ── 노드 이름 텍스트 스타일 ── -->
+        <Style x:Key="NodeLabelStyle" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="Margin" Value="4,0,0,0"/>
         </Style>
 
+        <!-- ── 인라인 편집 TextBox 스타일 ── -->
         <Style x:Key="NodeEditBoxStyle" TargetType="TextBox">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Margin" Value="4,1,4,1"/>
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
-            <Setter Property="Background" Value="{DynamicResource InputBgBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="2,1"/>
+            <Setter Property="Padding" Value="3,1"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource AccBrush}"/>
         </Style>
 
-        <!-- ── 배지 스타일 ── -->
+        <!-- ── 배지 Border 스타일 ── -->
         <Style x:Key="NodeBadgeStyle" TargetType="Border">
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="5,1"/>
-            <Setter Property="Margin" Value="4,0,0,0"/>
+            <Setter Property="Margin" Value="5,0,0,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
         </Style>
 
-        <!-- ── 노드 공통 헤더 DataTemplate ──
-             각 타입별 HierarchicalDataTemplate 에서 공유 -->
+        <!-- ── 노드 공통 헤더 Template (Group · Device · PLC 공유) ── -->
         <DataTemplate x:Key="NodeHeaderTemplate">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
                 <!-- 아이콘 -->
                 <TextBlock Text="{Binding IconGlyph}"
                            FontSize="14"
                            VerticalAlignment="Center"/>
-                <!-- 이름 (일반 모드) -->
+
+                <!-- 이름 — 일반 모드 -->
                 <TextBlock Text="{Binding Name}"
-                           Style="{StaticResource NodeEditableTextStyle}"
+                           Style="{StaticResource NodeLabelStyle}"
                            Visibility="{Binding IsEditing,
                                Converter={StaticResource BoolToVisibilityInvertConverter}}"/>
-                <!-- 이름 (편집 모드) -->
+
+                <!-- 이름 — 편집 모드 -->
                 <TextBox Text="{Binding EditBuffer, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource NodeEditBoxStyle}"
                          Width="130"
                          Visibility="{Binding IsEditing,
-                             Converter={StaticResource BoolToVisibilityConverter}}"
-                         x:Name="EditBox"/>
-                <!-- 배지 -->
+                             Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                <!-- 배지 (null 이면 숨김) -->
                 <Border Style="{StaticResource NodeBadgeStyle}"
-                        Background="{DynamicResource AccentBrush}"
                         Visibility="{Binding Badge,
                             Converter={StaticResource NullToVisibilityConverter}}">
                     <TextBlock Text="{Binding Badge}"
@@ -75,59 +101,72 @@
                                Foreground="White"
                                VerticalAlignment="Center"/>
                 </Border>
+
             </StackPanel>
         </DataTemplate>
 
-        <!-- ═══ Group HierarchicalDataTemplate ═══ -->
-        <HierarchicalDataTemplate
-            DataType="{x:Type vm:GroupNodeViewModel}"
-            ItemsSource="{Binding Children}">
+        <!-- ═══ Group ═══ -->
+        <HierarchicalDataTemplate DataType="{x:Type vm:GroupNodeViewModel}"
+                                   ItemsSource="{Binding Children}">
             <ContentPresenter ContentTemplate="{StaticResource NodeHeaderTemplate}"
                               Content="{Binding}"/>
         </HierarchicalDataTemplate>
 
-        <!-- ═══ Device HierarchicalDataTemplate ═══ -->
-        <HierarchicalDataTemplate
-            DataType="{x:Type vm:DeviceItemViewModel}"
-            ItemsSource="{Binding Children}">
+        <!-- ═══ Device ═══ -->
+        <HierarchicalDataTemplate DataType="{x:Type vm:DeviceItemViewModel}"
+                                   ItemsSource="{Binding Children}">
             <ContentPresenter ContentTemplate="{StaticResource NodeHeaderTemplate}"
                               Content="{Binding}"/>
         </HierarchicalDataTemplate>
 
-        <!-- ═══ PLC HierarchicalDataTemplate ═══ -->
-        <HierarchicalDataTemplate
-            DataType="{x:Type vm:PlcNodeViewModel}"
-            ItemsSource="{Binding Children}">
+        <!-- ═══ PLC ═══ -->
+        <HierarchicalDataTemplate DataType="{x:Type vm:PlcNodeViewModel}"
+                                   ItemsSource="{Binding Children}">
             <ContentPresenter ContentTemplate="{StaticResource NodeHeaderTemplate}"
                               Content="{Binding}"/>
         </HierarchicalDataTemplate>
 
-        <!-- ═══ Tag DataTemplate (리프 노드) ═══ -->
+        <!-- ═══ Tag (리프 노드) ═══ -->
         <DataTemplate DataType="{x:Type vm:TagNodeViewModel}">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{Binding IconGlyph}" FontSize="13" VerticalAlignment="Center"/>
+
+                <TextBlock Text="{Binding IconGlyph}"
+                           FontSize="13"
+                           VerticalAlignment="Center"/>
+
+                <!-- 이름 — 일반 모드 -->
                 <TextBlock Text="{Binding Name}"
-                           Style="{StaticResource NodeEditableTextStyle}"
+                           Style="{StaticResource NodeLabelStyle}"
                            Visibility="{Binding IsEditing,
                                Converter={StaticResource BoolToVisibilityInvertConverter}}"/>
+
+                <!-- 이름 — 편집 모드 -->
                 <TextBox Text="{Binding EditBuffer, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource NodeEditBoxStyle}"
                          Width="120"
                          Visibility="{Binding IsEditing,
                              Converter={StaticResource BoolToVisibilityConverter}}"/>
+
                 <!-- BufType 배지 (회색) -->
-                <Border CornerRadius="4" Padding="4,1" Margin="4,0,0,0"
-                        Background="{DynamicResource BgTertiaryBrush}"
+                <Border CornerRadius="4"
+                        Padding="4,1"
+                        Margin="5,0,0,0"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
                         VerticalAlignment="Center">
                     <TextBlock Text="{Binding BufType}"
                                FontSize="9"
-                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                               Foreground="{DynamicResource Text2Brush}"/>
                 </Border>
-                <!-- Address -->
+
+                <!-- 주소 -->
                 <TextBlock Text="{Binding Address, StringFormat='@ {0}'}"
-                           FontSize="10" Margin="4,0,0,0"
+                           FontSize="10"
+                           Margin="4,0,0,0"
                            VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+                           Foreground="{DynamicResource Text3Brush}"/>
+
             </StackPanel>
         </DataTemplate>
 
@@ -137,81 +176,91 @@
 
         <!-- ── 상단 툴바 ── -->
         <ToolBar DockPanel.Dock="Top"
-                 Background="{DynamicResource BgSecondaryBrush}"
+                 Background="{DynamicResource SurfaceBrush}"
                  BorderBrush="{DynamicResource BorderBrush}"
                  BorderThickness="0,0,0,1">
 
             <!-- 그룹 추가 -->
             <Button Command="{Binding AddGroupCommand}"
-                    ToolTip="그룹 추가 (선택 그룹 하위 또는 루트)"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    ToolTip="그룹 추가"
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" FontSize="13"/>
                     <TextBlock Text=" 그룹" FontSize="12"
-                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
-            <!-- 장비 추가 (그룹 선택 시 활성) -->
+            <!-- 장비 추가 -->
             <Button Command="{Binding AddDeviceCommand}"
                     ToolTip="장비 추가 (그룹 선택 필요)"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📟" FontSize="13"/>
                     <TextBlock Text=" 장비" FontSize="12"
-                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
-            <!-- PLC 추가 (장비 선택 시 활성) -->
+            <!-- PLC 추가 -->
             <Button Command="{Binding AddPlcCommand}"
                     ToolTip="PLC 추가 (장비 선택 필요)"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚙️" FontSize="13"/>
                     <TextBlock Text=" PLC" FontSize="12"
-                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
-            <!-- 태그 추가 (장비/PLC 선택 시 활성) -->
+            <!-- 태그 추가 -->
             <Button Command="{Binding AddTagCommand}"
                     ToolTip="태그 추가 (장비 또는 PLC 선택 필요)"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="🏷️" FontSize="13"/>
                     <TextBlock Text=" 태그" FontSize="12"
-                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
             <Separator/>
 
-            <!-- 위로 -->
+            <!-- 위로 이동 -->
             <Button Command="{Binding MoveUpCommand}"
                     ToolTip="위로 이동"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <TextBlock Text="▲" FontSize="12"
-                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
-            <!-- 아래로 -->
+            <!-- 아래로 이동 -->
             <Button Command="{Binding MoveDownCommand}"
                     ToolTip="아래로 이동"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <TextBlock Text="▼" FontSize="12"
-                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
             <Separator/>
 
-            <!-- 삭제 -->
+            <!-- 삭제 — SecondaryBtn 에 RedBrush 오버라이드 -->
             <Button Command="{Binding DeleteNodeCommand}"
                     ToolTip="선택 노드 삭제"
-                    Style="{DynamicResource DangerButtonStyle}">
+                    Style="{DynamicResource SecondaryBtn}"
+                    Padding="6,3"
+                    Foreground="{DynamicResource RedBrush}"
+                    BorderBrush="{DynamicResource RedBrush}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="🗑" FontSize="13"/>
-                    <TextBlock Text=" 삭제" FontSize="12"/>
+                    <TextBlock Text=" 삭제" FontSize="12"
+                               Foreground="{DynamicResource RedBrush}"/>
                 </StackPanel>
             </Button>
 
@@ -220,47 +269,50 @@
             <!-- 전체 펼치기 -->
             <Button Command="{Binding ExpandAllCommand}"
                     ToolTip="전체 펼치기"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <TextBlock Text="⊞" FontSize="13"
-                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
             <!-- 전체 접기 -->
             <Button Command="{Binding CollapseAllCommand}"
                     ToolTip="전체 접기"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <TextBlock Text="⊟" FontSize="13"
-                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
-            <!-- 샘플 로드 (개발용) -->
             <Separator/>
+
+            <!-- 샘플 로드 (개발용) -->
             <Button Command="{Binding LoadSampleCommand}"
                     ToolTip="샘플 데이터 로드 (개발용)"
-                    Style="{DynamicResource ToolbarButtonStyle}">
+                    Style="{DynamicResource GhostBtn}"
+                    Padding="6,3">
                 <TextBlock Text="↺ 샘플" FontSize="12"
-                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+                           Foreground="{DynamicResource Text2Brush}"/>
             </Button>
+
         </ToolBar>
 
         <!-- ── 하단 상태바 ── -->
         <StatusBar DockPanel.Dock="Bottom"
-                   Background="{DynamicResource BgSecondaryBrush}"
+                   Height="22"
+                   Background="{DynamicResource SurfaceBrush}"
                    BorderBrush="{DynamicResource BorderBrush}"
-                   BorderThickness="0,1,0,0"
-                   Height="22">
+                   BorderThickness="0,1,0,0">
             <StatusBarItem>
-                <TextBlock FontSize="11"
-                           Foreground="{DynamicResource TextSecondaryBrush}">
+                <TextBlock FontSize="11" Foreground="{DynamicResource Text2Brush}">
                     <Run Text="전체:"/>
                     <Run Text="{Binding TotalNodeCount, Mode=OneWay}"/>
-                    <Run Text="개 노드"/>
+                    <Run Text="개"/>
                 </TextBlock>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
-                <TextBlock FontSize="11"
-                           Foreground="{DynamicResource TextSecondaryBrush}">
+                <TextBlock FontSize="11" Foreground="{DynamicResource Text2Brush}">
                     <Run Text="선택:"/>
                     <Run Text="{Binding SelectedNode.Name, Mode=OneWay, FallbackValue=없음}"/>
                 </TextBlock>
@@ -271,7 +323,7 @@
         <TreeView
             x:Name="DeviceTree"
             ItemsSource="{Binding RootNodes}"
-            Background="{DynamicResource BgPrimaryBrush}"
+            Background="{DynamicResource BgBrush}"
             BorderThickness="0"
             Style="{DynamicResource BaseTreeViewStyle}"
             SelectedItemChanged="DeviceTree_SelectedItemChanged"
@@ -279,14 +331,43 @@
             VirtualizingPanel.VirtualizationMode="Recycling">
 
             <TreeView.ItemContainerStyle>
-                <Style TargetType="TreeViewItem"
-                       BasedOn="{StaticResource BaseTreeViewItemStyle}">
-                    <Setter Property="IsExpanded"
-                            Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                    <Setter Property="IsSelected"
-                            Value="{Binding IsSelected, Mode=TwoWay}"/>
+                <!--
+                ★ XDG0008 수정 핵심:
+                   BasedOn="{StaticResource BaseTreeViewItemStyle}" 제거
+                   이유: 테마는 런타임에 ThemeManager.Apply()로 로드되므로
+                         디자인타임에는 StaticResource로 찾을 수 없음
+                         → XAML 파싱 실패 → XDG0008 연쇄 발생
+                   대신: 필요한 Setter를 직접 정의
+                -->
+                <Style TargetType="TreeViewItem">
 
-                    <!-- 컨텍스트 메뉴 (각 노드에 동일 적용, CanExecute 로 항목 자동 비활성) -->
+                    <!-- IsExpanded / IsSelected 양방향 바인딩 -->
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+
+                    <!-- 기본 스타일 직접 정의 (BasedOn 대체) -->
+                    <Setter Property="Padding" Value="2,3"/>
+                    <Setter Property="MinHeight" Value="26"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                    <Setter Property="Background" Value="Transparent"/>
+
+                    <!-- 선택 시 하이라이트 -->
+                    <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="IsSelectionActive" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Background" Value="{DynamicResource Border2Brush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                        </MultiTrigger>
+                    </Style.Triggers>
+
+                    <!-- 컨텍스트 메뉴 -->
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
@@ -325,9 +406,10 @@
                     <EventSetter Event="MouseDoubleClick"
                                  Handler="TreeViewItem_MouseDoubleClick"/>
 
-                    <!-- 편집 중 키 처리 (Enter=확정, Escape=취소) -->
+                    <!-- Enter = 확정 / Escape = 취소 -->
                     <EventSetter Event="KeyDown"
                                  Handler="TreeViewItem_KeyDown"/>
+
                 </Style>
             </TreeView.ItemContainerStyle>
 

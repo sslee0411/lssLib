@@ -1,11 +1,13 @@
-﻿// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  IIoT.DeviceManager · PlcNodeViewModel.cs
 //  역할: PLC 슬롯/채널 노드 ViewModel
 //  생성: 2025-05-22
+//  수정: 2025-05-22 — XDG0008 수정
+//        PropertyChanged 수동 구독 제거 (nameof(SlotNo) = 소스 제너레이터 의존)
+//        → [NotifyPropertyChangedFor] 어트리뷰트로 교체
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Xml.Linq;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 
@@ -16,7 +18,9 @@ public partial class PlcNodeViewModel : DeviceNodeViewModel
 {
     // §1 ─ 속성 ───────────────────────────────────────────────
 
+    /// <summary>슬롯번호. 변경 시 Badge 자동 알림.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Badge))]
     private int _slotNo;
 
     [ObservableProperty]
@@ -29,24 +33,18 @@ public partial class PlcNodeViewModel : DeviceNodeViewModel
 
     public override NodeKind Kind => NodeKind.Plc;
 
-    /// <summary>⚙️</summary>
     public override string IconGlyph => "⚙️";
 
     public override IReadOnlyList<NodeKind> AllowedChildKinds => [NodeKind.Tag];
 
-    /// <summary>슬롯번호 배지</summary>
+    /// <summary>슬롯번호 배지 (예: #0, #1)</summary>
     public override string? Badge => $"#{SlotNo}";
 
     // §3 ─ 생성자 ─────────────────────────────────────────────
 
     public PlcNodeViewModel(string name = "새 PLC", int slotNo = 0)
     {
-        Name = name;
+        Name   = name;
         SlotNo = slotNo;
-        PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(SlotNo))
-                OnPropertyChanged(nameof(Badge));
-        };
     }
 }
