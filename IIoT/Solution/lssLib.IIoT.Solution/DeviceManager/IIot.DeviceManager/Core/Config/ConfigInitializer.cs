@@ -1,39 +1,45 @@
 ﻿// ══════════════════════════════════════════════════════════
 //  IIoT.DeviceManager · Core/Config/ConfigInitializer.cs
 //  역할: 프로그램 시작 시 JSON 설정 파일 초기화
-//        ① config/{name}.json 존재 → 그대로 사용
-//        ② config/{name}.json 없고 .json.sample 있음 → sample 복사하여 생성
-//        ③ .json.sample 도 없음 → 최소 기본값 JSON 자동 생성
-//  Phase 1 Update: 신규 추가
+//
+//  처리 우선순위:
+//   ① Config/*.json 존재 → 그대로 사용 (아무것도 안 함)
+//   ② Config/*.json 없음 → 실행파일 내장 리소스에서 읽어 생성
+//   ③ 내장 리소스도 없음 → 최소 기본값 JSON 자동 생성
+//
+//  Fix2: MSBuild Target / CopyToOutputDirectory 방식 제거
+//        EmbeddedResource 방식으로 변경
+//        → 출력폴더 파일 의존성 없음, .json 없을 때만 동작 보장
 // ══════════════════════════════════════════════════════════
 
+using System.IO;
+using System.Reflection;
+using System.Text;
 using lssLib.Log;
 using lssLib.Utils;
-using System.IO;
 
 namespace IIoT.DeviceManager.Core.Config;
 
 /// <summary>
 /// 프로그램 시작 시 설정 JSON 파일 5종의 존재를 보장합니다.
-/// App.xaml.cs 의 OnStartup 에서 LogManager 초기화 직후 호출합니다.
+///
+/// .json.sample 파일은 실행파일 내부에 EmbeddedResource 로 내장되어 있으며,
+/// Config/*.json 이 없을 때만 해당 리소스를 추출하여 파일을 생성합니다.
+/// Config/*.json 이 이미 존재하면 절대 건드리지 않습니다.
 /// </summary>
-/// <example><code>
-/// // App.xaml.cs OnStartup
-/// _InitLogManager();
-/// ConfigInitializer.EnsureConfigFiles(ConfigDirectory);
-/// </code></example>
 public static class ConfigInitializer
 {
     // §1 ─ 상수 ───────────────────────────────────────────────
     private const string LogSource = "ConfigInitializer";
 
-    // §2 ─ 파일 정의 ──────────────────────────────────────────
-
     /// <summary>
-    /// 관리할 설정 파일 정보 목록.
-    /// FileName : 실제 JSON 파일명
-    /// DefaultContent : .json 과 .sample 모두 없을 때 생성할 최소 JSON
+    /// 임베디드 리소스 이름 접두사.
+    /// csproj RootNamespace + 폴더 경로
+    /// → "IIoT.DeviceManager.Config."
     /// </summary>
+    private const string ResourcePrefix = "IIoT.DeviceManager.Config.";
+
+    // §2 ─ 파일 정의 ──────────────────────────────────────────
     private static readonly IReadOnlyList<ConfigFileSpec> _Specs =
     [
         new("device.json",
@@ -91,19 +97,16 @@ public static class ConfigInitializer
     // §3 ─ 공개 메서드 ────────────────────────────────────────
 
     /// <summary>
-    /// config 디렉터리의 JSON 설정 파일 5종을 보장합니다.
-    /// 없는 파일은 .sample 복사 또는 기본값 생성으로 만들어냅니다.
+    /// Config 디렉터리의 JSON 설정 파일 5종을 보장합니다.
     /// </summary>
-    /// <param name="configDirectory">설정 파일 디렉터리 (예: [Exe]/config)</param>
+    /// <param name="configDirectory">설정 파일 디렉터리 (예: [Exe]/Config)</param>
     public static void EnsureConfigFiles(string configDirectory)
     {
         Guard.NotWhiteSpace(configDirectory);
-
-        // config 디렉터리 생성 (없으면)
         Directory.CreateDirectory(configDirectory);
 
         LogManager.Instance.Info(LogSource,
-            $"설정 파일 초기화 시작 → {configDirectory}");
+            $"설정 파일 초기화 → {configDirectory}");
 
         foreach (var spec in _Specs)
             _EnsureFile(configDirectory, spec);
@@ -113,13 +116,11 @@ public static class ConfigInitializer
 
     // §4 ─ 내부 메서드 ────────────────────────────────────────
 
-    /// <summary>단일 설정 파일의 존재를 보장합니다.</summary>
     private static void _EnsureFile(string configDir, ConfigFileSpec spec)
     {
         string jsonPath = Path.Combine(configDir, spec.FileName);
-        string samplePath = Path.Combine(configDir, spec.FileName + ".sample");
 
-        // ① JSON 파일이 이미 존재하면 건드리지 않음
+        // ① .json 파일이 이미 존재하면 절대 건드리지 않음
         if (File.Exists(jsonPath))
         {
             LogManager.Instance.Debug(LogSource,
@@ -127,37 +128,66 @@ public static class ConfigInitializer
             return;
         }
 
-        // ② .sample 파일이 있으면 복사하여 JSON 생성
-        if (File.Exists(samplePath))
-        {
-            File.Copy(samplePath, jsonPath, overwrite: false);
+        // ② 실행파일 내장 리소스에서 .json.sample 읽기
+        string? sampleContent = _ReadEmbeddedSample(spec.FileName + ".sample");
 
-            // 복사한 JSON 에 무결성 해시 생성
-            string content = File.ReadAllText(jsonPath, System.Text.Encoding.UTF8);
-            IntegrityGuard.SaveHash(content, jsonPath);
+        if (sampleContent != null)
+        {
+            string json = _NormalizeJson(sampleContent);
+            File.WriteAllText(jsonPath, json, Encoding.UTF8);
+            IntegrityGuard.SaveHash(json, jsonPath);
 
             LogManager.Instance.Info(LogSource,
-                $"[COPY] {spec.FileName} ← {spec.FileName}.sample");
+                $"[INIT] {spec.FileName} — 내장 sample 에서 생성");
             return;
         }
 
-        // ③ 둘 다 없으면 기본값 JSON 생성
+        // ③ 내장 리소스도 없으면 최소 기본값으로 생성 (최후 수단)
         string defaultJson = _NormalizeJson(spec.DefaultContent);
-        File.WriteAllText(jsonPath, defaultJson, System.Text.Encoding.UTF8);
+        File.WriteAllText(jsonPath, defaultJson, Encoding.UTF8);
         IntegrityGuard.SaveHash(defaultJson, jsonPath);
 
         LogManager.Instance.Warn(LogSource,
-            $"[NEW] {spec.FileName} — .sample 없음, 기본값으로 생성");
+            $"[NEW] {spec.FileName} — 내장 리소스 없음, 기본값으로 생성");
     }
 
-    /// <summary>JSON 문자열 앞뒤 공백 정리 + UTF-8 BOM 없음 보장.</summary>
+    /// <summary>
+    /// 실행파일에 내장된 .json.sample 리소스를 문자열로 읽습니다.
+    ///
+    /// 리소스 이름: "IIoT.DeviceManager.Config.device.json.sample"
+    /// csproj:     &lt;EmbeddedResource Include="Config\*.json.sample" /&gt;
+    /// </summary>
+    private static string? _ReadEmbeddedSample(string sampleFileName)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        string resName = ResourcePrefix + sampleFileName;
+
+        // 디버그: 실제 내장된 리소스 이름 목록 확인 (개발 시 유용)
+        LogManager.Instance.Debug(LogSource,
+            $"리소스 로드 시도: {resName}");
+
+        using var stream = assembly.GetManifestResourceStream(resName);
+
+        if (stream == null)
+        {
+            // 리소스를 못 찾은 경우 실제 이름 목록 로그 (트러블슈팅용)
+            var available = assembly.GetManifestResourceNames()
+                                    .Where(n => n.Contains("Config"))
+                                    .ToArray();
+            if (available.Length > 0)
+                LogManager.Instance.Debug(LogSource,
+                    $"사용 가능한 Config 리소스: {string.Join(", ", available)}");
+
+            return null;
+        }
+
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        return reader.ReadToEnd();
+    }
+
     private static string _NormalizeJson(string json)
         => json.Trim().ReplaceLineEndings("\n");
 
     // §5 ─ 내부 타입 ──────────────────────────────────────────
-
-    /// <summary>설정 파일 스펙 레코드</summary>
-    private record ConfigFileSpec(
-        string FileName,
-        string DefaultContent);
+    private record ConfigFileSpec(string FileName, string DefaultContent);
 }

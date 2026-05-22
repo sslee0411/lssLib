@@ -1,31 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
 
-  <ItemGroup>
+	<ItemGroup>
 
-	<!-- ★ Phase 0: WPF 공유 테마 라이브러리 참조 -->
-    <ProjectReference Include="..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
-    <ProjectReference Include="..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
-    <ProjectReference Include="..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
-    <ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
-  </ItemGroup>
-	
-<ItemGroup>
-    <!-- ★ Phase 0: MVVM 툴킷 -->
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <!-- DI 컨테이너 -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-  </ItemGroup>
-	
-<ItemGroup>
-  <Folder Include="Config\" />
-</ItemGroup>
+		<!-- ★ Phase 0: WPF 공유 테마 라이브러리 참조 -->
+		<ProjectReference Include="..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+		<ProjectReference Include="..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+		<ProjectReference Include="..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+		<ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- ★ Phase 0: MVVM 툴킷 -->
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<!-- DI 컨테이너 -->
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+	<!--
+      ★ Phase 1 Fix2: .json.sample 을 실행파일 내부 임베디드 리소스로 내장
+         빌드 시 IIoT.DeviceManager.exe 안에 포함됨 (별도 파일 불필요)
+         리소스 이름 규칙: {RootNamespace}.Config.{파일명}
+           예) IIoT.DeviceManager.Config.device.json.sample
+         ConfigInitializer 가 런타임에 이 리소스를 읽어
+         Config/*.json 이 없을 때만 파일 생성
+    -->
+		<EmbeddedResource Include="Config\*.json.sample" />
+	</ItemGroup>
 
 </Project>
