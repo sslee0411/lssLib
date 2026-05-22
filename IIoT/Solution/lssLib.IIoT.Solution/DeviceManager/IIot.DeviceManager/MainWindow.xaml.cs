@@ -114,7 +114,7 @@ public partial class MainWindow : Window
     private static void NavigateTheme(int direction)
     {
         var list = ThemeManager.AllThemes;
-        var idx = list.Select((t, i) => (t, i))
+        var idx  = list.Select((t, i) => (t, i))
                        .FirstOrDefault(x => x.t.Kind == ThemeManager.Current).i;
         var next = list[((idx + direction) % list.Count + list.Count) % list.Count].Kind;
         ThemeManager.Apply(next);

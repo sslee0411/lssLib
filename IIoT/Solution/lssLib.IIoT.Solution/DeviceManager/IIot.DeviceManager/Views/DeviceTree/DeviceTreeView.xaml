@@ -18,7 +18,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
-    xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.DeviceTree;assembly=IIot.DeviceManager"
+    xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.DeviceTree;assembly=IIoT.DeviceManager"
     mc:Ignorable="d"
     d:DesignHeight="600" d:DesignWidth="280"
     d:DataContext="{d:DesignInstance vm:DeviceTreeViewModel, IsDesignTimeCreatable=False}">
