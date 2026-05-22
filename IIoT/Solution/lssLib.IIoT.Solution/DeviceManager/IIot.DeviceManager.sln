@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.37314.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIot.DeviceManager", "IIot.DeviceManager\IIot.DeviceManager.csproj", "{5E94BD49-1014-4B62-9C5B-E8894CAB5EBF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.DeviceManager", "IIot.DeviceManager\IIoT.DeviceManager.csproj", "{5E94BD49-1014-4B62-9C5B-E8894CAB5EBF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj", "{0B33F722-E6E2-2609-2227-46A2599D5C76}"
 EndProject

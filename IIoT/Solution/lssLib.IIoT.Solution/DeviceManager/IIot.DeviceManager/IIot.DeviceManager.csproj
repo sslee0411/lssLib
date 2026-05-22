@@ -6,11 +6,18 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
+		<!--
+		  ★ Fix3: RootNamespace 명시
+		     미설정 시 MSBuild 가 csproj 파일명(IIot.DeviceManager)을 기준으로
+		     EmbeddedResource 이름 생성 → "IIot.DeviceManager.Config.device.json.sample"
+		     ConfigInitializer 의 ResourcePrefix("IIoT.DeviceManager.Config.") 와 불일치
+		     → RootNamespace 를 명시하여 두 곳 모두 "IIoT.DeviceManager" 로 통일
+		-->
+		<RootNamespace>IIoT.DeviceManager</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>
-
-		<!-- ★ Phase 0: WPF 공유 테마 라이브러리 참조 -->
+		<!-- WPF 공유 테마 라이브러리 참조 (Phase 0) -->
 		<ProjectReference Include="..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
 		<ProjectReference Include="..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 		<ProjectReference Include="..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
@@ -18,21 +25,22 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- ★ Phase 0: MVVM 툴킷 -->
+		<!-- MVVM 툴킷 (Phase 0) -->
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<!-- DI 컨테이너 -->
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-	<!--
-      ★ Phase 1 Fix2: .json.sample 을 실행파일 내부 임베디드 리소스로 내장
-         빌드 시 IIoT.DeviceManager.exe 안에 포함됨 (별도 파일 불필요)
-         리소스 이름 규칙: {RootNamespace}.Config.{파일명}
-           예) IIoT.DeviceManager.Config.device.json.sample
-         ConfigInitializer 가 런타임에 이 리소스를 읽어
-         Config/*.json 이 없을 때만 파일 생성
-    -->
+		<!--
+		  ★ Phase 1 Fix2: .json.sample 을 실행파일 내부 임베디드 리소스로 내장
+		     RootNamespace 명시 후 리소스 이름:
+		       IIoT.DeviceManager.Config.device.json.sample       ← ConfigInitializer 와 일치
+		       IIoT.DeviceManager.Config.scale-library.json.sample
+		       IIoT.DeviceManager.Config.alarm-library.json.sample
+		       IIoT.DeviceManager.Config.comm-library.json.sample
+		       IIoT.DeviceManager.Config.location-library.json.sample
+		-->
 		<EmbeddedResource Include="Config\*.json.sample" />
 	</ItemGroup>
 
