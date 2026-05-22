@@ -11,6 +11,9 @@
   <ItemGroup>
 
 	<!-- ★ Phase 0: WPF 공유 테마 라이브러리 참조 -->
+    <ProjectReference Include="..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+    <ProjectReference Include="..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
     <ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
   </ItemGroup>
 	
@@ -20,5 +23,9 @@
     <!-- DI 컨테이너 -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
   </ItemGroup>
+	
+<ItemGroup>
+  <Folder Include="Config\" />
+</ItemGroup>
 
 </Project>

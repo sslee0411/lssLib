@@ -1,0 +1,15 @@
+{
+  "Meta": { "Version": "1.0", "UpdatedAt": "2025-01-01T00:00:00Z" },
+  "LocationLibrary:loc-001": {
+    "name": "1동 1층 전기패널", "description": "메인 분전반 옆",
+    "building": "1동", "floor": "1층", "room": "전기실",
+    "coordX": "12.5", "coordY": "34.0",
+    "latitude": "35.1796", "longitude": "129.0756", "altitude": "5.0"
+  },
+  "LocationLibrary:loc-002": {
+    "name": "2동 옥상 기계실", "description": "냉각탑 인근",
+    "building": "2동", "floor": "옥상", "room": "기계실",
+    "coordX": "45.0", "coordY": "12.0",
+    "latitude": "35.1802", "longitude": "129.0761", "altitude": "22.5"
+  }
+}
