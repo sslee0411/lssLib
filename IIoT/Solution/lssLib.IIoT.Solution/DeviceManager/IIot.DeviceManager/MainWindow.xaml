@@ -1,8 +1,11 @@
-<!-- ══════════════════════════════════════════════════════════ -->
-<!--  IIoT.DeviceManager · MainWindow.xaml                      -->
-<!--  역할: 메인 레이아웃 — 헤더 + 사이드트리 + 상세 편집 영역  -->
-<!--  Phase 0: 테마 통합 (DynamicResource 전용, ThemePickerButton) -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.DeviceManager · MainWindow.xaml
+     역할: 메인 레이아웃 — 헤더 + 좌(장비트리) + 우(편집영역) + 상태바
+     Phase 0 : 테마 통합 (DynamicResource 전용, ThemePickerButton)
+     Phase 1 : Core 기반 구조
+     Phase 2 : DeviceTreeView 좌측 패널 통합 ← 현재
+     수정    : 2025-05-22
+     ══════════════════════════════════════════════════════════ -->
 
 <Window x:Class="IIoT.DeviceManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -10,6 +13,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        xmlns:tree="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
         mc:Ignorable="d"
         Title="IIoT Device Manager"
         Width="1280" Height="800"
@@ -17,240 +21,253 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
 
-    <!-- ★ Phase 0: 모든 색상은 DynamicResource — 하드코딩 hex 절대 금지 -->
+    <!--
+    ★ 리소스 키 기준 (IIoT.UI.Themes v1.1 README 확인)
+    ══════════════════════════════════════════════════
+    배경  : BgBrush(페이지), SurfaceBrush(패널), CardBrush(카드)
+    구분선: BorderBrush(연함), Border2Brush(강함)
+    텍스트: TextBrush(주), Text2Brush(보조), Text3Brush(흐림)
+    액센트: AccBrush(주), Acc2Brush(보조)
+    상태  : GreenBrush(정상), YellowBrush(경고), RedBrush(위험), OrangeBrush(주의)
+    버튼  : PrimaryBtn, SecondaryBtn, GhostBtn
+    폰트  : UiFont, MonoFont
+    ★ DynamicResource 전용 — StaticResource 절대 금지
+    ══════════════════════════════════════════════════
+    -->
 
     <DockPanel LastChildFill="True">
 
-        <!-- ── 헤더 ─────────────────────────────────────────── -->
+        <!-- ──────────────────────────────────────────────────────
+             헤더 (48px)
+             ────────────────────────────────────────────────────── -->
         <Border DockPanel.Dock="Top"
                 Height="48"
-                Background="{DynamicResource HeaderBgBrush}"
+                Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
+
             <DockPanel Margin="12,0">
 
-                <!-- 앱 아이콘 + 타이틀 -->
+                <!-- 좌: 앱 타이틀 -->
                 <StackPanel DockPanel.Dock="Left"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <TextBlock Text="⚙"
                                FontSize="18"
-                               Foreground="{DynamicResource AccentBrush}"
+                               Foreground="{DynamicResource AccBrush}"
                                VerticalAlignment="Center"
                                Margin="0,0,8,0"/>
-                    <TextBlock Text="Device Manager"
+                    <TextBlock Text="IIoT Device Manager"
                                FontSize="15"
-                               FontWeight="Medium"
-                               Foreground="{DynamicResource FgBrush}"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"
                                VerticalAlignment="Center"/>
-                    <TextBlock Text="v0.3"
-                               FontSize="11"
-                               Foreground="{DynamicResource FgMutedBrush}"
-                               VerticalAlignment="Center"
-                               Margin="6,0,0,0"/>
+                    <Border Background="{DynamicResource AccBrush}"
+                            CornerRadius="4"
+                            Padding="5,2"
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center"
+                            Opacity="0.85">
+                        <TextBlock Text="DEV"
+                                   FontSize="9"
+                                   FontWeight="Bold"
+                                   Foreground="White"/>
+                    </Border>
                 </StackPanel>
 
-                <!-- ★ Phase 0 핵심: ThemePickerButton — 헤더 우측 배치 필수 -->
-                <uc:ThemePickerButton DockPanel.Dock="Right"
-                                      VerticalAlignment="Center"
-                                      Margin="0,0,4,0"/>
-
-                <!-- 헤더 우측 액션 버튼 영역 -->
+                <!-- 우: ThemePickerButton (★ Phase 0 핵심) -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            Margin="0,0,8,0">
-                    <Button Content="저장"
-                            Style="{DynamicResource PrimaryButton}"
-                            Width="64" Height="30"
-                            Margin="4,0"
-                            ToolTip="device.xml 저장 (Ctrl+S)"
-                            x:Name="BtnSave"/>
-                    <Button Content="되돌리기"
-                            Style="{DynamicResource SecondaryButton}"
-                            Width="72" Height="30"
-                            Margin="4,0"
-                            x:Name="BtnRevert"/>
+                            VerticalAlignment="Center">
+
+                    <!-- 저장 버튼 (Phase 6 연결 예정) -->
+                    <Button Style="{DynamicResource SecondaryBtn}"
+                            Content="💾 저장"
+                            Margin="0,0,8,0"
+                            Padding="10,4"
+                            FontSize="12"
+                            Click="BtnSave_Click"
+                            ToolTip="Ctrl+S — 설정 저장 (Phase 6 구현 예정)"/>
+
+                    <!-- 테마 선택 드롭다운 -->
+                    <uc:ThemePickerButton VerticalAlignment="Center"/>
+
                 </StackPanel>
 
-                <!-- 상태 표시 (중앙) -->
+                <!-- 중: 탭 메뉴 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center">
+                    <Button x:Name="BtnTabDevice"
+                            Content="장비 관리"
+                            Style="{DynamicResource GhostBtn}"
+                            FontSize="13"
+                            Padding="14,6"
+                            Click="BtnTab_Click"
+                            Tag="Device"/>
+                    <Button x:Name="BtnTabScale"
+                            Content="스케일 설정"
+                            Style="{DynamicResource GhostBtn}"
+                            FontSize="13"
+                            Padding="14,6"
+                            Margin="2,0,0,0"
+                            Click="BtnTab_Click"
+                            Tag="Scale"/>
+                    <Button x:Name="BtnTabAlarm"
+                            Content="알람 규칙"
+                            Style="{DynamicResource GhostBtn}"
+                            FontSize="13"
+                            Padding="14,6"
+                            Margin="2,0,0,0"
+                            Click="BtnTab_Click"
+                            Tag="Alarm"/>
+                    <Button x:Name="BtnTabComm"
+                            Content="통신 설정"
+                            Style="{DynamicResource GhostBtn}"
+                            FontSize="13"
+                            Padding="14,6"
+                            Margin="2,0,0,0"
+                            Click="BtnTab_Click"
+                            Tag="Comm"/>
+                </StackPanel>
+
+            </DockPanel>
+        </Border>
+
+        <!-- ──────────────────────────────────────────────────────
+             상태바 (하단, 24px)
+             ────────────────────────────────────────────────────── -->
+        <StatusBar DockPanel.Dock="Bottom"
+                   Height="24"
+                   Background="{DynamicResource SurfaceBrush}"
+                   BorderBrush="{DynamicResource BorderBrush}"
+                   BorderThickness="0,1,0,0">
+
+            <!-- 선택 노드 -->
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="선택:"
+                               FontSize="11"
+                               Foreground="{DynamicResource Text3Brush}"
+                               Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtSelectedNode"
+                               Text="없음"
+                               FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}"/>
+                </StackPanel>
+            </StatusBarItem>
+
+            <Separator/>
+
+            <!-- 노드 수 -->
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="노드:"
+                               FontSize="11"
+                               Foreground="{DynamicResource Text3Brush}"
+                               Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtNodeCount"
+                               Text="0"
+                               FontSize="11"
+                               FontFamily="{DynamicResource MonoFont}"
+                               Foreground="{DynamicResource AccBrush}"/>
+                </StackPanel>
+            </StatusBarItem>
+
+            <Separator/>
+
+            <!-- 일반 상태 메시지 -->
+            <StatusBarItem>
                 <TextBlock x:Name="TxtStatus"
                            Text="준비"
-                           FontSize="12"
-                           Foreground="{DynamicResource FgMutedBrush}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
-            </DockPanel>
-        </Border>
-
-        <!-- ── 상태바 ─────────────────────────────────────────── -->
-        <Border DockPanel.Dock="Bottom"
-                Height="26"
-                Background="{DynamicResource HeaderBgBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,1,0,0">
-            <DockPanel Margin="12,0">
-                <TextBlock x:Name="TxtStatusBar"
-                           Text="device.xml 경로: (미지정)"
                            FontSize="11"
-                           Foreground="{DynamicResource FgMutedBrush}"
-                           VerticalAlignment="Center"/>
-                <TextBlock x:Name="TxtTagCount"
-                           DockPanel.Dock="Right"
-                           FontSize="11"
-                           Foreground="{DynamicResource FgMutedBrush}"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Right"
-                           Text="Tag 0개"/>
-            </DockPanel>
-        </Border>
+                           Foreground="{DynamicResource Text2Brush}"/>
+            </StatusBarItem>
 
-        <!-- ── 본문 레이아웃 (Tree | Splitter | 편집 영역) ─── -->
+            <!-- 우측: 버전 -->
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="v0.2-Phase2"
+                           FontSize="10"
+                           Foreground="{DynamicResource Text3Brush}"
+                           Margin="0,0,8,0"/>
+            </StatusBarItem>
+
+        </StatusBar>
+
+        <!-- ──────────────────────────────────────────────────────
+             본문 — 좌(트리) + 구분선 + 우(편집)
+             ────────────────────────────────────────────────────── -->
         <Grid>
             <Grid.ColumnDefinitions>
-                <!-- 좌: 장비 트리 -->
-                <ColumnDefinition Width="280" MinWidth="180" MaxWidth="480"/>
-                <!-- 스플리터 -->
+                <!-- 좌: 장비 트리 패널 (조절 가능) -->
+                <ColumnDefinition Width="280" MinWidth="200" MaxWidth="480"/>
+                <!-- 구분선 -->
                 <ColumnDefinition Width="4"/>
-                <!-- 우: 상세 편집 -->
+                <!-- 우: 편집 영역 -->
                 <ColumnDefinition Width="*" MinWidth="400"/>
             </Grid.ColumnDefinitions>
 
-            <!-- ── 좌측 장비 트리 패널 ─────────────────────── -->
+            <!-- ── 좌: 장비 트리 ── -->
             <Border Grid.Column="0"
-                    Background="{DynamicResource SidebarBgBrush}"
+                    Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
-                <DockPanel>
-                    <!-- 트리 헤더 툴바 -->
-                    <Border DockPanel.Dock="Top"
-                            Height="36"
-                            Background="{DynamicResource CardBgBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <DockPanel Margin="8,0">
-                            <TextBlock Text="장비 트리"
-                                       FontSize="12"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource FgBrush}"
-                                       VerticalAlignment="Center"/>
-                            <StackPanel DockPanel.Dock="Right"
-                                        Orientation="Horizontal">
-                                <Button Content="+"
-                                        Style="{DynamicResource GhostButton}"
-                                        Width="28" Height="28"
-                                        ToolTip="그룹 추가"
-                                        x:Name="BtnAddGroup"/>
-                                <Button Content="−"
-                                        Style="{DynamicResource GhostButton}"
-                                        Width="28" Height="28"
-                                        ToolTip="선택 항목 삭제"
-                                        x:Name="BtnDelete"/>
-                            </StackPanel>
-                        </DockPanel>
-                    </Border>
 
-                    <!-- 검색창 -->
-                    <Border DockPanel.Dock="Top"
-                            Padding="8,6">
-                        <TextBox x:Name="TxtSearch"
-                                 Style="{DynamicResource PropInput}"
-                                 Height="28"
-                                 FontSize="12"
-                                 Tag="장비/Tag 검색..."/>
-                    </Border>
+                <!-- ★ Phase 2: DeviceTreeView 배치 -->
+                <tree:DeviceTreeView x:Name="DeviceTreePanel"
+                                     DataContext="{Binding DeviceTree}"/>
 
-                    <!-- TreeView 영역 (Phase 2에서 DeviceTreeView로 교체 예정) -->
-                    <TreeView x:Name="DeviceTree"
-                              Style="{DynamicResource IIoTTreeView}"
-                              Background="Transparent"
-                              BorderThickness="0"
-                              Margin="4,0"/>
-                </DockPanel>
             </Border>
 
-            <!-- ── 스플리터 ───────────────────────────────── -->
+            <!-- ── 구분선 (드래그 가능) ── -->
             <GridSplitter Grid.Column="1"
                           Width="4"
                           HorizontalAlignment="Stretch"
                           Background="{DynamicResource BorderBrush}"
-                          Cursor="SizeWE"/>
+                          Cursor="SizeWE"
+                          ShowsPreview="True"/>
 
-            <!-- ── 우측 편집 영역 ─────────────────────────── -->
-            <Border Grid.Column="2"
-                    Background="{DynamicResource BgBrush}">
-                <Grid>
-                    <!-- 탭 헤더 -->
-                    <TabControl x:Name="EditTabs"
-                                Style="{DynamicResource IIoTTabControl}"
-                                Background="Transparent"
-                                BorderThickness="0">
+            <!-- ── 우: 편집 영역 ── -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                        <!-- Phase 2에서 각 View로 교체 예정 -->
-                        <TabItem Header="장비 정보">
-                            <Border Padding="20">
-                                <StackPanel>
-                                    <TextBlock Text="장비 정보 편집"
-                                               FontSize="16"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource FgBrush}"
-                                               Margin="0,0,0,4"/>
-                                    <TextBlock Text="Phase 2 — DeviceEditorView 구현 예정"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource FgMutedBrush}"/>
-                                </StackPanel>
-                            </Border>
-                        </TabItem>
+                <!-- 편집 탭 컨텐츠 (Phase 3~5 에서 채워질 영역) -->
+                <Border x:Name="EditorArea"
+                        Background="{DynamicResource BgBrush}">
 
-                        <TabItem Header="Tag 편집">
-                            <Border Padding="20">
-                                <StackPanel>
-                                    <TextBlock Text="Tag 편집"
-                                               FontSize="16"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource FgBrush}"
-                                               Margin="0,0,0,4"/>
-                                    <TextBlock Text="Phase 2 — TagEditorView 구현 예정"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource FgMutedBrush}"/>
-                                </StackPanel>
-                            </Border>
-                        </TabItem>
+                    <!-- Phase 3 이전 플레이스홀더 -->
+                    <Grid x:Name="PlaceholderGrid">
+                        <StackPanel VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    Opacity="0.4">
+                            <TextBlock Text="⚙"
+                                       FontSize="48"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource Text3Brush}"/>
+                            <TextBlock Text="장비를 선택하면 편집기가 표시됩니다"
+                                       FontSize="14"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,12,0,0"/>
+                            <TextBlock Text="Phase 3 — TagEditorView / DeviceEditorView"
+                                       FontSize="11"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource Text3Brush}"
+                                       Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Grid>
 
-                        <TabItem Header="스케일">
-                            <Border Padding="20">
-                                <StackPanel>
-                                    <TextBlock Text="스케일 설정"
-                                               FontSize="16"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource FgBrush}"
-                                               Margin="0,0,0,4"/>
-                                    <TextBlock Text="Phase 3 — ScaleEditorView 구현 예정"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource FgMutedBrush}"/>
-                                </StackPanel>
-                            </Border>
-                        </TabItem>
+                    <!-- Phase 3 이후: ContentControl 로 교체 예정
+                    <ContentControl Content="{Binding SelectedEditor}"/>
+                    -->
 
-                        <TabItem Header="알람">
-                            <Border Padding="20">
-                                <StackPanel>
-                                    <TextBlock Text="알람 규칙"
-                                               FontSize="16"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource FgBrush}"
-                                               Margin="0,0,0,4"/>
-                                    <TextBlock Text="Phase 3 — AlarmRuleView 구현 예정"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource FgMutedBrush}"/>
-                                </StackPanel>
-                            </Border>
-                        </TabItem>
+                </Border>
 
-                    </TabControl>
-                </Grid>
-            </Border>
+            </Grid>
 
         </Grid>
+
     </DockPanel>
 </Window>

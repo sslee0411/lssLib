@@ -44,4 +44,8 @@
 		<EmbeddedResource Include="Config\*.json.sample" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Views\DeviceTree\" />
+	</ItemGroup>
+
 </Project>

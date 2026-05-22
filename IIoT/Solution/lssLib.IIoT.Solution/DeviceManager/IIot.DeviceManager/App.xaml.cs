@@ -9,6 +9,7 @@
 // ══════════════════════════════════════════════════════════
 
 using IIoT.DeviceManager.Core.Config;
+using IIoT.DeviceManager.ViewModels.DeviceTree;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -101,6 +102,7 @@ public partial class App : Application
             _ => new JsonConfigLoader(ConfigDirectory));
 
         // ── Views ────────────────────────────────────────────
+        services.AddSingleton<DeviceTreeViewModel>();
         services.AddTransient<MainWindow>();
 
         // TODO Phase 2~: ViewModels, DeviceTreeViewModel 등 추가 예정
