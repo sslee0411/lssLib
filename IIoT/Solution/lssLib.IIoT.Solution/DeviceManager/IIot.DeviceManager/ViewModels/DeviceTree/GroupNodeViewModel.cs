@@ -5,6 +5,7 @@
 //  수정: 2025-05-22 v2 — using System.Xml.Linq 미사용 제거
 // ══════════════════════════════════════════════════════════
 
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;

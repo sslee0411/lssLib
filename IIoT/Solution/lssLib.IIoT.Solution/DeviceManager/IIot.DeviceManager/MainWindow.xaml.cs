@@ -6,7 +6,7 @@
 //  Phase 2 : DeviceTree 상태바 바인딩 ← 현재
 //  수정    : 2025-05-22
 // ══════════════════════════════════════════════════════════
-
+using System;
 using IIoT.DeviceManager.ViewModels.DeviceTree;
 using IIoT.UI.Themes;
 using System.Windows;

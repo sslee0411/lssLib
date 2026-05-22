@@ -4,6 +4,7 @@
 //  생성: 2025-05-22
 // ══════════════════════════════════════════════════════════
 
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;

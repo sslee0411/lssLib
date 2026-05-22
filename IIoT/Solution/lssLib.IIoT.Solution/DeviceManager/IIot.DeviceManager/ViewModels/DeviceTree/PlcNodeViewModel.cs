@@ -7,6 +7,7 @@
 //        → [NotifyPropertyChangedFor] 어트리뷰트로 교체
 // ══════════════════════════════════════════════════════════
 
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;

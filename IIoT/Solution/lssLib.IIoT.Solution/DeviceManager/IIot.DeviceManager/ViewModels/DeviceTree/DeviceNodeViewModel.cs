@@ -7,6 +7,7 @@
 //        ② BadgeBrushKey 기본값 "AccentBrush" → "AccBrush" (테마 올바른 키)
 // ══════════════════════════════════════════════════════════
 
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;

@@ -18,12 +18,31 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
-    xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.DeviceTree;assembly=IIoT.DeviceManager"
+    xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.DeviceTree"
+    xmlns:conv="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
     mc:Ignorable="d"
     d:DesignHeight="600" d:DesignWidth="280"
     d:DataContext="{d:DesignInstance vm:DeviceTreeViewModel, IsDesignTimeCreatable=False}">
 
     <UserControl.Resources>
+
+        <!-- MergedDictionaries: designer 에서 IIoT.UI.Themes 리소스를 찾을 수 있도록 추가 -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 스타일(버튼/컨트롤) -->
+                <ResourceDictionary Source="pack://application:,,,/IIoT.UI.Themes;component/Styles/Styles.Controls.xaml"/>
+                <!-- TreeView 스타일 -->
+                <ResourceDictionary Source="pack://application:,,,/IIoT.UI.Themes;component/Styles/Styles.TreeView.xaml"/>
+                <!-- 디자인타임 기본 테마(디자이너가 브러시 키를 찾게 함) -->
+                <ResourceDictionary Source="pack://application:,,,/IIoT.UI.Themes;component/Themes/Theme.DarkNavy.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- DeviceTreeView.xaml 에서 사용하는 변환기 인스턴스 등록 -->
+            <vm:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <vm:BoolToVisibilityInvertConverter x:Key="BoolToVisibilityInvertConverter"/>
+            <vm:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+        </ResourceDictionary>
 
         <!--
         ★ 올바른 리소스 키 (IIoT.UI.Themes README 기준)

@@ -4,6 +4,7 @@
 //  생성: 2025-05-22
 // ══════════════════════════════════════════════════════════
 
+using System;
 using IIoT.DeviceManager.ViewModels.DeviceTree;
 using System.Windows;
 using System.Windows.Controls;

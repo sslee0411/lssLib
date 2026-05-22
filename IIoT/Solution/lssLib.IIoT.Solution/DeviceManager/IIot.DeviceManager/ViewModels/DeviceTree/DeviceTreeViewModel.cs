@@ -4,6 +4,7 @@
 //  생성: 2025-05-22
 // ══════════════════════════════════════════════════════════
 
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using lssLib.Log;
