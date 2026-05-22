@@ -3,11 +3,12 @@
   IIoT.DeviceManager · DeviceTreeView.xaml
   역할: 장비 트리 뷰 — Group/Device/PLC/Tag 계층 표시 + CRUD 툴바
   생성: 2025-05-22
-  수정: 2025-05-22 — XDG0008 수정
+  수정: 2025-05-22 v1 — XDG0008 수정
         ① BasedOn="{StaticResource BaseTreeViewItemStyle}" 제거
-           → 디자인타임 미로드 테마 키 의존성 제거 (XDG0008 주원인)
-        ② 잘못된 리소스 키 전면 교체 (README 기준)
-           TextPrimaryBrush→TextBrush, AccentBrush→AccBrush 등
+        ② 잘못된 리소스 키 전면 교체
+  수정: 2025-05-22 v2 — 런타임 오류 수정
+        ③ Style="{DynamicResource BaseTreeViewStyle}"
+           → Style="{DynamicResource DeviceTreeView}"  (올바른 키)
  ══════════════════════════════════════════════════════════
 -->
 <UserControl
@@ -34,8 +35,11 @@
         SurfaceBrush  패널/사이드바
         CardBrush     카드/컨텐츠 박스
         BorderBrush   구분선(연함)
+        Border2Brush  구분선(강함)
         RedBrush      위험/오류
-        GhostBtn / SecondaryBtn  버튼 스타일
+        GhostBtn      툴바 아이콘 버튼
+        SecondaryBtn  보조 액션 버튼
+        DeviceTreeView  TreeView 스타일 키 (Styles.TreeView.xaml 정의)
         ★ StaticResource 절대 금지 — DynamicResource 전용
         ════════════════════════════════════════════
         -->
@@ -250,7 +254,7 @@
 
             <Separator/>
 
-            <!-- 삭제 — SecondaryBtn 에 RedBrush 오버라이드 -->
+            <!-- 삭제 — SecondaryBtn + RedBrush 오버라이드 -->
             <Button Command="{Binding DeleteNodeCommand}"
                     ToolTip="선택 노드 삭제"
                     Style="{DynamicResource SecondaryBtn}"
@@ -320,23 +324,23 @@
         </StatusBar>
 
         <!-- ── 트리뷰 본체 ── -->
+        <!-- ★ v2 수정: BaseTreeViewStyle → DeviceTreeView (Styles.TreeView.xaml 에 정의된 올바른 키) -->
         <TreeView
             x:Name="DeviceTree"
             ItemsSource="{Binding RootNodes}"
             Background="{DynamicResource BgBrush}"
             BorderThickness="0"
-            Style="{DynamicResource BaseTreeViewStyle}"
+            Style="{DynamicResource DeviceTreeView}"
             SelectedItemChanged="DeviceTree_SelectedItemChanged"
             VirtualizingPanel.IsVirtualizing="True"
             VirtualizingPanel.VirtualizationMode="Recycling">
 
             <TreeView.ItemContainerStyle>
                 <!--
-                ★ XDG0008 수정 핵심:
+                ★ XDG0008 수정 (v1):
                    BasedOn="{StaticResource BaseTreeViewItemStyle}" 제거
                    이유: 테마는 런타임에 ThemeManager.Apply()로 로드되므로
                          디자인타임에는 StaticResource로 찾을 수 없음
-                         → XAML 파싱 실패 → XDG0008 연쇄 발생
                    대신: 필요한 Setter를 직접 정의
                 -->
                 <Style TargetType="TreeViewItem">
@@ -345,7 +349,7 @@
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
 
-                    <!-- 기본 스타일 직접 정의 (BasedOn 대체) -->
+                    <!-- 기본 스타일 직접 정의 -->
                     <Setter Property="Padding" Value="2,3"/>
                     <Setter Property="MinHeight" Value="26"/>
                     <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>

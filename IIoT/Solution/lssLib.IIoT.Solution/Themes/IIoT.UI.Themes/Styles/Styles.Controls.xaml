@@ -1,16 +1,7 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.UI.Themes · Styles/Styles.Controls.xaml
-     역할: 버튼·TextBox·ComboBox·CheckBox 공통 스타일 (Dark Navy 기준)
-           모든 스타일은 DynamicResource로 테마 색상을 참조한다.
-     생성: 2025-05-16
-     수정: 2025-05-17 v1.4
-       FIX §8 PropCombo — Full ControlTemplate 완전 교체
-         · PART_ToggleButton: 전체 클릭 영역 + 드롭다운 화살표 (테마별 변색)
-         · ContentPresenter: 선택 항목 텍스트
-           TextBlock.Foreground 첨부 속성 → 모든 테마에서 TextBrush 적용
-           (기존 기본 WPF 템플릿은 SystemColors.WindowTextBrush 고정 → 다크 테마 불가)
-         · PART_Popup: 드롭다운 팝업 (AccBrush 테두리, PopupAnimation=Fade)
-         · ItemContainerStyle.ControlTemplate: SystemColors.HighlightBrush 완전 우회
+     버튼·TextBox·ComboBox·CheckBox 공통 스타일
+     수정: 2025-05-22 — SecondaryBtn · GhostBtn 추가 (미정의 → 런타임 오류 수정)
      ══════════════════════════════════════════════════════════ -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -96,7 +87,99 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §3 ─ 위험 버튼 (DangerBtn) — 롤백, 삭제
+         §3 ─ 보조 버튼 (SecondaryBtn) ← 신규 추가
+         AccBrush 테두리 + 배경 투명, Foreground AccBrush
+         DeviceTreeView 삭제버튼 · MainWindow 저장버튼에서 사용
+    ════════════════════════════════════════════ -->
+    <Style x:Key="SecondaryBtn" TargetType="Button">
+        <Setter Property="Background"       Value="Transparent"/>
+        <Setter Property="Foreground"       Value="{DynamicResource AccBrush}"/>
+        <Setter Property="BorderBrush"      Value="{DynamicResource AccBrush}"/>
+        <Setter Property="BorderThickness"  Value="1"/>
+        <Setter Property="Padding"          Value="12,5"/>
+        <Setter Property="FontSize"         Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"       Value="{DynamicResource UiFont}"/>
+        <Setter Property="FontWeight"       Value="SemiBold"/>
+        <Setter Property="Cursor"           Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="root" Property="Background"
+                                    Value="{DynamicResource AccFaintBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="root" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="root" Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §4 ─ 고스트 버튼 (GhostBtn) ← 신규 추가
+         배경 없음, 테두리 없음, 아이콘+텍스트 툴바용
+         DeviceTreeView 툴바 버튼 전체에서 사용
+    ════════════════════════════════════════════ -->
+    <Style x:Key="GhostBtn" TargetType="Button">
+        <Setter Property="Background"       Value="Transparent"/>
+        <Setter Property="Foreground"       Value="{DynamicResource Text2Brush}"/>
+        <Setter Property="BorderBrush"      Value="Transparent"/>
+        <Setter Property="BorderThickness"  Value="1"/>
+        <Setter Property="Padding"          Value="8,4"/>
+        <Setter Property="FontSize"         Value="{DynamicResource FontBase}"/>
+        <Setter Property="FontFamily"       Value="{DynamicResource UiFont}"/>
+        <Setter Property="FontWeight"       Value="Normal"/>
+        <Setter Property="Cursor"           Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{DynamicResource RadiusSm}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="root" Property="Background"
+                                    Value="{DynamicResource CardBrush}"/>
+                            <Setter TargetName="root" Property="BorderBrush"
+                                    Value="{DynamicResource BorderBrush}"/>
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource TextBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="root" Property="Opacity" Value="0.75"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="root" Property="Opacity" Value="0.35"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ════════════════════════════════════════════
+         §5 ─ 위험 버튼 (DangerBtn) — 롤백, 삭제
     ════════════════════════════════════════════ -->
     <Style x:Key="DangerBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
         <Setter Property="Foreground"  Value="{DynamicResource RedBrush}"/>
@@ -104,7 +187,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §4 ─ 성공 버튼 (SuccessBtn) — 확인, 연결 테스트
+         §6 ─ 성공 버튼 (SuccessBtn) — 확인, 연결 테스트
     ════════════════════════════════════════════ -->
     <Style x:Key="SuccessBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
         <Setter Property="Foreground"  Value="{DynamicResource GreenBrush}"/>
@@ -112,7 +195,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §5 ─ 적용 버튼 (ApplyBtn) — 속성 패널 하단
+         §7 ─ 적용 버튼 (ApplyBtn) — 속성 패널 하단
     ════════════════════════════════════════════ -->
     <Style x:Key="ApplyBtn" TargetType="Button">
         <Setter Property="Background"      Value="{DynamicResource AccBrush}"/>
@@ -148,7 +231,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §6 ─ 트리 소형 버튼 (TreeBtn) — + 그룹, + 장비 등
+         §8 ─ 트리 소형 버튼 (TreeBtn) — + 그룹, + 장비 등
     ════════════════════════════════════════════ -->
     <Style x:Key="TreeBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
         <Setter Property="Padding"   Value="7,3"/>
@@ -157,7 +240,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §7 ─ TextBox (PropInput) — 속성 편집 패널
+         §9 ─ TextBox (PropInput) — 속성 편집 패널
     ════════════════════════════════════════════ -->
     <Style x:Key="PropInput" TargetType="TextBox">
         <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
@@ -202,24 +285,8 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §8 ─ ComboBox (PropCombo)
-              ★ v1.4 대대적 교체 — Full ControlTemplate 완전 정의:
-
-              [문제 원인]
-              기본 WPF ComboBox 템플릿은 선택된 항목(닫힌 상태)을
-              SystemColors.WindowTextBrush / SystemColors.WindowBrush 로 렌더링.
-              다크 테마에서 배경=어두운색, 글자=검정 → 글자 안 보임.
-
-              [해결 방법]
-              ① PART_ToggleButton : 전체 클릭 영역 + 드롭다운 화살표 구현
-                 (닫힘/열림/호버 상태별 테마 색상 적용)
-              ② ContentPresenter  : 선택 항목 텍스트 오버레이
-                 TextBlock.Foreground 첨부 속성으로 TextBrush 강제 상속
-                 → WPF 의 시스템 색상 개입 원천 차단
-              ③ PART_Popup        : 드롭다운 팝업
-                 AccBrush 테두리, PopupAnimation=Fade, 최대 200px 스크롤
-              ④ ItemContainerStyle.ControlTemplate:
-                 SystemColors.HighlightBrush 완전 우회 (변경 전과 동일)
+         §10 ─ ComboBox (PropCombo) — Full ControlTemplate
+               (Styles.Controls.xaml v1.4 이후 기존 동일)
     ════════════════════════════════════════════ -->
     <Style x:Key="PropCombo" TargetType="ComboBox">
         <Setter Property="Background"       Value="{DynamicResource CardBrush}"/>
@@ -235,11 +302,6 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
                     <Grid x:Name="templateRoot" SnapsToDevicePixels="True">
-
-                        <!-- ① PART_ToggleButton ─────────────────────────────────
-                             전체 영역을 클릭 가능하게 덮음 → 드롭다운 열기/닫기
-                             Border 안에 드롭다운 화살표 Path 배치
-                        ──────────────────────────────────────────────────────── -->
                         <ToggleButton x:Name="PART_ToggleButton"
                                       Focusable="False"
                                       ClickMode="Press"
@@ -253,7 +315,6 @@
                                             BorderBrush="{DynamicResource Border2Brush}"
                                             BorderThickness="1"
                                             CornerRadius="{DynamicResource RadiusSm}">
-                                        <!-- 드롭다운 화살표 (오른쪽 정렬) -->
                                         <Path x:Name="arrow"
                                               Data="M 0 0 L 4 4 L 8 0 Z"
                                               Fill="{DynamicResource Text3Brush}"
@@ -265,23 +326,18 @@
                                               IsHitTestVisible="False"/>
                                     </Border>
                                     <ControlTemplate.Triggers>
-                                        <!-- 호버: 배경 약간 밝아짐 + 화살표 밝아짐 -->
                                         <Trigger Property="IsMouseOver" Value="True">
                                             <Setter TargetName="tgBorder" Property="Background"
-                                                    Value="{DynamicResource Border2Brush}"/>
-                                            <Setter TargetName="tgBorder" Property="BorderBrush"
                                                     Value="{DynamicResource Border2Brush}"/>
                                             <Setter TargetName="arrow" Property="Fill"
                                                     Value="{DynamicResource Text2Brush}"/>
                                         </Trigger>
-                                        <!-- 드롭다운 열림: AccBrush 테두리 + 화살표 변색 -->
                                         <Trigger Property="IsChecked" Value="True">
                                             <Setter TargetName="tgBorder" Property="BorderBrush"
                                                     Value="{DynamicResource AccBrush}"/>
                                             <Setter TargetName="arrow" Property="Fill"
                                                     Value="{DynamicResource AccBrush}"/>
                                         </Trigger>
-                                        <!-- 비활성: 반투명 -->
                                         <Trigger Property="IsEnabled" Value="False">
                                             <Setter TargetName="tgBorder" Property="Opacity" Value="0.4"/>
                                         </Trigger>
@@ -289,13 +345,6 @@
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
-
-                        <!-- ② 선택 항목 ContentPresenter ──────────────────────
-                             PART_ToggleButton 위에 오버레이 (IsHitTestVisible=False)
-                             ★ TextBlock.Foreground 첨부 속성:
-                               WPF 상속 메커니즘으로 내부 TextBlock에 색상 전달
-                               → SystemColors 개입 없이 항상 TextBrush 적용
-                        ──────────────────────────────────────────────────────── -->
                         <ContentPresenter x:Name="contentSite"
                                           Margin="8,4,28,4"
                                           Content="{TemplateBinding SelectionBoxItem}"
@@ -307,12 +356,6 @@
                                           TextBlock.Foreground="{DynamicResource TextBrush}"
                                           TextBlock.FontFamily="{DynamicResource UiFont}"
                                           TextBlock.FontSize="{DynamicResource FontBase}"/>
-
-                        <!-- ③ PART_Popup ─────────────────────────────────────
-                             AllowsTransparency=True → CornerRadius 클리핑 정상 표시
-                             PlacementTarget=templateRoot → 콤보박스 너비로 정렬
-                             MinWidth: ElementName 바인딩으로 콤보박스 너비 동기화
-                        ──────────────────────────────────────────────────────── -->
                         <Popup x:Name="PART_Popup"
                                AllowsTransparency="True"
                                IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -334,14 +377,11 @@
                                 </ScrollViewer>
                             </Border>
                         </Popup>
-
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- 비활성 전체: Opacity 감소 -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>
                         </Trigger>
-                        <!-- 그룹핑 시 가상화 스크롤 해제 -->
                         <Trigger Property="IsGrouping" Value="True">
                             <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
                         </Trigger>
@@ -349,14 +389,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-
-        <!--
-            ItemContainerStyle:
-            ★ ControlTemplate 직접 정의 — SystemColors 완전 우회
-            ★ TextBlock.Foreground 첨부 속성 → 항목 텍스트 DynamicResource 적용
-            호버: AccFaintBrush 배경 + AccBrush 텍스트
-            선택: AccBrush 배경 + 흰 텍스트
-        -->
         <Setter Property="ItemContainerStyle">
             <Setter.Value>
                 <Style TargetType="ComboBoxItem">
@@ -380,20 +412,17 @@
                                         TextBlock.FontFamily="{TemplateBinding FontFamily}"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
-                                    <!-- 호버: AccFaintBrush 배경 + AccBrush 텍스트 -->
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter TargetName="itemBorder" Property="Background"
                                                 Value="{DynamicResource AccFaintBrush}"/>
                                         <Setter Property="Foreground"
                                                 Value="{DynamicResource AccBrush}"/>
                                     </Trigger>
-                                    <!-- 선택됨: AccBrush 배경 + 흰 텍스트 -->
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="itemBorder" Property="Background"
                                                 Value="{DynamicResource AccBrush}"/>
                                         <Setter Property="Foreground" Value="White"/>
                                     </Trigger>
-                                    <!-- 선택 + 호버: 선택 상태 유지 -->
                                     <MultiTrigger>
                                         <MultiTrigger.Conditions>
                                             <Condition Property="IsSelected"  Value="True"/>
@@ -403,7 +432,6 @@
                                                 Value="{DynamicResource AccBrush}"/>
                                         <Setter Property="Foreground" Value="White"/>
                                     </MultiTrigger>
-                                    <!-- 비활성 -->
                                     <Trigger Property="IsEnabled" Value="False">
                                         <Setter TargetName="itemBorder" Property="Opacity" Value="0.4"/>
                                     </Trigger>
@@ -417,7 +445,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §9 ─ CheckBox
+         §11 ─ CheckBox
     ════════════════════════════════════════════ -->
     <Style x:Key="DarkCheckBox" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
@@ -427,7 +455,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §10 ─ 구분선
+         §12 ─ 구분선
     ════════════════════════════════════════════ -->
     <Style x:Key="DividerLine" TargetType="Separator">
         <Setter Property="Background"   Value="{DynamicResource BorderBrush}"/>

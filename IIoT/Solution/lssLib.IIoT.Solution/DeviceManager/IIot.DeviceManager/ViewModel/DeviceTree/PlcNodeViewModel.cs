@@ -44,7 +44,7 @@ public partial class PlcNodeViewModel : DeviceNodeViewModel
 
     public PlcNodeViewModel(string name = "새 PLC", int slotNo = 0)
     {
-        Name   = name;
+        Name = name;
         SlotNo = slotNo;
     }
 }

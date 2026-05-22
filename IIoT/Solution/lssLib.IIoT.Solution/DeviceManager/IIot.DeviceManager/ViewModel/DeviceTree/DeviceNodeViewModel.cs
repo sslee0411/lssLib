@@ -2,12 +2,14 @@
 //  IIoT.DeviceManager · DeviceNodeViewModel.cs
 //  역할: 장비 트리 노드 추상 기반 ViewModel
 //  생성: 2025-05-22
+//  수정: 2025-05-22 v2 — 코드 정리
+//        ① using System.Xml.Linq 미사용 제거
+//        ② BadgeBrushKey 기본값 "AccentBrush" → "AccBrush" (테마 올바른 키)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.Xml.Linq;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 
@@ -48,8 +50,11 @@ public abstract partial class DeviceNodeViewModel : ObservableObject
     /// <summary>배지 텍스트 (null = 비표시)</summary>
     public virtual string? Badge => null;
 
-    /// <summary>배지 색상 키 (DynamicResource 키)</summary>
-    public virtual string BadgeBrushKey => "AccentBrush";
+    /// <summary>
+    /// 배지 색상 DynamicResource 키.
+    /// ★ 수정: "AccentBrush" → "AccBrush" (IIoT.UI.Themes 올바른 키)
+    /// </summary>
+    public virtual string BadgeBrushKey => "AccBrush";
 
     /// <summary>자식 노드 컬렉션</summary>
     public ObservableCollection<DeviceNodeViewModel> Children { get; } = [];

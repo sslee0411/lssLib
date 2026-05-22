@@ -2,10 +2,10 @@
 //  IIoT.DeviceManager · GroupNodeViewModel.cs
 //  역할: 논리 그룹 노드 ViewModel
 //  생성: 2025-05-22
+//  수정: 2025-05-22 v2 — using System.Xml.Linq 미사용 제거
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Xml.Linq;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 
@@ -18,7 +18,7 @@ public partial class GroupNodeViewModel : DeviceNodeViewModel
 
     public override NodeKind Kind => NodeKind.Group;
 
-    /// <summary>📁</summary>
+    /// <summary>📁 / 📂 — 펼침 상태에 따라 전환</summary>
     public override string IconGlyph => IsExpanded ? "📂" : "📁";
 
     public override IReadOnlyList<NodeKind> AllowedChildKinds =>
