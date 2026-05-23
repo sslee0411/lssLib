@@ -70,6 +70,7 @@ public partial class DeviceTreeViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(
+        nameof(AddGroupCommand),
         nameof(AddDeviceCommand),
         nameof(AddPlcCommand),
         nameof(AddTagCommand),
@@ -101,7 +102,7 @@ public partial class DeviceTreeViewModel : ObservableObject
     /// · Group 선택 시 → 하위 그룹
     /// · 그 외 (선택 없음 / Device / Plc / Tag 선택) → 루트 그룹
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAddGroup))]
     private void AddGroup()
     {
         var group = new GroupNodeViewModel();
@@ -120,6 +121,9 @@ public partial class DeviceTreeViewModel : ObservableObject
         OnPropertyChanged(nameof(TotalNodeCount));
         LogManager.Instance.Info(LogSrc, $"[하위] 그룹 추가: {group.Name}");
     }
+
+    /// <summary>Tag 선택 시 그룹 추가 비활성</summary>
+    private bool CanAddGroup() => SelectedNode is not TagNodeViewModel;
 
     /// <summary>
     /// 장비(Device) 추가.
