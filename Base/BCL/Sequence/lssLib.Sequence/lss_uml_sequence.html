@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lssLib.Sequence — UML 클래스 다이어그램</title>
+<style>
+:root {
+  --bg-primary:#ffffff; --bg-secondary:#f5f6fa; --bg-tertiary:#ececf1;
+  --bd-primary:#c8cad4; --bd-secondary:#dfe1e8; --bd-tertiary:#eeeff3;
+  --tx-primary:#1a1b23; --tx-secondary:#5c5f72; --tx-tertiary:#8f92a6;
+  --tx-info:#1a5cb8;    --tx-success:#1e7e34;   --tx-warning:#b85c00; --tx-danger:#b81a1a;
+  --mono:'Consolas','Monaco','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary:#1e1f2e; --bg-secondary:#252637; --bg-tertiary:#2e2f42;
+    --bd-primary:#444660; --bd-secondary:#393a52; --bd-tertiary:#32334a;
+    --tx-primary:#e8e9f2; --tx-secondary:#9ea2bc; --tx-tertiary:#6b6f8a;
+    --tx-info:#82b1f8;    --tx-success:#81c784;   --tx-warning:#ffb74d; --tx-danger:#ef9a9a;
+    --bg-success:#1a3d1e; --bg-warning:#3d2400;   --bg-info:#0d2545;  --bg-danger:#3d0d0d;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg-secondary);color:var(--tx-primary);font-family:var(--mono);font-size:12px;}
+body{padding:14px;}
+h1{font-size:15px;font-weight:700;margin-bottom:4px;font-family:var(--mono);}
+p.sub{font-size:10px;color:var(--tx-tertiary);margin-bottom:10px;}
+#zc{display:flex;gap:5px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+#zc button{font-size:11px;padding:3px 10px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--bd-primary);background:var(--bg-primary);color:var(--tx-primary);font-family:var(--mono);}
+#zc button:hover{background:var(--bg-tertiary);}
+#zlb{font-size:11px;color:var(--tx-secondary);}
+#lg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:8px 10px;
+  background:var(--bg-primary);border:1px solid var(--bd-secondary);border-radius:6px;}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--tx-secondary);font-family:var(--mono);}
+#vp{overflow:auto;border:1px solid var(--bd-secondary);border-radius:8px;
+  background:var(--bg-secondary);max-height:calc(100vh - 160px);min-height:400px;position:relative;}
+#cv-phantom{position:relative;pointer-events:none;}
+#cv{position:absolute;top:0;left:0;transform-origin:0 0;min-width:3000px;min-height:2600px;}
+.bw{position:absolute;z-index:1;}
+.ut{border-collapse:collapse;font-size:10px;font-family:var(--mono);
+  background:var(--bg-primary);border:2px solid var(--bd-primary);
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.ut td{padding:2px 7px;border:0.5px solid var(--bd-secondary);vertical-align:top;white-space:nowrap;}
+.ut td:last-child{white-space:normal;max-width:185px;line-height:1.5;}
+.uh td{padding:5px 7px;border-bottom:2px solid var(--bd-primary);white-space:normal;}
+.sep td{background:var(--bg-tertiary);font-size:9px;color:var(--tx-tertiary);padding:1px 7px;}
+.thr td{font-size:9px;color:var(--tx-tertiary);background:var(--bg-secondary);padding:1px 7px;}
+.cn{font-weight:700;font-size:11px;color:var(--tx-primary);}
+.ct{font-size:9px;color:var(--tx-secondary);}
+.cex{font-size:9px;color:var(--tx-tertiary);}
+.mt{color:var(--tx-info);font-size:10px;}
+.mn{color:var(--tx-primary);}
+.md{color:var(--tx-secondary);font-size:10px;}
+.mm{color:var(--tx-warning);font-size:9px;margin-right:2px;}
+.mab{font-style:italic;opacity:0.70;}
+.ev{color:var(--tx-success);}
+.ut-interface{border-color:#2563eb!important;}
+.uh-interface{background:#dbeafe!important;}
+.uh-interface td{border-bottom-color:#2563eb!important;}
+.uh-interface .cn{color:#1e3a8a!important;} .uh-interface .ct{color:#1d4ed8!important;}
+.ut-abstract{border-color:#d97706!important;}
+.uh-abstract{background:#fef3c7!important;}
+.uh-abstract td{border-bottom-color:#d97706!important;}
+.uh-abstract .cn{color:#78350f!important;} .uh-abstract .ct{color:#92400e!important;}
+.ut-class{border-color:#059669!important;}
+.uh-class{background:#d1fae5!important;}
+.uh-class td{border-bottom-color:#059669!important;}
+.uh-class .cn{color:#064e3b!important;} .uh-class .ct{color:#065f46!important;}
+.ut-enum{border-color:#dc2626!important;}
+.uh-enum{background:#fee2e2!important;}
+.uh-enum td{border-bottom-color:#dc2626!important;}
+.uh-enum .cn{color:#7f1d1d!important;} .uh-enum .ct{color:#991b1b!important;}
+.ut-record{border-color:#7c3aed!important;}
+.uh-record{background:#ede9fe!important;}
+.uh-record td{border-bottom-color:#7c3aed!important;}
+.uh-record .cn{color:#3b0764!important;} .uh-record .ct{color:#5b21b6!important;}
+@media (prefers-color-scheme: dark){
+  .ut-interface{border-color:#60a5fa!important;} .uh-interface{background:#1e3a5f!important;}
+  .uh-interface td{border-bottom-color:#60a5fa!important;}
+  .uh-interface .cn{color:#bfdbfe!important;} .uh-interface .ct{color:#93c5fd!important;}
+  .ut-abstract{border-color:#fbbf24!important;} .uh-abstract{background:#451a03!important;}
+  .uh-abstract td{border-bottom-color:#fbbf24!important;}
+  .uh-abstract .cn{color:#fde68a!important;} .uh-abstract .ct{color:#fcd34d!important;}
+  .ut-class{border-color:#34d399!important;} .uh-class{background:#064e3b!important;}
+  .uh-class td{border-bottom-color:#34d399!important;}
+  .uh-class .cn{color:#a7f3d0!important;} .uh-class .ct{color:#6ee7b7!important;}
+  .ut-enum{border-color:#f87171!important;} .uh-enum{background:#450a0a!important;}
+  .uh-enum td{border-bottom-color:#f87171!important;}
+  .uh-enum .cn{color:#fecaca!important;} .uh-enum .ct{color:#fca5a5!important;}
+  .ut-record{border-color:#a78bfa!important;} .uh-record{background:#2e1065!important;}
+  .uh-record td{border-bottom-color:#a78bfa!important;}
+  .uh-record .cn{color:#ddd6fe!important;} .uh-record .ct{color:#c4b5fd!important;}
+}
+#svg{position:absolute;top:0;left:0;z-index:0;pointer-events:none;overflow:visible;}
+</style>
+</head>
+<body>
+
+<h1>lssLib.Sequence — UML 클래스 다이어그램</h1>
+<p class="sub">범용 시퀀스 실행 엔진 · Node-RED 스타일 확장 · BCL only · .NET 8.0 · C# 12</p>
+
+<div id="zc">
+  <button onclick="sz(zl*1.15)">＋</button>
+  <button onclick="sz(zl*0.87)">－</button>
+  <button onclick="sz(1)">1:1</button>
+  <button onclick="sz(0.72)">72%</button>
+  <button onclick="sz(0.52)">52%</button>
+  <button onclick="sz(0.36)">36%</button>
+  <span id="zlb">100%</span>
+</div>
+
+<div id="lg">
+  <div class="li"><span style="background:#dbeafe;color:#1e3a8a;border:1.5px solid #2563eb;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«interface»</span>인터페이스</div>
+  <div class="li"><span style="background:#fef3c7;color:#78350f;border:1.5px solid #d97706;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«abstract»</span>추상 클래스</div>
+  <div class="li"><span style="background:#d1fae5;color:#064e3b;border:1.5px solid #059669;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«class»</span>클래스</div>
+  <div class="li"><span style="background:#fee2e2;color:#7f1d1d;border:1.5px solid #dc2626;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;font-family:monospace">«enum»</span>열거형</div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lge" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#e040fb" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#e040fb" stroke-width="2.2" marker-end="url(#lge)"/></svg>extends
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1L11 6L1 11Z" fill="white" stroke="#4f8ef7" stroke-width="2"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#4f8ef7" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#lgi)"/></svg>implements
+  </div>
+  <div class="li">
+    <svg width="48" height="16" style="flex-shrink:0"><defs><marker id="lgu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker></defs><line x1="0" y1="8" x2="32" y2="8" stroke="#888" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#lgu)"/></svg>uses
+  </div>
+  <div class="li">
+    <svg width="54" height="16" style="flex-shrink:0"><defs><marker id="lgds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="14" markerHeight="12" orient="auto-start-reverse"><path d="M0 6L9 1L18 6L9 11Z" fill="#555"/></marker><marker id="lgda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 2L10 6L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker></defs><line x1="14" y1="8" x2="46" y2="8" stroke="#555" stroke-width="1.8" marker-start="url(#lgds)" marker-end="url(#lgda)"/></svg>composition
+  </div>
+</div>
+
+<div id="vp">
+  <div id="cv-phantom"></div>
+  <div id="cv">
+    <svg id="svg" width="3000" height="2600"></svg>
+  </div>
+</div>
+
+<script>
+'use strict';
+let zl = 1;
+function sz(z) {
+  zl = Math.min(2, Math.max(0.25, z));
+  const cv = document.getElementById('cv');
+  const ph = document.getElementById('cv-phantom');
+  cv.style.transform = `scale(${zl})`;
+  const nw = parseFloat(cv.style.minWidth)  || 3000;
+  const nh = parseFloat(cv.style.minHeight) || 2600;
+  ph.style.width  = Math.ceil(nw * zl) + 'px';
+  ph.style.height = Math.ceil(nh * zl) + 'px';
+  document.getElementById('zlb').textContent = Math.round(zl * 100) + '%';
+}
+
+const H = s => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function ctbl(kind, name, desc, members, ext, tw) {
+  tw = tw || 400; ext = ext || '';
+  const bm = { interface:'bi', abstract:'ba', class:'bc', enum:'be', 'record struct':'br' };
+  const lm = { interface:'«interface»', abstract:'«abstract»', class:'«class»', enum:'«enum»', 'record struct':'«record»' };
+  const tc = { interface:'ut-interface', abstract:'ut-abstract', class:'ut-class', enum:'ut-enum', 'record struct':'ut-record' };
+  const hc = { interface:'uh-interface', abstract:'uh-abstract', class:'uh-class', enum:'uh-enum', 'record struct':'uh-record' };
+  const ex = ext ? ` <span class="cex">: ${H(ext)}</span>` : '';
+  const w1 = 68, w2 = 172, w3 = tw - w1 - w2 - 4;
+  let rows = '';
+  members.forEach(m => {
+    if (m.s) { rows += `<tr class="sep"><td colspan="3">${m.s}</td></tr>`; return; }
+    const ab = m.mo === 'abstract', ev = m.mo === 'event';
+    const mo = (m.mo && !ev) ? `<span class="mm">${m.mo}</span>` : '';
+    rows += `<tr>
+      <td style="width:${w1}px" class="${ev?'ev':'mt'}${ab?' mab':''}">${H(m.t||'')}</td>
+      <td style="width:${w2}px" class="mn${ab?' mab':''}">${mo}${H(m.n)}</td>
+      <td style="width:${w3}px" class="md">${m.d||''}</td>
+    </tr>`;
+  });
+  return `<table class="ut ${tc[kind]||''}" style="width:${tw}px">
+    <tr class="${hc[kind]||'uh'}"><td colspan="3">
+      <span class="bx ${bm[kind]||'bc'}">${lm[kind]||kind}</span>
+      <span class="cn"> ${H(name)}</span>${ex}
+      <span class="ct"> ${desc}</span>
+    </td></tr>
+    <tr class="thr"><td>Type</td><td>Member</td><td>Notes</td></tr>
+    ${rows}
+  </table>`;
+}
+
+const BOXES = {
+
+  /* ── Col 0 · Core Enums ──────────────────────────────────────── */
+  'StepExecutionMode': ctbl('enum', 'StepExecutionMode', '스텝 그룹 내 실행 방식', [
+    { t:'0', n:'Sequential', d:'스텝 1개씩 순서대로 실행' },
+    { t:'1', n:'Parallel',   d:'스텝 동시 실행 (Task.WhenAll)' },
+  ], '', 310),
+
+  'SequenceStepStatus': ctbl('enum', 'SequenceStepStatus', '개별 스텝 실행 상태', [
+    { t:'0', n:'Pending',   d:'아직 실행 안 됨' },
+    { t:'1', n:'Running',   d:'실행 중' },
+    { t:'2', n:'Completed', d:'성공 완료' },
+    { t:'3', n:'Failed',    d:'실패 (오류 또는 검증 실패)' },
+    { t:'4', n:'Cancelled', d:'취소됨' },
+    { t:'5', n:'Skipped',   d:'건너뜀 (ContinueOnError)' },
+  ], '', 310),
+
+  'SequenceStatus': ctbl('enum', 'SequenceStatus', '시퀀스 전체 실행 상태', [
+    { t:'0', n:'Pending',   d:'아직 실행 안 됨' },
+    { t:'1', n:'Running',   d:'실행 중' },
+    { t:'2', n:'Completed', d:'모든 스텝 성공 완료' },
+    { t:'3', n:'Failed',    d:'하나 이상 스텝 실패' },
+    { t:'4', n:'Cancelled', d:'CancellationToken 취소' },
+    { t:'5', n:'TimedOut',  d:'TotalTimeout 초과 중단' },
+  ], '', 310),
+
+  /* ── Col 1 · Core Results ────────────────────────────────────── */
+  'SequenceStepResult': ctbl('class', 'SequenceStepResult', '단일 스텝 실행 결과 (sealed)', [
+    { t:'ISequenceStep',      n:'Step { get; }',         d:'실행된 스텝 정의' },
+    { t:'bool',               n:'IsSuccess { get; }',    d:'Status == Completed' },
+    { t:'SequenceStepStatus', n:'Status { get; }',        d:'실행 상태' },
+    { t:'string?',            n:'ErrorMessage { get; }', d:'실패 원인 메시지' },
+    { t:'Exception?',         n:'Exception { get; }',    d:'발생한 예외' },
+    { t:'object?',            n:'OutputData { get; }',   d:'출력 데이터 (NetResult 등)' },
+    { t:'TimeSpan',           n:'Elapsed { get; }',      d:'실행 소요 시간' },
+    { t:'int',                n:'RetryCount { get; }',   d:'실제 재시도 횟수' },
+    { t:'DateTime',           n:'StartedAt { get; }',    d:'스텝 시작 시각' },
+    { s:'── 팩토리 (static)' },
+    { t:'SequenceStepResult', mo:'static', n:'Ok(ISequenceStep step, outputData?, elapsed, retryCount, startedAt)', d:'' },
+    { t:'SequenceStepResult', mo:'static', n:'Fail(step, string errorMessage, ...)',                               d:'' },
+    { t:'SequenceStepResult', mo:'static', n:'Fail(step, Exception exception, ...)',                               d:'' },
+    { t:'SequenceStepResult', mo:'static', n:'Cancelled(step, elapsed, startedAt)',                                d:'' },
+  ], '', 460),
+
+  'SequenceResult': ctbl('class', 'SequenceResult', '시퀀스 전체 실행 결과 (sealed)', [
+    { t:'string',         n:'SequenceName { get; }',   d:'시퀀스 이름' },
+    { t:'SequenceStatus', n:'Status { get; }',          d:'전체 실행 상태' },
+    { t:'bool',           n:'IsSuccess { get; }',       d:'Status == Completed' },
+    { t:'string?',        n:'ErrorMessage { get; }',   d:'실패 원인' },
+    { t:'ISequenceStep?', n:'FailedStep { get; }',     d:'최초 실패 스텝' },
+    { t:'IRL&lt;SequenceStepResult&gt;', n:'StepResults { get; }', d:'전체 스텝 결과 (DataGrid 바인딩용)' },
+    { t:'int',            n:'SuccessCount { get; }',    d:'성공 스텝 수' },
+    { t:'int',            n:'FailCount { get; }',       d:'실패 스텝 수' },
+    { t:'TimeSpan',       n:'Elapsed { get; }',         d:'전체 실행 시간' },
+    { t:'DateTime',       n:'StartedAt { get; }',       d:'시퀀스 시작 시각' },
+  ], '', 440),
+
+  'SequenceBatchResult': ctbl('class', 'SequenceBatchResult', '배치 실행 결과 (sealed)', [
+    { t:'bool',                    n:'IsSuccess { get; }',     d:'모든 시퀀스 성공이어야 true' },
+    { t:'IRL&lt;SequenceResult&gt;', n:'Results { get; }',     d:'개별 시퀀스 결과 목록' },
+    { t:'int',                     n:'SuccessCount { get; }',  d:'성공한 시퀀스 수' },
+    { t:'int',                     n:'FailCount { get; }',     d:'실패한 시퀀스 수' },
+    { t:'TimeSpan',                n:'TotalElapsed { get; }',  d:'전체 실행 시간' },
+  ], '', 420),
+
+  /* ── Col 2 · Contracts ───────────────────────────────────────── */
+  'ISequenceStep': ctbl('interface', 'ISequenceStep', '모든 시퀀스 스텝의 핵심 계약 (Node-RED 노드 유사)', [
+    { t:'int',      n:'StepIndex { get; set; }',d:'스텝 고유 번호 (0-based, 빌더 자동 부여)' },
+    { t:'string',   n:'StepName { get; }',      d:'스텝 이름 (로그·UI 표시용)' },
+    { t:'TimeSpan', n:'Delay { get; }',          d:'실행 전 대기 시간 (Zero=즉시)' },
+    { t:'Task&lt;SequenceStepResult&gt;', n:'ExecuteAsync(ISequenceContext context, ct)', d:'스텝 실행' },
+  ], '', 460),
+
+  'ISequenceContext': ctbl('interface', 'ISequenceContext', '시퀀스 실행 컨텍스트 — 외부 자원 접근 관문', [
+    { s:'── §1 장비 접근' },
+    { t:'object?', n:'GetDevice(int deviceId)',        d:'장치/자원 객체 반환 (없으면 null)' },
+    { t:'bool',    n:'IsDeviceConnected(int deviceId)',d:'연결 상태 확인' },
+    { s:'── §2 변수 저장소 (스텝 간 데이터 전달)' },
+    { t:'void', n:'SetVariable(string key, object? value)', d:'변수 저장 (덮어쓰기)' },
+    { t:'T?',   n:'GetVariable&lt;T&gt;(string key)',        d:'변수 반환 (없으면 default)' },
+    { t:'bool', n:'HasVariable(string key)',                  d:'변수 존재 확인' },
+    { t:'void', n:'ClearVariables()',                         d:'모든 변수 삭제' },
+    { s:'── §3 로그' },
+    { t:'void', n:'Log(string message)',      d:'정보 로그' },
+    { t:'void', n:'LogError(string message)', d:'오류 로그' },
+  ], '', 460),
+
+  'ISequenceDefinition': ctbl('interface', 'ISequenceDefinition', '실행 가능한 시퀀스 최소 계약', [
+    { t:'string',    n:'Name { get; }',                          d:'시퀀스 이름' },
+    { t:'bool',      n:'ContinueOnError { get; }',               d:'오류 발생 시 계속 진행 여부' },
+    { t:'TimeSpan?', n:'TotalTimeout { get; }',                  d:'전체 타임아웃 (null=무제한)' },
+    { t:'IRL&lt;ISequenceStep&gt;', n:'AllSteps { get; }',      d:'전체 스텝 평탄화 목록' },
+  ], '', 440),
+
+  'ISequenceExecutor': ctbl('interface', 'ISequenceExecutor', '시퀀스 실행기 계약', [
+    { t:'Task&lt;SequenceResult&gt;',      n:'RunAsync(ISequenceDefinition sequence, ISequenceContext context, ct)', d:'단일 시퀀스 실행' },
+    { t:'Task&lt;SequenceBatchResult&gt;', n:'RunAllAsync(IEnumerable&lt;ISD&gt; sequences, context, continueOnError, ct)', d:'배치 실행 (순서대로)' },
+  ], '', 460),
+
+  /* ── Col 3 · Abstractions ────────────────────────────────────── */
+  'SequenceStepBase': ctbl('abstract', 'SequenceStepBase', 'ISequenceStep 공통 구현 · Delay+재시도 처리', [
+    { t:'int',      n:'StepIndex { get; set; }',                          d:'' },
+    { t:'string',   mo:'abstract', n:'StepName { get; }',                d:'[override 필수]' },
+    { t:'TimeSpan', mo:'virtual',  n:'Delay { get; set; }',              d:'기본 Zero' },
+    { t:'int',      mo:'virtual',  n:'MaxRetries { get; init; }',        d:'최대 재시도 횟수 (기본 0)' },
+    { t:'TimeSpan', mo:'virtual',  n:'RetryDelay { get; init; }',        d:'재시도 간 대기 (기본 200ms)' },
+    { t:'Action&lt;SequenceStepResult&gt;?', n:'OnCompleted { get; init; }', d:'완료 콜백 (BG Thread)' },
+    { s:'── 실행' },
+    { t:'Task&lt;SequenceStepResult&gt;', n:'ExecuteAsync(ISequenceContext, ct)', d:'Delay → ExecuteCore → 재시도' },
+    { s:'── 추상 메서드 [override 필수]' },
+    { t:'Task&lt;SequenceStepResult&gt;', mo:'abstract', n:'ExecuteCoreAsync(ISequenceContext context, ct)', d:'실제 스텝 로직' },
+  ], 'ISequenceStep', 480),
+
+  'SequenceContextBase': ctbl('abstract', 'SequenceContextBase', 'ISequenceContext 공통 구현 · 변수저장소 + 로그', [
+    { s:'── 변수 저장소 (ConcurrentDictionary 공통 구현)' },
+    { t:'void',  n:'SetVariable(key, value)',       d:'' },
+    { t:'T?',    n:'GetVariable&lt;T&gt;(key)',     d:'' },
+    { t:'bool',  n:'HasVariable(key)',              d:'' },
+    { t:'void',  n:'ClearVariables()',              d:'' },
+    { s:'── 이벤트 (외부 로그 후킹)' },
+    { t:'Action&lt;string&gt;?', mo:'event', n:'OnLog',      d:'Log 호출 시' },
+    { t:'Action&lt;string&gt;?', mo:'event', n:'OnLogError', d:'LogError 호출 시' },
+    { s:'── 추상 메서드 [override 필수]' },
+    { t:'object?', mo:'abstract', n:'GetDeviceCore(int deviceId)',        d:'장치 객체 반환' },
+    { t:'bool',    mo:'abstract', n:'IsDeviceConnectedCore(int deviceId)',d:'연결 상태 확인' },
+    { s:'── 가상 메서드 [선택 override]' },
+    { t:'void', mo:'virtual', n:'LogCore(string message)',      d:'기본: Console.WriteLine' },
+    { t:'void', mo:'virtual', n:'LogErrorCore(string message)', d:'기본: Console.Error.WriteLine' },
+  ], 'ISequenceContext', 480),
+
+  'SequenceBase': ctbl('abstract', 'SequenceBase', 'ISequenceDefinition 공통 구현 (그룹 목록 보유)', [
+    { t:'string',    n:'Name { get; }',            d:'' },
+    { t:'bool',      n:'ContinueOnError { get; set; }', d:'기본 false' },
+    { t:'TimeSpan?', n:'TotalTimeout { get; set; }',    d:'' },
+    { t:'IRL&lt;ISequenceStep&gt;', n:'AllSteps { get; }', d:'Groups 평탄화' },
+    { t:'List&lt;SequenceGroup&gt;', n:'Groups (internal)', d:'그룹 목록 (빌더에서 채움)' },
+    { t:'Action&lt;SequenceResult&gt;?', n:'OnCompleted { get; set; }', d:'완료 콜백' },
+  ], 'ISequenceDefinition', 460),
+
+  'SequenceDefinition': ctbl('class', 'SequenceDefinition', 'SequenceBase 단순 구현체 (sealed)', [
+    { t:'SequenceDefinition', n:'AddGroup(SequenceGroup group)', d:'그룹 추가 + this 반환' },
+  ], 'SequenceBase', 380),
+
+  'SequenceGroup': ctbl('class', 'SequenceGroup', '시퀀스 내 하나의 실행 단위 그룹 (sealed)', [
+    { t:'string',             n:'Name { get; init; }',          d:'그룹 이름 (로그·디버깅)' },
+    { t:'StepExecutionMode',  n:'ExecutionMode { get; init; }', d:'Sequential / Parallel' },
+    { t:'List&lt;ISequenceStep&gt;', n:'Steps { get; init; }', d:'소속 스텝 목록' },
+  ], '', 380),
+
+  'SequenceControllerBase': ctbl('abstract', 'SequenceControllerBase', 'ISequenceExecutor 공통 구현 (그룹 순차/병렬 처리)', [
+    { s:'── 이벤트 (BG Thread — WPF: Dispatcher 필요)' },
+    { t:'Action&lt;SequenceStepResult&gt;?',   mo:'event', n:'StepCompleted',      d:'각 스텝 완료 시 (성공/실패 모두)' },
+    { t:'Action&lt;ISequenceDefinition&gt;?',  mo:'event', n:'SequenceStarted',    d:'시퀀스 시작 시' },
+    { t:'Action&lt;SequenceResult&gt;?',        mo:'event', n:'SequenceCompleted',  d:'시퀀스 완료 시' },
+    { s:'── 실행 (ISequenceExecutor 구현)' },
+    { t:'Task&lt;SequenceResult&gt;',      n:'RunAsync(sequence, context, ct)',                  d:'그룹 순차 처리 · TotalTimeout 적용' },
+    { t:'Task&lt;SequenceBatchResult&gt;', n:'RunAllAsync(sequences, context, continueOnError, ct)', d:'배치 실행' },
+    { s:'── 훅 [선택 override]' },
+    { t:'Task', mo:'virtual', n:'OnBeforeStepAsync(ISequenceStep, context, ct)', d:'스텝 실행 전 · 기본: Task.CompletedTask' },
+    { t:'Task', mo:'virtual', n:'OnAfterStepAsync(SequenceStepResult, context, ct)', d:'스텝 실행 후' },
+  ], 'ISequenceExecutor', 500),
+
+  /* ── Col 4 · Builder ─────────────────────────────────────────── */
+  'SequenceBuilderBase': ctbl('abstract', 'SequenceBuilderBase&lt;TStep,TBuilder&gt;', '단일 그룹(순차) Fluent 빌더 추상 베이스', [
+    { s:'── 스텝 추가' },
+    { t:'TBuilder', mo:'abstract', n:'AddStep(TStep step)',                        d:'StepIndex 자동 부여 + Fluent 반환 [protected]' },
+    { t:'TBuilder', n:'AddDelay(TimeSpan duration, string name="Delay")',           d:'DelayStep 추가' },
+    { s:'── 빌드' },
+    { t:'SequenceDefinition', n:'Build(string name, bool continueOnError, TimeSpan? totalTimeout, Action&lt;SR&gt;? onCompleted)', d:'시퀀스 완성' },
+    { t:'int', n:'StepCount { get; }',  d:'현재 등록된 스텝 수' },
+  ], '', 490),
+
+  'GroupSequenceBuilderBase': ctbl('abstract', 'GroupSequenceBuilderBase&lt;TStep,TBuilder&gt;', '다중 그룹 Fluent 빌더 추상 베이스 (다중 장비 연계)', [
+    { s:'── 그룹 제어' },
+    { t:'TBuilder', n:'Then(StepExecutionMode mode, string name="")', d:'새 그룹 시작 (Sequential/Parallel)' },
+    { s:'── 스텝 추가 (현재 그룹에)' },
+    { t:'TBuilder', mo:'abstract', n:'AddStepToCurrentGroup(TStep step)', d:'[protected]' },
+    { t:'TBuilder', n:'AddDelay(TimeSpan duration, string name="Delay")', d:'DelayStep 추가' },
+    { s:'── 빌드' },
+    { t:'SequenceDefinition', n:'Build(bool continueOnError, TimeSpan? totalTimeout, Action&lt;SR&gt;? onCompleted)', d:'다중 그룹 시퀀스 완성' },
+  ], '', 490),
+
+  'DelayStep': ctbl('class', 'DelayStep', '순수 대기 스텝 — 모든 빌더에서 공통 사용 (sealed)', [
+    { t:'string', n:'StepName { get; }', d:'내부 StepName_ 위임' },
+    { t:'Task&lt;SequenceStepResult&gt;', n:'ExecuteCoreAsync(context, ct)', d:'즉시 Ok 반환 · Delay는 StepBase 처리' },
+  ], 'SequenceStepBase', 380),
+};
+
+const COL = {
+  0: ['StepExecutionMode','SequenceStepStatus','SequenceStatus'],
+  1: ['SequenceStepResult','SequenceResult','SequenceBatchResult'],
+  2: ['ISequenceStep','ISequenceContext','ISequenceDefinition','ISequenceExecutor'],
+  3: ['SequenceStepBase','SequenceContextBase','SequenceBase','SequenceDefinition','SequenceGroup','SequenceControllerBase'],
+  4: ['SequenceBuilderBase','GroupSequenceBuilderBase','DelayStep'],
+};
+
+const FG = [
+  { lbl:'lssLib.Sequence  Core Enums',    ns:['StepExecutionMode','SequenceStepStatus','SequenceStatus'],                                color:'#dc2626' },
+  { lbl:'lssLib.Sequence  Core Results',  ns:['SequenceStepResult','SequenceResult','SequenceBatchResult'],                              color:'#7c3aed' },
+  { lbl:'lssLib.Sequence  Contracts',     ns:['ISequenceStep','ISequenceContext','ISequenceDefinition','ISequenceExecutor'],              color:'#2563eb' },
+  { lbl:'lssLib.Sequence  Abstractions',  ns:['SequenceStepBase','SequenceContextBase','SequenceBase','SequenceDefinition','SequenceGroup','SequenceControllerBase'], color:'#d97706' },
+  { lbl:'lssLib.Sequence  Builder',       ns:['SequenceBuilderBase','GroupSequenceBuilderBase','DelayStep'],                             color:'#059669' },
+];
+
+const CONN = [
+  // ── Abstractions → Contracts (implements) ─────────────────────
+  { f:'SequenceStepBase',       fe:'left', t:'ISequenceStep',        te:'right', ty:'impl', lbl:'implements', xoff:30  },
+  { f:'SequenceContextBase',    fe:'left', t:'ISequenceContext',      te:'right', ty:'impl', lbl:'implements', xoff:0   },
+  { f:'SequenceBase',           fe:'left', t:'ISequenceDefinition',   te:'right', ty:'impl', lbl:'implements', xoff:-30 },
+  { f:'SequenceControllerBase', fe:'left', t:'ISequenceExecutor',     te:'right', ty:'impl', lbl:'implements', xoff:0   },
+
+  // ── SequenceDefinition extends SequenceBase ───────────────────
+  { f:'SequenceDefinition', fe:'top', t:'SequenceBase', te:'bottom', ty:'ext', lbl:'extends', xoff:0 },
+
+  // ── SequenceBase ◆→ SequenceGroup (composition) ──────────────
+  { f:'SequenceBase', fe:'right', t:'SequenceGroup', te:'left', ty:'comp', lbl:'1◆*', xoff:0 },
+
+  // ── SequenceGroup → StepExecutionMode (uses) ─────────────────
+  { f:'SequenceGroup', fe:'left', t:'StepExecutionMode', te:'right', ty:'uses', lbl:'uses', xoff:0 },
+
+  // ── SequenceControllerBase → results (creates) ──────────────
+  { f:'SequenceControllerBase', fe:'left', t:'SequenceResult',      te:'right', ty:'uses', lbl:'uses', xoff:20  },
+  { f:'SequenceControllerBase', fe:'left', t:'SequenceBatchResult', te:'right', ty:'uses', lbl:'uses', xoff:-20 },
+
+  // ── SequenceStepBase → SequenceStepResult (creates) ──────────
+  { f:'SequenceStepBase', fe:'left', t:'SequenceStepResult', te:'right', ty:'uses', lbl:'uses', xoff:0 },
+
+  // ── Builder → SequenceDefinition (builds) ────────────────────
+  { f:'SequenceBuilderBase',       fe:'top', t:'SequenceDefinition', te:'bottom', ty:'uses', lbl:'«builds»', xoff:-20 },
+  { f:'GroupSequenceBuilderBase',  fe:'top', t:'SequenceDefinition', te:'bottom', ty:'uses', lbl:'«builds»', xoff:20  },
+
+  // ── DelayStep extends SequenceStepBase ────────────────────────
+  { f:'DelayStep', fe:'left', t:'SequenceStepBase', te:'right', ty:'ext', lbl:'extends', xoff:0 },
+];
+
+const GAP_COL = 140, PAD_STACK = 50, START_X = 30, START_Y = 40;
+
+const cv    = document.getElementById('cv');
+const svgEl = document.getElementById('svg');
+
+Object.keys(BOXES).forEach(name => {
+  const div = document.createElement('div');
+  div.className = 'bw'; div.dataset.box = name;
+  div.style.left = '0px'; div.style.top = '0px';
+  div.innerHTML = BOXES[name];
+  cv.insertBefore(div, svgEl);
+});
+
+const gb  = n => { const el = cv.querySelector(`[data-box="${n}"]`); return el ? {el,x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight} : null; };
+const bot = n => { const b = gb(n); return b ? b.y + b.h : 0; };
+const setX = (n,x) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.left = x+'px'; };
+const setY = (n,y) => { const el = cv.querySelector(`[data-box="${n}"]`); if(el) el.style.top  = y+'px'; };
+const ri  = v => Math.round(v);
+
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  const colW = {};
+  Object.entries(COL).forEach(([ci,ns]) => {
+    colW[ci] = Math.max(...ns.map(n => { const b=gb(n); return b?b.w:0; }));
+  });
+  const colX = {};
+  let cx = START_X;
+  Object.keys(COL).sort().forEach(ci => { colX[ci] = cx; cx += colW[ci] + GAP_COL; });
+  Object.entries(COL).forEach(([ci,ns]) => ns.forEach(n => setX(n, colX[ci])));
+
+  requestAnimationFrame(() => {
+    // Row 0
+    setY('StepExecutionMode',    START_Y);
+    setY('SequenceStepResult',   START_Y);
+    setY('ISequenceStep',        START_Y);
+    setY('SequenceStepBase',     START_Y);
+    setY('SequenceBuilderBase',  START_Y);
+
+    requestAnimationFrame(() => {
+      // Row 1
+      setY('SequenceStepStatus',     bot('StepExecutionMode')   + PAD_STACK);
+      setY('SequenceResult',         bot('SequenceStepResult')  + PAD_STACK);
+      setY('ISequenceContext',       bot('ISequenceStep')       + PAD_STACK);
+      setY('SequenceContextBase',    bot('SequenceStepBase')    + PAD_STACK);
+      setY('GroupSequenceBuilderBase', bot('SequenceBuilderBase') + PAD_STACK);
+
+      requestAnimationFrame(() => {
+        // Row 2
+        setY('SequenceStatus',       bot('SequenceStepStatus')  + PAD_STACK);
+        setY('SequenceBatchResult',  bot('SequenceResult')      + PAD_STACK);
+        setY('ISequenceDefinition',  bot('ISequenceContext')    + PAD_STACK);
+        setY('SequenceBase',         bot('SequenceContextBase') + PAD_STACK);
+        setY('DelayStep',            bot('GroupSequenceBuilderBase') + PAD_STACK);
+
+        requestAnimationFrame(() => {
+          // Row 3
+          setY('ISequenceExecutor',     bot('ISequenceDefinition') + PAD_STACK);
+          setY('SequenceDefinition',    bot('SequenceBase')        + PAD_STACK);
+
+          requestAnimationFrame(() => {
+            // Row 4
+            setY('SequenceGroup',         bot('SequenceDefinition')  + PAD_STACK);
+
+            requestAnimationFrame(() => {
+              // Row 5
+              setY('SequenceControllerBase', bot('SequenceGroup')    + PAD_STACK);
+
+              requestAnimationFrame(() => drawAll());
+            });
+          });
+        });
+      });
+    });
+  });
+}));
+
+function drawAll() {
+  const pos = {};
+  cv.querySelectorAll('.bw').forEach(el => {
+    pos[el.dataset.box] = {x:el.offsetLeft,y:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};
+  });
+  const maxW = Math.max(...Object.values(pos).map(p=>p.x+p.w)) + 80;
+  const maxH = Math.max(...Object.values(pos).map(p=>p.y+p.h)) + 100;
+  cv.style.minWidth = maxW+'px'; cv.style.minHeight = maxH+'px';
+  svgEl.setAttribute('width', maxW); svgEl.setAttribute('height', maxH);
+  const ph = document.getElementById('cv-phantom');
+  ph.style.width  = Math.ceil(maxW*zl)+'px';
+  ph.style.height = Math.ceil(maxH*zl)+'px';
+
+  svgEl.innerHTML = `<defs>
+    <marker id="me" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#e040fb" stroke-width="2"/></marker>
+    <marker id="mi" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 1 L11 6 L1 11 Z" fill="white" stroke="#4f8ef7" stroke-width="2"/></marker>
+    <marker id="mu" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#888" stroke-width="2.5" stroke-linecap="round"/></marker>
+    <marker id="mds" viewBox="0 0 18 12" refX="0" refY="6" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <path d="M0 6 L9 1 L18 6 L9 11 Z" fill="#555"/></marker>
+    <marker id="mda" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="14" markerHeight="14" orient="auto">
+      <path d="M1 2 L10 6 L1 10" fill="none" stroke="#555" stroke-width="2.5"/></marker>
+  </defs>`;
+
+  FG.forEach(fg => {
+    const bs = fg.ns.map(n=>pos[n]).filter(Boolean); if(!bs.length) return;
+    const pd=14, x1=Math.min(...bs.map(b=>b.x))-pd, y1=Math.min(...bs.map(b=>b.y))-pd;
+    const x2=Math.max(...bs.map(b=>b.x+b.w))+pd,    y2=Math.max(...bs.map(b=>b.y+b.h))+pd;
+    const rc=mk('rect'); sa(rc,{x:x1,y:y1,width:x2-x1,height:y2-y1,rx:6,fill:'none',stroke:fg.color,'stroke-width':1.5,'stroke-dasharray':'6,3',opacity:0.75});
+    svgEl.appendChild(rc);
+    const bg=mk('rect'); sa(bg,{x:x1+2,y:y1-9,width:fg.lbl.length*6.5+12,height:14,rx:3,fill:'white'});
+    svgEl.appendChild(bg);
+    const tx=mk('text'); sa(tx,{x:x1+8,y:y1+1,'font-size':10,fill:fg.color,'font-family':'monospace','font-weight':700});
+    tx.textContent=fg.lbl; svgEl.appendChild(tx);
+  });
+
+  function ep(b,e){
+    if(e==='top')    return [b.x+b.w/2, b.y];
+    if(e==='bottom') return [b.x+b.w/2, b.y+b.h];
+    if(e==='left')   return [b.x,        b.y+b.h/2];
+    if(e==='right')  return [b.x+b.w,    b.y+b.h/2];
+    return [b.x+b.w/2, b.y];
+  }
+
+  const SY = {
+    ext:  {stroke:'#e040fb','stroke-width':2,  'marker-end':'url(#me)'},
+    impl: {stroke:'#4f8ef7','stroke-width':1.5,'stroke-dasharray':'5,3','marker-end':'url(#mi)'},
+    uses: {stroke:'#888',   'stroke-width':1.2,'stroke-dasharray':'4,2','marker-end':'url(#mu)'},
+    comp: {stroke:'#555',   'stroke-width':1.5,'stroke-dasharray':'4,2','marker-start':'url(#mds)','marker-end':'url(#mda)'},
+  };
+
+  CONN.forEach(c => {
+    const fb=pos[c.f], tb=pos[c.t]; if(!fb||!tb) return;
+    const [sx,sy] = ep(fb,c.fe).map(ri);
+    const [tx2,ty2] = ep(tb,c.te).map(ri);
+    const ML=18;
+    let ex=tx2,ey=ty2;
+    if(c.te==='top')    ey+=ML; else if(c.te==='bottom') ey-=ML;
+    else if(c.te==='left') ex+=ML; else if(c.te==='right') ex-=ML;
+    const dist=Math.hypot(ex-sx,ey-sy);
+    const cp=Math.max(80,dist*0.48);
+    const xoff=c.xoff||0;
+    let c1x=sx+xoff,c1y=sy,c2x=ex+xoff,c2y=ey;
+    if(c.fe==='bottom') c1y+=cp; else if(c.fe==='top')   c1y-=cp;
+    else if(c.fe==='right') c1x+=cp; else if(c.fe==='left')  c1x-=cp;
+    if(c.te==='top')    c2y-=cp; else if(c.te==='bottom') c2y+=cp;
+    else if(c.te==='left') c2x-=cp; else if(c.te==='right') c2x+=cp;
+    const d=`M${sx} ${sy} C${ri(c1x)} ${ri(c1y)} ${ri(c2x)} ${ri(c2y)} ${ex} ${ey}`;
+    const pa=mk('path'); sa(pa,{d,fill:'none',...(SY[c.ty]||SY.uses)});
+    svgEl.appendChild(pa);
+    if(c.lbl){
+      const t=0.5, it=1-t;
+      const mx=ri(it*it*it*sx+3*it*it*t*c1x+3*it*t*t*c2x+t*t*t*ex);
+      const my=ri(it*it*it*sy+3*it*it*t*c1y+3*it*t*t*c2y+t*t*t*ey);
+      const lblCol={ext:'#c000d8',impl:'#1a5cb8',uses:'#555',comp:'#333'}[c.ty]||'#444';
+      const FSIZE=11,PAD_X=7,PAD_Y=3;
+      const approxW=c.lbl.length*FSIZE*0.62+PAD_X*2;
+      const approxH=FSIZE+PAD_Y*2;
+      const bg=mk('rect'); sa(bg,{x:mx-approxW/2,y:my-approxH/2,width:approxW,height:approxH,rx:4,fill:'white',stroke:lblCol,'stroke-width':1.2,opacity:0.97});
+      svgEl.appendChild(bg);
+      const tl=mk('text'); sa(tl,{x:mx,y:my,'font-size':FSIZE,fill:lblCol,'font-family':'monospace','font-weight':'700','text-anchor':'middle','dominant-baseline':'central'});
+      tl.textContent=c.lbl; svgEl.appendChild(tl);
+    }
+  });
+}
+
+function mk(tag){ return document.createElementNS('http://www.w3.org/2000/svg',tag); }
+function sa(el,a){ Object.entries(a).forEach(([k,v])=>el.setAttribute(k,v)); }
+</script>
+</body>
+</html>
