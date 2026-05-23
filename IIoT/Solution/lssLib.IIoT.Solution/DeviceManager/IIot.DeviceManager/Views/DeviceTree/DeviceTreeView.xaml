@@ -9,6 +9,13 @@
   수정: 2025-05-23 v4 — ResourceDictionary 구조 수정 (모든 리소스 내부로 이동)
   수정: 2025-05-23 v5 — XLS0509 수정: Style.Triggers 를 Style 내 마지막으로 이동
                          XLS0414 재확인: conv: 접두사 명시적 적용
+  수정: 2025-05-23 v6 — 트리 구조 유연화 반영
+        ToolTip / ContextMenu 텍스트를 새 동작에 맞게 수정
+        · 장비 추가: 선택 없으면 루트에 추가, Device/Plc 하위에도 추가 가능
+        · PLC 추가: 선택 없으면 루트에 추가, Device/Plc 하위에도 추가 가능
+  수정: 2025-05-23 v7 — 같은 레벨(Sibling) 추가 버튼/메뉴 추가
+        툴바: [하위 추가] 그룹 | 장비 | PLC | 태그  ──  [같은레벨] 그룹 | 장비 | PLC
+        컨텍스트: 하위에 추가 / 같은 레벨에 추가 분리
  ══════════════════════════════════════════════════════════
 -->
 <UserControl
@@ -36,6 +43,7 @@
             <conv:BoolToVisibilityInvertConverter x:Key="BoolToVisibilityInvertConverter"/>
             <conv:NullToVisibilityConverter       x:Key="NullToVisibilityConverter"/>
 
+            <!-- ── 노드 스타일 ── -->
             <Style x:Key="NodeLabelStyle" TargetType="TextBlock">
                 <Setter Property="VerticalAlignment" Value="Center"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
@@ -63,6 +71,7 @@
                 <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
             </Style>
 
+            <!-- ── 공통 노드 헤더 ── -->
             <DataTemplate x:Key="NodeHeaderTemplate">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding IconGlyph}" FontSize="14" VerticalAlignment="Center"/>
@@ -132,92 +141,180 @@
 
     <DockPanel>
 
+        <!-- ══════════════════════════════════════════════════
+             상단 툴바
+             ─────────────────────────────────────────────────
+             [하위 추가] 그룹·장비·PLC·태그
+             ─ Separator ─
+             [같은레벨] 그룹·장비·PLC
+             ─ Separator ─
+             ▲ ▼ ─ Separator ─ 삭제
+             ─ Separator ─
+             ⊞ ⊟ ─ Separator ─ 샘플
+        ══════════════════════════════════════════════════ -->
         <ToolBar DockPanel.Dock="Top"
                  Background="{DynamicResource SurfaceBrush}"
                  BorderBrush="{DynamicResource BorderBrush}"
                  BorderThickness="0,0,0,1">
 
+            <!-- ── 구분 레이블: 하위 추가 ── -->
+            <TextBlock Text="하위"
+                       FontSize="9" FontWeight="Bold"
+                       Foreground="{DynamicResource Text3Brush}"
+                       VerticalAlignment="Center"
+                       Margin="4,0,2,0"/>
+
+            <!-- 하위: 그룹 추가 -->
             <Button Command="{Binding AddGroupCommand}"
-                    ToolTip="그룹 추가" Style="{DynamicResource GhostBtn}" Padding="6,3">
+                    ToolTip="하위 그룹 추가&#x0a;· 그룹 선택 → 하위 그룹&#x0a;· 그 외 → 루트 그룹"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" FontSize="13"/>
-                    <TextBlock Text=" 그룹" FontSize="12" Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text=" 그룹" FontSize="11"
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
+            <!-- 하위: 장비 추가 -->
             <Button Command="{Binding AddDeviceCommand}"
-                    ToolTip="장비 추가 (그룹 선택 필요)"
-                    Style="{DynamicResource GhostBtn}" Padding="6,3">
+                    ToolTip="하위 장비 추가&#x0a;· 선택 없음 → 루트&#x0a;· 그룹/장비/PLC → 하위"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📟" FontSize="13"/>
-                    <TextBlock Text=" 장비" FontSize="12" Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text=" 장비" FontSize="11"
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
+            <!-- 하위: PLC 추가 -->
             <Button Command="{Binding AddPlcCommand}"
-                    ToolTip="PLC 추가 (장비 선택 필요)"
-                    Style="{DynamicResource GhostBtn}" Padding="6,3">
+                    ToolTip="하위 PLC 추가&#x0a;· 선택 없음 → 루트&#x0a;· 그룹/장비/PLC → 하위"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚙️" FontSize="13"/>
-                    <TextBlock Text=" PLC" FontSize="12" Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text=" PLC" FontSize="11"
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
+            <!-- 하위: 태그 추가 -->
             <Button Command="{Binding AddTagCommand}"
                     ToolTip="태그 추가 (장비 또는 PLC 선택 필요)"
-                    Style="{DynamicResource GhostBtn}" Padding="6,3">
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="🏷️" FontSize="13"/>
-                    <TextBlock Text=" 태그" FontSize="12" Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text=" 태그" FontSize="11"
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
 
             <Separator/>
 
+            <!-- ── 구분 레이블: 같은 레벨 추가 ── -->
+            <TextBlock Text="동레벨"
+                       FontSize="9" FontWeight="Bold"
+                       Foreground="{DynamicResource AccBrush}"
+                       VerticalAlignment="Center"
+                       Margin="4,0,2,0"/>
+
+            <!-- 같은 레벨: 그룹 추가 -->
+            <Button Command="{Binding AddSiblingGroupCommand}"
+                    ToolTip="같은 레벨에 그룹 추가&#x0a;선택 노드 바로 다음에 그룹 삽입"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📁" FontSize="13"/>
+                    <TextBlock Text="=" FontSize="9"
+                               Foreground="{DynamicResource AccBrush}"
+                               VerticalAlignment="Bottom" Margin="1,0,0,2"/>
+                </StackPanel>
+            </Button>
+
+            <!-- 같은 레벨: 장비 추가 -->
+            <Button Command="{Binding AddSiblingDeviceCommand}"
+                    ToolTip="같은 레벨에 장비 추가&#x0a;선택 노드 바로 다음에 장비 삽입"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📟" FontSize="13"/>
+                    <TextBlock Text="=" FontSize="9"
+                               Foreground="{DynamicResource AccBrush}"
+                               VerticalAlignment="Bottom" Margin="1,0,0,2"/>
+                </StackPanel>
+            </Button>
+
+            <!-- 같은 레벨: PLC 추가 -->
+            <Button Command="{Binding AddSiblingPlcCommand}"
+                    ToolTip="같은 레벨에 PLC 추가&#x0a;선택 노드 바로 다음에 PLC 삽입"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⚙️" FontSize="13"/>
+                    <TextBlock Text="=" FontSize="9"
+                               Foreground="{DynamicResource AccBrush}"
+                               VerticalAlignment="Bottom" Margin="1,0,0,2"/>
+                </StackPanel>
+            </Button>
+
+            <Separator/>
+
+            <!-- 위/아래 이동 -->
             <Button Command="{Binding MoveUpCommand}"
-                    ToolTip="위로 이동" Style="{DynamicResource GhostBtn}" Padding="6,3">
-                <TextBlock Text="▲" FontSize="12" Foreground="{DynamicResource TextBrush}"/>
+                    ToolTip="위로 이동"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <TextBlock Text="▲" FontSize="12"
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
             <Button Command="{Binding MoveDownCommand}"
-                    ToolTip="아래로 이동" Style="{DynamicResource GhostBtn}" Padding="6,3">
-                <TextBlock Text="▼" FontSize="12" Foreground="{DynamicResource TextBrush}"/>
+                    ToolTip="아래로 이동"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <TextBlock Text="▼" FontSize="12"
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
             <Separator/>
 
+            <!-- 삭제 -->
             <Button Command="{Binding DeleteNodeCommand}"
-                    ToolTip="선택 노드 삭제" Style="{DynamicResource SecondaryBtn}" Padding="6,3"
+                    ToolTip="선택 노드 삭제 (하위 전체 포함)"
+                    Style="{DynamicResource SecondaryBtn}" Padding="5,3"
                     Foreground="{DynamicResource RedBrush}"
                     BorderBrush="{DynamicResource RedBrush}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="🗑" FontSize="13"/>
-                    <TextBlock Text=" 삭제" FontSize="12" Foreground="{DynamicResource RedBrush}"/>
+                    <TextBlock Text=" 삭제" FontSize="11"
+                               Foreground="{DynamicResource RedBrush}"/>
                 </StackPanel>
             </Button>
 
             <Separator/>
 
+            <!-- 전체 펼치기/접기 -->
             <Button Command="{Binding ExpandAllCommand}"
-                    ToolTip="전체 펼치기" Style="{DynamicResource GhostBtn}" Padding="6,3">
-                <TextBlock Text="⊞" FontSize="13" Foreground="{DynamicResource TextBrush}"/>
+                    ToolTip="전체 펼치기"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <TextBlock Text="⊞" FontSize="13"
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
             <Button Command="{Binding CollapseAllCommand}"
-                    ToolTip="전체 접기" Style="{DynamicResource GhostBtn}" Padding="6,3">
-                <TextBlock Text="⊟" FontSize="13" Foreground="{DynamicResource TextBrush}"/>
+                    ToolTip="전체 접기"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <TextBlock Text="⊟" FontSize="13"
+                           Foreground="{DynamicResource TextBrush}"/>
             </Button>
 
             <Separator/>
 
+            <!-- 샘플 로드 -->
             <Button Command="{Binding LoadSampleCommand}"
-                    ToolTip="샘플 데이터 로드 (개발용)"
-                    Style="{DynamicResource GhostBtn}" Padding="6,3">
-                <TextBlock Text="↺ 샘플" FontSize="12" Foreground="{DynamicResource Text2Brush}"/>
+                    ToolTip="샘플 데이터 로드 (테스트용)"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <TextBlock Text="↺ 샘플" FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"/>
             </Button>
 
         </ToolBar>
 
+        <!-- ── 하단 상태바 ── -->
         <StatusBar DockPanel.Dock="Bottom" Height="22"
                    Background="{DynamicResource SurfaceBrush}"
                    BorderBrush="{DynamicResource BorderBrush}"
@@ -238,6 +335,7 @@
             </StatusBarItem>
         </StatusBar>
 
+        <!-- ── 트리뷰 본체 ── -->
         <TreeView
             x:Name="DeviceTree"
             ItemsSource="{Binding RootNodes}"
@@ -251,7 +349,6 @@
             <TreeView.ItemContainerStyle>
                 <Style TargetType="TreeViewItem">
 
-                    <!-- ① 일반 Setter (단순 값) -->
                     <Setter Property="IsExpanded"  Value="{Binding IsExpanded, Mode=TwoWay}"/>
                     <Setter Property="IsSelected"  Value="{Binding IsSelected, Mode=TwoWay}"/>
                     <Setter Property="Padding"      Value="2,3"/>
@@ -259,53 +356,96 @@
                     <Setter Property="Foreground"   Value="{DynamicResource TextBrush}"/>
                     <Setter Property="Background"   Value="Transparent"/>
 
-                    <!-- ② 복합 Setter (ContextMenu) -->
+                    <!--
+                    ══════════════════════════════════════════════
+                    컨텍스트 메뉴 구조:
+                      ✏️ 이름 변경
+                      ───
+                      ▼ 하위에 추가
+                        📁 하위 그룹
+                        📟 하위 장비
+                        ⚙️ 하위 PLC
+                        🏷️ 태그
+                      ───
+                      ↔ 같은 레벨에 추가
+                        📁 같은 레벨 그룹
+                        📟 같은 레벨 장비
+                        ⚙️ 같은 레벨 PLC
+                      ───
+                      ▲ 위로 이동
+                      ▼ 아래로 이동
+                      ───
+                      🗑 삭제
+                    ══════════════════════════════════════════════
+                    -->
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
                                              RelativeSource={RelativeSource Self}}">
-                                <MenuItem Header="✏️ 이름 변경"
+
+                                <!-- 이름 변경 -->
+                                <MenuItem Header="✏️  이름 변경"
                                           Command="{Binding BeginEditCommand}"/>
+
                                 <Separator/>
-                                <MenuItem Header="📁 하위 그룹 추가"
-                                          Command="{Binding DataContext.AddGroupCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="📟 장비 추가"
-                                          Command="{Binding DataContext.AddDeviceCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="⚙️ PLC 추가"
-                                          Command="{Binding DataContext.AddPlcCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="🏷️ 태그 추가"
-                                          Command="{Binding DataContext.AddTagCommand,
-                                              RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+
+                                <!-- 하위에 추가 (SubMenu) -->
+                                <MenuItem Header="↓  하위에 추가">
+                                    <MenuItem Header="📁  하위 그룹"
+                                              Command="{Binding DataContext.AddGroupCommand,
+                                                  RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                    <MenuItem Header="📟  하위 장비"
+                                              Command="{Binding DataContext.AddDeviceCommand,
+                                                  RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                    <MenuItem Header="⚙️  하위 PLC"
+                                              Command="{Binding DataContext.AddPlcCommand,
+                                                  RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                    <Separator/>
+                                    <MenuItem Header="🏷️  태그"
+                                              Command="{Binding DataContext.AddTagCommand,
+                                                  RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                </MenuItem>
+
+                                <!-- 같은 레벨에 추가 (SubMenu) -->
+                                <MenuItem Header="↔  같은 레벨에 추가">
+                                    <MenuItem Header="📁  같은 레벨 그룹"
+                                              Command="{Binding DataContext.AddSiblingGroupCommand,
+                                                  RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                    <MenuItem Header="📟  같은 레벨 장비"
+                                              Command="{Binding DataContext.AddSiblingDeviceCommand,
+                                                  RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                    <MenuItem Header="⚙️  같은 레벨 PLC"
+                                              Command="{Binding DataContext.AddSiblingPlcCommand,
+                                                  RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+                                </MenuItem>
+
                                 <Separator/>
-                                <MenuItem Header="▲ 위로 이동"
+
+                                <!-- 이동 -->
+                                <MenuItem Header="▲  위로 이동"
                                           Command="{Binding DataContext.MoveUpCommand,
                                               RelativeSource={RelativeSource AncestorType=TreeView}}"/>
-                                <MenuItem Header="▼ 아래로 이동"
+                                <MenuItem Header="▼  아래로 이동"
                                           Command="{Binding DataContext.MoveDownCommand,
                                               RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+
                                 <Separator/>
-                                <MenuItem Header="🗑 삭제"
+
+                                <!-- 삭제 -->
+                                <MenuItem Header="🗑  삭제"
                                           Command="{Binding DataContext.DeleteNodeCommand,
                                               RelativeSource={RelativeSource AncestorType=TreeView}}"/>
+
                             </ContextMenu>
                         </Setter.Value>
                     </Setter>
 
-                    <!-- ③ EventSetter -->
                     <EventSetter Event="MouseDoubleClick"
                                  Handler="TreeViewItem_MouseDoubleClick"/>
                     <EventSetter Event="KeyDown"
                                  Handler="TreeViewItem_KeyDown"/>
 
-                    <!--
-                    ★ v5 핵심 수정: Style.Triggers 는 반드시 Style 내 마지막에 위치
-                       Setter / EventSetter (일반 내용) 뒤에
-                       Style.Triggers (속성 요소) 가 와야 XLS0509 가 발생하지 않음.
-                       순서: ① 일반 Setter → ② 복합 Setter → ③ EventSetter → ④ Style.Triggers
-                    -->
+                    <!-- ★ Style.Triggers — 항상 마지막 -->
                     <Style.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
@@ -313,7 +453,7 @@
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
-                                <Condition Property="IsSelected"       Value="True"/>
+                                <Condition Property="IsSelected"        Value="True"/>
                                 <Condition Property="IsSelectionActive" Value="False"/>
                             </MultiTrigger.Conditions>
                             <Setter Property="Background" Value="{DynamicResource Border2Brush}"/>

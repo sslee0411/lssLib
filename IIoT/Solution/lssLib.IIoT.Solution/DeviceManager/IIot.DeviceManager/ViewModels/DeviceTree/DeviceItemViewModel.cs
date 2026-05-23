@@ -1,19 +1,21 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.DeviceManager · DeviceItemViewModel.cs
-//  역할: 실제 장비(Device) 노드 ViewModel
+//  역할: 실제 장비(Device/PLC) 노드 ViewModel
 //  생성: 2025-05-22
-//  수정: 2025-05-22 — XDG0008 수정
-//        PropertyChanged 수동 구독 제거 (nameof(IsOnline) = 소스 제너레이터 의존)
-//        → [NotifyPropertyChangedFor] 어트리뷰트로 교체 (공식 CommunityToolkit 패턴)
+//  수정: 2025-05-22 — XDG0008 수정 ([NotifyPropertyChangedFor] 패턴)
+//  수정: 2025-05-23 v2 — 트리 구조 유연화
+//        AllowedChildKinds 에 Device / Plc 추가
+//        → 장비(PLC) 하위에 장비(PLC)를 연결할 수 있음
 // ══════════════════════════════════════════════════════════
 
-using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 
 /// <summary>
-/// 실제 장비 노드 — CommConfig 참조, PLC / Tag 자식 허용.
+/// 실제 장비 / PLC 노드.
+/// 하위 노드: Device · PLC (중첩 가능) · Tag
+/// CommConfig 참조, IsOnline 상태 포함.
 /// </summary>
 public partial class DeviceItemViewModel : DeviceNodeViewModel
 {
@@ -57,8 +59,13 @@ public partial class DeviceItemViewModel : DeviceNodeViewModel
     /// <summary>온라인 = 🖥️, 오프라인 = 📟</summary>
     public override string IconGlyph => IsOnline ? "🖥️" : "📟";
 
+    /// <summary>
+    /// ★ v2 수정: Device · Plc · Tag 모두 허용
+    ///   → 장비(PLC) 하위에 장비(PLC)를 중첩 연결할 수 있음
+    ///   예) PLC-001 → PLC-001-A (확장 슬롯) → Tag
+    /// </summary>
     public override IReadOnlyList<NodeKind> AllowedChildKinds =>
-        [NodeKind.Plc, NodeKind.Tag];
+        [NodeKind.Device, NodeKind.Plc, NodeKind.Tag];
 
     /// <summary>CommConfig 연결 시 "COM" 배지 표시</summary>
     public override string? Badge => CommConfigId is not null ? "COM" : null;
