@@ -95,13 +95,26 @@ public partial class DeviceTreeViewModel : ObservableObject
             (_, _) => OnPropertyChanged(nameof(TotalNodeCount));
     }
 
-    // §4 ─ 하위(Child) 추가 커맨드 ───────────────────────────
+    // §3-1 ─ SelectedNode 변경 시 IsSelected 동기화 ───────────
 
     /// <summary>
-    /// 그룹 추가.
-    /// · Group 선택 시 → 하위 그룹
-    /// · 그 외 (선택 없음 / Device / Plc / Tag 선택) → 루트 그룹
+    /// ★ 버그 수정: VM에서 SelectedNode를 직접 바꿀 때
+    ///   (AddTag/AddDevice 등) TreeView 시각 선택과 동기화.
+    ///
+    /// SelectedNode = tag 를 VM에서 설정하면 tag.IsSelected = true 가 되고
+    /// TwoWay 바인딩으로 TreeViewItem 의 시각 선택도 변경됨.
+    /// 이후 사용자가 장비를 다시 클릭하면 TreeView 가 "변경" 으로 감지하여
+    /// SelectedItemChanged 이벤트가 정상 발생 → SelectedNode 가 장비로 업데이트됨.
     /// </summary>
+    partial void OnSelectedNodeChanged(DeviceNodeViewModel? oldValue, DeviceNodeViewModel? newValue)
+    {
+        if (oldValue is not null) oldValue.IsSelected = false;
+        if (newValue is not null) newValue.IsSelected = true;
+    }
+
+    // §4 ─ 하위(Child) 추가 커맨드 ───────────────────────────
+
+    /// <summary>그룹 하위에 그룹 / 그 외 루트 그룹 추가</summary>
     [RelayCommand(CanExecute = nameof(CanAddGroup))]
     private void AddGroup()
     {
@@ -367,6 +380,9 @@ public partial class DeviceTreeViewModel : ObservableObject
         int idx = list.IndexOf(SelectedNode);
         if (idx <= 0) return;
         list.Move(idx, idx - 1);
+        // 위치가 바뀌었으므로 CanExecute 수동 갱신
+        MoveUpCommand.NotifyCanExecuteChanged();
+        MoveDownCommand.NotifyCanExecuteChanged();
     }
 
     private bool CanMoveUp()
@@ -386,6 +402,9 @@ public partial class DeviceTreeViewModel : ObservableObject
         int idx = list.IndexOf(SelectedNode);
         if (idx < 0 || idx >= list.Count - 1) return;
         list.Move(idx, idx + 1);
+        // 위치가 바뀌었으므로 CanExecute 수동 갱신
+        MoveUpCommand.NotifyCanExecuteChanged();
+        MoveDownCommand.NotifyCanExecuteChanged();
     }
 
     private bool CanMoveDown()
