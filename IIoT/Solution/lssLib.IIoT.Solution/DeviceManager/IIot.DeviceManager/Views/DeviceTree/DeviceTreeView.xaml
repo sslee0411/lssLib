@@ -48,7 +48,7 @@
             <conv:BoolToVisibilityInvertConverter x:Key="BoolToVisibilityInvertConverter"/>
             <conv:NullToVisibilityConverter       x:Key="NullToVisibilityConverter"/>
 
-            <!-- ── 노드 스타일 ── -->
+            <!-- ── 노드 공통 스타일 ── -->
             <Style x:Key="NodeLabelStyle" TargetType="TextBlock">
                 <Setter Property="VerticalAlignment" Value="Center"/>
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
@@ -82,7 +82,7 @@
                 <Setter Property="Background" Value="{DynamicResource GreenBrush}"/>
             </Style>
 
-            <!-- ── 공통 노드 헤더 ── -->
+            <!-- ── 공통 노드 헤더 (Group/Device/Plc 공유) ── -->
             <DataTemplate x:Key="NodeHeaderTemplate">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding IconGlyph}" FontSize="14" VerticalAlignment="Center"/>
@@ -195,7 +195,7 @@
 
         <!-- ══════════════════════════════════════════════════
              상단 툴바
-             ─────────────────────────────────────────────────
+             ──────────────────────────────────────────────────
 			 [하위] 그룹 | 장비 | PLC
              [수집] 태그     ← Plc 선택 시만 활성
              [물리] 센서     ← Device 선택 시만 활성
@@ -217,7 +217,7 @@
 
             <!-- 하위: 그룹 추가 -->
             <Button Command="{Binding AddGroupCommand}"
-                    ToolTip="하위 그룹 추가&#x0a;· 그룹 선택 → 하위 그룹&#x0a;· 그 외 → 루트 그룹"
+                    ToolTip="하위 그룹 추가"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" FontSize="13"/>
@@ -228,7 +228,7 @@
 
             <!-- 하위: 장비 추가 -->
             <Button Command="{Binding AddDeviceCommand}"
-                    ToolTip="하위 장비 추가&#x0a;· 선택 없음 → 루트&#x0a;· 그룹/장비/PLC → 하위"
+                    ToolTip="하위 장비 추가"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📟" FontSize="13"/>
@@ -239,12 +239,11 @@
 
             <!-- 하위: PLC 추가 -->
             <Button Command="{Binding AddPlcCommand}"
-                    ToolTip="하위 PLC 추가&#x0a;· 선택 없음 → 루트&#x0a;· 그룹/장비/PLC → 하위"
+                    ToolTip="하위 PLC 추가 (수집 레이어)"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚙️" FontSize="13"/>
-                    <TextBlock Text=" PLC" FontSize="11"
-                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text=" PLC" FontSize="11" Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
             <Separator/>
@@ -257,7 +256,7 @@
 
             <!-- Tag: Plc 선택 시만 활성 -->
             <Button Command="{Binding AddTagCommand}"
-                    ToolTip="태그 추가 [수집 레이어]&#x0a;PLC 레지스터 주소 — Plc 선택 시만 활성"
+                    ToolTip="태그 추가 [수집 레이어]&#x0a;· Plc 선택 → PLC 레지스터 태그&#x0a;· Device 선택 → 필드 장비 직접 태그 (HART/Profibus 등)"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📋" FontSize="13"/>
@@ -285,7 +284,7 @@
 
             <Separator/>
 
-            <!-- ── 구분 레이블: 같은 레벨 추가 ── -->
+            <!-- ── 동레벨 추가 레이블 ── -->
             <TextBlock Text="동레벨"
                        FontSize="9" FontWeight="Bold"
                        Foreground="{DynamicResource Acc2Brush}"
@@ -294,7 +293,7 @@
 
             <!-- 같은 레벨: 그룹 추가 -->
             <Button Command="{Binding AddSiblingGroupCommand}"
-                    ToolTip="같은 레벨에 그룹 추가&#x0a;선택 노드 바로 다음에 그룹 삽입"
+                    ToolTip="같은 레벨에 그룹 추가"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" FontSize="13"/>
@@ -306,7 +305,7 @@
 
             <!-- 같은 레벨: 장비 추가 -->
             <Button Command="{Binding AddSiblingDeviceCommand}"
-                    ToolTip="같은 레벨에 장비 추가&#x0a;선택 노드 바로 다음에 장비 삽입"
+                    ToolTip="같은 레벨에 장비 추가"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📟" FontSize="13"/>
@@ -318,7 +317,7 @@
 
             <!-- 같은 레벨: PLC 추가 -->
             <Button Command="{Binding AddSiblingPlcCommand}"
-                    ToolTip="같은 레벨에 PLC 추가&#x0a;선택 노드 바로 다음에 PLC 삽입"
+                    ToolTip="같은 레벨에 PLC 추가"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚙️" FontSize="13"/>
@@ -381,7 +380,7 @@
 
             <!-- 샘플 로드 -->
             <Button Command="{Binding LoadSampleCommand}"
-                    ToolTip="샘플 데이터 로드 (테스트용)"
+                    ToolTip="샘플 데이터 로드 (이중 레이어 구조)"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <TextBlock Text="↺ 샘플" FontSize="11"
                            Foreground="{DynamicResource Text2Brush}"/>
@@ -425,7 +424,13 @@
                 <Style TargetType="TreeViewItem">
 
                     <Setter Property="IsExpanded"  Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                    <Setter Property="IsSelected"  Value="{Binding IsSelected, Mode=TwoWay}"/>
+                    <!--
+                    IsSelected: OneWayToSource 만 사용
+                    TreeView → VM 방향만 허용. VM에서 TreeView로 역주입 시
+                    부모 노드 IsSelected가 함께 활성화되는 버그 발생.
+                    선택 동기화는 SelectedItemChanged 이벤트가 단독 담당.
+                    -->
+                    <Setter Property="IsSelected"  Value="{Binding IsSelected, Mode=OneWayToSource}"/>
                     <Setter Property="Padding"      Value="2,3"/>
                     <Setter Property="MinHeight"    Value="26"/>
                     <Setter Property="Foreground"   Value="{DynamicResource TextBrush}"/>
@@ -469,13 +474,6 @@
                       🗑 삭제
                     ══════════════════════════════════════════════
                     -->
-                    <!--
-                    Tag 에 DeviceTreeViewModel 바인딩
-                    ElementName=DeviceTree → TreeView.DataContext = DeviceTreeViewModel
-                    -->
-                    <Setter Property="Tag"
-                            Value="{Binding DataContext, ElementName=DeviceTree}"/>
-
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
@@ -486,11 +484,6 @@
                                           Command="{Binding BeginEditCommand}"/>
 
                                 <Separator/>
-
-                                <!--
-                                하위에 추가 / 같은 레벨에 추가
-                                PlacementTarget.Tag = DeviceTreeViewModel (Tag 패턴)
-                                -->
 
                                 <!-- 하위에 추가 (SubMenu) -->
                                 <MenuItem Header="↓  하위에 추가">
@@ -505,7 +498,7 @@
                                                   RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                     <Separator/>
                                     <MenuItem Header="── [수집 레이어] ──" IsEnabled="False"/>
-                                    <MenuItem Header="📋  태그 (Plc 선택 시 활성)"
+                                    <MenuItem Header="📋  태그 (Plc/Device 선택 시 활성)"
                                               Command="{Binding PlacementTarget.Tag.AddTagCommand,
                                                   RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                     <Separator/>
@@ -515,7 +508,7 @@
                                                   RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                 </MenuItem>
 
-                                <!-- 같은 레벨에 추가 (SubMenu) -->
+                                <!-- 같은 레벨에 추가 -->
                                 <MenuItem Header="↔  같은 레벨에 추가">
                                     <MenuItem Header="📁  같은 레벨 그룹"
                                               Command="{Binding PlacementTarget.Tag.AddSiblingGroupCommand,

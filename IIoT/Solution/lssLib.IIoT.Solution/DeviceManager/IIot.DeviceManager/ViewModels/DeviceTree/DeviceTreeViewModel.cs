@@ -16,6 +16,7 @@
 //        AddSiblingPlcCommand    — 선택 노드와 같은 레벨에 PLC 추가
 //  수정: 2025-05-23 v4 — 버그 수정 (SelectedNode 동기화, MoveUp/Down)
 //  수정: 2025-05-23 v5 — Tag/Sensor 이중 레이어 구조 반영
+//  수정: 2025-05-23 v6 — AddTag Device 지원 (PLC 하위 필드 장비)
 //        AddSensorCommand 추가 (Device 하위 Sensor 추가)
 //        AddTagCommand: Plc 하위에만 추가 (Device 직접 불가)
 //        CanAddSensor/CanAddTag CanExecute 조건 업데이트
@@ -117,8 +118,15 @@ public partial class DeviceTreeViewModel : ObservableObject
     /// </summary>
     partial void OnSelectedNodeChanged(DeviceNodeViewModel? oldValue, DeviceNodeViewModel? newValue)
     {
-        if (oldValue is not null) oldValue.IsSelected = false;
-        if (newValue is not null) newValue.IsSelected = true;
+        // ★ IsSelected를 VM에서 직접 설정하지 않음 (버그 원인 제거)
+        // IsSelected 바인딩이 OneWayToSource이므로 TreeView → VM 방향만 허용.
+        // VM에서 역방향으로 IsSelected를 설정하면 부모 노드도 함께 선택되는 버그 발생.
+        //
+        // 대신: TreeView.SelectedItemChanged 이벤트가 SelectedNode를 단독으로 관리.
+        // ViewModel에서 AddSensor 등으로 SelectedNode를 직접 변경할 때는
+        // TreeView가 다음 렌더링에서 자연스럽게 동기화됨.
+        _ = oldValue; // 미사용 경고 억제
+        _ = newValue;
     }
 
     // §4 ─ 하위(Child) 추가 커맨드 ───────────────────────────
@@ -145,7 +153,7 @@ public partial class DeviceTreeViewModel : ObservableObject
     }
 
     /// <summary>Tag 선택 시 그룹 추가 비활성</summary>
-    private bool CanAddGroup() => SelectedNode is not TagNodeViewModel;
+    private bool CanAddGroup() => SelectedNode is not (TagNodeViewModel or SensorNodeViewModel);
 
     /// <summary>
     /// 장비(Device) 추가.
@@ -259,8 +267,12 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     /// <summary>
     /// Tag 추가 — Plc 선택 시만 활성 (수집 레이어).
-    /// Tag는 PLC 레지스터 주소이므로 반드시 Plc 하위에 위치.
-    /// Device 직접 하위에 Tag 추가 불가 → Sensor 사용.
+    ///
+    /// Tag를 추가할 수 있는 부모 노드:
+    ///   · Plc  : 일반적인 PLC 레지스터 주소 태그
+    ///   · Device: PLC 하위 필드 장비가 자체 통신으로 연결한 태그
+    ///             예) PLC → 온도변환기(Device) → 측정값(Tag)
+    ///             HART, Profibus, IO-Link 등 자체 프로토콜 연결 장비
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanAddTag))]
     private void AddTag()

@@ -7,6 +7,7 @@
 //        AllowedChildKinds 에 Device / Plc 추가
 //        → 장비(PLC) 하위에 장비(PLC)를 연결할 수 있음
 //  수정: 2025-05-23 v3 — Tag/Sensor 이중 레이어 구조 반영
+//  수정: 2025-05-23 v4 — Device 하위 Tag 허용 (PLC 하위 필드 장비 지원)
 //        AllowedChildKinds: Tag 제거, Sensor 추가
 //        Device 하위: [Device, Plc(수집), Sensor(물리)]
 //        Tag는 Plc 하위에만 위치 → Device 직접 하위 불가
@@ -67,13 +68,23 @@ public partial class DeviceItemViewModel : DeviceNodeViewModel
     public override string IconGlyph => IsOnline ? "🖥️" : "📟";
 
     /// <summary>
-    /// ★ v3 수정: Tag 제거, Sensor 추가
-    ///   · Device 직접 하위에 Tag를 두지 않음 (Tag는 Plc 하위)
-    ///   · Sensor(물리 레이어)는 Device 하위에 직접 배치
-    ///   · 하위 Device/Plc 중첩은 유지 (v2 기능)
+    /// ★ v4 수정: Tag 추가 (Device 독립/PLC하위 모두 허용)
+    ///
+    /// Device는 두 가지 사용 방식을 지원:
+    ///   ① 독립 장비 (Group/루트 하위):
+    ///       Device → [Device, Plc, Sensor]
+    ///       장비 내부 PLC 통신 + 물리 센서 구성
+    ///
+    ///   ② PLC 하위 필드 장비 (PLC에 연결된 세부 장비):
+    ///       PLC → Device → [Tag, Device, Sensor]
+    ///       HART/Profibus 등 자체 통신으로 태그 직접 연결
+    ///       예) PLC → 온도변환기(Device) → 측정값(Tag), 설정값(Tag)
+    ///
+    /// Tag를 AllowedChildKinds에 포함하여 두 방식 모두 지원.
+    /// 실제 배치 위치(루트/그룹/PLC 하위)에 따라 사용자가 의미 구분.
     /// </summary>
     public override IReadOnlyList<NodeKind> AllowedChildKinds =>
-        [NodeKind.Device, NodeKind.Plc, NodeKind.Sensor];
+        [NodeKind.Device, NodeKind.Plc, NodeKind.Tag, NodeKind.Sensor];
 
     /// <summary>CommConfig 연결 시 "COM" 배지 표시</summary>
     public override string? Badge => CommConfigId is not null ? "COM" : null;

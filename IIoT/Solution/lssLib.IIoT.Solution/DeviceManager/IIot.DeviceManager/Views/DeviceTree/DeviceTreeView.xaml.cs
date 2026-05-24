@@ -2,6 +2,11 @@
 //  IIoT.DeviceManager · DeviceTreeView.xaml.cs
 //  역할: 장비 트리뷰 코드 비하인드 — 인라인 편집 입력 처리
 //  생성: 2025-05-22
+//  수정: 2025-05-23 v2 — 다중 선택 버그 수정
+//        IsSelected 바인딩을 OneWayToSource로 변경 후
+//        VM→TreeView 방향 동기화는 SelectedItemChanged만 담당.
+//        이전 선택 노드의 IsSelected를 명시적으로 해제하여
+//        부모 노드가 함께 선택되는 버그 제거.
 // ══════════════════════════════════════════════════════════
 
 using System;
@@ -30,12 +35,31 @@ public partial class DeviceTreeView : UserControl
 
     /// <summary>
     /// 트리 선택 변경 → ViewModel.SelectedNode 동기화.
+    ///
+    /// ★ v2 수정: 이전 선택 노드의 IsSelected를 명시적으로 false 처리.
+    ///   IsSelected 바인딩이 OneWayToSource이므로 VM에서 TreeView로
+    ///   역방향 주입을 하지 않는다.
+    ///   대신 이 이벤트 핸들러에서만 IsSelected를 관리.
+    ///
+    ///   부모 노드가 함께 선택되는 버그 원인:
+    ///   TwoWay 바인딩 + VM에서 IsSelected = true 설정 →
+    ///   WPF 내부에서 부모 TreeViewItem까지 IsSelected 전파.
     /// </summary>
     private void DeviceTree_SelectedItemChanged(object sender,
         RoutedPropertyChangedEventArgs<object> e)
     {
         if (DataContext is not DeviceTreeViewModel vm) return;
-        vm.SelectedNode = e.NewValue as DeviceNodeViewModel;
+
+        // ① 이전 선택 노드 IsSelected 해제
+        if (e.OldValue is DeviceNodeViewModel oldNode)
+            oldNode.IsSelected = false;
+
+        // ② 새 선택 노드 설정
+        var newNode = e.NewValue as DeviceNodeViewModel;
+        if (newNode is not null)
+            newNode.IsSelected = true;
+
+        vm.SelectedNode = newNode;
     }
 
     /// <summary>
