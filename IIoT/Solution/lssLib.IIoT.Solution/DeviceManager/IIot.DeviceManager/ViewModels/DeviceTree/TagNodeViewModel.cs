@@ -1,56 +1,75 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.DeviceManager · TagNodeViewModel.cs
-//  역할: 수집 태그(Tag) 리프 노드 ViewModel
+//  역할: PLC 레지스터 주소 노드 ViewModel (수집 레이어)
 //  생성: 2025-05-22
-//  수정: 2025-05-22 — XDG0008 수정
-//        PropertyChanged 수동 구독 제거 (nameof(BufType) = 소스 제너레이터 의존)
-//        → [NotifyPropertyChangedFor] 어트리뷰트로 교체
+//  수정: 2025-05-23 v2 — Tag/Sensor 이중 레이어 구조 반영
+//        ScaleConfigId, AlarmGroupId → Sensor로 이동
+//        Tag는 순수 수집 주소만 보유
 // ══════════════════════════════════════════════════════════
 
-using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 
 /// <summary>
-/// Tag 노드 — 리프 노드, 자식 없음.
-/// 주소·BufType·PollMs·DeadBand 포함.
+/// PLC 레지스터 주소 노드 — 수집 레이어.
+///
+/// Tag는 "어디서 읽느냐"만 알고, "무엇을 보여주느냐"는 모릅니다.
+/// ScaleConfig, AlarmConfig는 Sensor(물리 레이어)가 소유합니다.
+///
+/// 배치: Plc 하위에만 위치 (Plc → Tag)
+///
+/// 예시:
+///   🔌 PLC-SIEMENS
+///     📋 temp_raw  Address=MW100  DataType=Int16  PollRateMs=1000
+///     📋 press_hi  Address=MW102  DataType=Float  PollRateMs=500
 /// </summary>
 public partial class TagNodeViewModel : DeviceNodeViewModel
 {
-    // §1 ─ 속성 ───────────────────────────────────────────────
+    // §1 ─ 수집 주소 속성 ─────────────────────────────────────
 
+    /// <summary>
+    /// PLC 레지스터 주소.
+    /// Modbus: "40001", "D100"
+    /// OPC-UA: "ns=2;i=1003"
+    /// Siemens: "MW100", "M0.0"
+    /// </summary>
     [ObservableProperty]
-    private string _address = string.Empty;
+    [NotifyPropertyChangedFor(nameof(Badge))]
+    private string _address = "";
 
-    /// <summary>BufType. 변경 시 Badge 자동 알림.</summary>
+    /// <summary>
+    /// 데이터 타입 (BufType).
+    /// lssLib.Binary.BufType 열거형 문자열.
+    /// 예: "FloatBE", "Int16BE", "UInt16BE", "Bool"
+    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Badge))]
     private string _bufType = "FloatBE";
 
-    [ObservableProperty]
-    private int _pollMs = 1000;
+    /// <summary>
+    /// 폴링 주기 (밀리초).
+    /// 0이면 PLC의 기본 주기를 따름.
+    /// </summary>
+    [ObservableProperty] private int _pollMs = 1000;
 
-    [ObservableProperty]
-    private double _deadBand;
-
-    [ObservableProperty]
-    private string? _scaleConfigId;
-
-    [ObservableProperty]
-    private string _unit = string.Empty;
+    /// <summary>
+    /// DeadBand — 이 범위 이내 변화는 수집 생략 (원시값 기준).
+    /// 값이 작을수록 민감, 0이면 모든 변화 수집.
+    /// </summary>
+    [ObservableProperty] private double _deadBand;
 
     // §2 ─ 기반 멤버 구현 ─────────────────────────────────────
 
     public override NodeKind Kind => NodeKind.Tag;
 
-    public override string IconGlyph => "🏷️";
+    public override string IconGlyph => "📋";
 
-    /// <summary>Tag 는 자식 추가 불가 (리프 노드)</summary>
+    /// <summary>Tag는 리프 노드 — 자식 없음</summary>
     public override IReadOnlyList<NodeKind> AllowedChildKinds => [];
 
-    /// <summary>BufType 배지 (예: FloatBE, UInt16BE)</summary>
-    public override string? Badge => BufType;
+    /// <summary>BufType 배지 (예: FloatBE, Int16BE)</summary>
+    public override string? Badge => string.IsNullOrEmpty(BufType) ? null : BufType;
 
     // §3 ─ 생성자 ─────────────────────────────────────────────
 

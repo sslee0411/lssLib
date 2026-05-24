@@ -14,6 +14,11 @@
 //        AddSiblingGroupCommand  — 선택 노드와 같은 레벨에 그룹 추가
 //        AddSiblingDeviceCommand — 선택 노드와 같은 레벨에 장비 추가
 //        AddSiblingPlcCommand    — 선택 노드와 같은 레벨에 PLC 추가
+//  수정: 2025-05-23 v4 — 버그 수정 (SelectedNode 동기화, MoveUp/Down)
+//  수정: 2025-05-23 v5 — Tag/Sensor 이중 레이어 구조 반영
+//        AddSensorCommand 추가 (Device 하위 Sensor 추가)
+//        AddTagCommand: Plc 하위에만 추가 (Device 직접 불가)
+//        CanAddSensor/CanAddTag CanExecute 조건 업데이트
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -42,16 +47,19 @@ namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 ///   │   └─ 압출기-001 (Device)
 ///   │       └─ RPM_Tag
 ///   └─ PLC-002              (루트 직속 PLC)
-/// ── 하위(Child) 추가 ────────────────────────────────────
-///   AddGroupCommand   : 선택 노드 하위에 그룹 추가
-///   AddDeviceCommand  : 선택 노드 하위에 장비 추가 (선택 없으면 루트)
-///   AddPlcCommand     : 선택 노드 하위에 PLC 추가 (선택 없으면 루트)
-///   AddTagCommand     : Device/Plc 하위에 태그 추가
-///
+/// ── 하위(Child) 추가 ────────────────────────────────────────
+///   AddGroupCommand  : 그룹 추가 (그룹 선택 → 하위, 그 외 → 루트)
+///   AddDeviceCommand : 장비 추가
+///   AddPlcCommand    : PLC 추가 (수집 레이어)
+///   AddTagCommand    : Tag 추가 (Plc 하위에만)
+///   AddSensorCommand : Sensor 추가 (Device 하위에만) ★ 물리 레이어
 /// ── 같은 레벨(Sibling) 추가 ─────────────────────────────
 ///   AddSiblingGroupCommand  : 선택 노드와 같은 레벨에 그룹 추가
 ///   AddSiblingDeviceCommand : 선택 노드와 같은 레벨에 장비 추가
 ///   AddSiblingPlcCommand    : 선택 노드와 같은 레벨에 PLC 추가
+/// ── 이중 레이어 배치 규칙 ───────────────────────────────────
+///   Tag    : Plc 선택 시만 활성  (수집 레이어 — Plc 하위)
+///   Sensor : Device 선택 시만 활성  (물리 레이어 — Device 하위 직접)
 /// </summary>
 public partial class DeviceTreeViewModel : ObservableObject
 {
@@ -74,6 +82,7 @@ public partial class DeviceTreeViewModel : ObservableObject
         nameof(AddDeviceCommand),
         nameof(AddPlcCommand),
         nameof(AddTagCommand),
+        nameof(AddSensorCommand),
         nameof(DeleteNodeCommand),
         nameof(MoveUpCommand),
         nameof(MoveDownCommand),
@@ -249,8 +258,9 @@ public partial class DeviceTreeViewModel : ObservableObject
     private bool CanAddPlc() => SelectedNode is not TagNodeViewModel;
 
     /// <summary>
-    /// Tag 추가 — Device 또는 Plc 선택 시만 활성 (기존 동작 유지).
-    /// Tag 는 Device / Plc 하위에만 배치 가능.
+    /// Tag 추가 — Plc 선택 시만 활성 (수집 레이어).
+    /// Tag는 PLC 레지스터 주소이므로 반드시 Plc 하위에 위치.
+    /// Device 직접 하위에 Tag 추가 불가 → Sensor 사용.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanAddTag))]
     private void AddTag()
@@ -266,8 +276,28 @@ public partial class DeviceTreeViewModel : ObservableObject
         LogManager.Instance.Info(LogSrc, $"[하위] 태그 추가: {tag.Name}");
     }
 
-    private bool CanAddTag() =>
-        SelectedNode is DeviceItemViewModel or PlcNodeViewModel;
+    /// <summary>Tag는 Plc 하위에만 추가 가능</summary>
+    private bool CanAddTag() => SelectedNode is PlcNodeViewModel;
+
+    /// <summary>
+    /// Sensor 추가 — Device 선택 시만 활성 (물리 레이어).
+    /// Sensor는 실 물리 센서 표현이므로 Device 하위에 직접 위치.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanAddSensor))]
+    private void AddSensor()
+    {
+        if (SelectedNode is not DeviceItemViewModel) return;
+        var sensor = new SensorNodeViewModel();
+        SelectedNode.AddChild(sensor);
+        SelectedNode.IsExpanded = true;
+        SelectedNode = sensor;
+        sensor.BeginEditCommand.Execute(null);
+        OnPropertyChanged(nameof(TotalNodeCount));
+        LogManager.Instance.Info(LogSrc, $"[하위] 센서 추가: {sensor.Name}");
+    }
+
+    /// <summary>Sensor는 Device 하위에만 추가 가능</summary>
+    private bool CanAddSensor() => SelectedNode is DeviceItemViewModel;
 
     // §5 ─ 같은 레벨(Sibling) 추가 커맨드 ───────────────────
 
@@ -287,12 +317,10 @@ public partial class DeviceTreeViewModel : ObservableObject
         LogManager.Instance.Info(LogSrc, $"[같은레벨] 그룹 추가: {group.Name}");
     }
 
-    private bool CanAddSiblingGroup()
-    {
-        if (SelectedNode is null) return false;
-        // Group은 루트 또는 Group 하위에만 위치 가능
-        return SelectedNode.Parent is null or GroupNodeViewModel;
-    }
+
+    private bool CanAddSiblingGroup() =>
+        SelectedNode is not null and not (TagNodeViewModel or SensorNodeViewModel) &&
+        SelectedNode.Parent is null or GroupNodeViewModel;
 
     /// <summary>
     /// 선택 노드와 같은 레벨에 장비 추가.
@@ -310,13 +338,8 @@ public partial class DeviceTreeViewModel : ObservableObject
         LogManager.Instance.Info(LogSrc, $"[같은레벨] 장비 추가: {device.Name}");
     }
 
-    private bool CanAddSiblingDevice()
-    {
-        if (SelectedNode is null) return false;
-        // Tag 레벨에서는 같은 레벨 장비 추가 불가
-        // (Tag 부모는 Device/Plc이지만, 장비와 Tag를 같은 레벨에 두는 것은 혼란)
-        return SelectedNode is not TagNodeViewModel;
-    }
+    private bool CanAddSiblingDevice() =>
+        SelectedNode is not null and not (TagNodeViewModel or SensorNodeViewModel);
 
     /// <summary>
     /// 선택 노드와 같은 레벨에 PLC 추가.
@@ -335,12 +358,9 @@ public partial class DeviceTreeViewModel : ObservableObject
         LogManager.Instance.Info(LogSrc, $"[같은레벨] PLC 추가: {plc.Name}");
     }
 
-    private bool CanAddSiblingPlc()
-    {
-        if (SelectedNode is null) return false;
-        return SelectedNode is not TagNodeViewModel;
-    }
 
+    private bool CanAddSiblingPlc() =>
+        SelectedNode is not null and not (TagNodeViewModel or SensorNodeViewModel);
     // §6 ─ 삭제 커맨드 ────────────────────────────────────────
 
     [RelayCommand(CanExecute = nameof(CanDelete))]
@@ -444,44 +464,65 @@ public partial class DeviceTreeViewModel : ObservableObject
     {
         RootNodes.Clear();
 
-        // ── 케이스 1: 루트 직속 PLC (그룹 없음) ─────────────
+        // ── 케이스 1: 이중 레이어 구조 (핵심 패턴) ─────────
+        var g1 = new GroupNodeViewModel("Line-1 (생산라인)");
+        var dev1 = new DeviceItemViewModel("압연기-001") { Manufacturer = "POSCO", Model = "RM-100" };
+
+        // [수집 레이어] PLC + Tag
+        var plc1 = new PlcNodeViewModel("PLC-SIEMENS", slotNo: 0) { UnitId = 1, ProtocolType = "ModbusTCP" };
+        plc1.AddChild(new TagNodeViewModel("temp_raw") { Address = "40001", BufType = "Int16BE", PollMs = 1000 });
+        plc1.AddChild(new TagNodeViewModel("press_hi") { Address = "40003", BufType = "FloatBE", PollMs = 500 });
+        plc1.AddChild(new TagNodeViewModel("press_lo") { Address = "40005", BufType = "FloatBE", PollMs = 500 });
+        plc1.AddChild(new TagNodeViewModel("motor_run") { Address = "M0.0", BufType = "Bool", PollMs = 200 });
+        dev1.AddChild(plc1);
+
+        // [물리 레이어] Sensor (Device 하위 직접)
+        var sen1 = new SensorNodeViewModel("베어링온도1")
+        {
+            SensorType = "Temperature",
+            Unit = "°C",
+            Description = "압연기 1번 베어링 온도",
+            AlarmHigh = 120.0,
+            AlarmHighHigh = 140.0,
+            AlarmLow = 5.0
+        };
+        sen1.AddTagRef("temp_raw_id", "temp_raw", "primary");
+        dev1.AddChild(sen1);
+
+        var sen2 = new SensorNodeViewModel("차압센서1")
+        {
+            SensorType = "Pressure",
+            Unit = "kPa",
+            Formula = "high - low",
+            AlarmHigh = 85.0,
+            AlarmLow = 2.0
+        };
+        sen2.AddTagRef("press_hi_id", "press_hi", "high");
+        sen2.AddTagRef("press_lo_id", "press_lo", "low");
+        dev1.AddChild(sen2);
+
+        var sen3 = new SensorNodeViewModel("모터운전상태")
+        {
+            SensorType = "Bool",
+            Unit = ""
+        };
+        sen3.AddTagRef("motor_run_id", "motor_run", "primary");
+        dev1.AddChild(sen3);
+
+        g1.AddChild(dev1);
+        RootNodes.Add(g1);
+
+        // ── 케이스 2: 루트 직속 PLC (그룹 없음) ─────────────
         var rootPlc = new PlcNodeViewModel("PLC-001 (루트직속)", slotNo: 0) { UnitId = 1 };
         rootPlc.AddChild(new TagNodeViewModel("온도_CH1") { Address = "40001", BufType = "FloatBE", PollMs = 500 });
         rootPlc.AddChild(new TagNodeViewModel("압력_CH1") { Address = "40003", BufType = "FloatBE", PollMs = 500 });
-
-        // PLC 하위에 PLC 중첩
-        var subPlc = new PlcNodeViewModel("PLC-001-확장슬롯", slotNo: 1) { UnitId = 2 };
-        subPlc.AddChild(new TagNodeViewModel("전류") { Address = "40005", BufType = "FloatBE", PollMs = 1000 });
-        rootPlc.AddChild(subPlc);
-
         RootNodes.Add(rootPlc);
 
-        // ── 케이스 2: 루트 직속 Device (그룹 없음) ──────────
-        var rootDevice = new DeviceItemViewModel("냉각기 (루트직속)") { Manufacturer = "Danfoss" };
-        rootDevice.AddChild(new TagNodeViewModel("RPM") { Address = "40001", BufType = "UInt16BE", PollMs = 200 });
-
-        // Device 하위에 Device 중첩
-        var subDevice = new DeviceItemViewModel("냉각기-보조펌프") { Manufacturer = "Grundfos" };
-        subDevice.AddChild(new TagNodeViewModel("유량") { Address = "40001", BufType = "FloatBE", PollMs = 500 });
-        rootDevice.AddChild(subDevice);
-
-        RootNodes.Add(rootDevice);
-
-        // ── 케이스 3: 그룹 → 장비 → PLC → Tag (기존 구조) ──
-        var g1 = new GroupNodeViewModel("1공장");
-        var d1 = new DeviceItemViewModel("압출기 #1") { Manufacturer = "Atlas Copco", Model = "GA90" };
-        var p1 = new PlcNodeViewModel("Modbus Slot", slotNo: 0) { UnitId = 1 };
-
-        p1.AddChild(new TagNodeViewModel("온도") { Address = "40001", BufType = "FloatBE", PollMs = 500 });
-        p1.AddChild(new TagNodeViewModel("압력") { Address = "40003", BufType = "FloatBE", PollMs = 500 });
-        d1.AddChild(p1);
-        g1.AddChild(d1);
-        RootNodes.Add(g1);
-
-        SelectedNode = rootPlc;
+        SelectedNode = g1;
         OnPropertyChanged(nameof(TotalNodeCount));
-        LogManager.Instance.Info(LogSrc, "샘플 데이터 로드 완료 (유연 트리 구조)");
+        LogManager.Instance.Info(LogSrc, "샘플 데이터 로드 완료 (이중 레이어 구조)");
     }
+
 
     // §10 ─ 내부 헬퍼 ─────────────────────────────────────────
 

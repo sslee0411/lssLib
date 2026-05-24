@@ -6,16 +6,30 @@
 //  수정: 2025-05-23 v2 — 트리 구조 유연화
 //        AllowedChildKinds 에 Device / Plc 추가
 //        → 장비(PLC) 하위에 장비(PLC)를 연결할 수 있음
+//  수정: 2025-05-23 v3 — Tag/Sensor 이중 레이어 구조 반영
+//        AllowedChildKinds: Tag 제거, Sensor 추가
+//        Device 하위: [Device, Plc(수집), Sensor(물리)]
+//        Tag는 Plc 하위에만 위치 → Device 직접 하위 불가
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 
+
 /// <summary>
-/// 실제 장비 / PLC 노드.
-/// 하위 노드: Device · PLC (중첩 가능) · Tag
-/// CommConfig 참조, IsOnline 상태 포함.
+/// 실 장비 노드 — 수집 레이어(PLC/Tag)와 물리 레이어(Sensor) 모두 포함.
+///
+/// 트리 구조:
+///   📦 압연기-001 (DeviceItemViewModel)
+///     ├── [수집 레이어]
+///     │   🔌 PLC-SIEMENS (Plc)
+///     │       📋 temp_raw (Tag) ← Tag는 Plc 하위에만
+///     └── [물리 레이어]
+///         🌡️ 베어링온도1 (Sensor) ← Sensor는 Device 하위 직접
+///         💧 차압센서1   (Sensor)
+///
+/// AllowedChildKinds: [Device, Plc, Sensor]  (Tag 직접 추가 불가)
 /// </summary>
 public partial class DeviceItemViewModel : DeviceNodeViewModel
 {
@@ -30,17 +44,10 @@ public partial class DeviceItemViewModel : DeviceNodeViewModel
     [NotifyPropertyChangedFor(nameof(BadgeBrushKey))]
     private string? _commConfigId;
 
-    [ObservableProperty]
-    private string _manufacturer = string.Empty;
-
-    [ObservableProperty]
-    private string _model = string.Empty;
-
-    [ObservableProperty]
-    private string _serialNo = string.Empty;
-
-    [ObservableProperty]
-    private string? _locationId;
+    [ObservableProperty] private string _manufacturer = "";
+    [ObservableProperty] private string _model = "";
+    [ObservableProperty] private string _serialNo = "";
+    [ObservableProperty] private string? _locationId;
 
     /// <summary>
     /// 온라인 상태.
@@ -60,12 +67,13 @@ public partial class DeviceItemViewModel : DeviceNodeViewModel
     public override string IconGlyph => IsOnline ? "🖥️" : "📟";
 
     /// <summary>
-    /// ★ v2 수정: Device · Plc · Tag 모두 허용
-    ///   → 장비(PLC) 하위에 장비(PLC)를 중첩 연결할 수 있음
-    ///   예) PLC-001 → PLC-001-A (확장 슬롯) → Tag
+    /// ★ v3 수정: Tag 제거, Sensor 추가
+    ///   · Device 직접 하위에 Tag를 두지 않음 (Tag는 Plc 하위)
+    ///   · Sensor(물리 레이어)는 Device 하위에 직접 배치
+    ///   · 하위 Device/Plc 중첩은 유지 (v2 기능)
     /// </summary>
     public override IReadOnlyList<NodeKind> AllowedChildKinds =>
-        [NodeKind.Device, NodeKind.Plc, NodeKind.Tag];
+        [NodeKind.Device, NodeKind.Plc, NodeKind.Sensor];
 
     /// <summary>CommConfig 연결 시 "COM" 배지 표시</summary>
     public override string? Badge => CommConfigId is not null ? "COM" : null;

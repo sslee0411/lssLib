@@ -16,6 +16,11 @@
   수정: 2025-05-23 v7 — 같은 레벨(Sibling) 추가 버튼/메뉴 추가
         툴바: [하위 추가] 그룹 | 장비 | PLC | 태그  ──  [같은레벨] 그룹 | 장비 | PLC
         컨텍스트: 하위에 추가 / 같은 레벨에 추가 분리
+  수정: 2025-05-23 v8 — Tag/Sensor 이중 레이어 구조 반영
+        · SensorNodeViewModel HierarchicalDataTemplate 추가
+        · 툴바: 태그 추가(Plc 선택 시) / 센서 추가(Device 선택 시) 분리
+        · ContextMenu: 수집레이어/물리레이어 섹션 구분
+        · 레이어 구분 레이블 추가 (수집뷰/물리뷰)
  ══════════════════════════════════════════════════════════
 -->
 <UserControl
@@ -27,7 +32,7 @@
     xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.DeviceTree"
     xmlns:conv="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
     mc:Ignorable="d"
-    d:DesignHeight="600" d:DesignWidth="280">
+    d:DesignHeight="700" d:DesignWidth="300">
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -71,6 +76,12 @@
                 <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
             </Style>
 
+            <!-- Sensor 배지 — GreenBrush (물리 레이어 강조) -->
+            <Style x:Key="SensorBadgeStyle" TargetType="Border"
+                   BasedOn="{StaticResource NodeBadgeStyle}">
+                <Setter Property="Background" Value="{DynamicResource GreenBrush}"/>
+            </Style>
+
             <!-- ── 공통 노드 헤더 ── -->
             <DataTemplate x:Key="NodeHeaderTemplate">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -93,24 +104,28 @@
                 </StackPanel>
             </DataTemplate>
 
+            <!-- ═══ Group ═══ -->
             <HierarchicalDataTemplate DataType="{x:Type vm:GroupNodeViewModel}"
                                        ItemsSource="{Binding Children}">
                 <ContentPresenter ContentTemplate="{StaticResource NodeHeaderTemplate}"
                                   Content="{Binding}"/>
             </HierarchicalDataTemplate>
 
+            <!-- ═══ Device ═══ -->
             <HierarchicalDataTemplate DataType="{x:Type vm:DeviceItemViewModel}"
                                        ItemsSource="{Binding Children}">
                 <ContentPresenter ContentTemplate="{StaticResource NodeHeaderTemplate}"
                                   Content="{Binding}"/>
             </HierarchicalDataTemplate>
 
+            <!-- ═══ Plc ═══ -->
             <HierarchicalDataTemplate DataType="{x:Type vm:PlcNodeViewModel}"
                                        ItemsSource="{Binding Children}">
                 <ContentPresenter ContentTemplate="{StaticResource NodeHeaderTemplate}"
                                   Content="{Binding}"/>
             </HierarchicalDataTemplate>
 
+            <!-- ═══ Tag (수집 레이어 리프) ═══ -->
             <DataTemplate DataType="{x:Type vm:TagNodeViewModel}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="{Binding IconGlyph}" FontSize="13" VerticalAlignment="Center"/>
@@ -123,6 +138,7 @@
                              Width="120"
                              Visibility="{Binding IsEditing,
                                  Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <!-- BufType 배지 -->
                     <Border CornerRadius="4" Padding="4,1" Margin="5,0,0,0"
                             Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
@@ -130,9 +146,45 @@
                         <TextBlock Text="{Binding BufType}" FontSize="9"
                                    Foreground="{DynamicResource Text2Brush}"/>
                     </Border>
+                    <!-- 주소 -->
                     <TextBlock Text="{Binding Address, StringFormat='@ {0}'}"
                                FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"
                                Foreground="{DynamicResource Text3Brush}"/>
+                </StackPanel>
+            </DataTemplate>
+
+            <!-- ═══ Sensor (물리 레이어 리프) ═══ -->
+            <DataTemplate DataType="{x:Type vm:SensorNodeViewModel}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding IconGlyph}" FontSize="13" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Name}"
+                               Style="{StaticResource NodeLabelStyle}"
+                               Visibility="{Binding IsEditing,
+                                   Converter={StaticResource BoolToVisibilityInvertConverter}}"/>
+                    <TextBox Text="{Binding EditBuffer, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource NodeEditBoxStyle}" Width="110"
+                             Visibility="{Binding IsEditing,
+                                 Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <!-- 단위 배지 (GreenBrush) -->
+                    <Border CornerRadius="4" Padding="4,1" Margin="5,0,0,0"
+                            Background="{DynamicResource GreenFaintBrush}"
+                            BorderBrush="{DynamicResource GreenBrush}"
+                            BorderThickness="1" VerticalAlignment="Center"
+                            Visibility="{Binding Unit,
+                                Converter={StaticResource NullToVisibilityConverter}}">
+                        <TextBlock Text="{Binding Unit}" FontSize="9"
+                                   Foreground="{DynamicResource GreenBrush}"/>
+                    </Border>
+                    <!-- TagRef 개수 (복합 센서) -->
+                    <Border CornerRadius="4" Padding="4,1" Margin="3,0,0,0"
+                            Background="{DynamicResource AccFaintBrush}"
+                            BorderBrush="{DynamicResource AccBrush}"
+                            BorderThickness="1" VerticalAlignment="Center">
+                        <TextBlock FontSize="9" Foreground="{DynamicResource AccBrush}">
+                            <Run Text="T×"/>
+                            <Run Text="{Binding TagRefs.Count, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
                 </StackPanel>
             </DataTemplate>
 
@@ -144,13 +196,12 @@
         <!-- ══════════════════════════════════════════════════
              상단 툴바
              ─────────────────────────────────────────────────
-             [하위 추가] 그룹·장비·PLC·태그
-             ─ Separator ─
-             [같은레벨] 그룹·장비·PLC
-             ─ Separator ─
-             ▲ ▼ ─ Separator ─ 삭제
-             ─ Separator ─
-             ⊞ ⊟ ─ Separator ─ 샘플
+			 [하위] 그룹 | 장비 | PLC
+             [수집] 태그     ← Plc 선택 시만 활성
+             [물리] 센서     ← Device 선택 시만 활성
+             ─ Sep ─
+             [동레벨] 그룹= | 장비= | PLC=
+             ─ Sep ─ ▲ ▼ ─ Sep ─ 삭제 ─ Sep ─ ⊞ ⊟ ─ 샘플
         ══════════════════════════════════════════════════ -->
         <ToolBar DockPanel.Dock="Top"
                  Background="{DynamicResource SurfaceBrush}"
@@ -196,15 +247,39 @@
                                Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
+            <Separator/>
 
-            <!-- 하위: 태그 추가 -->
+            <!-- ── 수집 레이어 레이블 ── -->
+            <TextBlock Text="수집"
+                       FontSize="9" FontWeight="Bold"
+                       Foreground="{DynamicResource AccBrush}"
+                       VerticalAlignment="Center" Margin="4,0,2,0"/>
+
+            <!-- Tag: Plc 선택 시만 활성 -->
             <Button Command="{Binding AddTagCommand}"
-                    ToolTip="태그 추가 (장비 또는 PLC 선택 필요)"
+                    ToolTip="태그 추가 [수집 레이어]&#x0a;PLC 레지스터 주소 — Plc 선택 시만 활성"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="🏷️" FontSize="13"/>
-                    <TextBlock Text=" 태그" FontSize="11"
-                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text="📋" FontSize="13"/>
+                    <TextBlock Text=" 태그" FontSize="11" Foreground="{DynamicResource AccBrush}"/>
+                </StackPanel>
+            </Button>
+
+            <Separator/>
+
+            <!-- ── 물리 레이어 레이블 ── -->
+            <TextBlock Text="물리"
+                       FontSize="9" FontWeight="Bold"
+                       Foreground="{DynamicResource GreenBrush}"
+                       VerticalAlignment="Center" Margin="4,0,2,0"/>
+
+            <!-- Sensor: Device 선택 시만 활성 -->
+            <Button Command="{Binding AddSensorCommand}"
+                    ToolTip="센서 추가 [물리 레이어]&#x0a;실 물리 센서 표현 — Device 선택 시만 활성"
+                    Style="{DynamicResource GhostBtn}" Padding="5,3">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🌡️" FontSize="13"/>
+                    <TextBlock Text=" 센서" FontSize="11" Foreground="{DynamicResource GreenBrush}"/>
                 </StackPanel>
             </Button>
 
@@ -213,7 +288,7 @@
             <!-- ── 구분 레이블: 같은 레벨 추가 ── -->
             <TextBlock Text="동레벨"
                        FontSize="9" FontWeight="Bold"
-                       Foreground="{DynamicResource AccBrush}"
+                       Foreground="{DynamicResource Acc2Brush}"
                        VerticalAlignment="Center"
                        Margin="4,0,2,0"/>
 
@@ -224,7 +299,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📁" FontSize="13"/>
                     <TextBlock Text="=" FontSize="9"
-                               Foreground="{DynamicResource AccBrush}"
+                               Foreground="{DynamicResource Acc2Brush}"
                                VerticalAlignment="Bottom" Margin="1,0,0,2"/>
                 </StackPanel>
             </Button>
@@ -236,7 +311,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📟" FontSize="13"/>
                     <TextBlock Text="=" FontSize="9"
-                               Foreground="{DynamicResource AccBrush}"
+                               Foreground="{DynamicResource Acc2Brush}"
                                VerticalAlignment="Bottom" Margin="1,0,0,2"/>
                 </StackPanel>
             </Button>
@@ -248,7 +323,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚙️" FontSize="13"/>
                     <TextBlock Text="=" FontSize="9"
-                               Foreground="{DynamicResource AccBrush}"
+                               Foreground="{DynamicResource Acc2Brush}"
                                VerticalAlignment="Bottom" Margin="1,0,0,2"/>
                 </StackPanel>
             </Button>
@@ -356,6 +431,9 @@
                     <Setter Property="Foreground"   Value="{DynamicResource TextBrush}"/>
                     <Setter Property="Background"   Value="Transparent"/>
 
+
+                    <!-- Tag 패턴: TreeViewItem.Tag = DeviceTreeViewModel (ContextMenu 바인딩용) -->
+                    <Setter Property="Tag" Value="{Binding DataContext, ElementName=DeviceTree}"/>
                     <!--
                     ★ ContextMenu 커맨드 바인딩 핵심 패턴 (v7 Fix)
                     ══════════════════════════════════════════════
@@ -374,21 +452,20 @@
                     ══════════════════════════════════════════════
                     컨텍스트 메뉴 구조:
                       ✏️ 이름 변경
-                      ───
-                      ▼ 하위에 추가
-                        📁 하위 그룹
-                        📟 하위 장비
-                        ⚙️ 하위 PLC
-                        🏷️ 태그
-                      ───
+                      ─────────────────────────────────────────
+                      ↓ 하위에 추가
+                        📁 하위 그룹 / 📟 하위 장비 / ⚙️ 하위 PLC
+                        ─────────────────────────────────────────
+                        [수집 레이어]
+                        📋 태그 (Plc 하위에만)
+                        [물리 레이어]
+                        🌡️ 센서 (Device 하위에만)
+                      ─────────────────────────────────────────
                       ↔ 같은 레벨에 추가
-                        📁 같은 레벨 그룹
-                        📟 같은 레벨 장비
-                        ⚙️ 같은 레벨 PLC
-                      ───
-                      ▲ 위로 이동
-                      ▼ 아래로 이동
-                      ───
+                        📁= / 📟= / ⚙️=
+                      ─────────────────────────────────────────
+                      ▲ 위로 이동 / ▼ 아래로 이동
+                      ─────────────────────────────────────────
                       🗑 삭제
                     ══════════════════════════════════════════════
                     -->
@@ -427,8 +504,14 @@
                                               Command="{Binding PlacementTarget.Tag.AddPlcCommand,
                                                   RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                     <Separator/>
-                                    <MenuItem Header="🏷️  태그"
+                                    <MenuItem Header="── [수집 레이어] ──" IsEnabled="False"/>
+                                    <MenuItem Header="📋  태그 (Plc 선택 시 활성)"
                                               Command="{Binding PlacementTarget.Tag.AddTagCommand,
+                                                  RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    <Separator/>
+                                    <MenuItem Header="── [물리 레이어] ──" IsEnabled="False"/>
+                                    <MenuItem Header="🌡️  센서 (Device 선택 시 활성)"
+                                              Command="{Binding PlacementTarget.Tag.AddSensorCommand,
                                                   RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                 </MenuItem>
 
