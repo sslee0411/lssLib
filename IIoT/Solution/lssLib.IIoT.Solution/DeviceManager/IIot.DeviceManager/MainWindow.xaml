@@ -3,8 +3,11 @@
      역할: 메인 레이아웃 — 헤더 + 좌(장비트리) + 우(편집영역) + 상태바
      Phase 0 : 테마 통합 (DynamicResource 전용, ThemePickerButton)
      Phase 1 : Core 기반 구조
-     Phase 2 : DeviceTreeView 좌측 패널 통합 ← 현재
-     수정    : 2025-05-22
+     Phase 2 : DeviceTreeView 좌측 패널 통합
+     Phase 3 : 편집기 DataTemplate 매핑
+     Fix     : 2025-05-26 — XamlParseException 수정
+               NullToVisibilityConverter Window.Resources 누락 → 추가
+               xmlns:conv 네임스페이스 추가
      ══════════════════════════════════════════════════════════ -->
 
 <Window x:Class="IIoT.DeviceManager.MainWindow"
@@ -16,14 +19,28 @@
         xmlns:tree="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
         xmlns:ed="clr-namespace:IIoT.DeviceManager.Views.Editors"
         xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.Editors"
+        xmlns:conv="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
         mc:Ignorable="d"
         Title="IIoT Device Manager"
         Width="1280" Height="800"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
-    
+
     <Window.Resources>
+
+        <!--
+        ★ Fix (2025-05-26): NullToVisibilityConverter 선언 추가
+        ══════════════════════════════════════════════════════════════
+        오류: XamlParseException — StaticResource 'NullToVisibilityConverter' 를 찾을 수 없음
+        원인: 컨버터가 DeviceTreeView.xaml 의 UserControl.Resources 에만 선언되어 있고
+              MainWindow.xaml 의 Window.Resources 에는 선언되지 않음.
+              WPF ResourceDictionary 스코프는 격리되므로 UserControl 내부 리소스는
+              Window 레벨에서 탐색되지 않음.
+        해결: xmlns:conv 네임스페이스 추가 + Window.Resources 에 컨버터 선언
+        ══════════════════════════════════════════════════════════════
+        -->
+        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
 
         <!-- 편집기 DataTemplate 매핑 — ContentControl 이 자동으로 View 선택 -->
         <DataTemplate DataType="{x:Type vm:DeviceEditorViewModel}">
@@ -207,7 +224,7 @@
 
             <!-- 우측: 버전 -->
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="v0.2-Phase2"
+                <TextBlock Text="v0.3-Phase3Fix"
                            FontSize="10"
                            Foreground="{DynamicResource Text3Brush}"
                            Margin="0,0,8,0"/>
@@ -254,12 +271,14 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- 편집 탭 컨텐츠 (Phase 3~5 에서 채워질 영역) -->
+                <!-- 편집 탭 컨텐츠 -->
                 <Border x:Name="EditorArea" Background="{DynamicResource BgBrush}">
                     <Grid>
+
                         <!-- 선택 없을 때 플레이스홀더 -->
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                    Opacity="0.4">
+                        <StackPanel VerticalAlignment="Center"
+                                    HorizontalAlignment="Center"
+                                    Opacity="0.4">
                             <StackPanel.Style>
                                 <Style TargetType="StackPanel">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -270,17 +289,27 @@
                                     </Style.Triggers>
                                 </Style>
                             </StackPanel.Style>
-                            <TextBlock Text="⚙" FontSize="48" HorizontalAlignment="Center"
-                       Foreground="{DynamicResource Text3Brush}"/>
+                            <TextBlock Text="⚙"
+                                       FontSize="48"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource Text3Brush}"/>
                             <TextBlock Text="장비를 선택하면 편집기가 표시됩니다"
-                       FontSize="14" HorizontalAlignment="Center"
-                       Foreground="{DynamicResource Text2Brush}" Margin="0,12,0,0"/>
+                                       FontSize="14"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,12,0,0"/>
                         </StackPanel>
 
-                        <!-- 편집기 ContentControl — DataTemplate 자동 선택 -->
+                        <!--
+                        ★ Fix: NullToVisibilityConverter 가 Window.Resources 에 선언되어야
+                               StaticResource 탐색이 성공함.
+                               기존 코드는 DeviceTreeView.xaml 내부 리소스에만 있었으므로
+                               MainWindow 스코프에서 XamlParseException 발생.
+                        -->
                         <ContentControl Content="{Binding SelectedEditor}"
-                         Visibility="{Binding SelectedEditor,
-                             Converter={StaticResource NullToVisibilityConverter}}"/>
+                                        Visibility="{Binding SelectedEditor,
+                                            Converter={StaticResource NullToVisibilityConverter}}"/>
+
                     </Grid>
                 </Border>
 
