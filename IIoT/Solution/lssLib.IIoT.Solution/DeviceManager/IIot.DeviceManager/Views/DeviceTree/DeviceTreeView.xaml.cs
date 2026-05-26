@@ -3,13 +3,15 @@
 //  역할: 장비 트리뷰 코드 비하인드 — 인라인 편집 입력 처리
 //  생성: 2025-05-22
 //  수정: 2025-05-23 v2 — 다중 선택 버그 수정
-//        IsSelected 바인딩을 OneWayToSource로 변경 후
+//        IsSelected 바인딩 OneWayToSource, SelectedItemChanged 단독 관리
 //        VM→TreeView 방향 동기화는 SelectedItemChanged만 담당.
 //        이전 선택 노드의 IsSelected를 명시적으로 해제하여
 //        부모 노드가 함께 선택되는 버그 제거.
+//  수정: 2025-05-23 v3 — IsEditing 유지 버그 수정
+//        SelectedItemChanged 에서 이전 노드 CommitEdit 강제 호출
+//        노드 변경 시 편집 텍스트박스 자동 닫힘 보장
 // ══════════════════════════════════════════════════════════
 
-using System;
 using IIoT.DeviceManager.ViewModels.DeviceTree;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,7 +33,7 @@ public partial class DeviceTreeView : UserControl
         InitializeComponent();
     }
 
-    // §2 ─ 이벤트 핸들러 ──────────────────────────────────────
+    // §2 ─ 선택 변경 ──────────────────────────────────────────
 
     /// <summary>
     /// 트리 선택 변경 → ViewModel.SelectedNode 동기화.
@@ -44,23 +46,31 @@ public partial class DeviceTreeView : UserControl
     ///   부모 노드가 함께 선택되는 버그 원인:
     ///   TwoWay 바인딩 + VM에서 IsSelected = true 설정 →
     ///   WPF 내부에서 부모 TreeViewItem까지 IsSelected 전파.
+    /// ★ v3: 이전 노드가 편집 중이면 CommitEdit 강제 호출
+    ///        → 노드를 변경해도 텍스트박스가 열린 채로 유지되는 버그 수정
     /// </summary>
     private void DeviceTree_SelectedItemChanged(object sender,
         RoutedPropertyChangedEventArgs<object> e)
     {
         if (DataContext is not DeviceTreeViewModel vm) return;
 
-        // ① 이전 선택 노드 IsSelected 해제
+        // ① 이전 노드: 편집 중이면 확정 → IsSelected 해제
         if (e.OldValue is DeviceNodeViewModel oldNode)
+        {
+            if (oldNode.IsEditing)
+                oldNode.CommitEditCommand.Execute(null);   // ★ 편집 강제 확정
             oldNode.IsSelected = false;
+        }
 
-        // ② 새 선택 노드 설정
+        // ② 새 노드: IsSelected 설정
         var newNode = e.NewValue as DeviceNodeViewModel;
         if (newNode is not null)
             newNode.IsSelected = true;
 
         vm.SelectedNode = newNode;
     }
+
+    // §3 ─ 더블클릭 편집 ──────────────────────────────────────
 
     /// <summary>
     /// 더블클릭 → 인라인 이름 편집 시작.
@@ -74,15 +84,17 @@ public partial class DeviceTreeView : UserControl
         if (node.IsEditing) return;
 
         node.BeginEditCommand.Execute(null);
-        e.Handled = true;   // 부모 트리 더블클릭 버블링 차단
+        e.Handled = true; // 부모 트리 더블클릭 버블링 차단
 
         // 포커스 → EditBox (TextBox) 로 이동
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
             () => FocusEditBox(sender as TreeViewItem));
     }
 
+    // §4 ─ 키 입력 처리 ───────────────────────────────────────
+
     /// <summary>
-    /// 키 입력 처리 — Enter: 편집 확정, Escape: 편집 취소.
+    /// Enter: 편집 확정, Escape: 편집 취소.
     /// </summary>
     private void TreeViewItem_KeyDown(object sender, KeyEventArgs e)
     {
@@ -95,7 +107,6 @@ public partial class DeviceTreeView : UserControl
                 node.CommitEditCommand.Execute(null);
                 e.Handled = true;
                 break;
-
             case Key.Escape:
                 node.CancelEditCommand.Execute(null);
                 e.Handled = true;
@@ -103,7 +114,7 @@ public partial class DeviceTreeView : UserControl
         }
     }
 
-    // §3 ─ 내부 헬퍼 ──────────────────────────────────────────
+    // §5 ─ 내부 헬퍼 ──────────────────────────────────────────
 
     /// <summary>
     /// TreeViewItem 내부의 EditBox(TextBox) 를 찾아 포커스 설정.
@@ -113,7 +124,6 @@ public partial class DeviceTreeView : UserControl
         if (item is null) return;
         var textBox = FindVisualChild<TextBox>(item);
         if (textBox is null) return;
-
         textBox.Focus();
         textBox.SelectAll();
     }

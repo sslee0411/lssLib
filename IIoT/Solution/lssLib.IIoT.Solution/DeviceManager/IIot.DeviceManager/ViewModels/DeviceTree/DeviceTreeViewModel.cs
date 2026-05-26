@@ -54,10 +54,10 @@ namespace IIoT.DeviceManager.ViewModels.DeviceTree;
 ///   AddPlcCommand    : PLC 추가 (수집 레이어)
 ///   AddTagCommand    : Tag 추가 (Plc 하위에만)
 ///   AddSensorCommand : Sensor 추가 (Device 하위에만) ★ 물리 레이어
-/// ── 같은 레벨(Sibling) 추가 ─────────────────────────────
-///   AddSiblingGroupCommand  : 선택 노드와 같은 레벨에 그룹 추가
-///   AddSiblingDeviceCommand : 선택 노드와 같은 레벨에 장비 추가
-///   AddSiblingPlcCommand    : 선택 노드와 같은 레벨에 PLC 추가
+///
+/// ── 같은 레벨(Sibling) 추가 ─────────────────────────────────
+///   AddSiblingGroup/Device/PlcCommand
+///
 /// ── 이중 레이어 배치 규칙 ───────────────────────────────────
 ///   Tag    : Plc 선택 시만 활성  (수집 레이어 — Plc 하위)
 ///   Sensor : Device 선택 시만 활성  (물리 레이어 — Device 하위 직접)
@@ -92,10 +92,7 @@ public partial class DeviceTreeViewModel : ObservableObject
         nameof(AddSiblingPlcCommand))]
     private DeviceNodeViewModel? _selectedNode;
 
-    /// <summary>트리 전체 노드 수 (상태표시줄용)</summary>
-    public int TotalNodeCount => RootNodes
-        .SelectMany(r => r.Flatten())
-        .Count();
+    public int TotalNodeCount => RootNodes.SelectMany(r => r.Flatten()).Count();
 
     // §3 ─ 생성자 ─────────────────────────────────────────────
 
@@ -169,42 +166,20 @@ public partial class DeviceTreeViewModel : ObservableObject
     private void AddDevice()
     {
         var device = new DeviceItemViewModel();
-
         switch (SelectedNode)
         {
-            case GroupNodeViewModel group:
-                group.AddChild(device);
-                group.IsExpanded = true;
-                break;
-
-            case DeviceItemViewModel parentDevice:
-                parentDevice.AddChild(device);
-                parentDevice.IsExpanded = true;
-                break;
-
-            case PlcNodeViewModel parentPlc:
-                parentPlc.AddChild(device);
-                parentPlc.IsExpanded = true;
-                break;
-
-            default:
-                // 선택 없음 또는 Tag 선택 → 루트에 추가
-                RootNodes.Add(device);
-                device.Parent = null;
-                break;
+            case GroupNodeViewModel g: g.AddChild(device); g.IsExpanded = true; break;
+            case DeviceItemViewModel d: d.AddChild(device); d.IsExpanded = true; break;
+            case PlcNodeViewModel p: p.AddChild(device); p.IsExpanded = true; break;
+            default: RootNodes.Add(device); device.Parent = null; break;
         }
-
         SelectedNode = device;
         device.BeginEditCommand.Execute(null);
         OnPropertyChanged(nameof(TotalNodeCount));
-
         LogManager.Instance.Info(LogSrc, $"[하위] 장비 추가: {device.Name}");
     }
 
-    /// <summary>
-    /// Tag 가 선택된 경우만 비활성 — 나머지는 항상 장비 추가 가능.
-    /// </summary>
-    private bool CanAddDevice() => SelectedNode is not TagNodeViewModel;
+    private bool CanAddDevice() => SelectedNode is not (TagNodeViewModel or SensorNodeViewModel);
 
     /// <summary>
     /// PLC 추가.
@@ -219,7 +194,6 @@ public partial class DeviceTreeViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAddPlc))]
     private void AddPlc()
     {
-        // 슬롯 번호: 부모 또는 루트 내 기존 PlcNode 개수
         int slotNo = SelectedNode switch
         {
             DeviceItemViewModel d => d.Children.OfType<PlcNodeViewModel>().Count(),
@@ -227,33 +201,14 @@ public partial class DeviceTreeViewModel : ObservableObject
             GroupNodeViewModel g => g.Children.OfType<PlcNodeViewModel>().Count(),
             _ => RootNodes.OfType<PlcNodeViewModel>().Count(),
         };
-
         var plc = new PlcNodeViewModel(slotNo: slotNo);
-
         switch (SelectedNode)
         {
-            case GroupNodeViewModel group:
-                group.AddChild(plc);
-                group.IsExpanded = true;
-                break;
-
-            case DeviceItemViewModel parentDevice:
-                parentDevice.AddChild(plc);
-                parentDevice.IsExpanded = true;
-                break;
-
-            case PlcNodeViewModel parentPlc:
-                parentPlc.AddChild(plc);
-                parentPlc.IsExpanded = true;
-                break;
-
-            default:
-                // 선택 없음 또는 Tag 선택 → 루트에 추가
-                RootNodes.Add(plc);
-                plc.Parent = null;
-                break;
+            case GroupNodeViewModel g: g.AddChild(plc); g.IsExpanded = true; break;
+            case DeviceItemViewModel d: d.AddChild(plc); d.IsExpanded = true; break;
+            case PlcNodeViewModel p: p.AddChild(plc); p.IsExpanded = true; break;
+            default: RootNodes.Add(plc); plc.Parent = null; break;
         }
-
         SelectedNode = plc;
         plc.BeginEditCommand.Execute(null);
         OnPropertyChanged(nameof(TotalNodeCount));
@@ -263,22 +218,22 @@ public partial class DeviceTreeViewModel : ObservableObject
     /// <summary>
     /// Tag 가 선택된 경우만 비활성 — 나머지는 항상 PLC 추가 가능.
     /// </summary>
-    private bool CanAddPlc() => SelectedNode is not TagNodeViewModel;
+    private bool CanAddPlc() => SelectedNode is not (TagNodeViewModel or SensorNodeViewModel);
 
     /// <summary>
-    /// Tag 추가 — Plc 선택 시만 활성 (수집 레이어).
+    /// Tag 추가 — Plc / Device / Sensor 선택 시 활성 (수집 레이어).
     ///
     /// Tag를 추가할 수 있는 부모 노드:
-    ///   · Plc  : 일반적인 PLC 레지스터 주소 태그
-    ///   · Device: PLC 하위 필드 장비가 자체 통신으로 연결한 태그
+    ///   · Plc    : 일반 PLC 레지스터 주소 태그
+    ///   · Device : 필드 장비 직접 태그 (HART, Profibus, IO-Link 등)
     ///             예) PLC → 온도변환기(Device) → 측정값(Tag)
-    ///             HART, Profibus, IO-Link 등 자체 프로토콜 연결 장비
+    ///   · Sensor : Sensor 전용 수집 태그 (TagRef 연결 후보)
+    ///             Sensor 하위에 Tag를 두면 해당 Sensor의 TagRef로 자동 연결 예정
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanAddTag))]
     private void AddTag()
     {
-        if (SelectedNode is not (DeviceItemViewModel or PlcNodeViewModel)) return;
-
+        if (SelectedNode is not (PlcNodeViewModel or DeviceItemViewModel or SensorNodeViewModel)) return;
         var tag = new TagNodeViewModel();
         SelectedNode.AddChild(tag);
         SelectedNode.IsExpanded = true;
@@ -288,8 +243,15 @@ public partial class DeviceTreeViewModel : ObservableObject
         LogManager.Instance.Info(LogSrc, $"[하위] 태그 추가: {tag.Name}");
     }
 
-    /// <summary>Tag는 Plc 하위에만 추가 가능</summary>
-    private bool CanAddTag() => SelectedNode is PlcNodeViewModel;
+    /// <summary>Tag는 Plc 또는 Device 하위에 추가 가능</summary>
+    /// <summary>
+    /// Tag 추가 가능 부모:
+    ///   Plc    — 일반 PLC 레지스터 태그
+    ///   Device — 필드 장비 직접 태그 (HART/Profibus)
+    ///   Sensor — Sensor 전용 수집 태그 (TagRef 연결 대상)
+    /// </summary>
+    private bool CanAddTag() =>
+        SelectedNode is PlcNodeViewModel or DeviceItemViewModel or SensorNodeViewModel;
 
     /// <summary>
     /// Sensor 추가 — Device 선택 시만 활성 (물리 레이어).
@@ -320,19 +282,34 @@ public partial class DeviceTreeViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAddSiblingGroup))]
     private void AddSiblingGroup()
     {
-        if (SelectedNode is null) return;
         var group = new GroupNodeViewModel();
-        _InsertSibling(group);
+
+        if (SelectedNode is null)
+        {
+            // 선택 없음 → 루트 마지막에 추가
+            RootNodes.Add(group);
+            group.Parent = null;
+        }
+        else
+        {
+            _InsertSibling(group);
+        }
+
         SelectedNode = group;
         group.BeginEditCommand.Execute(null);
         OnPropertyChanged(nameof(TotalNodeCount));
         LogManager.Instance.Info(LogSrc, $"[같은레벨] 그룹 추가: {group.Name}");
     }
 
-
-    private bool CanAddSiblingGroup() =>
-        SelectedNode is not null and not (TagNodeViewModel or SensorNodeViewModel) &&
-        SelectedNode.Parent is null or GroupNodeViewModel;
+    private bool CanAddSiblingGroup()
+    {
+        // 선택 없음 → 루트에 그룹 추가 가능
+        if (SelectedNode is null) return true;
+        // Tag/Sensor 선택 시 불가
+        if (SelectedNode is TagNodeViewModel or SensorNodeViewModel) return false;
+        // 루트 노드 또는 그룹 하위 노드일 때만 그룹 추가 가능
+        return SelectedNode.Parent is null or GroupNodeViewModel;
+    }
 
     /// <summary>
     /// 선택 노드와 같은 레벨에 장비 추가.
@@ -341,9 +318,19 @@ public partial class DeviceTreeViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAddSiblingDevice))]
     private void AddSiblingDevice()
     {
-        if (SelectedNode is null) return;
         var device = new DeviceItemViewModel();
-        _InsertSibling(device);
+
+        if (SelectedNode is null)
+        {
+            // 선택 없음 → 루트 마지막에 추가
+            RootNodes.Add(device);
+            device.Parent = null;
+        }
+        else
+        {
+            _InsertSibling(device);
+        }
+
         SelectedNode = device;
         device.BeginEditCommand.Execute(null);
         OnPropertyChanged(nameof(TotalNodeCount));
@@ -351,7 +338,9 @@ public partial class DeviceTreeViewModel : ObservableObject
     }
 
     private bool CanAddSiblingDevice() =>
-        SelectedNode is not null and not (TagNodeViewModel or SensorNodeViewModel);
+        // SelectedNode == null 이면 RootNodes 마지막에 추가 (루트 동레벨)
+        SelectedNode is null ||
+        SelectedNode is not (TagNodeViewModel or SensorNodeViewModel);
 
     /// <summary>
     /// 선택 노드와 같은 레벨에 PLC 추가.
@@ -360,29 +349,41 @@ public partial class DeviceTreeViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAddSiblingPlc))]
     private void AddSiblingPlc()
     {
-        if (SelectedNode is null) return;
-        int slotNo = _GetSiblingPlcCount();
+        int slotNo = SelectedNode is null
+            ? RootNodes.OfType<PlcNodeViewModel>().Count()
+            : _GetSiblingPlcCount();
+
         var plc = new PlcNodeViewModel(slotNo: slotNo);
-        _InsertSibling(plc);
+
+        if (SelectedNode is null)
+        {
+            // 선택 없음 → 루트 마지막에 추가
+            RootNodes.Add(plc);
+            plc.Parent = null;
+        }
+        else
+        {
+            _InsertSibling(plc);
+        }
+
         SelectedNode = plc;
         plc.BeginEditCommand.Execute(null);
         OnPropertyChanged(nameof(TotalNodeCount));
         LogManager.Instance.Info(LogSrc, $"[같은레벨] PLC 추가: {plc.Name}");
     }
 
-
     private bool CanAddSiblingPlc() =>
-        SelectedNode is not null and not (TagNodeViewModel or SensorNodeViewModel);
+        SelectedNode is null ||
+        SelectedNode is not (TagNodeViewModel or SensorNodeViewModel);
+
     // §6 ─ 삭제 커맨드 ────────────────────────────────────────
 
     [RelayCommand(CanExecute = nameof(CanDelete))]
     private void DeleteNode()
     {
         if (SelectedNode is null) return;
-
         var target = SelectedNode;
         var parent = target.Parent;
-
         if (parent is not null)
         {
             parent.RemoveChild(target);
@@ -393,7 +394,6 @@ public partial class DeviceTreeViewModel : ObservableObject
             RootNodes.Remove(target);
             SelectedNode = RootNodes.LastOrDefault();
         }
-
         OnPropertyChanged(nameof(TotalNodeCount));
         LogManager.Instance.Info(LogSrc, $"노드 삭제: {target.Name} ({target.Kind})");
     }
@@ -447,7 +447,7 @@ public partial class DeviceTreeViewModel : ObservableObject
                list.IndexOf(SelectedNode) < list.Count - 1;
     }
 
-    // §7 ─ 펼치기/접기 ────────────────────────────────────────
+    // §8 ─ 펼치기/접기 ────────────────────────────────────────
 
     /// <summary>트리 전체 펼치기</summary>
     [RelayCommand]
@@ -457,6 +457,7 @@ public partial class DeviceTreeViewModel : ObservableObject
             node.IsExpanded = true;
     }
 
+
     /// <summary>트리 전체 접기</summary>
     [RelayCommand]
     private void CollapseAll()
@@ -465,12 +466,13 @@ public partial class DeviceTreeViewModel : ObservableObject
             node.IsExpanded = false;
     }
 
-    // §8 ─ 샘플 데이터 로드 ───────────────────────────────────
+    // §9 ─ 샘플 데이터 ────────────────────────────────────────
 
     /// <summary>
     /// 샘플 데이터 — 다양한 트리 구조 테스트용.
     /// Phase 6 에서 JsonConfigLoader 로 대체 예정.
     /// </summary>
+
     [RelayCommand]
     private void LoadSample()
     {
@@ -535,7 +537,6 @@ public partial class DeviceTreeViewModel : ObservableObject
         LogManager.Instance.Info(LogSrc, "샘플 데이터 로드 완료 (이중 레이어 구조)");
     }
 
-
     // §10 ─ 내부 헬퍼 ─────────────────────────────────────────
 
     /// <summary>
@@ -545,13 +546,10 @@ public partial class DeviceTreeViewModel : ObservableObject
     private void _InsertSibling(DeviceNodeViewModel newNode)
     {
         if (SelectedNode is null) return;
-
         var list = GetSiblingList(SelectedNode);
         if (list is null) return;
-
         int idx = list.IndexOf(SelectedNode);
-        newNode.Parent = SelectedNode.Parent; // 루트이면 null
-
+        newNode.Parent = SelectedNode.Parent;
         // 선택 노드 바로 다음에 삽입 (끝이면 마지막에 추가)
         if (idx >= 0 && idx < list.Count - 1)
             list.Insert(idx + 1, newNode);
@@ -570,10 +568,8 @@ public partial class DeviceTreeViewModel : ObservableObject
     /// <summary>노드가 속한 형제 목록 반환 (루트 또는 부모 Children)</summary>
     private ObservableCollection<DeviceNodeViewModel>? GetSiblingList(DeviceNodeViewModel node)
     {
-        if (node.Parent is not null)
-            return node.Parent.Children;
-        if (RootNodes.Contains(node))
-            return RootNodes;
+        if (node.Parent is not null) return node.Parent.Children;
+        if (RootNodes.Contains(node)) return RootNodes;
         return null;
     }
 }

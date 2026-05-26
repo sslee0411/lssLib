@@ -152,8 +152,11 @@ public partial class SensorNodeViewModel : DeviceNodeViewModel
         _ => "📡",
     };
 
-    /// <summary>물리 레이어 — 자식 없음 (리프 노드)</summary>
-    public override IReadOnlyList<NodeKind> AllowedChildKinds => [];
+    /// <summary>
+    /// Tag 추가 허용 — Sensor의 TagRef 연결 대상을 트리에서 직접 생성.
+    /// Sensor 하위 Tag = 이 Sensor 전용 수집 태그 (TagRef 자동 연결 후보).
+    /// </summary>
+    public override IReadOnlyList<NodeKind> AllowedChildKinds => [NodeKind.Tag];
 
     /// <summary>스케일 설정 여부 + TagRef 개수 배지</summary>
     public override string? Badge
