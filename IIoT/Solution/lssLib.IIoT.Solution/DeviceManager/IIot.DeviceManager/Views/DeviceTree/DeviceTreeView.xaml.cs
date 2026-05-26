@@ -1,20 +1,22 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.DeviceManager · DeviceTreeView.xaml.cs
-//  역할: 장비 트리뷰 코드 비하인드 — 인라인 편집 입력 처리
+//  역할: 장비 트리뷰 코드 비하인드
 //  생성: 2025-05-22
-//  수정: 2025-05-23 v2 — 다중 선택 버그 (IsSelected OneWayToSource)
-//  수정: 2025-05-23 v3 — IsEditing 유지 버그 (CommitEdit 강제)
-//  수정: 2025-05-26 v4 — IsEditing 잔존 버그 (이중 추적 확인)
-//  수정: 2025-05-26 v5 — 더블클릭 시 상위 노드 에디트 박스 활성화 버그 수정
+//  수정: 2025-05-23 v2 — IsSelected OneWayToSource 다중 선택 버그 수정
+//  수정: 2025-05-23 v3 — IsEditing CommitEdit 강제 호출
+//  수정: 2025-05-26 v4 — IsEditing 잔존: e.OldValue + vm.SelectedNode 이중 확인
+//  수정: 2025-05-26 v5 — 더블클릭 상위노드 에디트 박스 활성화 버그 수정
+//        Control.MouseDoubleClick = Direct 이벤트 → 자식 필터 추가
+//  수정: 2025-05-26 v6 — 태그 버튼 비활성화 버그 수정
 //        [원인]
-//        Control.MouseDoubleClick 은 WPF에서 Direct 라우팅 이벤트.
-//        MouseLeftButtonDown(Bubbling)이 부모 TreeViewItem까지 전파되면서
-//        각 TreeViewItem마다 MouseDoubleClick 이 독립적으로 발생함.
-//        e.Handled = true 는 Direct 이벤트에서 상위 요소 발생을 차단하지 못함.
+//        Add* 커맨드로 vm.SelectedNode 가 새 자식 노드로 변경된 후,
+//        사용자가 부모 노드를 재클릭해도 WPF TreeView 가
+//        "이미 선택된 항목" 으로 판단하여 SelectedItemChanged 미발생.
+//        vm.SelectedNode 가 자식 노드에 머물러 CanAddTag 등 비활성화.
 //        [해결]
-//        e.OriginalSource 에서 visual tree를 역추적하여
-//        이벤트 발생 위치가 현재 TreeViewItem 의 직속 콘텐츠인지
-//        자식 TreeViewItem 내부인지 판별 → 자식 내부이면 무시
+//        PreviewMouseLeftButtonDown(터널링 이벤트) 에서
+//        vm.SelectedNode 를 클릭된 노드로 강제 동기화.
+//        SelectedItemChanged 미발생 케이스를 선점 처리.
 // ══════════════════════════════════════════════════════════
 
 using IIoT.DeviceManager.ViewModels.DeviceTree;
@@ -34,15 +36,65 @@ public partial class DeviceTreeView : UserControl
         InitializeComponent();
     }
 
-    // §2 ─ 선택 변경 ──────────────────────────────────────────
+    // §2 ─ 선택 선점 동기화 (★ v6 핵심 추가) ─────────────────
+
+    /// <summary>
+    /// PreviewMouseLeftButtonDown → vm.SelectedNode 강제 동기화.
+    ///
+    /// ★ v6 신규: SelectedItemChanged 미발생 케이스 대응
+    ///
+    /// [발생 시나리오]
+    ///   1. 사용자가 "새 장비" 클릭 → TreeView.SelectedItem = 새장비
+    ///   2. 툴바 "태그 추가" → AddTag() → vm.SelectedNode = 새태그
+    ///      (TreeView.SelectedItem 은 여전히 새장비)
+    ///   3. 사용자가 "새 장비" 재클릭
+    ///      → WPF: 이미 선택된 항목 → SelectedItemChanged 미발생
+    ///      → vm.SelectedNode 여전히 새태그 (TagNodeViewModel)
+    ///      → CanAddTag() → false → 태그 버튼 비활성!
+    ///
+    /// [해결]
+    ///   PreviewMouseLeftButtonDown 은 WPF 가 선택 처리를 시작하기 전에
+    ///   터널링으로 발생하므로, SelectedItemChanged 발생 여부와 무관하게
+    ///   vm.SelectedNode 를 클릭된 노드로 미리 동기화.
+    ///   이후 SelectedItemChanged 가 발생하면 동일 값 재설정 → SetProperty 멱등, 무해.
+    ///
+    /// [자식 TreeViewItem 필터]
+    ///   PreviewMouseLeftButtonDown 은 터널링이므로 부모가 먼저 수신.
+    ///   _IsEventFromChildTreeViewItem() 으로 자식 내부에서 발생한 클릭은 무시.
+    ///   → 부모가 자식 클릭을 가로채 vm.SelectedNode 를 잘못 변경하는 것을 방지.
+    /// </summary>
+    private void TreeViewItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not TreeViewItem tvi) return;
+        if (tvi.DataContext is not DeviceNodeViewModel clickedNode) return;
+        if (DataContext is not DeviceTreeViewModel vm) return;
+
+        // 자식 TreeViewItem 내부 클릭이면 부모 handler 에서 처리 안 함
+        if (_IsEventFromChildTreeViewItem(tvi, e.OriginalSource as DependencyObject))
+            return;
+
+        // vm.SelectedNode 가 다를 때만 동기화 (멱등 보장)
+        if (!ReferenceEquals(vm.SelectedNode, clickedNode))
+        {
+            // OnSelectedNodeChanged(old, clickedNode) 자동 발생:
+            //   old.IsEditing = true 이면 CommitEdit 처리
+            // CanExecuteChanged 자동 발생:
+            //   AddTag/AddDevice 등 CanExecute 즉시 재평가 → 버튼 활성화 복원
+            vm.SelectedNode = clickedNode;
+        }
+    }
+
+    // §3 ─ 선택 변경 (SelectedItemChanged) ───────────────────
 
     /// <summary>
     /// 트리 선택 변경 → ViewModel.SelectedNode 동기화.
     ///
-    /// [경로 A] e.OldValue: TreeView가 추적하는 이전 선택 노드
-    /// [경로 B] vm.SelectedNode: Add* 커맨드로 설정된 VM 현재 노드
-    ///   - 툴바 Add* 후 첫 TreeView 클릭 시 e.OldValue=null 이지만
-    ///     vm.SelectedNode 에 편집 중인 노드가 있을 수 있음
+    /// [경로 A] e.OldValue: TreeView 추적 이전 선택 (일반 클릭 전환)
+    /// [경로 B] vm.SelectedNode: Add* 후 첫 TreeView 클릭
+    ///   e.OldValue = null 이지만 vm.SelectedNode 에 편집 중 노드 있을 수 있음
+    ///
+    /// v6: PreviewMouseLeftButtonDown 이 이미 vm.SelectedNode 를 동기화했으므로
+    ///     SetProperty 멱등으로 중복 처리 무해.
     /// </summary>
     private void DeviceTree_SelectedItemChanged(object sender,
         RoutedPropertyChangedEventArgs<object> e)
@@ -74,48 +126,35 @@ public partial class DeviceTreeView : UserControl
         vm.SelectedNode = newNode;
     }
 
-    // §3 ─ 더블클릭 편집 ──────────────────────────────────────
+    // §4 ─ 더블클릭 편집 ──────────────────────────────────────
 
     /// <summary>
     /// 더블클릭 → 인라인 이름 편집 시작.
     ///
-    /// ★ v5 핵심 수정: 자식 TreeViewItem 에서 발생한 더블클릭 무시
-    ///
-    /// [문제]
-    ///   Control.MouseDoubleClick 은 WPF에서 Direct RoutedEvent.
-    ///   MouseLeftButtonDown(Bubbling)이 부모 TreeViewItem까지 전파되면서
-    ///   각 TreeViewItem마다 MouseDoubleClick 이 독립적으로 발생.
-    ///   e.Handled = true 는 Direct 이벤트에서 상위 요소 발생을 차단하지 못함.
-    ///   → 자식 더블클릭 시 부모·조부모 모두 BeginEditCommand 가 호출됨.
-    ///
-    /// [해결]
-    ///   _IsEventFromChildTreeViewItem() 으로 e.OriginalSource 에서
-    ///   Visual Tree 를 역추적:
-    ///     - sender TreeViewItem 에 도달하기 전에 다른 TreeViewItem 발견
-    ///       → 자식 노드에서 발생한 이벤트 → return (무시)
-    ///     - sender TreeViewItem 에 바로 도달
-    ///       → 이 노드 자신의 콘텐츠에서 발생 → BeginEditCommand 실행
+    /// ★ v5: Control.MouseDoubleClick 은 Direct 이벤트.
+    ///   MouseLeftButtonDown(Bubbling) 이 상위 TreeViewItem 까지 전파되면서
+    ///   각 TreeViewItem 마다 MouseDoubleClick 이 독립 발생.
+    ///   → _IsEventFromChildTreeViewItem() 으로 자식 발생 이벤트 필터링.
     /// </summary>
     private void TreeViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (sender is not TreeViewItem tvi) return;
         if (tvi.DataContext is not DeviceNodeViewModel node) return;
 
-        // ★ 자식 TreeViewItem 에서 발생한 이벤트 무시 (v5 핵심 수정)
+        // 자식 TreeViewItem 에서 발생한 이벤트 무시
         if (_IsEventFromChildTreeViewItem(tvi, e.OriginalSource as DependencyObject))
             return;
 
-        // 이미 편집 중이면 중복 진입 방지
         if (node.IsEditing) return;
 
         node.BeginEditCommand.Execute(null);
         e.Handled = true;
 
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
-            () => FocusEditBox(tvi));
+            () => _FocusEditBox(tvi));
     }
 
-    // §4 ─ 키 입력 처리 ───────────────────────────────────────
+    // §5 ─ 키 입력 처리 ───────────────────────────────────────
 
     private void TreeViewItem_KeyDown(object sender, KeyEventArgs e)
     {
@@ -135,24 +174,18 @@ public partial class DeviceTreeView : UserControl
         }
     }
 
-    // §5 ─ 내부 헬퍼 ──────────────────────────────────────────
+    // §6 ─ 내부 헬퍼 ──────────────────────────────────────────
 
     /// <summary>
-    /// 이벤트가 자식 TreeViewItem 내부에서 발생했는지 판별합니다.
+    /// 이벤트가 자식 TreeViewItem 내부에서 발생했는지 판별.
     ///
-    /// e.OriginalSource 에서 Visual Tree 를 역추적하여:
-    ///   · owner TreeViewItem 에 도달하기 전에 다른 TreeViewItem 발견
-    ///     → true  (자식에서 발생, 무시해야 함)
-    ///   · owner TreeViewItem 에 바로 도달 (중간에 다른 TreeViewItem 없음)
-    ///     → false (이 노드 자신의 콘텐츠에서 발생, 처리해야 함)
+    /// source 에서 Visual Tree 역추적:
+    ///   · owner 도달 전에 다른 TreeViewItem 발견 → true (자식에서 발생)
+    ///   · owner 에 바로 도달 → false (자신 콘텐츠에서 발생)
     ///
-    /// [Visual Tree 예시]
-    ///   ParentTreeViewItem (owner)
-    ///     ItemsPresenter
-    ///       ChildTreeViewItem      ← 여기서 발견 → true 반환
-    ///         ContentPresenter
-    ///           StackPanel
-    ///             TextBlock        ← e.OriginalSource (클릭된 요소)
+    /// [활용]
+    ///   MouseDoubleClick (Direct, v5): 부모 handler 에서 자식 이벤트 차단
+    ///   PreviewMouseLeftButtonDown (Tunneling, v6): 부모 handler 에서 자식 이벤트 차단
     /// </summary>
     private static bool _IsEventFromChildTreeViewItem(
         TreeViewItem owner, DependencyObject? source)
@@ -162,23 +195,15 @@ public partial class DeviceTreeView : UserControl
         var current = source;
         while (current is not null)
         {
-            // owner 에 도달 → 자식 TreeViewItem 없이 도달 → 자신의 콘텐츠
-            if (ReferenceEquals(current, owner))
-                return false;
-
-            // owner 가 아닌 다른 TreeViewItem 발견 → 자식 노드에서 발생
-            if (current is TreeViewItem)
-                return true;
-
+            if (ReferenceEquals(current, owner)) return false;  // 자신 콘텐츠
+            if (current is TreeViewItem) return true;           // 자식 TreeViewItem 발견
             current = VisualTreeHelper.GetParent(current);
         }
-
-        // Visual Tree 범위를 벗어남 (비정상 케이스) → 안전하게 무시
-        return true;
+        return true; // Visual Tree 이탈 → 안전하게 무시
     }
 
-    /// <summary>TreeViewItem 내부의 TextBox (EditBox) 를 찾아 포커스 설정.</summary>
-    private static void FocusEditBox(TreeViewItem? item)
+    /// <summary>TreeViewItem 내부 TextBox (EditBox) 찾아 포커스 설정.</summary>
+    private static void _FocusEditBox(TreeViewItem? item)
     {
         if (item is null) return;
         var textBox = _FindVisualChild<TextBox>(item);

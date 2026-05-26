@@ -533,11 +533,15 @@
                     </Setter>
 
                     <EventSetter Event="MouseDoubleClick"
-                                 Handler="TreeViewItem_MouseDoubleClick"/>
+                                  Handler="TreeViewItem_MouseDoubleClick"/>
+
                     <EventSetter Event="KeyDown"
                                  Handler="TreeViewItem_KeyDown"/>
+                    
+                    <EventSetter Event="PreviewMouseLeftButtonDown"
+                                 Handler="TreeViewItem_PreviewMouseLeftButtonDown"/>
 
-                    <!-- ★ Style.Triggers — 항상 마지막 -->
+                        <!-- ★ Style.Triggers — 항상 마지막 -->
                     <Style.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
