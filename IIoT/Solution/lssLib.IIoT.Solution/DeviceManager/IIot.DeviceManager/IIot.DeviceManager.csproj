@@ -48,6 +48,7 @@
 
 	<ItemGroup>
 	  <Folder Include="Views\DeviceTree\" />
+	  <Folder Include="Views\Editors\" />
 	</ItemGroup>
 
 </Project>

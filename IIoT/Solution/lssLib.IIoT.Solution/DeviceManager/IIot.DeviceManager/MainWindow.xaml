@@ -14,12 +14,33 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
         xmlns:tree="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
+        xmlns:ed="clr-namespace:IIoT.DeviceManager.Views.Editors"
+        xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.Editors"
         mc:Ignorable="d"
         Title="IIoT Device Manager"
         Width="1280" Height="800"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
+    
+    <Window.Resources>
+
+        <!-- 편집기 DataTemplate 매핑 — ContentControl 이 자동으로 View 선택 -->
+        <DataTemplate DataType="{x:Type vm:DeviceEditorViewModel}">
+            <ed:DeviceEditorView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PlcEditorViewModel}">
+            <ed:PlcEditorView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TagEditorViewModel}">
+            <ed:TagEditorView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SensorEditorViewModel}">
+            <ed:SensorEditorView/>
+        </DataTemplate>
+
+    </Window.Resources>
+
 
     <!--
     ★ 리소스 키 기준 (IIoT.UI.Themes v1.1 README 확인)
@@ -234,35 +255,33 @@
                 </Grid.RowDefinitions>
 
                 <!-- 편집 탭 컨텐츠 (Phase 3~5 에서 채워질 영역) -->
-                <Border x:Name="EditorArea"
-                        Background="{DynamicResource BgBrush}">
-
-                    <!-- Phase 3 이전 플레이스홀더 -->
-                    <Grid x:Name="PlaceholderGrid">
-                        <StackPanel VerticalAlignment="Center"
-                                    HorizontalAlignment="Center"
-                                    Opacity="0.4">
-                            <TextBlock Text="⚙"
-                                       FontSize="48"
-                                       HorizontalAlignment="Center"
-                                       Foreground="{DynamicResource Text3Brush}"/>
+                <Border x:Name="EditorArea" Background="{DynamicResource BgBrush}">
+                    <Grid>
+                        <!-- 선택 없을 때 플레이스홀더 -->
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Opacity="0.4">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedEditor}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="⚙" FontSize="48" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource Text3Brush}"/>
                             <TextBlock Text="장비를 선택하면 편집기가 표시됩니다"
-                                       FontSize="14"
-                                       HorizontalAlignment="Center"
-                                       Foreground="{DynamicResource Text2Brush}"
-                                       Margin="0,12,0,0"/>
-                            <TextBlock Text="Phase 3 — TagEditorView / DeviceEditorView"
-                                       FontSize="11"
-                                       HorizontalAlignment="Center"
-                                       Foreground="{DynamicResource Text3Brush}"
-                                       Margin="0,6,0,0"/>
+                       FontSize="14" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource Text2Brush}" Margin="0,12,0,0"/>
                         </StackPanel>
+
+                        <!-- 편집기 ContentControl — DataTemplate 자동 선택 -->
+                        <ContentControl Content="{Binding SelectedEditor}"
+                         Visibility="{Binding SelectedEditor,
+                             Converter={StaticResource NullToVisibilityConverter}}"/>
                     </Grid>
-
-                    <!-- Phase 3 이후: ContentControl 로 교체 예정
-                    <ContentControl Content="{Binding SelectedEditor}"/>
-                    -->
-
                 </Border>
 
             </Grid>
