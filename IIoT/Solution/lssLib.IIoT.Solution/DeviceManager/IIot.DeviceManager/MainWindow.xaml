@@ -1,13 +1,16 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.DeviceManager · MainWindow.xaml
-     역할: 메인 레이아웃 — 헤더 + 좌(장비트리) + 우(편집영역) + 상태바
+     역할: 메인 레이아웃 — 헤더 + 좌(장비트리) + 우(편집/라이브러리) + 상태바
      Phase 0 : 테마 통합 (DynamicResource 전용, ThemePickerButton)
      Phase 1 : Core 기반 구조
      Phase 2 : DeviceTreeView 좌측 패널 통합
      Phase 3 : 편집기 DataTemplate 매핑
-     Fix     : 2025-05-26 — XamlParseException 수정
-               NullToVisibilityConverter Window.Resources 누락 → 추가
-               xmlns:conv 네임스페이스 추가
+     Phase 3F: XamlParseException 수정 — NullToVisibilityConverter Window.Resources 추가
+     Phase 4 : 탭 전환 → 라이브러리 뷰 교체
+               ① ColumnDefinition x:Name 추가 (ColTree, ColSplitter)
+               ② DeviceTreePanel x:Name 추가
+               ③ GridSplitter1 x:Name 추가
+               ④ 우측 영역 — DeviceEditorGrid + LibraryArea 분리
      ══════════════════════════════════════════════════════════ -->
 
 <Window x:Class="IIoT.DeviceManager.MainWindow"
@@ -30,17 +33,13 @@
     <Window.Resources>
 
         <!--
-        ★ Fix (2025-05-26): NullToVisibilityConverter 선언 추가
-        ══════════════════════════════════════════════════════════════
-        오류: XamlParseException — StaticResource 'NullToVisibilityConverter' 를 찾을 수 없음
-        원인: 컨버터가 DeviceTreeView.xaml 의 UserControl.Resources 에만 선언되어 있고
-              MainWindow.xaml 의 Window.Resources 에는 선언되지 않음.
-              WPF ResourceDictionary 스코프는 격리되므로 UserControl 내부 리소스는
-              Window 레벨에서 탐색되지 않음.
-        해결: xmlns:conv 네임스페이스 추가 + Window.Resources 에 컨버터 선언
-        ══════════════════════════════════════════════════════════════
+        ★ Phase 3 Fix: NullToVisibilityConverter
+          DeviceTreeView.xaml 의 UserControl.Resources 에도 선언되어 있으나
+          MainWindow 스코프에서는 별도 선언 필요
         -->
-        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <conv:NullToVisibilityConverter       x:Key="NullToVisibilityConverter"/>
+        <conv:BoolToVisibilityConverter       x:Key="BoolToVisibilityConverter"/>
+        <conv:BoolToVisibilityInvertConverter x:Key="BoolToVisibilityInvertConverter"/>
 
         <!-- 편집기 DataTemplate 매핑 — ContentControl 이 자동으로 View 선택 -->
         <DataTemplate DataType="{x:Type vm:DeviceEditorViewModel}">
@@ -57,21 +56,6 @@
         </DataTemplate>
 
     </Window.Resources>
-
-
-    <!--
-    ★ 리소스 키 기준 (IIoT.UI.Themes v1.1 README 확인)
-    ══════════════════════════════════════════════════
-    배경  : BgBrush(페이지), SurfaceBrush(패널), CardBrush(카드)
-    구분선: BorderBrush(연함), Border2Brush(강함)
-    텍스트: TextBrush(주), Text2Brush(보조), Text3Brush(흐림)
-    액센트: AccBrush(주), Acc2Brush(보조)
-    상태  : GreenBrush(정상), YellowBrush(경고), RedBrush(위험), OrangeBrush(주의)
-    버튼  : PrimaryBtn, SecondaryBtn, GhostBtn
-    폰트  : UiFont, MonoFont
-    ★ DynamicResource 전용 — StaticResource 절대 금지
-    ══════════════════════════════════════════════════
-    -->
 
     <DockPanel LastChildFill="True">
 
@@ -96,77 +80,57 @@
                                VerticalAlignment="Center"
                                Margin="0,0,8,0"/>
                     <TextBlock Text="IIoT Device Manager"
-                               FontSize="15"
-                               FontWeight="SemiBold"
+                               FontSize="15" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextBrush}"
                                VerticalAlignment="Center"/>
                     <Border Background="{DynamicResource AccBrush}"
-                            CornerRadius="4"
-                            Padding="5,2"
-                            Margin="10,0,0,0"
-                            VerticalAlignment="Center"
-                            Opacity="0.85">
-                        <TextBlock Text="DEV"
-                                   FontSize="9"
-                                   FontWeight="Bold"
-                                   Foreground="White"/>
+                            CornerRadius="4" Padding="5,2"
+                            Margin="10,0,0,0" VerticalAlignment="Center" Opacity="0.85">
+                        <TextBlock Text="DEV" FontSize="9" FontWeight="Bold" Foreground="White"/>
                     </Border>
                 </StackPanel>
 
-                <!-- 우: ThemePickerButton (★ Phase 0 핵심) -->
+                <!-- 우: 저장 + 테마 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
-
-                    <!-- 저장 버튼 (Phase 6 연결 예정) -->
                     <Button Style="{DynamicResource SecondaryBtn}"
                             Content="💾 저장"
-                            Margin="0,0,8,0"
-                            Padding="10,4"
-                            FontSize="12"
+                            Margin="0,0,8,0" Padding="10,4" FontSize="12"
                             Click="BtnSave_Click"
-                            ToolTip="Ctrl+S — 설정 저장 (Phase 6 구현 예정)"/>
-
-                    <!-- 테마 선택 드롭다운 -->
+                            ToolTip="Ctrl+S — 설정 저장"/>
                     <uc:ThemePickerButton VerticalAlignment="Center"/>
-
                 </StackPanel>
 
                 <!-- 중: 탭 메뉴 -->
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center">
+
                     <Button x:Name="BtnTabDevice"
                             Content="장비 관리"
                             Style="{DynamicResource GhostBtn}"
-                            FontSize="13"
-                            Padding="14,6"
-                            Click="BtnTab_Click"
-                            Tag="Device"/>
+                            FontSize="13" Padding="14,6"
+                            Click="BtnTab_Click" Tag="Device"/>
+
                     <Button x:Name="BtnTabScale"
                             Content="스케일 설정"
                             Style="{DynamicResource GhostBtn}"
-                            FontSize="13"
-                            Padding="14,6"
-                            Margin="2,0,0,0"
-                            Click="BtnTab_Click"
-                            Tag="Scale"/>
+                            FontSize="13" Padding="14,6" Margin="2,0,0,0"
+                            Click="BtnTab_Click" Tag="Scale"/>
+
                     <Button x:Name="BtnTabAlarm"
                             Content="알람 규칙"
                             Style="{DynamicResource GhostBtn}"
-                            FontSize="13"
-                            Padding="14,6"
-                            Margin="2,0,0,0"
-                            Click="BtnTab_Click"
-                            Tag="Alarm"/>
+                            FontSize="13" Padding="14,6" Margin="2,0,0,0"
+                            Click="BtnTab_Click" Tag="Alarm"/>
+
                     <Button x:Name="BtnTabComm"
                             Content="통신 설정"
                             Style="{DynamicResource GhostBtn}"
-                            FontSize="13"
-                            Padding="14,6"
-                            Margin="2,0,0,0"
-                            Click="BtnTab_Click"
-                            Tag="Comm"/>
+                            FontSize="13" Padding="14,6" Margin="2,0,0,0"
+                            Click="BtnTab_Click" Tag="Comm"/>
+
                 </StackPanel>
 
             </DockPanel>
@@ -181,137 +145,139 @@
                    BorderBrush="{DynamicResource BorderBrush}"
                    BorderThickness="0,1,0,0">
 
-            <!-- 선택 노드 -->
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="선택:"
-                               FontSize="11"
-                               Foreground="{DynamicResource Text3Brush}"
-                               Margin="0,0,4,0"/>
+                               FontSize="11" Foreground="{DynamicResource Text3Brush}" Margin="0,0,4,0"/>
                     <TextBlock x:Name="TxtSelectedNode"
                                Text="없음"
-                               FontSize="11"
-                               Foreground="{DynamicResource Text2Brush}"/>
+                               FontSize="11" Foreground="{DynamicResource Text2Brush}"/>
                 </StackPanel>
             </StatusBarItem>
 
             <Separator/>
 
-            <!-- 노드 수 -->
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="노드:"
-                               FontSize="11"
-                               Foreground="{DynamicResource Text3Brush}"
-                               Margin="0,0,4,0"/>
+                               FontSize="11" Foreground="{DynamicResource Text3Brush}" Margin="0,0,4,0"/>
                     <TextBlock x:Name="TxtNodeCount"
                                Text="0"
-                               FontSize="11"
-                               FontFamily="{DynamicResource MonoFont}"
+                               FontSize="11" FontFamily="{DynamicResource MonoFont}"
                                Foreground="{DynamicResource AccBrush}"/>
                 </StackPanel>
             </StatusBarItem>
 
             <Separator/>
 
-            <!-- 일반 상태 메시지 -->
             <StatusBarItem>
                 <TextBlock x:Name="TxtStatus"
                            Text="준비"
-                           FontSize="11"
-                           Foreground="{DynamicResource Text2Brush}"/>
+                           FontSize="11" Foreground="{DynamicResource Text2Brush}"/>
             </StatusBarItem>
 
-            <!-- 우측: 버전 -->
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="v0.3-Phase3Fix"
-                           FontSize="10"
-                           Foreground="{DynamicResource Text3Brush}"
+                <TextBlock Text="v0.4-Phase4"
+                           FontSize="10" Foreground="{DynamicResource Text3Brush}"
                            Margin="0,0,8,0"/>
             </StatusBarItem>
 
         </StatusBar>
 
         <!-- ──────────────────────────────────────────────────────
-             본문 — 좌(트리) + 구분선 + 우(편집)
+             본문 — 좌(트리) + 구분선 + 우(편집 or 라이브러리)
+             ★ Phase 4:
+               ColTree / ColSplitter — x:Name 추가 (탭 전환 시 Width 조정)
+               DeviceTreePanel       — x:Name 추가 (Visibility 제어)
+               GridSplitter1         — x:Name 추가 (Visibility 제어)
+               DeviceEditorGrid      — Device 탭 전용 편집기 영역
+               LibraryArea           — Scale/Alarm/Comm 탭 뷰 주입 ContentControl
              ────────────────────────────────────────────────────── -->
         <Grid>
             <Grid.ColumnDefinitions>
-                <!-- 좌: 장비 트리 패널 (조절 가능) -->
-                <ColumnDefinition Width="280" MinWidth="200" MaxWidth="480"/>
-                <!-- 구분선 -->
-                <ColumnDefinition Width="4"/>
-                <!-- 우: 편집 영역 -->
+                <!-- ★ Phase 4: x:Name 추가 — 탭 전환 시 Width 조정 -->
+                <ColumnDefinition x:Name="ColTree"
+                                  Width="280" MinWidth="200" MaxWidth="480"/>
+                <ColumnDefinition x:Name="ColSplitter"
+                                  Width="4"/>
                 <ColumnDefinition Width="*" MinWidth="400"/>
             </Grid.ColumnDefinitions>
 
             <!-- ── 좌: 장비 트리 ── -->
-            <Border Grid.Column="0"
+            <!-- ★ Phase 4: x:Name="DeviceTreePanel" 추가 -->
+            <Border x:Name="DeviceTreePanel"
+                    Grid.Column="0"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
 
-                <!-- ★ Phase 2: DeviceTreeView 배치 -->
-                <tree:DeviceTreeView x:Name="DeviceTreePanel"
+                <tree:DeviceTreeView x:Name="DeviceTreeViewPanel"
                                      DataContext="{Binding DeviceTree}"/>
 
             </Border>
 
             <!-- ── 구분선 (드래그 가능) ── -->
-            <GridSplitter Grid.Column="1"
+            <!-- ★ Phase 4: x:Name="GridSplitter1" 추가 -->
+            <GridSplitter x:Name="GridSplitter1"
+                          Grid.Column="1"
                           Width="4"
                           HorizontalAlignment="Stretch"
                           Background="{DynamicResource BorderBrush}"
                           Cursor="SizeWE"
                           ShowsPreview="True"/>
 
-            <!-- ── 우: 편집 영역 ── -->
+            <!-- ── 우: 편집 영역 / 라이브러리 영역 ── -->
             <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
 
-                <!-- 편집 탭 컨텐츠 -->
-                <Border x:Name="EditorArea" Background="{DynamicResource BgBrush}">
-                    <Grid>
+                <!--
+                ★ Phase 4: 우측 영역을 두 레이어로 분리
+                  DeviceEditorGrid : 장비 관리 탭 전용 (기존 편집기 패널)
+                  LibraryArea      : 스케일/알람/통신 탭 공용 (ContentControl)
+                  탭 전환 시 Visibility 와 ColTree.Width 를 코드비하인드에서 제어
+                -->
 
-                        <!-- 선택 없을 때 플레이스홀더 -->
-                        <StackPanel VerticalAlignment="Center"
-                                    HorizontalAlignment="Center"
-                                    Opacity="0.4">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SelectedEditor}" Value="{x:Null}">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </StackPanel.Style>
-                            <TextBlock Text="⚙"
-                                       FontSize="48"
-                                       HorizontalAlignment="Center"
-                                       Foreground="{DynamicResource Text3Brush}"/>
-                            <TextBlock Text="장비를 선택하면 편집기가 표시됩니다"
-                                       FontSize="14"
-                                       HorizontalAlignment="Center"
-                                       Foreground="{DynamicResource Text2Brush}"
-                                       Margin="0,12,0,0"/>
-                        </StackPanel>
+                <!-- 장비 관리 탭 편집 영역 (Device 탭 전용) -->
+                <Grid x:Name="DeviceEditorGrid"
+                      Background="{DynamicResource BgBrush}">
 
-                        <!--
-                        ★ Fix: NullToVisibilityConverter 가 Window.Resources 에 선언되어야
-                               StaticResource 탐색이 성공함.
-                               기존 코드는 DeviceTreeView.xaml 내부 리소스에만 있었으므로
-                               MainWindow 스코프에서 XamlParseException 발생.
-                        -->
-                        <ContentControl Content="{Binding SelectedEditor}"
-                                        Visibility="{Binding SelectedEditor,
-                                            Converter={StaticResource NullToVisibilityConverter}}"/>
+                    <!-- 선택 없을 때 플레이스홀더 -->
+                    <StackPanel VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Opacity="0.4">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedEditor}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Text="⚙" FontSize="48"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource Text3Brush}"/>
+                        <TextBlock Text="장비를 선택하면 편집기가 표시됩니다"
+                                   FontSize="14" HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   Margin="0,12,0,0"/>
+                    </StackPanel>
 
-                    </Grid>
-                </Border>
+                    <!-- 편집기 ContentControl — DataTemplate 자동 선택 -->
+                    <ContentControl Content="{Binding SelectedEditor}"
+                                    Visibility="{Binding SelectedEditor,
+                                        Converter={StaticResource NullToVisibilityConverter}}"/>
+
+                </Grid>
+
+                <!--
+                ★ Phase 4 신규: 라이브러리 뷰 주입 ContentControl
+                  코드비하인드에서 Content = _scaleView / _alarmView / _commView 로 교체
+                  Device 탭에서는 Visibility.Collapsed
+                -->
+                <ContentControl x:Name="LibraryArea"
+                                Visibility="Collapsed"
+                                Background="{DynamicResource BgBrush}"/>
 
             </Grid>
 

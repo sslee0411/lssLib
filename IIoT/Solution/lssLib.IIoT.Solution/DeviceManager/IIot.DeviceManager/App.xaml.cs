@@ -1,15 +1,18 @@
 ﻿// ══════════════════════════════════════════════════════════
 //  IIoT.DeviceManager · App.xaml.cs
 //  역할: 애플리케이션 진입점
-//        ① 테마 초기화 (Phase 0)
+//  Phase 0: 테마 초기화
 //        ② LogManager 시작 (Phase 1)
 //        ③ ConfigInitializer — JSON 파일 존재 보장 (Phase 1 Update)
 //        ④ DI 컨테이너 — Phase 1 서비스 등록
-//  Phase 1 Update: ConfigInitializer 호출 추가
+//  Phase 1: LogManager + ConfigInitializer + DI
+//  Phase 4: ScaleLibraryVM / AlarmLibraryVM / CommLibraryVM DI 등록
 // ══════════════════════════════════════════════════════════
 
 using IIoT.DeviceManager.Core.Config;
+using IIoT.DeviceManager.ViewModels;
 using IIoT.DeviceManager.ViewModels.DeviceTree;
+using IIoT.DeviceManager.ViewModels.Library;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,15 +28,8 @@ public partial class App : Application
     private IServiceProvider? _services;
 
     // §2 ─ 설정 파일 디렉터리 ─────────────────────────────────
-    /// <summary>
-    /// 설정 JSON 파일 저장 경로:
-    ///   실행파일과 동일 디렉터리 / config
-    ///   예) C:\IIoT\DeviceManager\config\
-    /// </summary>
     private static string ConfigDirectory =>
-        Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "Config");
+        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
 
     // §3 ─ 시작 ───────────────────────────────────────────────
     protected override void OnStartup(StartupEventArgs e)
@@ -44,13 +40,11 @@ public partial class App : Application
         _themeSettings = new ThemeSettingsService();
         _themeSettings.LoadAndApply(this);
 
-        // ② LogManager 시작 (Phase 1)
+        // ② LogManager 시작
         _InitLogManager();
-
         LogManager.Instance.Info("App", "IIoT DeviceManager 시작");
 
-        // ③ JSON 설정 파일 존재 보장 (Phase 1 Update)
-        //    config/*.json 없으면 *.json.sample 복사, sample도 없으면 기본값 생성
+        // ③ JSON 설정 파일 존재 보장
         ConfigInitializer.EnsureConfigFiles(ConfigDirectory);
 
         // ④ DI 구성 + 메인 윈도우 표시
@@ -63,13 +57,8 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         LogManager.Instance.Info("App", "IIoT DeviceManager 종료");
-
-        // ① LogManager 비동기 플러시 후 중단
         await LogManager.Instance.StopAsync();
-
-        // ② 테마 이벤트 해제 (Phase 0 규칙)
         _themeSettings?.Dispose();
-
         base.OnExit(e);
     }
 
@@ -78,10 +67,9 @@ public partial class App : Application
     {
         var logConfig = new LogConfig
         {
-            LogRootPath = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory, "logs"),
+            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
             ValidDays = 30,
-            FileFormat = LogFileFormat.Both,   // .txt + .csv 동시 저장
+            FileFormat = LogFileFormat.Both,// .txt + .csv 동시 저장
             MinimumLevel = LogLevel.Debug,
             MaxDisplayCount = 2000,
         };
@@ -94,18 +82,25 @@ public partial class App : Application
         var services = new ServiceCollection();
 
         // ── Phase 1: Config 서비스 ───────────────────────────
-        // 경로를 생성자에 주입하는 팩토리 방식 — ConfigDirectory 는 정적 계산
         services.AddSingleton<JsonWriteService>(
             _ => new JsonWriteService(ConfigDirectory));
-
         services.AddSingleton<JsonConfigLoader>(
             _ => new JsonConfigLoader(ConfigDirectory));
 
-        // ── Views ────────────────────────────────────────────
+        // ── Phase 3: Tree + Editor ViewModels ────────────────
         services.AddSingleton<DeviceTreeViewModel>();
-        services.AddTransient<MainWindow>();
+        services.AddSingleton<MainViewModel>();
 
-        // TODO Phase 2~: ViewModels, DeviceTreeViewModel 등 추가 예정
+        // ── Phase 4: Library ViewModels ★ 신규 ───────────────
+        services.AddSingleton<ScaleLibraryViewModel>(sp =>
+            new ScaleLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
+        services.AddSingleton<AlarmLibraryViewModel>(sp =>
+            new AlarmLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
+        services.AddSingleton<CommLibraryViewModel>(sp =>
+            new CommLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
+
+        // ── Views ────────────────────────────────────────────
+        services.AddTransient<MainWindow>();
 
         return services.BuildServiceProvider();
     }

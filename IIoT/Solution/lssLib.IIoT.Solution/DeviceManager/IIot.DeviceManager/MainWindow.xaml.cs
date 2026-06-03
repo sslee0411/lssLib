@@ -2,12 +2,14 @@
 //  IIoT.DeviceManager · MainWindow.xaml.cs
 //  역할: 메인 윈도우 코드비하인드
 //  Phase 0 : 테마 단축키 + ThemeChanged 구독
-//  Phase 1 : Core 기반
-//  Phase 2 : DeviceTree 상태바 바인딩 ← 현재
-//  수정    : 2025-05-22
+//  Phase 2 : DeviceTree 상태바 바인딩
+//  Phase 4 : 탭 전환 → ColTree.Width + LibraryArea.Content 교체
 // ══════════════════════════════════════════════════════════
-using System;
+
+using IIoT.DeviceManager.Core.Config;
 using IIoT.DeviceManager.ViewModels.DeviceTree;
+using IIoT.DeviceManager.ViewModels.Library;
+using IIoT.DeviceManager.Views.Library;
 using IIoT.UI.Themes;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,115 +20,215 @@ namespace IIoT.DeviceManager;
 public partial class MainWindow : Window
 {
     // §1 ─ 필드 ──────────────────────────────────────────────
-
     private readonly DeviceTreeViewModel _deviceTree;
+    private readonly JsonConfigLoader _configLoader;
+    private readonly ScaleLibraryViewModel _scaleVm;
+    private readonly AlarmLibraryViewModel _alarmVm;
+    private readonly CommLibraryViewModel _commVm;
+
+    // ★ Phase 4: 라이브러리 뷰 인스턴스 (재사용, DataContext는 생성자에서 주입)
+    private readonly ScaleLibraryView _scaleView = new();
+    private readonly AlarmRuleView _alarmView = new();
+    private readonly CommLibraryView _commView = new();
+
+    private string _activeTab = "Device";
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
-
-    /// <summary>DI에서 DeviceTreeViewModel 주입.</summary>
-    public MainWindow(DeviceTreeViewModel deviceTree)
+    public MainWindow(
+        DeviceTreeViewModel deviceTree,
+        JsonConfigLoader configLoader,
+        ScaleLibraryViewModel scaleVm,
+        AlarmLibraryViewModel alarmVm,
+        CommLibraryViewModel commVm)
     {
         _deviceTree = deviceTree;
-        InitializeComponent();
+        _configLoader = configLoader;
+        _scaleVm = scaleVm;
+        _alarmVm = alarmVm;
+        _commVm = commVm;
 
-        // DataContext 설정 — DeviceTreeView 가 Binding DeviceTree 를 찾을 수 있도록
+        InitializeComponent();
         DataContext = this;
 
-        // ★ Phase 0 규칙: ThemeChanged 구독 — OnClosed에서 반드시 해제
+        // ★ Phase 4: 라이브러리 뷰 DataContext 연결
+        _scaleView.DataContext = _scaleVm;
+        _alarmView.DataContext = _alarmVm;
+        _commView.DataContext = _commVm;
+
+        // Phase 0 규칙: ThemeChanged 구독 — OnClosed에서 반드시 해제
         ThemeManager.ThemeChanged += OnThemeChanged;
 
         // Phase 2: 트리 선택 변경 → 상태바 동기화
         _deviceTree.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(DeviceTreeViewModel.SelectedNode))
-                UpdateStatusBar();
+                _UpdateStatusBar();
             if (e.PropertyName == nameof(DeviceTreeViewModel.TotalNodeCount))
                 TxtNodeCount.Text = _deviceTree.TotalNodeCount.ToString();
         };
+
+        // Device 탭 기본 활성화 (BtnTabDevice 하이라이트)
+        _ActivateTab("Device");
     }
 
     // §3 ─ 바인딩용 속성 (DataContext = this) ─────────────────
-
-    /// <summary>DeviceTreeView DataContext 바인딩용</summary>
     public DeviceTreeViewModel DeviceTree => _deviceTree;
 
-    // §4 ─ 테마 이벤트 핸들러 ──────────────────────────────────
+    /// <summary>
+    /// Phase 5에서 MainViewModel.SelectedEditor 로 교체 예정.
+    /// 현재는 null 반환 → DeviceEditorGrid 플레이스홀더 표시.
+    /// </summary>
+    public object? SelectedEditor => null;
 
-    private void OnThemeChanged(ThemeKind kind)
-    {
-        // DynamicResource 가 자동 처리 — 현재 추가 작업 없음
-        TxtStatus.Text = $"테마 변경: {kind}";
-    }
-
-    // §5 ─ 키보드 단축키 ──────────────────────────────────────
-
-    protected override void OnKeyDown(KeyEventArgs e)
-    {
-        base.OnKeyDown(e);
-
-        // ★ Phase 0 규칙: AllThemes 인덱스 기반 순환 — enum 산술 절대 금지
-        switch (e.Key)
-        {
-            // Ctrl+T: 다음 테마
-            case Key.T when Keyboard.Modifiers == ModifierKeys.Control:
-                NavigateTheme(+1);
-                e.Handled = true;
-                break;
-
-            // Ctrl+Shift+T: 이전 테마
-            case Key.T when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
-                NavigateTheme(-1);
-                e.Handled = true;
-                break;
-
-            // Ctrl+S: 저장 (Phase 6에서 XmlWriteService 연결 예정)
-            case Key.S when Keyboard.Modifiers == ModifierKeys.Control:
-                OnSaveRequested();
-                e.Handled = true;
-                break;
-        }
-    }
-
-    // §6 ─ 버튼 이벤트 ────────────────────────────────────────
-
-    private void BtnSave_Click(object sender, RoutedEventArgs e)
-        => OnSaveRequested();
+    // §4 ─ 탭 전환 (★ Phase 4 핵심) ──────────────────────────
 
     private void BtnTab_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn) return;
-        TxtStatus.Text = $"탭: {btn.Tag} (Phase 3~5 구현 예정)";
+        _ActivateTab(btn.Tag?.ToString() ?? "Device");
     }
 
-    // §7 ─ 윈도우 생명주기 ────────────────────────────────────
+    /// <summary>
+    /// 탭 전환 처리.
+    ///
+    /// Device 탭:
+    ///   · ColTree, ColSplitter 원래 Width 복원
+    ///   · DeviceTreePanel, GridSplitter1 표시
+    ///   · DeviceEditorGrid 표시, LibraryArea 숨김
+    ///
+    /// Library 탭 (Scale/Alarm/Comm):
+    ///   · ColTree, ColSplitter Width = 0 (전체 너비 확보)
+    ///   · DeviceTreePanel, GridSplitter1 숨김
+    ///   · DeviceEditorGrid 숨김, LibraryArea 표시
+    ///   · LibraryArea.Content 에 해당 뷰 주입
+    /// </summary>
+    private void _ActivateTab(string tabKey)
+    {
+        _activeTab = tabKey;
+        _UpdateTabButtonStyles(tabKey);
 
-    protected override void OnClosed(EventArgs e)
+        if (tabKey == "Device")
+        {
+            // 좌측 트리 패널 복원
+            ColTree.Width = new GridLength(280, GridUnitType.Pixel);
+            ColSplitter.Width = new GridLength(4, GridUnitType.Pixel);
+            DeviceTreePanel.Visibility = Visibility.Visible;
+            GridSplitter1.Visibility = Visibility.Visible;
+
+            // 편집 영역 전환
+            DeviceEditorGrid.Visibility = Visibility.Visible;
+            LibraryArea.Visibility = Visibility.Collapsed;
+            LibraryArea.Content = null;
+
+            TxtStatus.Text = "장비 관리";
+            return;
+        }
+
+        // ── 라이브러리 탭 ─────────────────────────────────────
+        // 좌측 트리 패널 숨김 (라이브러리 뷰 전체 너비 확보)
+        ColTree.Width = new GridLength(0, GridUnitType.Pixel);
+        ColSplitter.Width = new GridLength(0, GridUnitType.Pixel);
+        DeviceTreePanel.Visibility = Visibility.Collapsed;
+        GridSplitter1.Visibility = Visibility.Collapsed;
+
+        // 편집 영역 전환
+        DeviceEditorGrid.Visibility = Visibility.Collapsed;
+        LibraryArea.Visibility = Visibility.Visible;
+
+        // 탭에 맞는 뷰 + 데이터 주입
+        var bundle = _configLoader.LoadAll();
+
+        switch (tabKey)
+        {
+            case "Scale":
+                _scaleVm.Load(bundle.Scales);
+                LibraryArea.Content = _scaleView;
+                TxtStatus.Text = "스케일 라이브러리";
+                break;
+
+            case "Alarm":
+                _alarmVm.Load(bundle.AlarmRules);
+                LibraryArea.Content = _alarmView;
+                TxtStatus.Text = "알람 규칙 라이브러리";
+                break;
+
+            case "Comm":
+                _commVm.Load(bundle.CommConfigs);
+                LibraryArea.Content = _commView;
+                TxtStatus.Text = "통신 설정 라이브러리";
+                break;
+        }
+    }
+
+    /// <summary>활성 탭 버튼 하이라이트 업데이트</summary>
+    private void _UpdateTabButtonStyles(string activeKey)
+    {
+        foreach (var btn in new[] { BtnTabDevice, BtnTabScale, BtnTabAlarm, BtnTabComm })
+        {
+            bool isActive = btn.Tag?.ToString() == activeKey;
+            btn.FontWeight = isActive ? FontWeights.SemiBold : FontWeights.Normal;
+            btn.BorderThickness = isActive ? new Thickness(0, 0, 0, 2) : new Thickness(0);
+        }
+    }
+
+    // §5 ─ 테마 이벤트 핸들러 ──────────────────────────────────
+    private void OnThemeChanged(ThemeKind kind)
+        => TxtStatus.Text = $"테마 변경: {kind}";
+
+    // §6 ─ 키보드 단축키 ──────────────────────────────────────
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        switch (e.Key)
+        {
+            case Key.T when Keyboard.Modifiers == ModifierKeys.Control:
+                _NavigateTheme(+1); e.Handled = true; break;
+            case Key.T when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
+                _NavigateTheme(-1); e.Handled = true; break;
+            case Key.S when Keyboard.Modifiers == ModifierKeys.Control:
+                _OnSaveRequested(); e.Handled = true; break;
+        }
+    }
+
+    // §7 ─ 버튼 이벤트 ────────────────────────────────────────
+    private void BtnSave_Click(object sender, RoutedEventArgs e)
+        => _OnSaveRequested();
+
+    // §8 ─ 윈도우 생명주기 ────────────────────────────────────
+    protected override void OnClosed(System.EventArgs e)
     {
         // ★ Phase 0 규칙: ThemeChanged 구독 반드시 해제
         ThemeManager.ThemeChanged -= OnThemeChanged;
         base.OnClosed(e);
     }
 
-    // §8 ─ 내부 메서드 ────────────────────────────────────────
+    // §9 ─ 내부 메서드 ────────────────────────────────────────
 
-    /// <summary>테마를 인덱스 기반으로 순환 이동 (AllThemes 리스트 기반)</summary>
-    /// <param name="direction">+1 = 다음, -1 = 이전</param>
-    private static void NavigateTheme(int direction)
+    /// <summary>테마 인덱스 기반 순환 — AllThemes 리스트 기반 (enum 산술 금지)</summary>
+    private static void _NavigateTheme(int direction)
     {
         var list = ThemeManager.AllThemes;
-        var idx  = list.Select((t, i) => (t, i))
+        var idx = list.Select((t, i) => (t, i))
                        .FirstOrDefault(x => x.t.Kind == ThemeManager.Current).i;
         var next = list[((idx + direction) % list.Count + list.Count) % list.Count].Kind;
         ThemeManager.Apply(next);
     }
 
-    private void OnSaveRequested()
+    /// <summary>현재 활성 탭에 맞는 저장 실행</summary>
+    private void _OnSaveRequested()
     {
-        // TODO Phase 6: JsonWriteService / XmlWriteService 연결 예정
-        TxtStatus.Text = "저장 기능은 Phase 6에서 구현됩니다.";
+        switch (_activeTab)
+        {
+            case "Scale": _scaleVm.SaveCommand.Execute(null); break;
+            case "Alarm": _alarmVm.SaveCommand.Execute(null); break;
+            case "Comm": _commVm.SaveCommand.Execute(null); break;
+            default:
+                TxtStatus.Text = "장치 트리 저장은 Phase 5에서 구현됩니다.";
+                break;
+        }
     }
 
-    private void UpdateStatusBar()
+    private void _UpdateStatusBar()
     {
         var node = _deviceTree.SelectedNode;
         TxtSelectedNode.Text = node is null

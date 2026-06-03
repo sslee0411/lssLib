@@ -1,0 +1,209 @@
+<!--
+ ══════════════════════════════════════════════════════════
+  IIoT.DeviceManager · Views/Library/AlarmRuleView.xaml
+  역할: 알람 규칙 라이브러리 편집 패널
+  Phase 4-2
+ ══════════════════════════════════════════════════════════
+-->
+<UserControl
+    x:Class="IIoT.DeviceManager.Views.Library.AlarmRuleView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:conv="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
+    mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter       x:Key="BoolToVisibilityConverter"/>
+        <conv:BoolToVisibilityInvertConverter x:Key="BoolToVisibilityInvertConverter"/>
+        <conv:NullToVisibilityConverter       x:Key="NullToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── 헤더 + 툴바 ── -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="알람 규칙 라이브러리"
+                           FontSize="16" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Text="HH / H / L / LL 4단계 알람 임계값 설정 (alarm-library.json)"
+                           FontSize="11" Foreground="{DynamicResource Text3Brush}" Margin="0,2,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <Button Command="{Binding AddCommand}"
+                        Style="{DynamicResource GhostBtn}"
+                        Content="＋ 추가" Padding="12,5" FontSize="12" Margin="0,0,6,0"/>
+                <Button Command="{Binding DeleteCommand}"
+                        Style="{DynamicResource SecondaryBtn}"
+                        Content="🗑 삭제" Padding="12,5" FontSize="12" Margin="0,0,6,0"
+                        Foreground="{DynamicResource RedBrush}"/>
+                <Button Command="{Binding SaveCommand}"
+                        Style="{DynamicResource PrimaryBtn}"
+                        Content="💾 저장" Padding="16,5" FontSize="12"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ── DataGrid ── -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding SelectedItem}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False" CanUserDeleteRows="False"
+                  GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                  SelectionMode="Single"
+                  Background="{DynamicResource SurfaceBrush}"
+                  RowBackground="{DynamicResource BgBrush}"
+                  AlternatingRowBackground="{DynamicResource CardBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                  RowHeight="32" FontSize="12"
+                  Foreground="{DynamicResource TextBrush}">
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style TargetType="DataGridColumnHeader">
+                    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+                    <Setter Property="FontSize" Value="11"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Padding" Value="8,6"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="이름"
+                    Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                    Width="140"/>
+                <!-- HH — RedBrush -->
+                <DataGridTemplateColumn Header="HH 상한" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding HH, TargetNullValue='-'}"
+                                       Foreground="{DynamicResource RedBrush}"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       VerticalAlignment="Center" Margin="6,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding HH, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+                <!-- H — OrangeBrush -->
+                <DataGridTemplateColumn Header="H 상한" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding H, TargetNullValue='-'}"
+                                       Foreground="{DynamicResource OrangeBrush}"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       VerticalAlignment="Center" Margin="6,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding H, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+                <!-- L — AccBrush -->
+                <DataGridTemplateColumn Header="L 하한" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding L, TargetNullValue='-'}"
+                                       Foreground="{DynamicResource AccBrush}"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       VerticalAlignment="Center" Margin="6,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding L, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+                <!-- LL — Acc2Brush -->
+                <DataGridTemplateColumn Header="LL 하한" Width="80">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding LL, TargetNullValue='-'}"
+                                       Foreground="{DynamicResource Acc2Brush}"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       VerticalAlignment="Center" Margin="6,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding LL, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="DeadBand"
+                    Binding="{Binding DeadBand, UpdateSourceTrigger=PropertyChanged}"
+                    Width="80"/>
+                <DataGridTextColumn Header="메시지 템플릿"
+                    Binding="{Binding Message, UpdateSourceTrigger=PropertyChanged}"
+                    Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- ── 선택 항목 임계값 시각화 바 ── -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1" CornerRadius="6"
+                Padding="14,10" Margin="0,10,0,0"
+                Visibility="{Binding HasSelection,
+                    Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel>
+                <TextBlock Text="📊 알람 레벨 요약"
+                           FontSize="11" FontWeight="Bold"
+                           Foreground="{DynamicResource Text3Brush}" Margin="0,0,0,8"/>
+                <TextBlock Text="{Binding SelectedItem.ActiveLevels}"
+                           FontSize="13" FontFamily="{DynamicResource MonoFont}"
+                           Foreground="{DynamicResource TextBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ── 상태바 ── -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0" Padding="8,4" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                           FontSize="11" Foreground="{DynamicResource Text2Brush}"/>
+                <TextBlock Grid.Column="1" FontSize="11"
+                           Foreground="{DynamicResource YellowBrush}" Margin="0,0,4,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasChanges}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Setter Property="Text" Value="● 미저장 변경사항"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
