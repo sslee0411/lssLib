@@ -6,7 +6,13 @@
 //  Phase 4 : 탭 전환 → ColTree.Width + LibraryArea.Content 교체
 //  Phase 5 : DataContext = MainViewModel 교체
 //            Ctrl+S → SaveDeviceTreeCommand 실동작
-//            앱 시작 시 device.json 자동 로드
+//            앱 시작 시 device.json 자동 로드 (LoadDeviceTreeCommand)
+//
+//  ★ Phase 5 Fix:
+//    - CommunityToolkit [RelayCommand] 비동기 메서드명 규칙 적용
+//      메서드명 SaveDeviceTree  → 커맨드명 SaveDeviceTreeCommand  (O)
+//      메서드명 LoadDeviceTree  → 커맨드명 LoadDeviceTreeCommand  (O)
+//      (기존 SaveDeviceTreeAsyncCommand / LoadDeviceTreeAsyncCommand 는 오류)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.DeviceManager.Core.Config;
@@ -26,9 +32,9 @@ public partial class MainWindow : Window
     // §1 ─ 필드 ──────────────────────────────────────────────
 
     // ★ Phase 5: MainViewModel 직접 보관 (DataContext 이기도 함)
-    private readonly MainViewModel     _mainVm;
-    private readonly DeviceTreeViewModel _deviceTree;
-    private readonly JsonConfigLoader  _configLoader;
+    private readonly MainViewModel        _mainVm;
+    private readonly DeviceTreeViewModel  _deviceTree;
+    private readonly JsonConfigLoader     _configLoader;
     private readonly ScaleLibraryViewModel _scaleVm;
     private readonly AlarmLibraryViewModel _alarmVm;
     private readonly CommLibraryViewModel  _commVm;
@@ -43,7 +49,7 @@ public partial class MainWindow : Window
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public MainWindow(
-        MainViewModel          mainViewModel,   // ★ Phase 5: 직접 주입
+        MainViewModel          mainViewModel,   // ★ Phase 5
         DeviceTreeViewModel    deviceTree,
         JsonConfigLoader       configLoader,
         ScaleLibraryViewModel  scaleVm,
@@ -67,7 +73,7 @@ public partial class MainWindow : Window
         _alarmView.DataContext = _alarmVm;
         _commView.DataContext  = _commVm;
 
-        // Phase 0 규칙: ThemeChanged 구독 — OnClosed에서 반드시 해제
+        // Phase 0: ThemeChanged 구독 — OnClosed에서 반드시 해제
         ThemeManager.ThemeChanged += OnThemeChanged;
 
         // Phase 2: 트리 선택 변경 → 상태바 동기화
@@ -90,9 +96,11 @@ public partial class MainWindow : Window
         _ActivateTab("Device");
 
         // ★ Phase 5: 앱 시작 시 device.json 자동 로드
+        //   커맨드명: LoadDeviceTreeCommand
+        //   (CommunityToolkit [RelayCommand] → 메서드명 LoadDeviceTree → 커맨드명 LoadDeviceTreeCommand)
         Loaded += async (_, _) =>
         {
-            await _mainVm.LoadDeviceTreeAsyncCommand.ExecuteAsync(null);
+            await _mainVm.LoadDeviceTreeCommand.ExecuteAsync(null);
             TxtNodeCount.Text = _deviceTree.TotalNodeCount.ToString();
         };
     }
@@ -105,11 +113,6 @@ public partial class MainWindow : Window
         _ActivateTab(btn.Tag?.ToString() ?? "Device");
     }
 
-    /// <summary>
-    /// 탭 전환 처리.
-    /// Device 탭: 트리 + 편집기 영역 표시
-    /// Library 탭: 트리 숨김, 라이브러리 뷰 표시
-    /// </summary>
     private void _ActivateTab(string tabKey)
     {
         _activeTab = tabKey;
@@ -128,7 +131,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 라이브러리 탭
         ColTree.Width     = new GridLength(0, GridUnitType.Pixel);
         ColSplitter.Width = new GridLength(0, GridUnitType.Pixel);
         DeviceTreePanel.Visibility  = Visibility.Collapsed;
@@ -168,7 +170,7 @@ public partial class MainWindow : Window
         }
     }
 
-    // §4 ─ 테마 이벤트 핸들러 ──────────────────────────────────
+    // §4 ─ 테마 이벤트 ────────────────────────────────────────
 
     private void OnThemeChanged(ThemeKind kind)
         => TxtStatus.Text = $"테마 변경: {kind}";
@@ -184,12 +186,10 @@ public partial class MainWindow : Window
                 _NavigateTheme(+1);
                 e.Handled = true;
                 break;
-
             case Key.T when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift):
                 _NavigateTheme(-1);
                 e.Handled = true;
                 break;
-
             case Key.S when Keyboard.Modifiers == ModifierKeys.Control:
                 _OnSaveRequested();
                 e.Handled = true;
@@ -206,14 +206,12 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(System.EventArgs e)
     {
-        // Phase 0 규칙: ThemeChanged 구독 반드시 해제
         ThemeManager.ThemeChanged -= OnThemeChanged;
         base.OnClosed(e);
     }
 
     // §8 ─ 내부 메서드 ────────────────────────────────────────
 
-    /// <summary>테마 인덱스 기반 순환 — AllThemes 리스트 기반 (enum 산술 금지)</summary>
     private static void _NavigateTheme(int direction)
     {
         var list = ThemeManager.AllThemes;
@@ -223,28 +221,20 @@ public partial class MainWindow : Window
         ThemeManager.Apply(next);
     }
 
-    /// <summary>현재 활성 탭에 맞는 저장 실행</summary>
     private void _OnSaveRequested()
     {
         switch (_activeTab)
         {
-            // ★ Phase 5: Device 탭 저장 → SaveDeviceTreeCommand 실동작
+            // ★ Phase 5: 커맨드명 SaveDeviceTreeCommand
+            //   (CommunityToolkit [RelayCommand] → 메서드명 SaveDeviceTree → SaveDeviceTreeCommand)
             case "Device":
-                if (_mainVm.SaveDeviceTreeAsyncCommand.CanExecute(null))
-                    _mainVm.SaveDeviceTreeAsyncCommand.Execute(null);
+                if (_mainVm.SaveDeviceTreeCommand.CanExecute(null))
+                    _mainVm.SaveDeviceTreeCommand.Execute(null);
                 break;
 
-            case "Scale":
-                _scaleVm.SaveCommand.Execute(null);
-                break;
-
-            case "Alarm":
-                _alarmVm.SaveCommand.Execute(null);
-                break;
-
-            case "Comm":
-                _commVm.SaveCommand.Execute(null);
-                break;
+            case "Scale": _scaleVm.SaveCommand.Execute(null); break;
+            case "Alarm": _alarmVm.SaveCommand.Execute(null); break;
+            case "Comm":  _commVm.SaveCommand.Execute(null);  break;
         }
     }
 
