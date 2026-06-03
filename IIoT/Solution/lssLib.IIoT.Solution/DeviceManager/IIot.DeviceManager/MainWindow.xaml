@@ -7,10 +7,9 @@
      Phase 3 : 편집기 DataTemplate 매핑
      Phase 3F: XamlParseException 수정 — NullToVisibilityConverter Window.Resources 추가
      Phase 4 : 탭 전환 → 라이브러리 뷰 교체
-               ① ColumnDefinition x:Name 추가 (ColTree, ColSplitter)
-               ② DeviceTreePanel x:Name 추가
-               ③ GridSplitter1 x:Name 추가
-               ④ 우측 영역 — DeviceEditorGrid + LibraryArea 분리
+     Phase 5 : DataContext = MainViewModel 교체
+               상태바 — HasUnsavedChanges 바인딩 추가
+               버전 v0.5-Phase5 으로 갱신
      ══════════════════════════════════════════════════════════ -->
 
 <Window x:Class="IIoT.DeviceManager.MainWindow"
@@ -33,9 +32,9 @@
     <Window.Resources>
 
         <!--
-        ★ Phase 3 Fix: NullToVisibilityConverter
-          DeviceTreeView.xaml 의 UserControl.Resources 에도 선언되어 있으나
-          MainWindow 스코프에서는 별도 선언 필요
+        ★ Phase 3 Fix: NullToVisibilityConverter 를 Window 스코프에 선언
+          DeviceTreeView.UserControl.Resources 에도 있지만
+          MainWindow 스코프에서 편집기 ContentControl 이 참조하므로 반드시 중복 선언 필요
         -->
         <conv:NullToVisibilityConverter       x:Key="NullToVisibilityConverter"/>
         <conv:BoolToVisibilityConverter       x:Key="BoolToVisibilityConverter"/>
@@ -138,6 +137,7 @@
 
         <!-- ──────────────────────────────────────────────────────
              상태바 (하단, 24px)
+             Phase 5: HasUnsavedChanges 미저장 표시 추가
              ────────────────────────────────────────────────────── -->
         <StatusBar DockPanel.Dock="Bottom"
                    Height="24"
@@ -176,8 +176,30 @@
                            FontSize="11" Foreground="{DynamicResource Text2Brush}"/>
             </StatusBarItem>
 
+            <!--
+            ★ Phase 5 신규: 미저장 변경사항 표시
+              DataContext = MainViewModel 이므로 HasUnsavedChanges 직접 바인딩
+            -->
+            <StatusBarItem>
+                <TextBlock FontSize="11"
+                           Foreground="{DynamicResource YellowBrush}"
+                           Margin="8,0,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Setter Property="Text"       Value="● 미저장 변경사항"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StatusBarItem>
+
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="v0.4-Phase4"
+                <TextBlock Text="v0.5-Phase5"
                            FontSize="10" Foreground="{DynamicResource Text3Brush}"
                            Margin="0,0,8,0"/>
             </StatusBarItem>
@@ -186,16 +208,9 @@
 
         <!-- ──────────────────────────────────────────────────────
              본문 — 좌(트리) + 구분선 + 우(편집 or 라이브러리)
-             ★ Phase 4:
-               ColTree / ColSplitter — x:Name 추가 (탭 전환 시 Width 조정)
-               DeviceTreePanel       — x:Name 추가 (Visibility 제어)
-               GridSplitter1         — x:Name 추가 (Visibility 제어)
-               DeviceEditorGrid      — Device 탭 전용 편집기 영역
-               LibraryArea           — Scale/Alarm/Comm 탭 뷰 주입 ContentControl
              ────────────────────────────────────────────────────── -->
         <Grid>
             <Grid.ColumnDefinitions>
-                <!-- ★ Phase 4: x:Name 추가 — 탭 전환 시 Width 조정 -->
                 <ColumnDefinition x:Name="ColTree"
                                   Width="280" MinWidth="200" MaxWidth="480"/>
                 <ColumnDefinition x:Name="ColSplitter"
@@ -204,20 +219,22 @@
             </Grid.ColumnDefinitions>
 
             <!-- ── 좌: 장비 트리 ── -->
-            <!-- ★ Phase 4: x:Name="DeviceTreePanel" 추가 -->
             <Border x:Name="DeviceTreePanel"
                     Grid.Column="0"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
 
+                <!--
+                ★ Phase 5: DataContext = MainViewModel
+                  DeviceTree 프로퍼티로 DeviceTreeViewModel 에 바인딩
+                -->
                 <tree:DeviceTreeView x:Name="DeviceTreeViewPanel"
                                      DataContext="{Binding DeviceTree}"/>
 
             </Border>
 
-            <!-- ── 구분선 (드래그 가능) ── -->
-            <!-- ★ Phase 4: x:Name="GridSplitter1" 추가 -->
+            <!-- ── 구분선 ── -->
             <GridSplitter x:Name="GridSplitter1"
                           Grid.Column="1"
                           Width="4"
@@ -229,14 +246,7 @@
             <!-- ── 우: 편집 영역 / 라이브러리 영역 ── -->
             <Grid Grid.Column="2">
 
-                <!--
-                ★ Phase 4: 우측 영역을 두 레이어로 분리
-                  DeviceEditorGrid : 장비 관리 탭 전용 (기존 편집기 패널)
-                  LibraryArea      : 스케일/알람/통신 탭 공용 (ContentControl)
-                  탭 전환 시 Visibility 와 ColTree.Width 를 코드비하인드에서 제어
-                -->
-
-                <!-- 장비 관리 탭 편집 영역 (Device 탭 전용) -->
+                <!-- 장비 관리 탭 편집 영역 -->
                 <Grid x:Name="DeviceEditorGrid"
                       Background="{DynamicResource BgBrush}">
 
@@ -263,18 +273,17 @@
                                    Margin="0,12,0,0"/>
                     </StackPanel>
 
-                    <!-- 편집기 ContentControl — DataTemplate 자동 선택 -->
+                    <!--
+                    ★ Phase 5: DataContext = MainViewModel
+                      SelectedEditor 가 MainViewModel.SelectedEditor 에 직접 바인딩됨
+                    -->
                     <ContentControl Content="{Binding SelectedEditor}"
                                     Visibility="{Binding SelectedEditor,
                                         Converter={StaticResource NullToVisibilityConverter}}"/>
 
                 </Grid>
 
-                <!--
-                ★ Phase 4 신규: 라이브러리 뷰 주입 ContentControl
-                  코드비하인드에서 Content = _scaleView / _alarmView / _commView 로 교체
-                  Device 탭에서는 Visibility.Collapsed
-                -->
+                <!-- 라이브러리 뷰 주입 ContentControl -->
                 <ContentControl x:Name="LibraryArea"
                                 Visibility="Collapsed"
                                 Background="{DynamicResource BgBrush}"/>

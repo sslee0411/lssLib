@@ -1,12 +1,11 @@
-﻿// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  IIoT.DeviceManager · App.xaml.cs
 //  역할: 애플리케이션 진입점
 //  Phase 0: 테마 초기화
-//        ② LogManager 시작 (Phase 1)
-//        ③ ConfigInitializer — JSON 파일 존재 보장 (Phase 1 Update)
-//        ④ DI 컨테이너 — Phase 1 서비스 등록
 //  Phase 1: LogManager + ConfigInitializer + DI
 //  Phase 4: ScaleLibraryVM / AlarmLibraryVM / CommLibraryVM DI 등록
+//  Phase 5: MainViewModel 생성자에 JsonWriteService 추가 주입
+//           MainWindow 생성자에 MainViewModel 직접 주입
 // ══════════════════════════════════════════════════════════
 
 using IIoT.DeviceManager.Core.Config;
@@ -67,10 +66,10 @@ public partial class App : Application
     {
         var logConfig = new LogConfig
         {
-            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
-            ValidDays = 30,
-            FileFormat = LogFileFormat.Both,// .txt + .csv 동시 저장
-            MinimumLevel = LogLevel.Debug,
+            LogRootPath    = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
+            ValidDays      = 30,
+            FileFormat     = LogFileFormat.Both,
+            MinimumLevel   = LogLevel.Debug,
             MaxDisplayCount = 2000,
         };
         LogManager.Instance.Start(logConfig);
@@ -89,9 +88,15 @@ public partial class App : Application
 
         // ── Phase 3: Tree + Editor ViewModels ────────────────
         services.AddSingleton<DeviceTreeViewModel>();
-        services.AddSingleton<MainViewModel>();
 
-        // ── Phase 4: Library ViewModels ★ 신규 ───────────────
+        // ★ Phase 5: MainViewModel 생성자에 JsonWriteService 추가
+        services.AddSingleton<MainViewModel>(sp => new MainViewModel(
+            sp.GetRequiredService<DeviceTreeViewModel>(),
+            sp.GetRequiredService<JsonConfigLoader>(),
+            sp.GetRequiredService<JsonWriteService>()  // ← Phase 5 추가
+        ));
+
+        // ── Phase 4: Library ViewModels ──────────────────────
         services.AddSingleton<ScaleLibraryViewModel>(sp =>
             new ScaleLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
         services.AddSingleton<AlarmLibraryViewModel>(sp =>
@@ -100,7 +105,15 @@ public partial class App : Application
             new CommLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
 
         // ── Views ────────────────────────────────────────────
-        services.AddTransient<MainWindow>();
+        // ★ Phase 5: MainWindow 생성자에 MainViewModel 직접 주입
+        services.AddTransient<MainWindow>(sp => new MainWindow(
+            sp.GetRequiredService<MainViewModel>(),
+            sp.GetRequiredService<DeviceTreeViewModel>(),
+            sp.GetRequiredService<JsonConfigLoader>(),
+            sp.GetRequiredService<ScaleLibraryViewModel>(),
+            sp.GetRequiredService<AlarmLibraryViewModel>(),
+            sp.GetRequiredService<CommLibraryViewModel>()
+        ));
 
         return services.BuildServiceProvider();
     }

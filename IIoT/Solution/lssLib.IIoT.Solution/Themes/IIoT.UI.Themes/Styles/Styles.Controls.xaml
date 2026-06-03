@@ -1,7 +1,13 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.UI.Themes · Styles/Styles.Controls.xaml
      버튼·TextBox·ComboBox·CheckBox 공통 스타일
-     수정: 2025-05-22 — SecondaryBtn · GhostBtn 추가 (미정의 → 런타임 오류 수정)
+     수정: 2025-05-22 — SecondaryBtn · GhostBtn 추가
+     수정: 2025-05-28 Phase 5
+       ★ ModernTextBox / ModernComboBox 별칭 추가
+         DeviceEditorView / PlcEditorView / TagEditorView / SensorEditorView 에서
+         {DynamicResource ModernTextBox}, {DynamicResource ModernComboBox} 로 참조.
+         실제 구현은 PropInput / PropCombo 와 동일한 스타일을 가리킴.
+         (기존 스타일 키 변경 없이 별칭으로 호환성 유지)
      ══════════════════════════════════════════════════════════ -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -87,9 +93,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §3 ─ 보조 버튼 (SecondaryBtn) ← 신규 추가
-         AccBrush 테두리 + 배경 투명, Foreground AccBrush
-         DeviceTreeView 삭제버튼 · MainWindow 저장버튼에서 사용
+         §3 ─ 보조 버튼 (SecondaryBtn)
     ════════════════════════════════════════════ -->
     <Style x:Key="SecondaryBtn" TargetType="Button">
         <Setter Property="Background"       Value="Transparent"/>
@@ -131,9 +135,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §4 ─ 고스트 버튼 (GhostBtn) ← 신규 추가
-         배경 없음, 테두리 없음, 아이콘+텍스트 툴바용
-         DeviceTreeView 툴바 버튼 전체에서 사용
+         §4 ─ 고스트 버튼 (GhostBtn)
     ════════════════════════════════════════════ -->
     <Style x:Key="GhostBtn" TargetType="Button">
         <Setter Property="Background"       Value="Transparent"/>
@@ -179,7 +181,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §5 ─ 위험 버튼 (DangerBtn) — 롤백, 삭제
+         §5 ─ 위험 버튼 (DangerBtn)
     ════════════════════════════════════════════ -->
     <Style x:Key="DangerBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
         <Setter Property="Foreground"  Value="{DynamicResource RedBrush}"/>
@@ -187,7 +189,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §6 ─ 성공 버튼 (SuccessBtn) — 확인, 연결 테스트
+         §6 ─ 성공 버튼 (SuccessBtn)
     ════════════════════════════════════════════ -->
     <Style x:Key="SuccessBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
         <Setter Property="Foreground"  Value="{DynamicResource GreenBrush}"/>
@@ -195,7 +197,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §7 ─ 적용 버튼 (ApplyBtn) — 속성 패널 하단
+         §7 ─ 적용 버튼 (ApplyBtn)
     ════════════════════════════════════════════ -->
     <Style x:Key="ApplyBtn" TargetType="Button">
         <Setter Property="Background"      Value="{DynamicResource AccBrush}"/>
@@ -231,7 +233,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §8 ─ 트리 소형 버튼 (TreeBtn) — + 그룹, + 장비 등
+         §8 ─ 트리 소형 버튼 (TreeBtn)
     ════════════════════════════════════════════ -->
     <Style x:Key="TreeBtn" TargetType="Button" BasedOn="{StaticResource ToolbarBtn}">
         <Setter Property="Padding"   Value="7,3"/>
@@ -279,14 +281,21 @@
         </Setter>
     </Style>
 
-    <!-- Mono 폰트 TextBox (주소, 수식, 수치 전용) -->
+    <!--
+    ★★ Phase 5 신규: ModernTextBox 별칭 ★★
+    DeviceEditorView / PlcEditorView / TagEditorView / SensorEditorView 에서
+    Style="{DynamicResource ModernTextBox}" 로 참조.
+    PropInput 과 동일 구현 — 기존 키 변경 없이 별칭으로 호환성 유지.
+    -->
+    <Style x:Key="ModernTextBox" TargetType="TextBox" BasedOn="{StaticResource PropInput}"/>
+
+    <!-- Mono 폰트 TextBox -->
     <Style x:Key="MonoPropInput" TargetType="TextBox" BasedOn="{StaticResource PropInput}">
         <Setter Property="FontFamily" Value="{DynamicResource MonoFont}"/>
     </Style>
 
     <!-- ════════════════════════════════════════════
          §10 ─ ComboBox (PropCombo) — Full ControlTemplate
-               (Styles.Controls.xaml v1.4 이후 기존 동일)
     ════════════════════════════════════════════ -->
     <Style x:Key="PropCombo" TargetType="ComboBox">
         <Setter Property="Background"       Value="{DynamicResource CardBrush}"/>
@@ -382,9 +391,6 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>
                         </Trigger>
-                        <Trigger Property="IsGrouping" Value="True">
-                            <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
-                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -444,6 +450,13 @@
         </Setter>
     </Style>
 
+    <!--
+    ★★ Phase 5 신규: ModernComboBox 별칭 ★★
+    DeviceEditorView 에서 Style="{DynamicResource ModernComboBox}" 로 참조.
+    PropCombo 와 동일 구현.
+    -->
+    <Style x:Key="ModernComboBox" TargetType="ComboBox" BasedOn="{StaticResource PropCombo}"/>
+
     <!-- ════════════════════════════════════════════
          §11 ─ CheckBox
     ════════════════════════════════════════════ -->
@@ -458,10 +471,17 @@
          §12 ─ 구분선
     ════════════════════════════════════════════ -->
     <Style x:Key="DividerLine" TargetType="Separator">
-        <Setter Property="Background"   Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="Height"       Value="1"/>
-        <Setter Property="Margin"       Value="0,10"/>
+        <Setter Property="Background"      Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="Height"          Value="1"/>
+        <Setter Property="Margin"          Value="0,10"/>
         <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+
+    <!-- Divider Border 스타일 (Layout.xaml 에 있으나 Controls 에서도 자주 쓰임) -->
+    <Style x:Key="Divider" TargetType="Border">
+        <Setter Property="Height"     Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="Margin"     Value="0,10"/>
     </Style>
 
 </ResourceDictionary>

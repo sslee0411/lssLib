@@ -1,7 +1,13 @@
 <!-- ══════════════════════════════════════════════════════════
-     IIoT.DeviceManager · Themes/Styles.TreeView.xaml
+     IIoT.UI.Themes · Styles/Styles.TreeView.xaml
      역할: 장비 트리 TreeView / TreeViewItem 전체 스타일
      생성: 2025-05-16
+     수정: 2025-05-28 Phase 5
+       ★ 테마 깨짐 버그 수정
+         TreeViewItem Template 의 Trigger Setter 에서
+         StaticResource → DynamicResource 일괄 교체
+         (AccFaintBrush, AccBrush, Text2Brush, TextBrush,
+          Border2Brush, CardBrush 모두 해당)
      ══════════════════════════════════════════════════════════ -->
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,12 +21,13 @@
         <Setter Property="BorderThickness"  Value="0"/>
         <Setter Property="Padding"          Value="4"/>
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
-        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+        <Setter Property="VirtualizingPanel.IsVirtualizing"      Value="True"/>
+        <Setter Property="VirtualizingPanel.VirtualizationMode"  Value="Recycling"/>
     </Style>
 
     <!-- ════════════════════════════════════════════
          §2 ─ TreeViewItem (핵심)
+         ★ Phase 5 Fix: 모든 Trigger Setter.Value → DynamicResource
     ════════════════════════════════════════════ -->
     <Style x:Key="DeviceTreeItem" TargetType="TreeViewItem">
         <Setter Property="Background"    Value="Transparent"/>
@@ -31,7 +38,6 @@
         <Setter Property="Cursor"        Value="Hand"/>
         <Setter Property="IsExpanded"    Value="True"/>
 
-        <!-- 토글 버튼 숨김 (아이콘으로 대체) -->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TreeViewItem">
@@ -44,11 +50,11 @@
                                 Margin="0,1">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>  <!-- 토글 -->
-                                    <ColumnDefinition Width="*"/>     <!-- 콘텐츠 -->
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <!-- 확장/축소 토글 (삼각형) -->
+                                <!-- 확장/축소 토글 -->
                                 <ToggleButton x:Name="toggle"
                                               Grid.Column="0"
                                               Width="14" Height="14"
@@ -103,11 +109,21 @@
                         <Trigger Property="IsExpanded" Value="True">
                             <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible"/>
                         </Trigger>
+
+                        <!--
+                        ★ Phase 5 Fix: 호버 / 선택 Trigger 를 모두 DynamicResource 로 교체
+                           기존 StaticResource 는 스타일 첫 로드 시점에만 값을 가져오므로
+                           ThemeManager.Apply() 로 테마를 교체해도 갱신되지 않음.
+                           DynamicResource 는 매 렌더 사이클마다 현재 사전에서 조회하므로
+                           테마 전환이 즉시 반영됨.
+                        -->
+
                         <!-- 호버 -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="rowBorder" Property="Background"
                                     Value="{DynamicResource CardBrush}"/>
                         </Trigger>
+
                         <!-- 선택됨 -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="rowBorder" Property="Background"
@@ -115,6 +131,7 @@
                             <Setter Property="Foreground"
                                     Value="{DynamicResource AccBrush}"/>
                         </Trigger>
+
                         <!-- 선택 + 호버 -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
@@ -124,6 +141,7 @@
                             <Setter TargetName="rowBorder" Property="Background"
                                     Value="{DynamicResource AccFaintBrush}"/>
                         </MultiTrigger>
+
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -131,25 +149,21 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §3 ─ 트리 노드 아이콘 + 텍스트 DataTemplate 헬퍼
-              TreeNodeViewModel에서 사용하는 표준 행 구조
+         §3 ─ 트리 노드 스타일 헬퍼
     ════════════════════════════════════════════ -->
 
-    <!-- 트리 행 아이콘 -->
     <Style x:Key="TreeNodeIcon" TargetType="TextBlock">
         <Setter Property="FontSize"  Value="13"/>
         <Setter Property="Margin"    Value="0,0,6,0"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- 트리 행 이름 -->
     <Style x:Key="TreeNodeName" TargetType="TextBlock">
         <Setter Property="FontSize"   Value="{DynamicResource FontBase}"/>
         <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- 트리 행 그룹 이름 (굵게) -->
     <Style x:Key="TreeGroupName" TargetType="TextBlock"
            BasedOn="{StaticResource TreeNodeName}">
         <Setter Property="FontWeight" Value="SemiBold"/>
@@ -157,7 +171,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §4 ─ 태그 목록 행 (수집 프로그램 좌 패널)
+         §4 ─ 태그 목록 행
     ════════════════════════════════════════════ -->
     <Style x:Key="TagListRow" TargetType="Border">
         <Setter Property="Background"   Value="Transparent"/>
@@ -192,7 +206,7 @@
     </Style>
 
     <!-- ════════════════════════════════════════════
-         §5 ─ 알람 목록 행 (모니터링 좌 패널)
+         §5 ─ 알람 목록 행
     ════════════════════════════════════════════ -->
     <Style x:Key="AlarmRowHH" TargetType="Border">
         <Setter Property="Background"      Value="{DynamicResource RedFaintBrush}"/>

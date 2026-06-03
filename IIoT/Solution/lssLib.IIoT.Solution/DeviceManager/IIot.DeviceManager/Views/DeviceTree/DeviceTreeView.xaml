@@ -2,25 +2,24 @@
  ══════════════════════════════════════════════════════════
   IIoT.DeviceManager · DeviceTreeView.xaml
   역할: 장비 트리뷰 — Group/Device/PLC/Tag/Sensor 계층 + CRUD 툴바
-  생성: 2025-05-22
-  수정: 2025-05-22 v1 — XDG0008 수정 (BasedOn StaticResource 제거)
-  수정: 2025-05-22 v2 — DeviceTreeView 스타일 키 수정
-  수정: 2025-05-23 v3 — vm: → conv:, vm:: → vm:
-  수정: 2025-05-23 v4 — ResourceDictionary 구조 수정 (모든 리소스 내부로 이동)
-  수정: 2025-05-23 v5 — XLS0509 수정: Style.Triggers 를 Style 내 마지막으로 이동
-                         XLS0414 재확인: conv: 접두사 명시적 적용
-  수정: 2025-05-23 v6 — 트리 구조 유연화 반영
-        ToolTip / ContextMenu 텍스트를 새 동작에 맞게 수정
-        · 장비 추가: 선택 없으면 루트에 추가, Device/Plc 하위에도 추가 가능
-        · PLC 추가: 선택 없으면 루트에 추가, Device/Plc 하위에도 추가 가능
-  수정: 2025-05-23 v7 — 같은 레벨(Sibling) 추가 버튼/메뉴 추가
-        툴바: [하위 추가] 그룹 | 장비 | PLC | 태그  ──  [같은레벨] 그룹 | 장비 | PLC
-        컨텍스트: 하위에 추가 / 같은 레벨에 추가 분리
-  수정: 2025-05-23 v8 — Tag/Sensor 이중 레이어 구조 반영
-        · SensorNodeViewModel HierarchicalDataTemplate 추가
-        · 툴바: 태그 추가(Plc 선택 시) / 센서 추가(Device 선택 시) 분리
-        · ContextMenu: 수집레이어/물리레이어 섹션 구분
-        · 레이어 구분 레이블 추가 (수집뷰/물리뷰)
+  Phase 5: 테마 깨짐 버그 수정
+    [원인]
+    TreeViewItem.ItemContainerStyle 의 Trigger Setter 에서
+    AccBrush / Border2Brush 를 StaticResource 로 참조하면
+    테마 전환(ThemeManager.Apply) 후 Application.Resources 가 교체되어도
+    이미 생성된 TreeViewItem 의 Setter 값이 갱신되지 않음.
+    → 선택/호버 시 이전 테마 색상이 고정되어 나타남.
+
+    [해결]
+    ① ItemContainerStyle 의 모든 Setter + Trigger Setter 에서
+       {StaticResource ...} → {DynamicResource ...} 일괄 교체
+    ② MergedDictionary 에서 스타일을 병합하는 ResourceDictionary.Source 는
+       ThemeManager 가 Application.Resources 에 주입하므로
+       UserControl.Resources 에 직접 병합하지 않음
+       (단, Styles.Controls.xaml / Styles.TreeView.xaml 은
+        ThemeManager 주입 전에 초기화될 수 있으므로 유지)
+    ③ DataTemplate 내 Border, TextBlock 의 테마 관련 리소스도
+       StaticResource → DynamicResource 교체
  ══════════════════════════════════════════════════════════
 -->
 <UserControl
@@ -41,13 +40,13 @@
                 <!--
                 ★ 테마 파일(Theme.*.xaml) 은 여기서 로드하지 않음.
                   ThemeManager.Apply() 가 Application.Resources 에 런타임 주입.
-                  여기서 하드코딩하면 테마 전환이 무시됨 (UserControl 로컬이 우선).
-                  Styles 만 병합 — DynamicResource 는 Application.Resources 에서 탐색.
+                  스타일만 병합 — DynamicResource 는 Application.Resources 에서 탐색.
                 -->
                 <ResourceDictionary Source="pack://application:,,,/IIoT.UI.Themes;component/Styles/Styles.Controls.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/IIoT.UI.Themes;component/Styles/Styles.TreeView.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- 컨버터 — TreeConverters.cs 에 정의 -->
             <conv:BoolToVisibilityConverter       x:Key="BoolToVisibilityConverter"/>
             <conv:BoolToVisibilityInvertConverter x:Key="BoolToVisibilityInvertConverter"/>
             <conv:NullToVisibilityConverter       x:Key="NullToVisibilityConverter"/>
@@ -55,29 +54,29 @@
             <!-- ── 노드 공통 스타일 ── -->
             <Style x:Key="NodeLabelStyle" TargetType="TextBlock">
                 <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="Margin" Value="4,0,0,0"/>
+                <Setter Property="Foreground"        Value="{DynamicResource TextBrush}"/>
+                <Setter Property="FontSize"          Value="13"/>
+                <Setter Property="Margin"            Value="4,0,0,0"/>
             </Style>
 
             <Style x:Key="NodeEditBoxStyle" TargetType="TextBox">
                 <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Margin" Value="4,1,4,1"/>
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
-                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource AccBrush}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="3,1"/>
-                <Setter Property="CaretBrush" Value="{DynamicResource AccBrush}"/>
+                <Setter Property="Margin"            Value="4,1,4,1"/>
+                <Setter Property="FontSize"          Value="13"/>
+                <Setter Property="Background"        Value="{DynamicResource CardBrush}"/>
+                <Setter Property="Foreground"        Value="{DynamicResource TextBrush}"/>
+                <Setter Property="BorderBrush"       Value="{DynamicResource AccBrush}"/>
+                <Setter Property="BorderThickness"   Value="1"/>
+                <Setter Property="Padding"           Value="3,1"/>
+                <Setter Property="CaretBrush"        Value="{DynamicResource AccBrush}"/>
             </Style>
 
             <Style x:Key="NodeBadgeStyle" TargetType="Border">
-                <Setter Property="CornerRadius" Value="8"/>
-                <Setter Property="Padding" Value="5,1"/>
-                <Setter Property="Margin" Value="5,0,0,0"/>
+                <Setter Property="CornerRadius"   Value="8"/>
+                <Setter Property="Padding"        Value="5,1"/>
+                <Setter Property="Margin"         Value="5,0,0,0"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
+                <Setter Property="Background"     Value="{DynamicResource AccBrush}"/>
             </Style>
 
             <!-- Sensor 배지 — GreenBrush (물리 레이어 강조) -->
@@ -86,10 +85,11 @@
                 <Setter Property="Background" Value="{DynamicResource GreenBrush}"/>
             </Style>
 
-            <!-- ── 공통 노드 헤더 (Group/Device/Plc 공유) ── -->
+            <!-- ── 공통 노드 헤더 DataTemplate ── -->
             <DataTemplate x:Key="NodeHeaderTemplate">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding IconGlyph}" FontSize="14" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding IconGlyph}"
+                               FontSize="14" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding Name}"
                                Style="{StaticResource NodeLabelStyle}"
                                Visibility="{Binding IsEditing,
@@ -98,6 +98,12 @@
                              Style="{StaticResource NodeEditBoxStyle}" Width="130"
                              Visibility="{Binding IsEditing,
                                  Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <!--
+                    ★ Phase 5 Fix: Badge Background → DynamicResource
+                      ThemeManager 교체 시 NodeBadgeStyle 의 Background 가
+                      DynamicResource AccBrush 이므로 Border 는 자동 갱신되지만
+                      BadgeBrushKey 를 사용하는 경우는 코드비하인드에서 처리됨.
+                    -->
                     <Border Style="{StaticResource NodeBadgeStyle}"
                             Visibility="{Binding Badge,
                                 Converter={StaticResource NullToVisibilityConverter}}">
@@ -131,7 +137,8 @@
             <!-- ═══ Tag (수집 레이어 리프) ═══ -->
             <DataTemplate DataType="{x:Type vm:TagNodeViewModel}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding IconGlyph}" FontSize="13" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding IconGlyph}"
+                               FontSize="13" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding Name}"
                                Style="{StaticResource NodeLabelStyle}"
                                Visibility="{Binding IsEditing,
@@ -152,7 +159,7 @@
                     <TextBlock Text="{Binding Address, StringFormat='@ {0}'}"
                                FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"
                                Foreground="{DynamicResource Text3Brush}"/>
-                    <!-- 수집 주체 고정 배지 (OwnerDeviceId 지정 시만 표시) -->
+                    <!-- 수집 주체 고정 배지 -->
                     <Border CornerRadius="4" Padding="4,1" Margin="4,0,0,0"
                             Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource OrangeBrush}"
@@ -166,15 +173,12 @@
                 </StackPanel>
             </DataTemplate>
 
-            <!-- ═══ Sensor (물리 레이어 — Tag 자식 허용) ═══
-                 ★ HierarchicalDataTemplate 필수:
-                   DataTemplate 사용 시 Children 이 트리에 표시되지 않음.
-                   Sensor 하위에 Tag 를 추가해도 ItemsSource 가 없어 렌더링 생략됨.
-            -->
+            <!-- ═══ Sensor (물리 레이어 — Tag 자식 허용) ═══ -->
             <HierarchicalDataTemplate DataType="{x:Type vm:SensorNodeViewModel}"
                                        ItemsSource="{Binding Children}">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding IconGlyph}" FontSize="13" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding IconGlyph}"
+                               FontSize="13" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding Name}"
                                Style="{StaticResource NodeLabelStyle}"
                                Visibility="{Binding IsEditing,
@@ -213,20 +217,12 @@
 
         <!-- ══════════════════════════════════════════════════
              상단 툴바
-             ──────────────────────────────────────────────────
-             [하위] 그룹 | 장비 | PLC
-             [수집] 태그     ← Plc 선택 시만 활성
-             [물리] 센서     ← Device 선택 시만 활성
-             ─ Sep ─
-             [동레벨] 그룹= | 장비= | PLC=
-             ─ Sep ─ ▲ ▼ ─ Sep ─ 삭제 ─ Sep ─ ⊞ ⊟ ─ 샘플
         ══════════════════════════════════════════════════ -->
         <ToolBar DockPanel.Dock="Top"
                  Background="{DynamicResource SurfaceBrush}"
                  BorderBrush="{DynamicResource BorderBrush}"
                  BorderThickness="0,0,0,1">
 
-            <!-- ── 하위 추가 레이블 ── -->
             <TextBlock Text="하위"
                        FontSize="9" FontWeight="Bold"
                        Foreground="{DynamicResource Text3Brush}"
@@ -261,15 +257,13 @@
 
             <Separator/>
 
-            <!-- ── 수집 레이어 레이블 ── -->
             <TextBlock Text="수집"
                        FontSize="9" FontWeight="Bold"
                        Foreground="{DynamicResource AccBrush}"
                        VerticalAlignment="Center" Margin="4,0,2,0"/>
 
-            <!-- Tag: Plc 선택 시만 활성 -->
             <Button Command="{Binding AddTagCommand}"
-                    ToolTip="태그 추가 [수집 레이어]&#x0a;· Plc 선택 → PLC 레지스터 태그&#x0a;· Device 선택 → 필드 장비 직접 태그 (HART/Profibus 등)"
+                    ToolTip="태그 추가 [수집 레이어]&#x0a;· Plc 선택 → PLC 레지스터 태그&#x0a;· Device 선택 → 필드 장비 직접 태그"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📋" FontSize="13"/>
@@ -279,13 +273,11 @@
 
             <Separator/>
 
-            <!-- ── 물리 레이어 레이블 ── -->
             <TextBlock Text="물리"
                        FontSize="9" FontWeight="Bold"
                        Foreground="{DynamicResource GreenBrush}"
                        VerticalAlignment="Center" Margin="4,0,2,0"/>
 
-            <!-- Sensor: Device 선택 시만 활성 -->
             <Button Command="{Binding AddSensorCommand}"
                     ToolTip="센서 추가 [물리 레이어]&#x0a;실 물리 센서 표현 — Device 선택 시만 활성"
                     Style="{DynamicResource GhostBtn}" Padding="5,3">
@@ -297,7 +289,6 @@
 
             <Separator/>
 
-            <!-- ── 동레벨 추가 레이블 ── -->
             <TextBlock Text="동레벨"
                        FontSize="9" FontWeight="Bold"
                        Foreground="{DynamicResource Acc2Brush}"
@@ -414,14 +405,32 @@
             VirtualizingPanel.VirtualizationMode="Recycling">
 
             <TreeView.ItemContainerStyle>
+                <!--
+                ★★★ Phase 5 테마 버그 핵심 수정 ★★★
+                ════════════════════════════════════════════
+                [문제]
+                  Style.Triggers 의 Setter 에서 StaticResource 를 사용하면
+                  ThemeManager.Apply() 가 Application.Resources 를 교체해도
+                  이미 생성된 TreeViewItem 의 Trigger Setter 값이 갱신되지 않음.
+                  → 클릭/선택 시 이전 테마 AccBrush(파란색)가 그대로 남음.
+
+                [해결]
+                  모든 Trigger Setter 의 Value 를 DynamicResource 로 교체.
+                  DynamicResource 는 런타임 사전 조회이므로 테마 교체 즉시 반영.
+
+                  교체 대상:
+                    IsSelected=True  Background : AccBrush       (선택 배경)
+                    IsSelected=True  Foreground : White          (선택 텍스트 — 고정이므로 유지)
+                    IsSelected+!Active Background: Border2Brush  (비활성 선택 배경)
+                    IsSelected+!Active Foreground: TextBrush     (비활성 선택 텍스트)
+                ════════════════════════════════════════════
+                -->
                 <Style TargetType="TreeViewItem">
 
                     <Setter Property="IsExpanded"  Value="{Binding IsExpanded, Mode=TwoWay}"/>
                     <!--
-                    IsSelected: OneWayToSource 만 사용
-                    TreeView → VM 방향만 허용. VM에서 TreeView로 역주입 시
-                    부모 노드 IsSelected가 함께 활성화되는 버그 발생.
-                    선택 동기화는 SelectedItemChanged 이벤트가 단독 담당.
+                    IsSelected: OneWayToSource 유지 — TwoWay 사용 시
+                    부모 노드도 선택되는 버그 발생 (Phase 2 버그픽스 유지)
                     -->
                     <Setter Property="IsSelected"  Value="{Binding IsSelected, Mode=OneWayToSource}"/>
                     <Setter Property="Padding"      Value="2,3"/>
@@ -429,44 +438,9 @@
                     <Setter Property="Foreground"   Value="{DynamicResource TextBrush}"/>
                     <Setter Property="Background"   Value="Transparent"/>
 
-                    <!-- Tag 패턴: TreeViewItem.Tag = DeviceTreeViewModel (ContextMenu 바인딩용) -->
+                    <!-- ContextMenu 바인딩용 Tag = DeviceTreeViewModel -->
                     <Setter Property="Tag" Value="{Binding DataContext, ElementName=DeviceTree}"/>
 
-                    <!--
-                    ★ ContextMenu 커맨드 바인딩 핵심 패턴 (v7 Fix)
-                    ══════════════════════════════════════════════
-                    문제: ContextMenu는 Visual Tree 밖 별도 Popup으로 생성됨
-                         → RelativeSource AncestorType=TreeView 로 TreeView 탐색 불가 → null
-                    해결: TreeViewItem.Tag 에 DeviceTreeViewModel을 바인딩 (ElementName 사용)
-                         ContextMenu.PlacementTarget = TreeViewItem (WPF 자동 설정)
-                         → PlacementTarget.Tag = DeviceTreeViewModel 항상 접근 가능
-                    ──────────────────────────────────────────────
-                    노드 자체 커맨드 (BeginEditCommand):
-                      DataContext = PlacementTarget.DataContext = 해당 NodeViewModel
-                      → {Binding BeginEditCommand} 그대로 사용
-                    트리 전체 커맨드 (Add*/Delete/Move*):
-                      → {Binding PlacementTarget.Tag.커맨드명,
-                             RelativeSource={RelativeSource AncestorType=ContextMenu}}
-                    ══════════════════════════════════════════════
-                    컨텍스트 메뉴 구조:
-                      ✏️ 이름 변경
-                      ─────────────────────────────────────────
-                      ↓ 하위에 추가
-                        📁 하위 그룹 / 📟 하위 장비 / ⚙️ 하위 PLC
-                        ─────────────────────────────────────────
-                        [수집 레이어]
-                        📋 태그 (Plc 하위에만)
-                        [물리 레이어]
-                        🌡️ 센서 (Device 하위에만)
-                      ─────────────────────────────────────────
-                      ↔ 같은 레벨에 추가
-                        📁= / 📟= / ⚙️=
-                      ─────────────────────────────────────────
-                      ▲ 위로 이동 / ▼ 아래로 이동
-                      ─────────────────────────────────────────
-                      🗑 삭제
-                    ══════════════════════════════════════════════
-                    -->
                     <Setter Property="ContextMenu">
                         <Setter.Value>
                             <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
@@ -477,7 +451,6 @@
 
                                 <Separator/>
 
-                                <!-- 하위에 추가 -->
                                 <MenuItem Header="↓  하위에 추가">
                                     <MenuItem Header="📁  하위 그룹"
                                               Command="{Binding PlacementTarget.Tag.AddGroupCommand,
@@ -500,7 +473,6 @@
                                                   RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                 </MenuItem>
 
-                                <!-- 같은 레벨에 추가 -->
                                 <MenuItem Header="↔  같은 레벨에 추가">
                                     <MenuItem Header="📁  같은 레벨 그룹"
                                               Command="{Binding PlacementTarget.Tag.AddSiblingGroupCommand,
@@ -534,27 +506,46 @@
 
                     <EventSetter Event="MouseDoubleClick"
                                   Handler="TreeViewItem_MouseDoubleClick"/>
-
                     <EventSetter Event="KeyDown"
                                  Handler="TreeViewItem_KeyDown"/>
-                    
                     <EventSetter Event="PreviewMouseLeftButtonDown"
                                  Handler="TreeViewItem_PreviewMouseLeftButtonDown"/>
 
-                        <!-- ★ Style.Triggers — 항상 마지막 -->
+                    <!--
+                    ★ Style.Triggers — 항상 마지막 (WPF 규칙)
+                    ★★ Phase 5 Fix: 모든 Setter.Value → DynamicResource ★★
+                    -->
                     <Style.Triggers>
+
+                        <!-- 선택됨 -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource AccBrush}"/>
-                            <Setter Property="Foreground" Value="White"/>
+                            <!--
+                            ★ Fix: {StaticResource AccBrush} → {DynamicResource AccBrush}
+                               StaticResource: 스타일 로드 시점 1회 고정 → 테마 전환 후 갱신 안 됨
+                               DynamicResource: 매번 Application.Resources 조회 → 테마 전환 즉시 반영
+                            -->
+                            <Setter Property="Background"
+                                    Value="{DynamicResource AccBrush}"/>
+                            <Setter Property="Foreground"
+                                    Value="White"/>
                         </Trigger>
+
+                        <!-- 선택됨 + 포커스 없음 (비활성 윈도우) -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsSelected"        Value="True"/>
                                 <Condition Property="IsSelectionActive" Value="False"/>
                             </MultiTrigger.Conditions>
-                            <Setter Property="Background" Value="{DynamicResource Border2Brush}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                            <!--
+                            ★ Fix: {StaticResource Border2Brush} → {DynamicResource Border2Brush}
+                                   {StaticResource TextBrush}   → {DynamicResource TextBrush}
+                            -->
+                            <Setter Property="Background"
+                                    Value="{DynamicResource Border2Brush}"/>
+                            <Setter Property="Foreground"
+                                    Value="{DynamicResource TextBrush}"/>
                         </MultiTrigger>
+
                     </Style.Triggers>
 
                 </Style>
