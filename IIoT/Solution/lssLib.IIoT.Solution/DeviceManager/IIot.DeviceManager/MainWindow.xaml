@@ -1,15 +1,15 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.DeviceManager · MainWindow.xaml
-     역할: 메인 레이아웃 — 헤더 + 좌(장비트리) + 우(편집/라이브러리) + 상태바
-     Phase 0 : 테마 통합 (DynamicResource 전용, ThemePickerButton)
-     Phase 1 : Core 기반 구조
-     Phase 2 : DeviceTreeView 좌측 패널 통합
-     Phase 3 : 편집기 DataTemplate 매핑
-     Phase 3F: XamlParseException 수정 — NullToVisibilityConverter Window.Resources 추가
-     Phase 4 : 탭 전환 → 라이브러리 뷰 교체
-     Phase 5 : DataContext = MainViewModel 교체
-               상태바 — HasUnsavedChanges 바인딩 추가
-               버전 v0.5-Phase5 으로 갱신
+     역할: 통합 레이아웃 — 헤더 + 좌(트리) + 우(노드별 동적 패널)
+     Phase 5R: 전면 재설계 (트리↔라이브러리 통합)
+     Fix: MC3024 — SubTabBtn Style 중복 설정 오류 수정
+       원인: Window.Resources 의 SubTabBtn 스타일에 Style.Triggers 로
+             DataTrigger 를 선언하면, ItemsControl DataTemplate 내부
+             Button 에서 Style="{StaticResource SubTabBtn}" 을 지정할 때
+             WPF 가 "Style 속성이 이미 설정됨" 오류 발생.
+       해결: SubTabBtn 스타일에서 Style.Triggers(DataTrigger) 를 제거하고
+             ItemsControl ItemTemplate 의 Button 에 직접 Style 태그로
+             BasedOn + DataTrigger 를 포함한 완전한 스타일을 인라인 선언.
      ══════════════════════════════════════════════════════════ -->
 
 <Window x:Class="IIoT.DeviceManager.MainWindow"
@@ -20,27 +20,24 @@
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
         xmlns:tree="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
         xmlns:ed="clr-namespace:IIoT.DeviceManager.Views.Editors"
+        xmlns:lib="clr-namespace:IIoT.DeviceManager.Views.Library"
         xmlns:vm="clr-namespace:IIoT.DeviceManager.ViewModels.Editors"
+        xmlns:vmlib="clr-namespace:IIoT.DeviceManager.ViewModels.Library"
+        xmlns:vmain="clr-namespace:IIoT.DeviceManager.ViewModels"
         xmlns:conv="clr-namespace:IIoT.DeviceManager.Views.DeviceTree"
         mc:Ignorable="d"
         Title="IIoT Device Manager"
-        Width="1280" Height="800"
-        MinWidth="900" MinHeight="600"
+        Width="1400" Height="860"
+        MinWidth="1000" MinHeight="640"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
 
     <Window.Resources>
-
-        <!--
-        ★ Phase 3 Fix: NullToVisibilityConverter 를 Window 스코프에 선언
-          DeviceTreeView.UserControl.Resources 에도 있지만
-          MainWindow 스코프에서 편집기 ContentControl 이 참조하므로 반드시 중복 선언 필요
-        -->
         <conv:NullToVisibilityConverter       x:Key="NullToVisibilityConverter"/>
         <conv:BoolToVisibilityConverter       x:Key="BoolToVisibilityConverter"/>
         <conv:BoolToVisibilityInvertConverter x:Key="BoolToVisibilityInvertConverter"/>
 
-        <!-- 편집기 DataTemplate 매핑 — ContentControl 이 자동으로 View 선택 -->
+        <!-- ── DataTemplate 자동 라우팅 ── -->
         <DataTemplate DataType="{x:Type vm:DeviceEditorViewModel}">
             <ed:DeviceEditorView/>
         </DataTemplate>
@@ -53,31 +50,84 @@
         <DataTemplate DataType="{x:Type vm:SensorEditorViewModel}">
             <ed:SensorEditorView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vmlib:ScaleLibraryViewModel}">
+            <lib:ScaleLibraryView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmlib:AlarmLibraryViewModel}">
+            <lib:AlarmRuleView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmlib:CommLibraryViewModel}">
+            <lib:CommLibraryView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmain:TagListSummaryViewModel}">
+            <lib:TagListSummaryView/>
+        </DataTemplate>
+
+        <!--
+        ★ Fix MC3024: SubTabBtn 에서 Style.Triggers(DataTrigger) 완전 제거.
+          DataTrigger 는 ItemsControl.ItemTemplate 의 Button 인라인 Style 에만 선언.
+          Style 속성은 한 번만 설정 가능하므로,
+          BasedOn + Triggers 를 포함한 완전한 스타일을 인라인으로 작성해야 함.
+
+          SubTabBtn 은 순수 기반 스타일만 정의 (Triggers 없음).
+        -->
+        <Style x:Key="SubTabBtn" TargetType="Button">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
+            <Setter Property="Foreground"      Value="{DynamicResource Text2Brush}"/>
+            <Setter Property="Padding"         Value="14,8"/>
+            <Setter Property="FontSize"        Value="12"/>
+            <Setter Property="FontWeight"      Value="Normal"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              TextBlock.FontWeight="{TemplateBinding FontWeight}"
+                                              TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="root" Property="Background"
+                                        Value="{DynamicResource CardBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="root" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <!-- ★ Style.Triggers 없음 — DataTrigger 는 사용처 인라인에서 처리 -->
+        </Style>
 
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
 
-        <!-- ──────────────────────────────────────────────────────
+        <!-- ════════════════════════════════════════════════
              헤더 (48px)
-             ────────────────────────────────────────────────────── -->
-        <Border DockPanel.Dock="Top"
-                Height="48"
+             ════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top" Height="48"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
-
             <DockPanel Margin="12,0">
 
-                <!-- 좌: 앱 타이틀 -->
+                <!-- 좌: 타이틀 -->
                 <StackPanel DockPanel.Dock="Left"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="⚙"
-                               FontSize="18"
+                            Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="⚙" FontSize="18"
                                Foreground="{DynamicResource AccBrush}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0"/>
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBlock Text="IIoT Device Manager"
                                FontSize="15" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextBrush}"
@@ -85,105 +135,80 @@
                     <Border Background="{DynamicResource AccBrush}"
                             CornerRadius="4" Padding="5,2"
                             Margin="10,0,0,0" VerticalAlignment="Center" Opacity="0.85">
-                        <TextBlock Text="DEV" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Text="v0.5" FontSize="9" FontWeight="Bold" Foreground="White"/>
                     </Border>
                 </StackPanel>
 
                 <!-- 우: 저장 + 테마 -->
                 <StackPanel DockPanel.Dock="Right"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
+                            Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{DynamicResource SecondaryBtn}"
-                            Content="💾 저장"
+                            Content="💾 저장 (Ctrl+S)"
                             Margin="0,0,8,0" Padding="10,4" FontSize="12"
-                            Click="BtnSave_Click"
-                            ToolTip="Ctrl+S — 설정 저장"/>
+                            Click="BtnSave_Click"/>
                     <uc:ThemePickerButton VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- 중: 탭 메뉴 -->
+                <!-- 중: 상단 탭 메뉴 -->
                 <StackPanel Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center">
-
+                            VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Button x:Name="BtnTabDevice"
-                            Content="장비 관리"
+                            Content="🏭 장비 관리"
                             Style="{DynamicResource GhostBtn}"
                             FontSize="13" Padding="14,6"
                             Click="BtnTab_Click" Tag="Device"/>
-
                     <Button x:Name="BtnTabScale"
-                            Content="스케일 설정"
+                            Content="📐 스케일 관리"
                             Style="{DynamicResource GhostBtn}"
                             FontSize="13" Padding="14,6" Margin="2,0,0,0"
                             Click="BtnTab_Click" Tag="Scale"/>
-
                     <Button x:Name="BtnTabAlarm"
-                            Content="알람 규칙"
+                            Content="🔔 알람 규칙"
                             Style="{DynamicResource GhostBtn}"
                             FontSize="13" Padding="14,6" Margin="2,0,0,0"
                             Click="BtnTab_Click" Tag="Alarm"/>
-
                     <Button x:Name="BtnTabComm"
-                            Content="통신 설정"
+                            Content="🔌 통신 설정"
                             Style="{DynamicResource GhostBtn}"
                             FontSize="13" Padding="14,6" Margin="2,0,0,0"
                             Click="BtnTab_Click" Tag="Comm"/>
-
                 </StackPanel>
-
             </DockPanel>
         </Border>
 
-        <!-- ──────────────────────────────────────────────────────
+        <!-- ════════════════════════════════════════════════
              상태바 (하단, 24px)
-             Phase 5: HasUnsavedChanges 미저장 표시 추가
-             ────────────────────────────────────────────────────── -->
-        <StatusBar DockPanel.Dock="Bottom"
-                   Height="24"
+             ════════════════════════════════════════════════ -->
+        <StatusBar DockPanel.Dock="Bottom" Height="24"
                    Background="{DynamicResource SurfaceBrush}"
                    BorderBrush="{DynamicResource BorderBrush}"
                    BorderThickness="0,1,0,0">
-
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="선택:"
-                               FontSize="11" Foreground="{DynamicResource Text3Brush}" Margin="0,0,4,0"/>
-                    <TextBlock x:Name="TxtSelectedNode"
-                               Text="없음"
+                    <TextBlock Text="선택:" FontSize="11"
+                               Foreground="{DynamicResource Text3Brush}" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtSelectedNode" Text="없음"
                                FontSize="11" Foreground="{DynamicResource Text2Brush}"/>
                 </StackPanel>
             </StatusBarItem>
-
             <Separator/>
-
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="노드:"
-                               FontSize="11" Foreground="{DynamicResource Text3Brush}" Margin="0,0,4,0"/>
-                    <TextBlock x:Name="TxtNodeCount"
-                               Text="0"
+                    <TextBlock Text="노드:" FontSize="11"
+                               Foreground="{DynamicResource Text3Brush}" Margin="0,0,4,0"/>
+                    <TextBlock x:Name="TxtNodeCount" Text="0"
                                FontSize="11" FontFamily="{DynamicResource MonoFont}"
                                Foreground="{DynamicResource AccBrush}"/>
                 </StackPanel>
             </StatusBarItem>
-
             <Separator/>
-
             <StatusBarItem>
-                <TextBlock x:Name="TxtStatus"
-                           Text="준비"
+                <TextBlock x:Name="TxtStatus" Text="준비"
                            FontSize="11" Foreground="{DynamicResource Text2Brush}"/>
             </StatusBarItem>
-
-            <!--
-            ★ Phase 5 신규: 미저장 변경사항 표시
-              DataContext = MainViewModel 이므로 HasUnsavedChanges 직접 바인딩
-            -->
             <StatusBarItem>
                 <TextBlock FontSize="11"
-                           Foreground="{DynamicResource YellowBrush}"
-                           Margin="8,0,0,0">
+                           Foreground="{DynamicResource YellowBrush}" Margin="8,0,0,0">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -197,99 +222,315 @@
                     </TextBlock.Style>
                 </TextBlock>
             </StatusBarItem>
-
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="v0.5-Phase5"
+                <TextBlock Text="IIoT DeviceManager v0.5-Phase5R"
                            FontSize="10" Foreground="{DynamicResource Text3Brush}"
                            Margin="0,0,8,0"/>
             </StatusBarItem>
-
         </StatusBar>
 
-        <!-- ──────────────────────────────────────────────────────
-             본문 — 좌(트리) + 구분선 + 우(편집 or 라이브러리)
-             ────────────────────────────────────────────────────── -->
-        <Grid>
+        <!-- ════════════════════════════════════════════════
+             본문 — 트리 + 동적 우측 패널
+             ════════════════════════════════════════════════ -->
+        <Grid x:Name="DeviceManageArea">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="ColTree"
-                                  Width="280" MinWidth="200" MaxWidth="480"/>
-                <ColumnDefinition x:Name="ColSplitter"
-                                  Width="4"/>
-                <ColumnDefinition Width="*" MinWidth="400"/>
+                                  Width="300" MinWidth="200" MaxWidth="500"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="*" MinWidth="500"/>
             </Grid.ColumnDefinitions>
 
             <!-- ── 좌: 장비 트리 ── -->
-            <Border x:Name="DeviceTreePanel"
-                    Grid.Column="0"
+            <Border Grid.Column="0"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
-
-                <!--
-                ★ Phase 5: DataContext = MainViewModel
-                  DeviceTree 프로퍼티로 DeviceTreeViewModel 에 바인딩
-                -->
                 <tree:DeviceTreeView x:Name="DeviceTreeViewPanel"
                                      DataContext="{Binding DeviceTree}"/>
-
             </Border>
 
             <!-- ── 구분선 ── -->
-            <GridSplitter x:Name="GridSplitter1"
-                          Grid.Column="1"
-                          Width="4"
+            <GridSplitter Grid.Column="1" Width="4"
                           HorizontalAlignment="Stretch"
                           Background="{DynamicResource BorderBrush}"
-                          Cursor="SizeWE"
-                          ShowsPreview="True"/>
+                          Cursor="SizeWE" ShowsPreview="True"/>
 
-            <!-- ── 우: 편집 영역 / 라이브러리 영역 ── -->
-            <Grid Grid.Column="2">
+            <!-- ── 우: 노드별 동적 패널 ── -->
+            <Grid Grid.Column="2" Background="{DynamicResource BgBrush}">
 
-                <!-- 장비 관리 탭 편집 영역 -->
-                <Grid x:Name="DeviceEditorGrid"
-                      Background="{DynamicResource BgBrush}">
+                <!-- ① 대시보드 (노드 미선택) -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer.Style>
+                        <Style TargetType="ScrollViewer">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDashboard}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ScrollViewer.Style>
+                    <StackPanel Margin="24">
+                        <!-- 환영 메시지 -->
+                        <Border Background="{DynamicResource CardBrush}"
+                                BorderBrush="{DynamicResource AccBrush}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="20,16" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="IIoT Device Manager"
+                                           FontSize="18" FontWeight="Bold"
+                                           Foreground="{DynamicResource AccBrush}"/>
+                                <TextBlock Text="좌측 트리에서 노드를 선택하면 해당 노드의 설정 패널이 표시됩니다."
+                                           FontSize="12" Foreground="{DynamicResource Text2Brush}"
+                                           Margin="0,6,0,0"/>
+                                <TextBlock FontSize="11" Margin="0,4,0,0"
+                                           Foreground="{DynamicResource Text3Brush}">
+                                    <Run Text="Device 선택 → 통신 설정 연결  |  Sensor 선택 → 스케일·알람 연결"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
 
-                    <!-- 선택 없을 때 플레이스홀더 -->
-                    <StackPanel VerticalAlignment="Center"
-                                HorizontalAlignment="Center"
-                                Opacity="0.4">
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedEditor}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        <TextBlock Text="⚙" FontSize="48"
-                                   HorizontalAlignment="Center"
-                                   Foreground="{DynamicResource Text3Brush}"/>
-                        <TextBlock Text="장비를 선택하면 편집기가 표시됩니다"
-                                   FontSize="14" HorizontalAlignment="Center"
-                                   Foreground="{DynamicResource Text2Brush}"
-                                   Margin="0,12,0,0"/>
+                        <!-- 통계 카드 -->
+                        <TextBlock Text="프로젝트 현황"
+                                   FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   Margin="0,0,0,12"/>
+                        <UniformGrid Columns="3" Rows="2">
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="16,12" Margin="0,0,8,8">
+                                <StackPanel>
+                                    <TextBlock Text="📟 장비" FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                    <TextBlock Text="{Binding TotalDeviceCount}"
+                                               FontSize="28" FontWeight="Bold"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource AccBrush}"
+                                               Margin="0,4,0,2"/>
+                                    <TextBlock Text="Device" FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="16,12" Margin="0,0,8,8">
+                                <StackPanel>
+                                    <TextBlock Text="📋 태그" FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                    <TextBlock Text="{Binding TotalTagCount}"
+                                               FontSize="28" FontWeight="Bold"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource GreenBrush}"
+                                               Margin="0,4,0,2"/>
+                                    <TextBlock Text="Tag" FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="16,12" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="🌡️ 센서" FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                    <TextBlock Text="{Binding TotalSensorCount}"
+                                               FontSize="28" FontWeight="Bold"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource GreenBrush}"
+                                               Margin="0,4,0,2"/>
+                                    <TextBlock Text="Sensor" FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="16,12" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <TextBlock Text="📐 스케일" FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                    <TextBlock Text="{Binding ScaleLibraryCount}"
+                                               FontSize="28" FontWeight="Bold"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource Acc2Brush}"
+                                               Margin="0,4,0,2"/>
+                                    <TextBlock Text="라이브러리" FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="16,12" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <TextBlock Text="🔔 알람 규칙" FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                    <TextBlock Text="{Binding AlarmLibraryCount}"
+                                               FontSize="28" FontWeight="Bold"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource OrangeBrush}"
+                                               Margin="0,4,0,2"/>
+                                    <TextBlock Text="라이브러리" FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="16,12">
+                                <StackPanel>
+                                    <TextBlock Text="🔌 통신 설정" FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                    <TextBlock Text="{Binding CommLibraryCount}"
+                                               FontSize="28" FontWeight="Bold"
+                                               FontFamily="{DynamicResource MonoFont}"
+                                               Foreground="{DynamicResource YellowBrush}"
+                                               Margin="0,4,0,2"/>
+                                    <TextBlock Text="라이브러리" FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}"/>
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
                     </StackPanel>
+                </ScrollViewer>
 
-                    <!--
-                    ★ Phase 5: DataContext = MainViewModel
-                      SelectedEditor 가 MainViewModel.SelectedEditor 에 직접 바인딩됨
-                    -->
-                    <ContentControl Content="{Binding SelectedEditor}"
-                                    Visibility="{Binding SelectedEditor,
-                                        Converter={StaticResource NullToVisibilityConverter}}"/>
+                <!-- ② 노드 선택 시 — 서브탭 패널 -->
+                <DockPanel>
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDashboard}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
 
-                </Grid>
+                    <!-- 서브탭 헤더 바 -->
+                    <Border DockPanel.Dock="Top"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Height="40">
+                        <DockPanel>
 
-                <!-- 라이브러리 뷰 주입 ContentControl -->
-                <ContentControl x:Name="LibraryArea"
-                                Visibility="Collapsed"
-                                Background="{DynamicResource BgBrush}"/>
+                            <!--
+                            ★ Fix MC3024: 서브탭 버튼 인라인 Style 사용
+                              Button.Style 속성은 한 번만 설정 가능.
+                              Window.Resources 의 SubTabBtn 에 Style.Triggers 로
+                              DataTrigger 를 넣으면 → MC3024 발생.
+
+                              해결: ItemsControl.ItemTemplate 의 Button 에
+                              Style 을 직접(인라인)으로 선언하고,
+                              BasedOn="{StaticResource SubTabBtn}" 으로
+                              기반 스타일을 상속하면서
+                              Style.Triggers 에 DataTrigger 를 추가.
+                              → Style 속성은 인라인 1회만 설정되므로 MC3024 해소.
+                            -->
+                            <ItemsControl ItemsSource="{Binding RightTabs}"
+                                          VerticalAlignment="Stretch">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Header}"
+                                                Command="{Binding DataContext.SelectRightTabCommand,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <!--
+                                            ★ Fix: Style 을 Button 의 직접 자식 요소로 선언
+                                              (Button.Style 속성 setter 를 1번만 사용)
+                                              BasedOn 으로 SubTabBtn 기반 스타일 상속 +
+                                              DataTrigger 로 IsSelected 상태 반영
+                                            -->
+                                            <Button.Style>
+                                                <Style TargetType="Button"
+                                                       BasedOn="{StaticResource SubTabBtn}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}"
+                                                                     Value="True">
+                                                            <Setter Property="BorderBrush"
+                                                                    Value="{DynamicResource AccBrush}"/>
+                                                            <Setter Property="Foreground"
+                                                                    Value="{DynamicResource AccBrush}"/>
+                                                            <Setter Property="FontWeight"
+                                                                    Value="SemiBold"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- 연결 버튼 (Device / Sensor 선택 시만 표시) -->
+                            <StackPanel DockPanel.Dock="Right"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,12,0">
+
+                                <!-- Device 선택 시: 통신 설정 연결 버튼 -->
+                                <Button Content="🔌 통신 연결 적용"
+                                        Padding="10,4" FontSize="11"
+                                        Command="{Binding ApplyCommToDeviceCommand}"
+                                        ToolTip="통신 설정 탭에서 선택한 CommConfig 를 이 장비에 연결합니다">
+                                    <Button.Style>
+                                        <Style TargetType="Button"
+                                               BasedOn="{StaticResource PrimaryBtn}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDeviceMode}"
+                                                             Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- Sensor 선택 시: 스케일/알람 연결 버튼 -->
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSensorMode}"
+                                                             Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <Button Content="📐 스케일 연결"
+                                            Style="{DynamicResource SecondaryBtn}"
+                                            Padding="8,4" FontSize="11" Margin="0,0,6,0"
+                                            Command="{Binding ApplyScaleToSensorCommand}"
+                                            ToolTip="스케일 탭에서 선택한 ScaleConfig 를 이 센서에 연결합니다"/>
+                                    <Button Content="🔔 알람 연결"
+                                            Style="{DynamicResource SecondaryBtn}"
+                                            Padding="8,4" FontSize="11"
+                                            Command="{Binding ApplyAlarmToSensorCommand}"
+                                            ToolTip="알람 탭에서 선택한 AlarmRule 을 이 센서에 연결합니다"/>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- 서브탭 콘텐츠 영역 -->
+                    <ContentControl Content="{Binding RightContent}"
+                                    Background="{DynamicResource BgBrush}"/>
+
+                </DockPanel>
 
             </Grid>
-
         </Grid>
 
     </DockPanel>
