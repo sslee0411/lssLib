@@ -18,7 +18,6 @@
 
 using lssLib.Log;
 using lssLib.Net;
-using lssLib.Net.Config;
 
 namespace IIoT.CollectorRuntime.Protocols;
 

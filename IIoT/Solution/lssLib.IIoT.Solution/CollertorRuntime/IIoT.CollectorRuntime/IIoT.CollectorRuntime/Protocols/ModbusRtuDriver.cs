@@ -8,7 +8,6 @@
 
 using lssLib.Log;
 using lssLib.Net;
-using lssLib.Net.Config;
 
 namespace IIoT.CollectorRuntime.Protocols;
 
@@ -16,13 +15,13 @@ namespace IIoT.CollectorRuntime.Protocols;
 public sealed record ModbusRtuConfig(
     string DriverId,
     string PortName,
-    int BaudRate = 9600,
-    byte UnitId = 1,
-    int TimeoutMs = 2000,
-    int RetryCount = 2,
-    string Parity = "None",
-    int DataBits = 8,
-    int StopBits = 1);
+    int    BaudRate   = 9600,
+    byte   UnitId     = 1,
+    int    TimeoutMs  = 2000,
+    int    RetryCount = 2,
+    string Parity     = "None",
+    int    DataBits   = 8,
+    int    StopBits   = 1);
 
 // ── ModbusRtuDriver ───────────────────────────────────────
 /// <summary>
@@ -33,11 +32,11 @@ public sealed class ModbusRtuDriver : IProtocolDriver
 {
     private const string LogSrc = "ModbusRtuDriver";
     private readonly ModbusRtuConfig _cfg;
-    private RequestResponseChannel? _channel;
+    private RequestResponseChannel?  _channel;
     private bool _disposed;
 
-    public string DriverId => _cfg.DriverId;
-    public bool IsConnected => _channel is not null;
+    public string DriverId    => _cfg.DriverId;
+    public bool   IsConnected => _channel is not null;
 
     public ModbusRtuDriver(ModbusRtuConfig cfg) => _cfg = cfg;
 
@@ -46,10 +45,10 @@ public sealed class ModbusRtuDriver : IProtocolDriver
         try
         {
             var serialCfg = new SerialDeviceConfig(
-                deviceId: 1,
-                name: _cfg.DriverId,
-                portName: _cfg.PortName,
-                baudRate: _cfg.BaudRate);
+                deviceId : 1,
+                name     : _cfg.DriverId,
+                portName : _cfg.PortName,
+                baudRate : _cfg.BaudRate);
 
             var transport = SerialTransport.FromConfig(serialCfg);
             _channel = new RequestResponseChannel(
@@ -96,18 +95,18 @@ public sealed class ModbusRtuDriver : IProtocolDriver
         try
         {
             var tagList = tags.ToList();
-            var values = new Dictionary<string, double>(tagList.Count);
+            var values  = new Dictionary<string, double>(tagList.Count);
 
             // RTU Sequential — 태그 1개씩 순차 처리
             foreach (var tag in tagList)
             {
                 var (fc, addr) = _ParseAddress(tag.Address);
-                byte[] req = _BuildRtuRequest(fc, (ushort)addr, 1);
+                byte[] req     = _BuildRtuRequest(fc, (ushort)addr, 1);
 
                 var result = await _channel.RequestAsync(
                     deviceId: 1, req, ct,
                     timeoutMs: _cfg.TimeoutMs,
-                    retries: _cfg.RetryCount);
+                    retries:   _cfg.RetryCount);
 
                 if (!result.IsOk || result.Data is null || result.Data.Length < 5)
                 {
@@ -157,7 +156,7 @@ public sealed class ModbusRtuDriver : IProtocolDriver
             if (iec >= 40001) return (0x03, iec - 40001);
             if (iec >= 30001) return (0x04, iec - 30001);
             if (iec >= 10001) return (0x02, iec - 10001);
-            if (iec >= 1) return (0x01, iec - 1);
+            if (iec >= 1)     return (0x01, iec - 1);
         }
         return (0x03, 0);
     }
@@ -171,7 +170,7 @@ public sealed class ModbusRtuDriver : IProtocolDriver
             for (int i = 0; i < 8; i++)
             {
                 if ((crc & 0x0001) != 0) { crc >>= 1; crc ^= 0xA001; }
-                else { crc >>= 1; }
+                else                     { crc >>= 1; }
             }
         }
         return crc;
@@ -181,7 +180,7 @@ public sealed class ModbusRtuDriver : IProtocolDriver
     {
         if (data.Length < 4) return false;
         ushort received = (ushort)((data[^1] << 8) | data[^2]);
-        ushort calc = _CalcCrc(data[..^2]);
+        ushort calc     = _CalcCrc(data[..^2]);
         return received == calc;
     }
 
@@ -213,8 +212,8 @@ public sealed class VirtualDriver : IProtocolDriver
     private bool _connected;
     private bool _disposed;
 
-    public string DriverId { get; }
-    public bool IsConnected => _connected;
+    public string DriverId    { get; }
+    public bool   IsConnected => _connected;
 
     public VirtualDriver(string driverId = "Virtual") => DriverId = driverId;
 
@@ -251,8 +250,8 @@ public sealed class VirtualDriver : IProtocolDriver
     {
         if (tag.Address.StartsWith("sim:", StringComparison.OrdinalIgnoreCase))
         {
-            var parts = tag.Address[4..].Split('/');
-            string type = parts[0].ToUpper();
+            var    parts  = tag.Address[4..].Split('/');
+            string type   = parts[0].ToUpper();
             double nowSec = (DateTime.Now - DateTime.Today).TotalSeconds;
 
             return type switch
@@ -284,11 +283,11 @@ public sealed class VirtualDriver : IProtocolDriver
         }
 
         // 일반 주소 → TagId 해시 기반 sin파
-        int seed = Math.Abs(tag.TagId.GetHashCode());
-        double baseVal = (seed % 100) + 50.0;
+        int    seed      = Math.Abs(tag.TagId.GetHashCode());
+        double baseVal   = (seed % 100) + 50.0;
         double amplitude = (seed % 20) + 5.0;
-        double period = (seed % 30) + 20.0;
-        double elapsed = (DateTime.Now - DateTime.Today).TotalSeconds;
+        double period    = (seed % 30) + 20.0;
+        double elapsed   = (DateTime.Now - DateTime.Today).TotalSeconds;
 
         return Math.Round(
             baseVal + amplitude * Math.Sin(2 * Math.PI * elapsed / period), 3);
