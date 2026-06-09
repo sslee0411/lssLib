@@ -62,7 +62,6 @@ public sealed class ModbusTcpDriver : IProtocolDriver
         {
             var tcpCfg = new TcpDeviceConfig(
                 deviceId : 1,
-                name     : _cfg.DriverId,
                 host     : _cfg.Host,
                 port     : _cfg.Port,
                 timeoutMs: _cfg.TimeoutMs);
@@ -126,7 +125,7 @@ public sealed class ModbusTcpDriver : IProtocolDriver
 
                 byte[] request = _BuildReadRequest(fc, (ushort)baseAddr, (ushort)quantity);
                 var result     = await _channel.RequestAsync(
-                    deviceId: 1, request, ct,
+                    request, ct,
                     timeoutMs: _cfg.TimeoutMs,
                     retries:   _cfg.RetryCount);
 

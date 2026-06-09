@@ -11,6 +11,7 @@
 // ══════════════════════════════════════════════════════════
 
 using lssLib.DB;
+using lssLib.DB.Core;       // RelationalDbConfig · DbProviderType · DbParam · RowMapper<T>
 using lssLib.DB.Sqlite;
 using lssLib.Log;
 using lssLib.Messaging;
@@ -191,7 +192,7 @@ public sealed class TagHistoryDb : IAsyncDisposable
     {
         var r = await _histRepo.QueryScalarAsync<long>(
             $"SELECT COUNT(*) FROM {HistoryTable}");
-        return r.IsOk ? r.Value ?? 0 : 0;
+        return r.IsOk ? r.Value ?? 0L : 0L;
     }
 
     // §5 ─ 내부 배치 INSERT ────────────────────────────────────

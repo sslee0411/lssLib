@@ -46,7 +46,6 @@ public sealed class ModbusRtuDriver : IProtocolDriver
         {
             var serialCfg = new SerialDeviceConfig(
                 deviceId : 1,
-                name     : _cfg.DriverId,
                 portName : _cfg.PortName,
                 baudRate : _cfg.BaudRate);
 
@@ -104,7 +103,7 @@ public sealed class ModbusRtuDriver : IProtocolDriver
                 byte[] req     = _BuildRtuRequest(fc, (ushort)addr, 1);
 
                 var result = await _channel.RequestAsync(
-                    deviceId: 1, req, ct,
+                    req, ct,
                     timeoutMs: _cfg.TimeoutMs,
                     retries:   _cfg.RetryCount);
 
