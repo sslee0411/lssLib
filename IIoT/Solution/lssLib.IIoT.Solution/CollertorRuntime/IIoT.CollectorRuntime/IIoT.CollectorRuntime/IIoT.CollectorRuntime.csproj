@@ -16,9 +16,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\Base\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
     <ProjectReference Include="..\..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
   </ItemGroup>
 
 </Project>

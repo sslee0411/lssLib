@@ -13,6 +13,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Utils", "..\..\..\..
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj", "{4AA9DD28-16F5-E1F7-4D76-FF54C14F99B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Messaging", "..\..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj", "{B0306523-A0D6-9757-D225-8A1FAC8E02A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB", "..\..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj", "{2DF1FF1A-FFDC-6383-C303-0043C2361C76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.Sqlite", "..\..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj", "{35171808-57DB-9D62-24B2-01503723257E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Net", "..\..\..\..\..\Base\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj", "{1563BF89-348E-5117-C02E-0C5827942493}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +47,22 @@ Global
 		{4AA9DD28-16F5-E1F7-4D76-FF54C14F99B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4AA9DD28-16F5-E1F7-4D76-FF54C14F99B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AA9DD28-16F5-E1F7-4D76-FF54C14F99B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0306523-A0D6-9757-D225-8A1FAC8E02A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0306523-A0D6-9757-D225-8A1FAC8E02A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0306523-A0D6-9757-D225-8A1FAC8E02A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0306523-A0D6-9757-D225-8A1FAC8E02A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DF1FF1A-FFDC-6383-C303-0043C2361C76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DF1FF1A-FFDC-6383-C303-0043C2361C76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DF1FF1A-FFDC-6383-C303-0043C2361C76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DF1FF1A-FFDC-6383-C303-0043C2361C76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35171808-57DB-9D62-24B2-01503723257E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35171808-57DB-9D62-24B2-01503723257E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35171808-57DB-9D62-24B2-01503723257E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35171808-57DB-9D62-24B2-01503723257E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1563BF89-348E-5117-C02E-0C5827942493}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1563BF89-348E-5117-C02E-0C5827942493}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1563BF89-348E-5117-C02E-0C5827942493}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1563BF89-348E-5117-C02E-0C5827942493}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

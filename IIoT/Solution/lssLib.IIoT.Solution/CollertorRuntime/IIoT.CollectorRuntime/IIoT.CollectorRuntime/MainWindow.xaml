@@ -295,7 +295,7 @@
                                 <TextBlock Text="{Binding Source}"
                                            Width="100"
                                            Foreground="{DynamicResource Text3Brush}"/>
-                                <TextBlock Text="{Binding Message}"
+                                <TextBlock Text="{Binding Msg}"
                                            Foreground="{DynamicResource TextBrush}"/>
                             </StackPanel>
                         </DataTemplate>
