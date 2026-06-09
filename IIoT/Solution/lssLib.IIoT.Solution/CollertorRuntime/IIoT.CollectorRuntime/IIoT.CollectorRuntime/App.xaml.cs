@@ -13,9 +13,9 @@ namespace IIoT.CollectorRuntime;
 
 public partial class App : Application
 {
-    private ThemeSettingsService?  _themeSettings;
-    private MainViewModel?         _vm;
-    private ConfigReloadWatcher?   _watcher;
+    private ThemeSettingsService? _themeSettings;
+    private MainViewModel? _vm;
+    private ConfigReloadWatcher? _watcher;
 
     private static string ConfigDir =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
@@ -31,9 +31,9 @@ public partial class App : Application
         // ② LogManager
         LogManager.Instance.Start(new LogConfig
         {
-            LogRootPath  = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
-            ValidDays    = 30,
-            FileFormat   = LogFileFormat.Both,
+            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
+            ValidDays = 30,
+            FileFormat = LogFileFormat.Both,
             MinimumLevel = LogLevel.Debug,
         });
         LogManager.Instance.Info("App", "IIoT CollectorRuntime 시작");
@@ -42,7 +42,7 @@ public partial class App : Application
 
         // ③ 수집 엔진 + ViewModel
         var engine = new CollectionEngine(ConfigDir);
-        _vm        = new MainViewModel(engine);
+        _vm = new MainViewModel(engine);
 
         // ④ .signal 감시 (DeviceManager 설정 변경 자동 감지)
         _watcher = new ConfigReloadWatcher(ConfigDir);
@@ -54,8 +54,9 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        if (_vm?.Engine.IsRunning == true)
-            await _vm.Engine.StopAsync();
+        // CollectionEngine 은 IAsyncDisposable — DisposeAsync 가 내부적으로 StopAsync 호출
+        if (_vm is not null)
+            await _vm.Engine.DisposeAsync();
 
         _watcher?.Dispose();
         _vm?.Dispose();
