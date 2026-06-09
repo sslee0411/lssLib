@@ -148,11 +148,8 @@ public sealed class ConfigWatcher : IDisposable
     {
         try
         {
-            EventBus.Instance.Publish(new DeviceConfigChangedEvent
-            {
-                Reason    = reason,
-                Timestamp = DateTime.UtcNow,
-            });
+            EventBus.Instance.Publish(
+                new DeviceConfigChangedEvent(reason, DateTime.UtcNow));
         }
         catch (Exception ex)
         {
@@ -169,9 +166,10 @@ public sealed class ConfigWatcher : IDisposable
 }
 
 // ── 이벤트 페이로드 ──────────────────────────────────────
-/// <summary>device.json 변경 알림 이벤트 (lssLib EventBus 용)</summary>
-public sealed class DeviceConfigChangedEvent
-{
-    public string   Reason    { get; init; } = string.Empty;
-    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
-}
+/// <summary>
+/// device.json 변경 알림 이벤트 (lssLib EventBus 용)
+/// ★ EventBus.Publish&lt;T&gt; 제약 조건: T : EventMessage 필수
+/// </summary>
+public sealed record DeviceConfigChangedEvent(
+    string   Reason,
+    DateTime Timestamp) : EventMessage;
