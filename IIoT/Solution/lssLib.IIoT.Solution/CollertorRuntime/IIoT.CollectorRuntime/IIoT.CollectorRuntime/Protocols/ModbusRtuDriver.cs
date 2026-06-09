@@ -1,9 +1,9 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.CollectorRuntime · Protocols/ModbusRtuDriver.cs
-//  수정: Phase 8
-//    ① 클래스/메서드 선언부 { } 복구 (원본에서 누락됨)
-//    ② VirtualDriver._SimulateValue RAMP 블록
-//       switch expression 안 yield return → 삼항 표현식으로 교체
+//  수정: Phase 8R
+//    ① SerialDeviceConfig(int deviceId, string deviceName, string portName, int baudRate)
+//       — deviceName 필수 파라미터 → _cfg.DriverId 로 전달
+//    ② RequestAsync — timeoutMs / retries 없음 → ct 만 전달
 // ══════════════════════════════════════════════════════════
 
 using lssLib.Log;
@@ -11,7 +11,6 @@ using lssLib.Net;
 
 namespace IIoT.CollectorRuntime.Protocols;
 
-// ── ModbusRtuConfig ───────────────────────────────────────
 public sealed record ModbusRtuConfig(
     string DriverId,
     string PortName,
@@ -23,11 +22,6 @@ public sealed record ModbusRtuConfig(
     int    DataBits   = 8,
     int    StopBits   = 1);
 
-// ── ModbusRtuDriver ───────────────────────────────────────
-/// <summary>
-/// Modbus RTU 프로토콜 드라이버.
-/// ★ Serial 반이중(Half-Duplex) — Sequential 모드 필수.
-/// </summary>
 public sealed class ModbusRtuDriver : IProtocolDriver
 {
     private const string LogSrc = "ModbusRtuDriver";
@@ -44,10 +38,13 @@ public sealed class ModbusRtuDriver : IProtocolDriver
     {
         try
         {
+            // ★ SerialDeviceConfig(int deviceId, string deviceName, string portName, int baudRate)
+            //   — deviceName 은 2번째 필수 파라미터
             var serialCfg = new SerialDeviceConfig(
-                deviceId : 1,
-                portName : _cfg.PortName,
-                baudRate : _cfg.BaudRate);
+                deviceId  : 1,
+                deviceName: _cfg.DriverId,
+                portName  : _cfg.PortName,
+                baudRate  : _cfg.BaudRate);
 
             var transport = SerialTransport.FromConfig(serialCfg);
             _channel = new RequestResponseChannel(
@@ -75,8 +72,7 @@ public sealed class ModbusRtuDriver : IProtocolDriver
         _channel = null;
     }
 
-    public async Task<TagReadResult> ReadAsync(
-        TagAddressDef tag, CancellationToken ct = default)
+    public async Task<TagReadResult> ReadAsync(TagAddressDef tag, CancellationToken ct = default)
     {
         var batch = await ReadBatchAsync([tag], ct);
         return batch.IsSuccess && batch.Values.TryGetValue(tag.TagId, out var val)
@@ -85,8 +81,7 @@ public sealed class ModbusRtuDriver : IProtocolDriver
     }
 
     public async Task<BatchReadResult> ReadBatchAsync(
-        IEnumerable<TagAddressDef> tags,
-        CancellationToken ct = default)
+        IEnumerable<TagAddressDef> tags, CancellationToken ct = default)
     {
         if (_channel is null)
             return BatchReadResult.Fail("연결되지 않음");
@@ -96,16 +91,13 @@ public sealed class ModbusRtuDriver : IProtocolDriver
             var tagList = tags.ToList();
             var values  = new Dictionary<string, double>(tagList.Count);
 
-            // RTU Sequential — 태그 1개씩 순차 처리
             foreach (var tag in tagList)
             {
                 var (fc, addr) = _ParseAddress(tag.Address);
                 byte[] req     = _BuildRtuRequest(fc, (ushort)addr, 1);
 
-                var result = await _channel.RequestAsync(
-                    req, ct,
-                    timeoutMs: _cfg.TimeoutMs,
-                    retries:   _cfg.RetryCount);
+                // ★ RequestAsync: (request, ct) — timeoutMs / retries 없음
+                var result = await _channel.RequestAsync(req, ct);
 
                 if (!result.IsOk || result.Data is null || result.Data.Length < 5)
                 {
@@ -134,7 +126,6 @@ public sealed class ModbusRtuDriver : IProtocolDriver
         }
     }
 
-    // ── RTU 패킷 빌드 ─────────────────────────────────────────
     private byte[] _BuildRtuRequest(byte fc, ushort startAddr, ushort quantity)
     {
         byte[] pdu =
@@ -192,18 +183,8 @@ public sealed class ModbusRtuDriver : IProtocolDriver
 }
 
 // ═══════════════════════════════════════════════════════════
-//  VirtualDriver — 테스트·오프라인 시뮬레이터
+//  VirtualDriver — 오프라인 시뮬레이터
 // ═══════════════════════════════════════════════════════════
-/// <summary>
-/// 가상 드라이버 — 실제 통신 없이 시뮬레이션 값을 반환합니다.
-///
-/// 주소 형식:
-///   "sim:SIN/100/10"    → 주기 100초 sin파, 진폭 10
-///   "sim:RAMP/50/0/100" → 0→100 램프, 주기 50초
-///   "sim:CONST/42.5"    → 상수 42.5
-///   "sim:RAND/10/20"    → 10~20 랜덤
-///   일반 주소("40001")  → TagId 해시 기반 sin파
-/// </summary>
 public sealed class VirtualDriver : IProtocolDriver
 {
     private const string LogSrc = "VirtualDriver";
@@ -229,16 +210,14 @@ public sealed class VirtualDriver : IProtocolDriver
         return Task.CompletedTask;
     }
 
-    public async Task<TagReadResult> ReadAsync(
-        TagAddressDef tag, CancellationToken ct = default)
+    public async Task<TagReadResult> ReadAsync(TagAddressDef tag, CancellationToken ct = default)
     {
         await Task.Delay(5, ct);
         return TagReadResult.Ok(tag.TagId, _SimulateValue(tag));
     }
 
     public async Task<BatchReadResult> ReadBatchAsync(
-        IEnumerable<TagAddressDef> tags,
-        CancellationToken ct = default)
+        IEnumerable<TagAddressDef> tags, CancellationToken ct = default)
     {
         await Task.Delay(10, ct);
         var values = tags.ToDictionary(t => t.TagId, t => _SimulateValue(t));
@@ -255,41 +234,27 @@ public sealed class VirtualDriver : IProtocolDriver
 
             return type switch
             {
-                // sin 파형: sim:SIN/주기초/진폭
                 "SIN" when parts.Length >= 3 =>
-                    double.Parse(parts[2])
-                    * Math.Sin(2 * Math.PI * nowSec / double.Parse(parts[1])),
-
-                // 램프: sim:RAMP/주기초/최솟값/최댓값
-                // ★ 수정: switch expression 에서 yield return 불가 → 삼항 표현식
+                    double.Parse(parts[2]) * Math.Sin(2 * Math.PI * nowSec / double.Parse(parts[1])),
                 "RAMP" when parts.Length >= 4 =>
                     double.Parse(parts[2])
                     + (double.Parse(parts[3]) - double.Parse(parts[2]))
                     * ((nowSec % double.Parse(parts[1])) / double.Parse(parts[1])),
-
-                // 상수: sim:CONST/값
-                "CONST" when parts.Length >= 2 =>
-                    double.Parse(parts[1]),
-
-                // 랜덤: sim:RAND/최솟값/최댓값
-                "RAND" when parts.Length >= 3 =>
+                "CONST" when parts.Length >= 2 => double.Parse(parts[1]),
+                "RAND"  when parts.Length >= 3 =>
                     double.Parse(parts[2])
-                    + _rng.NextDouble()
-                    * (double.Parse(parts[3]) - double.Parse(parts[2])),
-
+                    + _rng.NextDouble() * (double.Parse(parts[3]) - double.Parse(parts[2])),
                 _ => 0.0
             };
         }
 
-        // 일반 주소 → TagId 해시 기반 sin파
         int    seed      = Math.Abs(tag.TagId.GetHashCode());
         double baseVal   = (seed % 100) + 50.0;
         double amplitude = (seed % 20) + 5.0;
         double period    = (seed % 30) + 20.0;
         double elapsed   = (DateTime.Now - DateTime.Today).TotalSeconds;
 
-        return Math.Round(
-            baseVal + amplitude * Math.Sin(2 * Math.PI * elapsed / period), 3);
+        return Math.Round(baseVal + amplitude * Math.Sin(2 * Math.PI * elapsed / period), 3);
     }
 
     public ValueTask DisposeAsync()

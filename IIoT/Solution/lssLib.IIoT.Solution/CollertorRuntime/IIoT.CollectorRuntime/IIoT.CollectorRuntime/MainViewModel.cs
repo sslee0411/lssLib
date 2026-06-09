@@ -1,6 +1,12 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.CollectorRuntime · ViewModels/MainViewModel.cs
-//  역할: 수집 모니터링 메인 ViewModel
+//  수정: Phase 8R (완전 재작성 — 이전 수정본 미반영 문제 해결)
+//    ① LogManager.LogReceived → LogManager.LogAdded (이벤트명 수정)
+//    ② LogEntry → LogData (lssLib.Log 실제 타입)
+//       LogData 프로퍼티: .Time / .LevelText / .Source / .Contents
+//    ③ _engine.Dispose() → 제거 (CollectionEngine은 IAsyncDisposable만 구현)
+//       App.xaml.cs OnExit에서 await engine.DisposeAsync() 처리
+//    ④ EventBus.Unsubscribe() → _tagSub?.Dispose() 패턴
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,10 +25,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
     // §1 ─ 필드 ──────────────────────────────────────────────
     private const string LogSrc = "MainViewModel";
     private readonly CollectionEngine _engine;
-    private System.Timers.Timer? _uptimeTimer;
-    private DateTime _startTime;
-    private IDisposable? _tagSub;   // EventBus 구독 해제 핸들
-    private bool _disposed;
+    private System.Timers.Timer?      _uptimeTimer;
+    private DateTime                  _startTime;
+    // ★ EventBus 구독 핸들 (IDisposable) — Dispose 시 해제
+    private IDisposable?              _tagSub;
+    private bool                      _disposed;
 
     // §2 ─ 엔진 프록시 ────────────────────────────────────────
     public CollectionEngine Engine => _engine;
@@ -45,7 +52,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     public int FilteredCount => TagsView.Cast<object>().Count();
 
-    // §4 ─ 선택된 태그 (상세 패널) ─────────────────────────────
+    // §4 ─ 선택된 태그 ─────────────────────────────────────────
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedTag))]
     private LiveTagValue? _selectedTag;
@@ -53,9 +60,9 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public bool HasSelectedTag => SelectedTag is not null;
 
     // §5 ─ 통계 ────────────────────────────────────────────────
-    [ObservableProperty] private int _goodCount;
-    [ObservableProperty] private int _badCount;
-    [ObservableProperty] private int _alarmCount;
+    [ObservableProperty] private int    _goodCount;
+    [ObservableProperty] private int    _badCount;
+    [ObservableProperty] private int    _alarmCount;
     [ObservableProperty] private string _uptime = "00:00:00";
 
     // §6 ─ 로그 ────────────────────────────────────────────────
@@ -67,13 +74,16 @@ public partial class MainViewModel : ObservableObject, IDisposable
     {
         _engine = engine;
 
-        TagsView = CollectionViewSource.GetDefaultView(LiveTags);
+        TagsView        = CollectionViewSource.GetDefaultView(LiveTags);
         TagsView.Filter = _Filter;
 
         LiveTags.CollectionChanged += (_, _) => _RefreshStats();
-        // ★ Subscribe 반환값(IDisposable)을 보관 → Dispose 시 해제
+
+        // ★ Subscribe 반환값(IDisposable) 저장 → Dispose() 로 해제
         _tagSub = EventBus.Instance.Subscribe<TagValueUpdatedEvent>(_OnTagUpdated);
-        LogManager.Instance.LogReceived += _OnLog;
+
+        // ★ 이벤트명: LogReceived(없음) → LogAdded(있음)
+        LogManager.Instance.LogAdded += _OnLogAdded;
     }
 
     // §8 ─ 수집 제어 커맨드 ────────────────────────────────────
@@ -81,7 +91,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(_CanStart))]
     private async Task Start()
     {
-        _AddLog("수집 시작 요청", "INFO");
+        _AddRow("수집 시작 요청", "INFO", "UI");
         await _engine.StartAsync();
         _startTime = DateTime.Now;
         _StartUptime();
@@ -92,7 +102,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(_CanStop))]
     private async Task Stop()
     {
-        _AddLog("수집 중지 요청", "INFO");
+        _AddRow("수집 중지 요청", "INFO", "UI");
         await _engine.StopAsync();
         _StopUptime();
         _RefreshCommands();
@@ -102,35 +112,35 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(_CanStop))]
     private async Task Restart()
     {
-        _AddLog("수집 재시작 요청", "WARN");
+        _AddRow("수집 재시작 요청", "WARN", "UI");
         await _engine.RestartAsync();
         _startTime = DateTime.Now;
     }
 
     // §9 ─ 필터 커맨드 ─────────────────────────────────────────
 
-    partial void OnSearchTextChanged(string _) => TagsView.Refresh();
-    partial void OnShowBadOnlyChanged(bool _) => TagsView.Refresh();
+    partial void OnSearchTextChanged(string _)  => TagsView.Refresh();
+    partial void OnShowBadOnlyChanged(bool _)   => TagsView.Refresh();
     partial void OnShowAlarmOnlyChanged(bool _) => TagsView.Refresh();
 
     [RelayCommand]
     private void ClearFilter()
     {
-        SearchText = string.Empty;
-        ShowBadOnly = false;
+        SearchText    = string.Empty;
+        ShowBadOnly   = false;
         ShowAlarmOnly = false;
     }
 
     [RelayCommand]
     private void ClearLog() => LogRows.Clear();
 
-    // §10 ─ 내부 ────────────────────────────────────────────────
+    // §10 ─ 내부 헬퍼 ──────────────────────────────────────────
 
     private bool _Filter(object obj)
     {
         if (obj is not LiveTagValue t) return false;
-        if (ShowBadOnly && t.Quality != TagQuality.Bad) return false;
-        if (ShowAlarmOnly && !t.HasAlarm) return false;
+        if (ShowBadOnly   && t.Quality != TagQuality.Bad) return false;
+        if (ShowAlarmOnly && !t.HasAlarm)                 return false;
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             var q = SearchText.ToLower();
@@ -148,8 +158,8 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     private void _RefreshStats()
     {
-        GoodCount = LiveTags.Count(t => t.Quality == TagQuality.Good);
-        BadCount = LiveTags.Count(t => t.Quality == TagQuality.Bad);
+        GoodCount  = LiveTags.Count(t => t.Quality == TagQuality.Good);
+        BadCount   = LiveTags.Count(t => t.Quality == TagQuality.Bad);
         AlarmCount = LiveTags.Count(t => t.HasAlarm);
         OnPropertyChanged(nameof(FilteredCount));
     }
@@ -161,22 +171,31 @@ public partial class MainViewModel : ObservableObject, IDisposable
         RestartCommand.NotifyCanExecuteChanged();
     }
 
-    private void _OnLog(LogEntry e)
+    /// <summary>
+    /// ★ 수정: lssLib.Log 이벤트 = LogAdded(LogData)
+    ///   LogData 프로퍼티:
+    ///     .Time     → string  ("14:30:25.123")
+    ///     .LevelText → string  ("INFO", "WARN", "ERROR" 등)
+    ///     .Source   → string  (로그 출처)
+    ///     .Contents → string  (메시지)
+    /// </summary>
+    private void _OnLogAdded(LogData data)
     {
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             LogRows.Insert(0, new LogRow(
-                e.Time.ToString("HH:mm:ss.fff"),
-                e.Level.ToString().ToUpper(),
-                e.Category,
-                e.Message));
+                Time  : data.Time,
+                Level : data.LevelText,
+                Source: data.Source,
+                Msg   : data.Contents));
             while (LogRows.Count > MaxLog)
                 LogRows.RemoveAt(LogRows.Count - 1);
         });
     }
 
-    private void _AddLog(string msg, string level) =>
-        LogRows.Insert(0, new LogRow(DateTime.Now.ToString("HH:mm:ss.fff"), level, "UI", msg));
+    private void _AddRow(string msg, string level, string source) =>
+        LogRows.Insert(0, new LogRow(
+            DateTime.Now.ToString("HH:mm:ss.fff"), level, source, msg));
 
     private void _StartUptime()
     {
@@ -201,14 +220,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        // ★ EventBus 구독 해제: Unsubscribe() 없음 → sub.Dispose() 사용
+
+        // ★ EventBus 구독 해제 — sub.Dispose() 패턴 (Unsubscribe 메서드 없음)
         _tagSub?.Dispose();
-        LogManager.Instance.LogReceived -= _OnLog;
+
+        // ★ LogAdded 이벤트 해제
+        LogManager.Instance.LogAdded -= _OnLogAdded;
+
         _StopUptime();
-        _engine.Dispose();
+
+        // ★ CollectionEngine은 IAsyncDisposable만 구현 — Dispose() 없음
+        //   App.xaml.cs OnExit 에서 await _vm.Engine.DisposeAsync() 처리
+
         _disposed = true;
     }
 }
 
-/// <summary>로그 패널 행 모델</summary>
-public record LogRow(string Time, string Level, string Source, string Message);
+/// <summary>로그 패널 행 데이터 모델</summary>
+public record LogRow(string Time, string Level, string Source, string Msg);
