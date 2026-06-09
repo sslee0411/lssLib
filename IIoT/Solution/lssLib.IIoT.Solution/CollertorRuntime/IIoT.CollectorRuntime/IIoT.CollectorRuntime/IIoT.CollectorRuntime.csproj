@@ -8,4 +8,15 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Core\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+    <ProjectReference Include="..\..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+    <ProjectReference Include="..\..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+  </ItemGroup>
+
 </Project>
