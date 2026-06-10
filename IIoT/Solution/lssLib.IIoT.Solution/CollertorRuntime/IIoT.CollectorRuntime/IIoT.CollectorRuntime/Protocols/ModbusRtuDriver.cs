@@ -96,8 +96,11 @@ public sealed class ModbusRtuDriver : IProtocolDriver
                 var (fc, addr) = _ParseAddress(tag.Address);
                 byte[] req     = _BuildRtuRequest(fc, (ushort)addr, 1);
 
-                // ★ RequestAsync: (request, ct) — timeoutMs / retries 없음
-                var result = await _channel.RequestAsync(req, ct);
+                // ★ RequestAsync(byte[] request, TimeSpan? timeout, CancellationToken ct)
+                var result = await _channel.RequestAsync(
+                    req,
+                    TimeSpan.FromMilliseconds(_cfg.TimeoutMs),
+                    ct);
 
                 if (!result.IsOk || result.Data is null || result.Data.Length < 5)
                 {

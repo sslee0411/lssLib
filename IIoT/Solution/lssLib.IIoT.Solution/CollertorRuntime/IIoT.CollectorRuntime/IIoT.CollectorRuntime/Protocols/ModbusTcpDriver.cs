@@ -37,11 +37,12 @@ public sealed class ModbusTcpDriver : IProtocolDriver
     {
         try
         {
-            // ★ TcpDeviceConfig: (deviceId, host, port) — timeoutMs 없음
+            // ★ TcpDeviceConfig(int deviceId, string deviceName, string host, int port)
             var tcpCfg = new TcpDeviceConfig(
-                deviceId: 1,
-                host    : _cfg.Host,
-                port    : _cfg.Port);
+                deviceId  : 1,
+                deviceName: _cfg.DriverId,
+                host      : _cfg.Host,
+                port      : _cfg.Port);
 
             var transport = TcpTransport.FromConfig(tcpCfg);
             _channel = new RequestResponseChannel(
@@ -97,8 +98,11 @@ public sealed class ModbusTcpDriver : IProtocolDriver
 
                 byte[] request = _BuildReadRequest(fc, (ushort)baseAddr, (ushort)quantity);
 
-                // ★ RequestAsync: (request, ct) — timeoutMs / retries 파라미터 없음
-                var result = await _channel.RequestAsync(request, ct);
+                // ★ RequestAsync(byte[] request, TimeSpan? timeout, CancellationToken ct)
+                var result = await _channel.RequestAsync(
+                    request,
+                    TimeSpan.FromMilliseconds(_cfg.TimeoutMs),
+                    ct);
 
                 if (!result.IsOk || result.Data is null)
                 {

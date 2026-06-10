@@ -148,11 +148,10 @@ public sealed class TagHistoryDb : IAsyncDisposable
 
     public async Task<long> GetTotalCountAsync()
     {
-        // ★ QueryScalarAsync<long> 반환 타입: DbResult<long?>
-        //   SQLite COUNT(*) → non-null 이지만 DbResult<long?> 래핑
+        // ★ QueryScalarAsync<long> → DbResult<long> (non-nullable)
         var r = await _histRepo.QueryScalarAsync<long>(
             $"SELECT COUNT(*) FROM {HistoryTable}");
-        return r.IsOk && r.Value.HasValue ? r.Value.Value : 0L;
+        return r.IsOk ? r.Value : 0L;
     }
 
     private async Task _InsertBatchAsync(List<TagHistoryRecord> records, CancellationToken ct)
