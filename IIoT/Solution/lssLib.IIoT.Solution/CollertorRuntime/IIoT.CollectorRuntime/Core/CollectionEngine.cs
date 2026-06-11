@@ -5,12 +5,16 @@
 //  Phase 8: IProtocolDriver + AsyncScheduler 배치 폴링
 //           SwingingDoorCompressor SDT 압축
 //           CommandQueue → TagHistoryDb SQLite 저장
+//  Phase 9: device.json ConfigTree 파싱 → 드라이버 팩토리
+//           _LoadConfigAsync()  — 동적 태그 구성
+//           _ConnectDriversAsync() — CommType 기반 드라이버 선택
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using IIoT.CollectorRuntime.Collection;
 using IIoT.CollectorRuntime.Protocols;
 using IIoT.CollectorRuntime.Storage;
+using lssLib.Config.Tree;
 using lssLib.Log;
 using lssLib.Messaging;
 using System.Collections.ObjectModel;
@@ -153,7 +157,7 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
         LogManager.Instance.Info(LogSrc, $"SQLite DB → {dbPath}");
     }
 
-    // §6 ─ 설정 로드 ──────────────────────────────────────────
+    // §6 ─ 설정 로드 (Phase 9: device.json ConfigTree 파싱) ────
     private async Task _LoadConfigAsync()
     {
         await Task.Run(() =>
@@ -162,23 +166,124 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
                 LiveTags.Clear());
 
             var configPath = Path.Combine(_configDir, "device.json");
-            bool hasConfig = File.Exists(configPath);
 
-            // ★ Phase 9: device.json → ConfigTree → AbstractNode 파싱으로 교체 예정
-            // 현재: 기본 태그 정의로 구동
-            _CreateDefaultTags();
+            if (!File.Exists(configPath))
+            {
+                // device.json 없음 → 시뮬레이터 모드
+                LogManager.Instance.Warn(LogSrc,
+                    "device.json 없음 — 시뮬레이터 모드로 구동");
+                _CreateDefaultTags();
+                ConfigInfo = $"시뮬레이터 모드 — {LiveTags.Count}개 태그";
+                return;
+            }
 
-            ConfigInfo = hasConfig
-                ? $"device.json 로드됨 — {LiveTags.Count}개 태그"
-                : $"시뮬레이터 모드 — {LiveTags.Count}개 태그";
+            try
+            {
+                // ★ Phase 9: ConfigTree.FromJson() 으로 파싱
+                var json = File.ReadAllText(configPath);
+                var tree = new ConfigTree();
+                tree.FromJson(json);
 
-            LogManager.Instance.Info(LogSrc, ConfigInfo);
+                var tagNodes = tree.Flatten()
+                    .Where(n => n.Type == NodeType.Tag)
+                    .ToList();
+
+                if (tagNodes.Count == 0)
+                {
+                    LogManager.Instance.Warn(LogSrc,
+                        "device.json에 Tag 노드가 없음 — 시뮬레이터 모드 병행");
+                    _CreateDefaultTags();
+                    ConfigInfo = $"device.json (태그 없음) — 시뮬레이터 {LiveTags.Count}개";
+                    return;
+                }
+
+                // Tag 노드 → LiveTagValue 동적 생성
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var node in tagNodes)
+                    {
+                        // 수집 주체 Device 탐색 (부모 방향 상향)
+                        var ownerName = _ResolveOwnerName(node, tree);
+
+                        LiveTags.Add(new LiveTagValue
+                        {
+                            TagId      = node.Id,
+                            TagName    = node.Name,
+                            Address    = node.GetProperty("address") ?? string.Empty,
+                            Unit       = _ResolveUnit(node, tree),
+                            DeviceName = ownerName,
+                        });
+                    }
+                });
+
+                ConfigInfo = $"device.json 로드됨 — {LiveTags.Count}개 태그";
+                LogManager.Instance.Info(LogSrc, ConfigInfo);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Instance.Error(LogSrc,
+                    $"device.json 파싱 오류: {ex.Message} — 시뮬레이터 모드 전환");
+                _CreateDefaultTags();
+                ConfigInfo = $"파싱 오류 (시뮬레이터) — {LiveTags.Count}개 태그";
+            }
         });
     }
 
+    /// <summary>
+    /// Tag 노드로부터 수집 주체 Device/Plc 이름을 탐색합니다.
+    /// 우선순위: ownerDeviceId 명시 → 부모 방향 상향 탐색
+    /// </summary>
+    private static string _ResolveOwnerName(ConfigNode tagNode, ConfigTree tree)
+    {
+        // ownerDeviceId 명시 지정 확인
+        var ownerId = tagNode.GetProperty("ownerDeviceId");
+        if (!string.IsNullOrEmpty(ownerId))
+        {
+            var owner = tree.FindById(ownerId);
+            if (owner is not null) return owner.Name;
+        }
+
+        // 부모 방향 상향 탐색 — Device/Plc 타입 첫 번째 노드
+        var parent = tagNode.Parent;
+        while (parent is not null)
+        {
+            if (parent.Type is NodeType.Device or NodeType.Root)
+                return parent.Name;
+            parent = parent.Parent;
+        }
+
+        return "Unknown";
+    }
+
+    /// <summary>
+    /// Tag 노드로부터 단위(unit)를 조회합니다.
+    /// Tag 자체에 없으면 부모 Sensor 노드의 unit을 참조합니다.
+    /// </summary>
+    private static string _ResolveUnit(ConfigNode tagNode, ConfigTree tree)
+    {
+        var unit = tagNode.GetProperty("unit");
+        if (!string.IsNullOrEmpty(unit)) return unit;
+
+        // 형제 Sensor 노드 또는 부모 scaleConfigId 에서 unit 참조 (간략 처리)
+        var parent = tagNode.Parent;
+        if (parent is not null)
+        {
+            foreach (var sibling in parent.Children)
+            {
+                if (sibling.Type == NodeType.Sensor)
+                {
+                    var sensorUnit = sibling.GetProperty("unit");
+                    if (!string.IsNullOrEmpty(sensorUnit)) return sensorUnit;
+                }
+            }
+        }
+
+        return string.Empty;
+    }
+
+    // §7 ─ 시뮬레이터 기본 태그 (device.json 없을 때 폴백) ────
     private void _CreateDefaultTags()
     {
-        // ★ Phase 9 에서 device.json ConfigTree 파싱으로 교체
         var defs = new[]
         {
             (id:"t001", name:"압연기#1 베어링온도",  addr:"40001", unit:"°C",   dev:"압연기-001"),
@@ -209,59 +314,197 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
         });
     }
 
-    // §7 ─ 드라이버 생성 + 연결 ───────────────────────────────
-
+    // §8 ─ 드라이버 팩토리 (Phase 9: CommType 기반 자동 선택) ──
     private async Task _ConnectDriversAsync()
     {
         var configPath = Path.Combine(_configDir, "device.json");
 
         if (!File.Exists(configPath))
         {
-            // device.json 없음 → VirtualDriver 로 전체 구동
             await _ConnectVirtualDriversAsync();
             return;
         }
 
-        // ★ Phase 9: device.json CommConfig → 드라이버 팩토리
-        // 예시 (Phase 9 구현 예정):
-        // ─────────────────────────────────────────────────────
-        // var json    = File.ReadAllText(configPath);
-        // var devices = CommConfigParser.Parse(json);  // device.json 파싱
-        //
-        // foreach (var dev in devices)
-        // {
-        //     IProtocolDriver driver = dev.CommType switch
-        //     {
-        //         "ModbusTcp" => new ModbusTcpDriver(new ModbusTcpConfig(
-        //                            dev.Id, dev.Host, dev.Port, dev.UnitId)),
-        //         "ModbusRtu" => new ModbusRtuDriver(new ModbusRtuConfig(
-        //                            dev.Id, dev.SerialPort, dev.BaudRate, dev.UnitId)),
-        //         _           => new VirtualDriver(dev.Id),
-        //     };
-        //
-        //     bool ok = await driver.ConnectAsync();
-        //     if (ok)
-        //         _drivers[dev.Id] = driver;
-        //     else
-        //     {
-        //         // 연결 실패 시 VirtualDriver 로 대체 (수집 중단 방지)
-        //         LogManager.Instance.Warn(LogSrc, $"[{dev.Id}] 연결 실패 → VirtualDriver 대체");
-        //         var vd = new VirtualDriver(dev.Id);
-        //         await vd.ConnectAsync();
-        //         _drivers[dev.Id] = vd;
-        //     }
-        // }
-        // ─────────────────────────────────────────────────────
+        try
+        {
+            var json = File.ReadAllText(configPath);
+            var tree = new ConfigTree();
+            tree.FromJson(json);
 
-        // Phase 8 임시: device.json 있어도 VirtualDriver 사용
-        await _ConnectVirtualDriversAsync();
-        LogManager.Instance.Info(LogSrc,
-            "Phase 9 에서 실제 드라이버 연결 예정 — 현재 VirtualDriver");
+            // Device 노드 탐색 → 드라이버 생성
+            var deviceNodes = tree.FindAll(NodeType.Device).ToList();
+
+            if (deviceNodes.Count == 0)
+            {
+                LogManager.Instance.Warn(LogSrc,
+                    "device.json에 Device 노드 없음 — VirtualDriver 사용");
+                await _ConnectVirtualDriversAsync();
+                return;
+            }
+
+            foreach (var device in deviceNodes)
+            {
+                var driverName = device.Name;
+
+                // 이미 등록된 드라이버 스킵
+                if (_drivers.ContainsKey(driverName)) continue;
+
+                var protocol = device.GetProperty("protocol") ?? string.Empty;
+                var driver   = _CreateDriver(device, protocol, driverName);
+                var connected = await driver.ConnectAsync();
+
+                if (connected)
+                {
+                    _drivers[driverName] = driver;
+                    LogManager.Instance.Info(LogSrc,
+                        $"[{driverName}] {protocol} 드라이버 연결 성공");
+                }
+                else
+                {
+                    // 연결 실패 → VirtualDriver 폴백 (수집 중단 방지)
+                    LogManager.Instance.Warn(LogSrc,
+                        $"[{driverName}] 연결 실패 → VirtualDriver 대체");
+                    await driver.DisposeAsync();
+
+                    var vd = new VirtualDriver(driverName);
+                    await vd.ConnectAsync();
+                    _drivers[driverName] = vd;
+                }
+            }
+
+            // device.json에 정의됐지만 Device 노드가 없는 태그들의
+            // DeviceName 에 해당하는 드라이버가 없으면 VirtualDriver 추가
+            await _EnsureDriversForAllTags();
+
+            LogManager.Instance.Info(LogSrc,
+                $"드라이버 연결 완료 — {_drivers.Count}개 (Real:{_drivers.Values.Count(d => d is not VirtualDriver)}, Virtual:{_drivers.Values.Count(d => d is VirtualDriver)})");
+        }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Error(LogSrc,
+                $"드라이버 팩토리 오류: {ex.Message} — 전체 VirtualDriver 전환");
+            foreach (var d in _drivers.Values) await d.DisposeAsync();
+            _drivers.Clear();
+            await _ConnectVirtualDriversAsync();
+        }
+    }
+
+    /// <summary>
+    /// CommType(protocol) 문자열 기반 드라이버 생성.
+    /// 지원: ModbusTcp / ModbusRtu / Virtual(명시) / 기타(→ VirtualDriver 폴백)
+    /// </summary>
+    private IProtocolDriver _CreateDriver(ConfigNode device, string protocol, string driverName)
+    {
+        return protocol.ToLowerInvariant() switch
+        {
+            "modbus tcp" or "modbustcp" or "modbus tcp/ip" =>
+                _CreateModbusTcpDriver(device, driverName),
+
+            "modbus rtu" or "modbusrtu" or "modbus serial" =>
+                _CreateModbusRtuDriver(device, driverName),
+
+            "virtual" or "simulation" or "simulator" =>
+                new VirtualDriver(driverName),
+
+            _ =>
+                _CreateFallbackDriver(device, driverName, protocol),
+        };
+    }
+
+    private IProtocolDriver _CreateModbusTcpDriver(ConfigNode device, string driverName)
+    {
+        var host = device.GetProperty("ip")
+                ?? device.GetProperty("host")
+                ?? device.GetProperty("ipAddress")
+                ?? "127.0.0.1";
+
+        var portStr = device.GetProperty("port") ?? "502";
+        int.TryParse(portStr, out int port);
+        if (port <= 0) port = 502;
+
+        var unitIdStr = device.GetProperty("unitId")
+                     ?? device.GetProperty("slaveId")
+                     ?? "1";
+        byte.TryParse(unitIdStr, out byte unitId);
+        if (unitId == 0) unitId = 1;
+
+        var timeoutStr = device.GetProperty("timeout")
+                      ?? device.GetProperty("timeoutMs")
+                      ?? "3000";
+        int.TryParse(timeoutStr, out int timeout);
+        if (timeout <= 0) timeout = 3000;
+
+        LogManager.Instance.Debug(LogSrc,
+            $"[{driverName}] ModbusTCP 생성 → {host}:{port} UnitId={unitId}");
+
+        return new ModbusTcpDriver(new ModbusTcpConfig(
+            DriverId  : driverName,
+            Host      : host,
+            Port      : port,
+            UnitId    : unitId,
+            TimeoutMs : timeout));
+    }
+
+    private IProtocolDriver _CreateModbusRtuDriver(ConfigNode device, string driverName)
+    {
+        var portName = device.GetProperty("portName")
+                    ?? device.GetProperty("comPort")
+                    ?? device.GetProperty("serialPort")
+                    ?? "COM1";
+
+        var baudStr = device.GetProperty("baudRate") ?? "9600";
+        int.TryParse(baudStr, out int baud);
+        if (baud <= 0) baud = 9600;
+
+        var unitIdStr = device.GetProperty("unitId")
+                     ?? device.GetProperty("slaveId")
+                     ?? "1";
+        byte.TryParse(unitIdStr, out byte unitId);
+        if (unitId == 0) unitId = 1;
+
+        LogManager.Instance.Debug(LogSrc,
+            $"[{driverName}] ModbusRTU 생성 → {portName} {baud}bps UnitId={unitId}");
+
+        return new ModbusRtuDriver(new ModbusRtuConfig(
+            DriverId : driverName,
+            PortName : portName,
+            BaudRate : baud,
+            UnitId   : unitId));
+    }
+
+    private IProtocolDriver _CreateFallbackDriver(
+        ConfigNode device, string driverName, string protocol)
+    {
+        // OPC-UA, MQTT 등 미구현 프로토콜 → VirtualDriver 폴백
+        LogManager.Instance.Warn(LogSrc,
+            $"[{driverName}] 미지원 프로토콜 '{protocol}' → VirtualDriver 대체");
+        return new VirtualDriver(driverName);
+    }
+
+    /// <summary>
+    /// LiveTags 전체를 순회하여 DeviceName에 해당하는 드라이버가 없으면
+    /// VirtualDriver를 자동 생성합니다.
+    /// </summary>
+    private async Task _EnsureDriversForAllTags()
+    {
+        var missingDevices = LiveTags
+            .Select(t => t.DeviceName)
+            .Distinct()
+            .Where(name => !_drivers.ContainsKey(name))
+            .ToList();
+
+        foreach (var name in missingDevices)
+        {
+            var vd = new VirtualDriver(name);
+            await vd.ConnectAsync();
+            _drivers[name] = vd;
+            LogManager.Instance.Info(LogSrc,
+                $"[{name}] 드라이버 미정의 → VirtualDriver 자동 생성");
+        }
     }
 
     private async Task _ConnectVirtualDriversAsync()
     {
-        // 장비별 VirtualDriver 생성
         var deviceNames = LiveTags
             .Select(t => t.DeviceName)
             .Distinct()
@@ -269,6 +512,7 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
 
         foreach (var name in deviceNames)
         {
+            if (_drivers.ContainsKey(name)) continue;
             var vd = new VirtualDriver(name);
             await vd.ConnectAsync();
             _drivers[name] = vd;
@@ -278,11 +522,9 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
             $"VirtualDriver {_drivers.Count}개 연결");
     }
 
-    // §8 ─ AsyncScheduler 폴링 등록 ────────────────────────────
-
+    // §9 ─ AsyncScheduler 폴링 등록 ────────────────────────────
     private void _RegisterPollingSchedules(CancellationToken ct)
     {
-        // 장비(DeviceName) 별로 태그를 묶어 배치 폴링 등록
         var groups = LiveTags
             .GroupBy(t => t.DeviceName)
             .ToList();
@@ -299,8 +541,6 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
                 .Select(t => new TagAddressDef(t.TagId, t.Address, t.Unit, PollMs: 1000))
                 .ToList();
 
-            // ★ lssLib AsyncScheduler.ScheduleRecurring
-            //   반환: ScheduledTask (Pause / Resume / Cancel 가능)
             var pollTask = AsyncScheduler.Instance.ScheduleRecurring(
                 TimeSpan.FromMilliseconds(1000),
                 pollCt => _PollDeviceAsync(driver, tags, addressDefs, pollCt),
@@ -312,8 +552,7 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
         }
     }
 
-    // §9 ─ 폴링 실행 (AsyncScheduler 콜백) ────────────────────
-
+    // §10 ─ 폴링 실행 (AsyncScheduler 콜백) ───────────────────
     private async Task _PollDeviceAsync(
         IProtocolDriver      driver,
         List<LiveTagValue>   tags,
@@ -322,7 +561,6 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
     {
         try
         {
-            // 드라이버 배치 읽기 — 1회 통신으로 모든 태그 수집
             var result = await driver.ReadBatchAsync(addressDefs, ct);
             var now    = DateTime.Now;
 
@@ -334,31 +572,26 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
                         && result.Values.TryGetValue(tag.TagId, out var val)
                         && !double.IsNaN(val))
                     {
-                        // UI 갱신
                         tag.UpdateValue(val, TagQuality.Good, now);
 
-                        // ★ SDT 압축 판정 — 의미 있는 변화점만 저장
                         var compressor = _compressors.GetOrCreate(tag.TagId);
                         if (compressor.ShouldStore(val, now))
                         {
                             var record = new TagHistoryRecord(
                                 tag.TagId, now, val, tag.Quality.ToString());
 
-                            _db?.Enqueue(record);       // 이력 INSERT
-                            _db?.UpsertLatest(record);  // 최신값 UPSERT
+                            _db?.Enqueue(record);
+                            _db?.UpsertLatest(record);
                         }
 
-                        // EventBus 발행 → Monitor / AlarmEngine 구독
                         EventBus.Instance.Publish(
                             new TagValueUpdatedEvent(tag.TagId, val, TagQuality.Good));
                     }
                     else
                     {
-                        // 통신 오류 또는 NaN
                         tag.UpdateValue(0, TagQuality.Bad, now);
                         ErrorCount++;
 
-                        // BAD 품질도 저장 (데이터 단절 기록)
                         var badRecord = new TagHistoryRecord(
                             tag.TagId, now, 0, "Bad");
                         _db?.UpsertLatest(badRecord);
@@ -378,7 +611,7 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
         }
     }
 
-    // §10 ─ TPS 계산 (1초 타이머) ─────────────────────────────
+    // §11 ─ TPS 계산 ──────────────────────────────────────────
     private async Task _RunTpsAsync(CancellationToken ct)
     {
         int prev = 0;
@@ -395,7 +628,7 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
         }
     }
 
-    // §11 ─ IAsyncDisposable ──────────────────────────────────
+    // §12 ─ IAsyncDisposable ───────────────────────────────────
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
@@ -406,7 +639,7 @@ public sealed partial class CollectionEngine : ObservableObject, IAsyncDisposabl
     }
 }
 
-// ── lssLib EventBus 이벤트 (T : EventMessage 필수) ───────
+// ── lssLib EventBus 이벤트 ────────────────────────────────
 public sealed record EngineStateChangedEvent(string NewState)  : EventMessage;
 public sealed record TagValueUpdatedEvent(
     string     TagId,
