@@ -1,0 +1,27 @@
+IIoT.Solution/
+│
+├─ ① DeviceManager     (WPF) — 장비/Tag/스케일/알람 설정 → device.xml 쓰기 전용
+├─ ② CollectConfig     (WPF) — NodeRed 캔버스 + BufParser → collect.xml 쓰기 전용  
+├─ ③ Monitor      (WPF+Web) — AbstractDetector 감지기 + SignalR Web API
+├─ ④ CollectorRuntime   (Service) — 24시간 수집 엔진, XML 읽기 전용
+│
+├─ [선택] Manager      (WPF) — gRPC로 전체 프로세스 총괄
+├─ [선택] Analytics.Engine   — SPC·OEE·추세예측·PM 스케줄러
+├─ [선택] Mobile.MAUI       — FCM Push 알람 + SignalR 실시간
+│
+├─ XML 설정 파일 (Single Source of Truth)
+│   ├─ device.xml     ← DeviceManager만 쓰기, 나머지 읽기 전용
+│   ├─ collect.xml    ← CollectConfig만 쓰기
+│   └─ monitor.xml   ← Monitor만 쓰기
+│
+├─ 공유 UI (★ WPF 프로그램 전체 공유)
+│   └─ IIoT.UI.Themes v1.5  — 8가지 테마 + ThemePickerButton + ThemeSelectorPanel
+│       ├─ DarkNavy(기본) · SteelLight · NeonCyber · WarmAmber
+│       ├─ ArcticFrost · TerminalGreen · CarbonElite · NoTheme
+│       └─ Styles: 버튼6종 · ComboBox(Full CT) · DataGrid · TreeView · Card · Badge
+│
+└─ 공유 Core (내부 NuGet)
+    ├─ Core.DataModel     — Tag, TagValue, ScaleConfig, AlarmRule, DeviceNode
+    ├─ Core.XmlConfig     — XmlConfigLoader, XmlWriteService, IntegrityGuard
+    ├─ Core.Protocol      — IProtocolDriver, ITagHistoryDb, AbstractNode
+    └─ lssLib v5          — Binary(BufSchema/RingBuffer), Messaging(EventBus/AsyncScheduler/CommandQueue), Log, Extensions
