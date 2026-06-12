@@ -1,0 +1,11 @@
+<Application x:Class="IIoT.Monitor.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        ★ StartupUri 제거 필수:
+           App.xaml.cs OnStartup() 에서 new MainWindow(_vm).Show() 로 직접 생성.
+    -->
+    <Application.Resources>
+        <ResourceDictionary/>
+    </Application.Resources>
+</Application>
