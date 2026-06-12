@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<!--
+      ★ 구 IIoT.DeviceManager → IIoT.ConfigApp 으로 통합
+         AssemblyName / RootNamespace 모두 변경
+         EmbeddedResource ResourcePrefix 도 이에 맞춰 변경 필요
+    -->
+		<AssemblyName>IIoT.ConfigApp</AssemblyName>
+		<RootNamespace>IIoT.ConfigApp</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+		<ProjectReference Include="..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+		<ProjectReference Include="..\..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+		<ProjectReference Include="..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+		<ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!--
+      ★ EmbeddedResource: RootNamespace = IIoT.ConfigApp 이므로
+         리소스 이름 → "IIoT.ConfigApp.Config.device.json.sample"
+         ConfigInitializer.ResourcePrefix 도 동일하게 변경 필요
+    -->
+		<EmbeddedResource Include="Config\*.json.sample" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Core\Canvas\" />
+		<Folder Include="Core\Config\" />
+		<Folder Include="Core\DataModel\" />
+		<Folder Include="Core\Canvas\" />
+		<Folder Include="Core\Config\" />
+		<Folder Include="ViewModels\Canvas\" />
+		<Folder Include="ViewModels\DeviceTree\" />
+		<Folder Include="ViewModels\Editors\" />
+		<Folder Include="ViewModels\Library\" />
+		<Folder Include="ViewModels\Canvas\" />
+		<Folder Include="Views\Canvas\" />
+		<Folder Include="Views\DeviceTree\" />
+		<Folder Include="Views\Editors\" />
+		<Folder Include="Views\Library\" />
+		<Folder Include="Views\Canvas\" />
+	</ItemGroup>
+
+</Project>
