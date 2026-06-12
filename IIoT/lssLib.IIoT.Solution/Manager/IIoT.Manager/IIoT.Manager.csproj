@@ -18,17 +18,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
-		<ProjectReference Include="..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Folder Include="Trend\" />
 		<Folder Include="Oee\" />
 		<Folder Include="Spc\" />
 		<Folder Include="Oee\" />
 		<Folder Include="Trend\" />
 		<Folder Include="Pm\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+	  <ProjectReference Include="..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
 	</ItemGroup>
 
 </Project>

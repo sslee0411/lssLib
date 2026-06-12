@@ -19,15 +19,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- WPF 공유 테마 라이브러리 참조 (Phase 0) -->
-		<ProjectReference Include="..\..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
-		<ProjectReference Include="..\..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
-		<ProjectReference Include="..\..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
-		<ProjectReference Include="..\..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
-		<ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<!-- MVVM 툴킷 (Phase 0) -->
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<!-- DI 컨테이너 -->
@@ -52,6 +43,14 @@
 	  <Folder Include="Views\DeviceTree\" />
 	  <Folder Include="Views\Editors\" />
 	  <Folder Include="Views\Library\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+	  <ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+	  <ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+	  <ProjectReference Include="..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+	  <ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
 	</ItemGroup>
 
 </Project>
