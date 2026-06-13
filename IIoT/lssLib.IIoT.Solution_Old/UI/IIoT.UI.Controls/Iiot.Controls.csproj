@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>IIoT.Controls</AssemblyName>
+    <RootNamespace>IIoT.Controls</RootNamespace>
+    <!--
+      ★ pack:// URI 지원 필수 — XAML 에서 리소스 참조 시 필요
+         GenerateLibraryLayout = true 없으면 다른 프로젝트에서
+         ResourceDictionary Source="pack://..." 가 실패함
+    -->
+    <GenerateLibraryLayout>true</GenerateLibraryLayout>
+    <Description>IIoT SCADA 시스템 WPF 공용 컴포넌트 라이브러리</Description>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+  </ItemGroup>
+
+</Project>

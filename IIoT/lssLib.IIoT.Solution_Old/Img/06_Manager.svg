@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#140604"/>
+  <!-- Central hub -->
+  <circle cx="256" cy="210" r="64" fill="#3d1208" stroke="#d85a30" stroke-width="3.5"/>
+  <circle cx="256" cy="210" r="44" fill="#2a0c06" stroke="#993c1d" stroke-width="2"/>
+  <!-- Pulse rings -->
+  <circle cx="256" cy="210" r="56" fill="none" stroke="#d85a30" stroke-width="1.5" opacity="0.4"/>
+  <!-- Hub label bars -->
+  <rect x="224" y="196" width="64" height="10" rx="4" fill="#f5c4b3" opacity="0.9"/>
+  <rect x="232" y="214" width="48" height="8" rx="3" fill="#993c1d" opacity="0.8"/>
+
+  <!-- Connector lines to 5 sub-programs -->
+  <!-- DeviceManager top-left -->
+  <line x1="218" y1="170" x2="124" y2="106" stroke="#d85a30" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- CollectConfig top-right -->
+  <line x1="294" y1="170" x2="388" y2="106" stroke="#d85a30" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- CollectorRuntime left -->
+  <line x1="193" y1="218" x2="80" y2="226" stroke="#993c1d" stroke-width="2" stroke-dasharray="6,4" stroke-linecap="round"/>
+  <!-- Monitor right -->
+  <line x1="319" y1="218" x2="432" y2="226" stroke="#993c1d" stroke-width="2" stroke-dasharray="6,4" stroke-linecap="round"/>
+  <!-- AlarmEngine bottom -->
+  <line x1="256" y1="274" x2="256" y2="344" stroke="#d85a30" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Sub-program boxes -->
+  <!-- DeviceManager -->
+  <rect x="44" y="62" width="160" height="60" rx="12" fill="#1e0d07" stroke="#993c1d" stroke-width="2"/>
+  <rect x="56" y="76" width="80" height="9" rx="4" fill="#f0997b" opacity="0.9"/>
+  <rect x="56" y="92" width="52" height="8" rx="3" fill="#3d1208" opacity="0.9"/>
+  <rect x="116" y="92" width="28" height="8" rx="4" fill="#3fb950" opacity="0.9"/>
+
+  <!-- CollectConfig -->
+  <rect x="308" y="62" width="160" height="60" rx="12" fill="#1e0d07" stroke="#993c1d" stroke-width="2"/>
+  <rect x="320" y="76" width="80" height="9" rx="4" fill="#f0997b" opacity="0.9"/>
+  <rect x="320" y="92" width="52" height="8" rx="3" fill="#3d1208" opacity="0.9"/>
+  <rect x="380" y="92" width="28" height="8" rx="4" fill="#3fb950" opacity="0.9"/>
+
+  <!-- CollectorRuntime -->
+  <rect x="18" y="196" width="132" height="60" rx="12" fill="#1e0d07" stroke="#993c1d" stroke-width="2"/>
+  <rect x="30" y="212" width="80" height="9" rx="4" fill="#f0997b" opacity="0.9"/>
+  <rect x="30" y="228" width="52" height="8" rx="3" fill="#3d1208" opacity="0.9"/>
+  <rect x="90" y="228" width="28" height="8" rx="4" fill="#3fb950" opacity="0.9"/>
+
+  <!-- Monitor -->
+  <rect x="362" y="196" width="132" height="60" rx="12" fill="#1e0d07" stroke="#993c1d" stroke-width="2"/>
+  <rect x="374" y="212" width="80" height="9" rx="4" fill="#f0997b" opacity="0.9"/>
+  <rect x="374" y="228" width="52" height="8" rx="3" fill="#3d1208" opacity="0.9"/>
+  <rect x="434" y="228" width="28" height="8" rx="4" fill="#3fb950" opacity="0.9"/>
+
+  <!-- AlarmEngine -->
+  <rect x="166" y="344" width="180" height="60" rx="12" fill="#1e0d07" stroke="#d85a30" stroke-width="2.5"/>
+  <rect x="180" y="360" width="80" height="9" rx="4" fill="#f5c4b3" opacity="0.9"/>
+  <rect x="180" y="376" width="52" height="8" rx="3" fill="#3d1208" opacity="0.9"/>
+  <rect x="240" y="376" width="28" height="8" rx="4" fill="#e84040" opacity="0.9"/>
+
+  <!-- gRPC label -->
+  <rect x="188" y="176" width="80" height="20" rx="6" fill="#3d1208" stroke="#d85a30" stroke-width="1.5"/>
+  <rect x="196" y="183" width="64" height="7" rx="3" fill="#d85a30" opacity="0.9"/>
+
+  <rect x="184" y="424" width="144" height="6" rx="3" fill="#d85a30"/>
+</svg>

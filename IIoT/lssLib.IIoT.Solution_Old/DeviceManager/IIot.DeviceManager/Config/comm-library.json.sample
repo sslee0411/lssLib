@@ -1,0 +1,19 @@
+{
+  "Meta": { "Version": "1.0", "UpdatedAt": "2025-01-01T00:00:00Z" },
+  "CommLibrary:cc-001": {
+    "name": "1공장 PLC 메인라인", "description": "A/B라인 공용 PLC",
+    "protocol": "0", "ipAddress": "192.168.1.10", "port": "502",
+    "slaveId": "1", "timeout": "3000", "retryCount": "3", "pollMs": "1000"
+  },
+  "CommLibrary:cc-002": {
+    "name": "2공장 OPC-UA 서버", "description": "",
+    "protocol": "3", "opcEndpointUrl": "opc.tcp://192.168.2.10:4840",
+    "opcSecurityPolicy": "None", "timeout": "5000", "retryCount": "3", "pollMs": "2000"
+  },
+  "CommLibrary:cc-003": {
+    "name": "전기실 RTU", "description": "RS-485 Modbus RTU",
+    "protocol": "1", "portName": "COM3", "baudRate": "9600",
+    "dataBits": "8", "parity": "0", "stopBits": "0",
+    "slaveId": "5", "timeout": "2000", "retryCount": "3", "pollMs": "1000"
+  }
+}

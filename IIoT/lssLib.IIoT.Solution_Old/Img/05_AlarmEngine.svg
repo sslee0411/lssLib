@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#1a0306"/>
+  <!-- Bell body -->
+  <path d="M256 64 C180 64 140 120 136 196 L116 292 L396 292 L376 196 C372 120 332 64 256 64 Z" fill="#4a0d18" stroke="#d85a72" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Bell inner highlight -->
+  <path d="M256 92 C204 92 172 138 168 202 L154 272 L358 272 L344 202 C340 138 308 92 256 92 Z" fill="#3d0a14" stroke="#993050" stroke-width="1.5"/>
+  <!-- Bell top knob -->
+  <circle cx="256" cy="60" r="20" fill="#3d0a14" stroke="#d85a72" stroke-width="3"/>
+  <circle cx="256" cy="60" r="10" fill="#d85a72"/>
+  <!-- Bell base / clapper mount -->
+  <rect x="208" y="286" width="96" height="18" rx="9" fill="#3d0a14" stroke="#d85a72" stroke-width="2.5"/>
+  <!-- Clapper -->
+  <circle cx="256" cy="326" r="22" fill="#993050" stroke="#d85a72" stroke-width="2.5"/>
+
+  <!-- Status indicators row -->
+  <!-- HH - red -->
+  <rect x="44" y="366" width="88" height="56" rx="12" fill="#3d0a0a" stroke="#e84040" stroke-width="2.5"/>
+  <rect x="56" y="380" width="40" height="10" rx="4" fill="#ff5050" opacity="0.95"/>
+  <rect x="56" y="397" width="60" height="8" rx="3" fill="#993030" opacity="0.8"/>
+  <!-- H - orange -->
+  <rect x="144" y="366" width="88" height="56" rx="12" fill="#3a2000" stroke="#e88030" stroke-width="2.5"/>
+  <rect x="156" y="380" width="32" height="10" rx="4" fill="#ffa040" opacity="0.95"/>
+  <rect x="156" y="397" width="60" height="8" rx="3" fill="#7a4e00" opacity="0.8"/>
+  <!-- OK - green -->
+  <rect x="244" y="366" width="88" height="56" rx="12" fill="#051f10" stroke="#1d9e75" stroke-width="2.5"/>
+  <rect x="256" y="380" width="32" height="10" rx="4" fill="#3fb950" opacity="0.95"/>
+  <rect x="256" y="397" width="60" height="8" rx="3" fill="#0f5030" opacity="0.8"/>
+  <!-- L - blue -->
+  <rect x="344" y="366" width="88" height="56" rx="12" fill="#0c1a2e" stroke="#378add" stroke-width="2.5"/>
+  <rect x="356" y="380" width="32" height="10" rx="4" fill="#4fa3e8" opacity="0.95"/>
+  <rect x="356" y="397" width="60" height="8" rx="3" fill="#1a3a6a" opacity="0.8"/>
+
+  <!-- Notification channel icons bottom row -->
+  <!-- Email -->
+  <rect x="60" y="440" width="56" height="40" rx="10" fill="#3d0a14" stroke="#993050" stroke-width="1.5"/>
+  <path d="M70 452 L88 466 L106 452" stroke="#d85a72" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <line x1="70" y1="452" x2="70" y2="472" stroke="#993050" stroke-width="1.5"/>
+  <line x1="106" y1="452" x2="106" y2="472" stroke="#993050" stroke-width="1.5"/>
+  <line x1="70" y1="472" x2="106" y2="472" stroke="#993050" stroke-width="1.5"/>
+  <!-- SMS -->
+  <rect x="128" y="440" width="56" height="40" rx="10" fill="#3d0a14" stroke="#993050" stroke-width="1.5"/>
+  <rect x="138" y="449" width="36" height="22" rx="5" fill="none" stroke="#d85a72" stroke-width="2"/>
+  <rect x="153" y="471" width="6" height="5" rx="2" fill="#d85a72"/>
+  <!-- Webhook -->
+  <rect x="196" y="440" width="56" height="40" rx="10" fill="#3d0a14" stroke="#993050" stroke-width="1.5"/>
+  <circle cx="224" cy="460" r="10" fill="none" stroke="#d85a72" stroke-width="2"/>
+  <line x1="224" y1="450" x2="224" y2="442" stroke="#d85a72" stroke-width="2" stroke-linecap="round"/>
+  <!-- Push -->
+  <rect x="264" y="440" width="56" height="40" rx="10" fill="#3d0a14" stroke="#993050" stroke-width="1.5"/>
+  <rect x="278" y="448" width="28" height="20" rx="4" fill="none" stroke="#d85a72" stroke-width="2"/>
+  <circle cx="292" cy="476" r="4" fill="#d85a72"/>
+  <!-- Kakao -->
+  <rect x="332" y="440" width="56" height="40" rx="10" fill="#3d0a14" stroke="#993050" stroke-width="1.5"/>
+  <rect x="346" y="451" width="28" height="20" rx="10" fill="none" stroke="#d85a72" stroke-width="2"/>
+  <circle cx="360" cy="461" r="3" fill="#d85a72"/>
+
+  <rect x="184" y="490" width="144" height="6" rx="3" fill="#d85a72"/>
+</svg>

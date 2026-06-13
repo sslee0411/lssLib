@@ -1,0 +1,22 @@
+{
+  "Meta": {
+    "Version": "1.0",
+    "UpdatedAt": "2025-01-01T00:00:00Z"
+  },
+  "ScaleLibrary:sc-001": {
+    "name": "온도 4-20mA",
+    "rawMin": "4",
+    "rawMax": "20",
+    "engMin": "0",
+    "engMax": "100",
+    "unit": "°C"
+  },
+  "ScaleLibrary:sc-002": {
+    "name": "압력 0-10V",
+    "rawMin": "0",
+    "rawMax": "10",
+    "engMin": "0",
+    "engMax": "10",
+    "unit": "bar"
+  }
+}

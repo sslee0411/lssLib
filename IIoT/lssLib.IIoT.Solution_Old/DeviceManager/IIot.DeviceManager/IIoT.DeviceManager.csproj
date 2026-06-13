@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<!-- 명시적 AssemblyName 추가: XAML의 clr-namespace:...;assembly= 이 값을 정확히 참조해야 함 -->
+		<AssemblyName>IIoT.DeviceManager</AssemblyName>
+		<!--
+		  ★ Fix3: RootNamespace 명시
+		     미설정 시 MSBuild 가 csproj 파일명(IIoT.DeviceManager)을 기준으로
+		     EmbeddedResource 이름 생성 → "IIoT.DeviceManager.Config.device.json.sample"
+		     ConfigInitializer 의 ResourcePrefix("IIoT.DeviceManager.Config.") 와 불일치
+		     → RootNamespace 를 명시하여 두 곳 모두 "IIoT.DeviceManager" 로 통일
+		-->
+		<RootNamespace>IIoT.DeviceManager</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- MVVM 툴킷 (Phase 0) -->
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<!-- DI 컨테이너 -->
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!--
+		  ★ Phase 1 Fix2: .json.sample 을 실행파일 내부 임베디드 리소스로 내장
+		     RootNamespace 명시 후 리소스 이름:
+		       IIoT.DeviceManager.Config.device.json.sample       ← ConfigInitializer 와 일치
+		       IIoT.DeviceManager.Config.scale-library.json.sample
+		       IIoT.DeviceManager.Config.alarm-library.json.sample
+		       IIoT.DeviceManager.Config.comm-library.json.sample
+		       IIoT.DeviceManager.Config.location-library.json.sample
+		-->
+		<EmbeddedResource Include="Config\*.json.sample" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="ViewModels\Library\" />
+	  <Folder Include="Views\DeviceTree\" />
+	  <Folder Include="Views\Editors\" />
+	  <Folder Include="Views\Library\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+	  <ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+	  <ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+	  <ProjectReference Include="..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+	  <ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+</Project>

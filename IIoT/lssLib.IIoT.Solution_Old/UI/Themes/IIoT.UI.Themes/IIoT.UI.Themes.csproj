@@ -1,0 +1,58 @@
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- ★ Library (WinExe 아님) + pack:// URI 지원 -->
+		<OutputType>Library</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>IIoT.UI.Themes</AssemblyName>
+		<RootNamespace>IIoT.UI.Themes</RootNamespace>
+		<!-- pack:// URI 지원 필수 -->
+		<GenerateLibraryLayout>true</GenerateLibraryLayout>
+		<Description>IIoT SCADA 시스템 WPF 공유 테마 라이브러리 — 7가지 테마 + 런타임 전환</Description>
+	</PropertyGroup>
+	<!--
+      ★ SDK 자동 포함 동작:
+         <UseWPF>true</UseWPF> 설정 시 .NET SDK가 프로젝트 폴더의
+         모든 .xaml 파일을 자동으로 Page 로, 모든 .cs 파일을 Compile 로 등록.
+         따라서 csproj에 <Page Include="..."/> 를 명시하면
+         SDK 자동 포함과 중복되어 NETSDK1022 오류 발생.
+         → <Page> 항목 명시 불필요. SDK에 맡긴다.
+    -->
+
+	<!--
+    <Page> 항목을 명시하지 않아도 된다.
+    SDK가 하위 폴더까지 포함하여 자동으로 모든 .xaml 을 Page 로 처리한다.
+    Themes/, Styles/, Controls/ 안의 .xaml 파일 전부 자동 포함.
+    -->
+	<!-- 7가지 테마 XAML — Build Action: Page (어셈블리 리소스로 컴파일) 
+	<ItemGroup Label="Themes">
+		<Page Include="Themes\Theme.DarkNavy.xaml"      />
+		<Page Include="Themes\Theme.SteelLight.xaml"    />
+		<Page Include="Themes\Theme.NeonCyber.xaml"     />
+		<Page Include="Themes\Theme.WarmAmber.xaml"     />
+		<Page Include="Themes\Theme.ArcticFrost.xaml"   />
+		<Page Include="Themes\Theme.TerminalGreen.xaml" />
+		<Page Include="Themes\Theme.CarbonElite.xaml"   />
+	</ItemGroup>-->
+
+	<!-- 공유 스타일 — DynamicResource 기반 
+	<ItemGroup Label="Styles">
+		<Page Include="Styles\Styles.Controls.xaml"  />
+		<Page Include="Styles\Styles.Layout.xaml"    />
+		<Page Include="Styles\Styles.TreeView.xaml"  />
+	</ItemGroup>-->
+
+	<!-- 테마 선택 UI 컨트롤 
+	<ItemGroup Label="Controls">
+		<Page Include="Controls\ThemeSelectorPanel.xaml" />
+	</ItemGroup>-->
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+	</ItemGroup>
+
+</Project>

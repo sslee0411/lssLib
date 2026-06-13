@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>IIoT SCADA — 7 Theme Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<style>
+/* ════════════════════════════════════════════════════════
+   폰트 임포트 — 각 테마 전용
+════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Mono:ital,wght@0,400;0,500&family=Syne:wght@400;600;700;800&display=swap');
+
+/* ════════════════════════════════════════════════════════
+   리셋
+════════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+button,input,select{font-family:inherit;outline:none}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+
+/* ════════════════════════════════════════════════════════
+   테마 변수 정의 (7종)
+════════════════════════════════════════════════════════ */
+
+/* ── T1: Dark Navy (기존) ── */
+.t1{
+  --bg:#0b0d14;--surface:#111520;--card:#161b2e;
+  --border:#1e2540;--b2:#2a3155;
+  --acc:#4f7cff;--acc2:#7c5cff;
+  --g:#22d3a0;--y:#f5c842;--r:#ff4f6b;--o:#ff8c42;
+  --tx:#e2e8f0;--t2:#94a3b8;--t3:#4a5568;
+  --fn:'JetBrains Mono',monospace;
+  --fs:'IBM Plex Sans KR',sans-serif;
+  --radius:6px;--radius-sm:3px;
+}
+/* ── T2: Steel Light ── */
+.t2{
+  --bg:#eef1f6;--surface:#ffffff;--card:#f5f7fa;
+  --border:#dde3ed;--b2:#c4cdd9;
+  --acc:#0057d8;--acc2:#0284c7;
+  --g:#059669;--y:#d97706;--r:#dc2626;--o:#ea580c;
+  --tx:#0f172a;--t2:#334155;--t3:#6b7a99;
+  --fn:'DM Mono',monospace;
+  --fs:'Outfit',sans-serif;
+  --radius:8px;--radius-sm:4px;
+}
+/* ── T3: Neon Cyber ── */
+.t3{
+  --bg:#040710;--surface:#06091a;--card:#080c20;
+  --border:#0b1230;--b2:#101d40;
+  --acc:#00ffa3;--acc2:#ff00cc;
+  --g:#00ffa3;--y:#ffe600;--r:#ff1155;--o:#ff6600;
+  --tx:#b0ffe0;--t2:#4dffb0;--t3:#1a6644;
+  --fn:'Rajdhani',sans-serif;
+  --fs:'Rajdhani',sans-serif;
+  --radius:2px;--radius-sm:1px;
+}
+/* ── T4: Warm Amber ── */
+.t4{
+  --bg:#110f0c;--surface:#1a1714;--card:#221e18;
+  --border:#2e2820;--b2:#3d3528;
+  --acc:#f59e0b;--acc2:#fb923c;
+  --g:#86efac;--y:#fcd34d;--r:#f87171;--o:#fb923c;
+  --tx:#fdf3e7;--t2:#c9a96e;--t3:#6b5a40;
+  --fn:'JetBrains Mono',monospace;
+  --fs:'IBM Plex Sans KR',sans-serif;
+  --radius:5px;--radius-sm:3px;
+}
+/* ── T5: Arctic Frost ── */
+.t5{
+  --bg:#f0f7ff;--surface:#ffffff;--card:#e8f3ff;
+  --border:#c5dcf5;--b2:#96bfe8;
+  --acc:#0284c7;--acc2:#06b6d4;
+  --g:#0d9488;--y:#ca8a04;--r:#dc2626;--o:#ea580c;
+  --tx:#0c1f3a;--t2:#1e3a5f;--t3:#5882a8;
+  --fn:'DM Mono',monospace;
+  --fs:'Outfit',sans-serif;
+  --radius:10px;--radius-sm:5px;
+}
+/* ── T6: Terminal Green ── */
+.t6{
+  --bg:#010a01;--surface:#020c02;--card:#030f03;
+  --border:#082008;--b2:#0d330d;
+  --acc:#00ff41;--acc2:#00cc33;
+  --g:#00ff41;--y:#ffff00;--r:#ff0000;--o:#ff8800;
+  --tx:#00ff41;--t2:#00cc33;--t3:#006616;
+  --fn:'Share Tech Mono',monospace;
+  --fs:'Share Tech Mono',monospace;
+  --radius:0px;--radius-sm:0px;
+}
+/* ── T7: Carbon Elite ── */
+.t7{
+  --bg:#080808;--surface:#0f0f0f;--card:#141414;
+  --border:#1c1c1c;--b2:#2a2a2a;
+  --acc:#c9a84c;--acc2:#e8c87a;
+  --g:#4ade80;--y:#fbbf24;--r:#f87171;--o:#fb923c;
+  --tx:#f5f0e8;--t2:#c8bfa8;--t3:#5a5448;
+  --fn:'Cormorant Garamond',serif;
+  --fs:'Cormorant Garamond',serif;
+  --radius:0px;--radius-sm:0px;
+}
+
+/* ════════════════════════════════════════════════════════
+   전역 레이아웃
+════════════════════════════════════════════════════════ */
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:var(--fs);font-size:13px;
+  transition:background .3s,color .3s;
+}
+
+/* ── 테마 선택 바 ───────────────────────────────────── */
+#theme-bar{
+  display:flex;align-items:stretch;
+  background:#000;border-bottom:1px solid #1a1a1a;
+  padding:0 12px;position:fixed;top:0;left:0;right:0;z-index:9999;
+  height:42px;
+}
+.tb-logo{
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:800;
+  color:#444;letter-spacing:3px;text-transform:uppercase;
+  display:flex;align-items:center;margin-right:16px;white-space:nowrap;
+}
+.tb-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:0 14px;font-size:11px;font-weight:600;
+  color:#3a3a3a;cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .2s;white-space:nowrap;letter-spacing:.3px;
+  font-family:'IBM Plex Sans KR',sans-serif;
+}
+.tb-tab:hover{color:#777}
+.tb-tab.on{color:#fff;border-bottom-color:var(--tab-color,#fff)}
+.tb-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--tab-color);flex-shrink:0;
+}
+.tb-tab.on .tb-dot{box-shadow:0 0 6px var(--tab-color);}
+
+/* ── 앱 래퍼 ────────────────────────────────────────── */
+#app{
+  margin-top:42px;height:calc(100vh - 42px);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ── 서브 탭 바 ─────────────────────────────────────── */
+#subtab-bar{
+  display:flex;align-items:center;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 16px;flex-shrink:0;
+  transition:background .3s,border-color .3s;
+}
+.stab{
+  padding:9px 18px;font-size:12px;font-weight:600;
+  color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .2s;font-family:var(--fs);letter-spacing:.3px;
+}
+.stab:hover{color:var(--t2)}
+.stab.on{color:var(--tx);border-bottom-color:var(--acc);}
+.tb-actions{
+  margin-left:auto;display:flex;align-items:center;gap:7px;
+}
+.xbtn{
+  padding:5px 11px;font-size:11px;font-weight:600;
+  border-radius:var(--radius-sm);border:1px solid var(--b2);
+  background:var(--card);color:var(--t2);cursor:pointer;
+  font-family:var(--fs);transition:all .15s;white-space:nowrap;
+  letter-spacing:.3px;
+}
+.xbtn:hover{background:var(--b2);color:var(--tx)}
+.xbtn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+.xbtn.pri:hover{opacity:.88}
+
+/* ── 메인 3분할 ─────────────────────────────────────── */
+#main-area{
+  flex:1;display:grid;
+  grid-template-columns:220px 1fr 268px;
+  overflow:hidden;
+}
+
+/* ── 패널 공통 ───────────────────────────────────────── */
+.panel{
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:background .3s,border-color .3s;
+}
+.panel-r{border-right:none;border-left:1px solid var(--border)}
+.ph{
+  padding:9px 14px;font-size:10px;font-weight:700;
+  color:var(--t3);background:var(--card);
+  border-bottom:1px solid var(--border);
+  text-transform:uppercase;letter-spacing:1.2px;flex-shrink:0;
+  font-family:var(--fs);transition:all .3s;
+}
+.pb{flex:1;overflow-y:auto;padding:8px}
+.pb::-webkit-scrollbar{width:3px}
+.pb::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+/* ── 트리 아이템 ─────────────────────────────────────── */
+.ti{
+  display:flex;align-items:center;gap:7px;
+  padding:5px 8px;font-size:12px;cursor:pointer;
+  border-radius:var(--radius-sm);transition:background .12s;
+  color:var(--t2);font-family:var(--fs);
+}
+.ti:hover{background:var(--card)}
+.ti.sel{background:var(--acc)18;color:var(--acc);font-weight:600}
+.ti .ico{font-size:12px;flex-shrink:0}
+.i1{padding-left:22px}.i2{padding-left:36px}.i3{padding-left:50px}
+
+/* ── 트리 툴바 ───────────────────────────────────────── */
+.tree-tb{
+  padding:5px 8px;display:flex;gap:3px;flex-wrap:wrap;
+  background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.tbtn{
+  padding:3px 7px;font-size:10px;font-weight:600;
+  border-radius:var(--radius-sm);border:1px solid var(--b2);
+  background:var(--surface);color:var(--t2);cursor:pointer;
+  font-family:var(--fs);transition:all .12s;
+}
+.tbtn:hover{background:var(--b2);color:var(--tx)}
+
+/* ── 중앙 컨텐츠 ─────────────────────────────────────── */
+#center{
+  background:var(--bg);overflow-y:auto;padding:18px;
+  display:flex;flex-direction:column;gap:13px;
+  transition:background .3s;
+}
+.center-hd{
+  display:flex;align-items:center;gap:12px;
+  padding-bottom:13px;border-bottom:1px solid var(--border);
+}
+.ch-icon{
+  width:42px;height:42px;border-radius:var(--radius);
+  background:var(--acc)1a;border:1px solid var(--acc)33;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.ch-title{font-size:15px;font-weight:700;color:var(--tx);letter-spacing:.3px}
+.ch-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.xbadge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;
+  font-family:var(--fn);
+}
+.dot5{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* ── 카드 ─────────────────────────────────────────────── */
+.card{
+  background:var(--card);border-radius:var(--radius);
+  border:1px solid var(--b2);padding:16px;
+  transition:background .3s,border-color .3s;
+}
+.card-title{
+  font-size:10px;font-weight:700;color:var(--acc);
+  text-transform:uppercase;letter-spacing:1.2px;margin-bottom:13px;
+  font-family:var(--fs);
+}
+
+/* ── 스케일 변환 시각화 ──────────────────────────────── */
+.scale-viz{display:flex;align-items:center;gap:14px}
+.scale-box{
+  text-align:center;background:var(--bg);
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:11px 14px;min-width:90px;
+}
+.scale-box.eng{border-color:var(--g)33;background:var(--g)08}
+.sb-lbl{font-size:9px;color:var(--t3);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.sb-val{font-size:22px;font-weight:700;font-family:var(--fn);margin:4px 0;color:var(--t2)}
+.sb-val.eng{color:var(--g)}
+.sb-rng{font-size:10px;color:var(--t3)}
+.scale-arrow{
+  flex:1;display:flex;flex-direction:column;gap:5px;align-items:stretch;
+}
+.sa-line{height:3px;background:linear-gradient(90deg,var(--acc2),var(--acc));border-radius:2px}
+.sa-label{font-size:9px;color:var(--t3);text-align:center;letter-spacing:.5px}
+.scale-bar{
+  height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:10px;
+}
+.scale-fill{
+  height:100%;width:50%;
+  background:linear-gradient(90deg,var(--acc2),var(--acc),var(--g));
+  border-radius:3px;
+}
+
+/* ── 알람 시각화 ─────────────────────────────────────── */
+.alarm-track{
+  position:relative;height:52px;margin:4px 0 6px;
+}
+.at-bar{
+  position:absolute;width:100%;height:8px;top:50%;transform:translateY(-50%);
+  border-radius:4px;overflow:hidden;
+  background:linear-gradient(90deg,var(--acc2)33,var(--acc)22,var(--g)22,var(--y)22,var(--r)22);
+}
+.at-marker{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;}
+.at-line{width:2px;height:24px;border-radius:1px}
+.at-lbl{font-size:9px;font-weight:700;font-family:var(--fn);margin-top:2px;white-space:nowrap}
+.at-cur{position:absolute;transform:translateX(-50%);top:-18px;font-size:10px;font-family:var(--fn);font-weight:700;background:var(--card);padding:0 4px;border-radius:2px;border:1px solid var(--g);color:var(--g)}
+
+/* ── 알람 셀 그리드 ──────────────────────────────────── */
+.alarm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.ac{background:var(--bg);border-radius:var(--radius-sm);padding:8px;text-align:center;border-top:2px solid}
+.ac-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.ac-v{font-size:16px;font-weight:700;font-family:var(--fn);margin:3px 0}
+.ac-u{font-size:9px;color:var(--t3)}
+
+/* ── 통계 카드 행 ────────────────────────────────────── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sc{
+  background:var(--card);border-radius:var(--radius);
+  border:1px solid var(--b2);padding:11px;text-align:center;
+}
+.sc-l{font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.sc-v{font-size:20px;font-family:var(--fn);font-weight:700;margin:4px 0}
+.sc-s{font-size:9px;color:var(--t3)}
+
+/* ── 속성 편집 패널 ──────────────────────────────────── */
+#right-panel .pb{padding:14px}
+.ps{padding-bottom:13px;margin-bottom:13px;border-bottom:1px solid var(--border)}
+.ps:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.pt{font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+.field{margin-bottom:9px}
+.field label{display:block;font-size:10px;color:var(--t3);margin-bottom:3px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.field input,.field select{
+  width:100%;padding:5px 8px;font-size:12px;
+  background:var(--card);border:1px solid var(--b2);
+  color:var(--tx);border-radius:var(--radius-sm);
+  font-family:var(--fs);transition:border-color .15s;
+}
+.field input:focus,.field select:focus{border-color:var(--acc)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+
+/* 스케일 프리뷰 인라인 */
+.sp-box{
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:8px 10px;margin-top:7px;
+}
+.sp-raw-lbl{font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.sp-raw{background:transparent;border:none;font-family:var(--fn);font-size:13px;color:var(--t2);width:72px}
+.sp-eng{font-family:var(--fn);font-size:15px;font-weight:700;color:var(--g);text-align:right}
+.sp-eng-lbl{font-size:9px;color:var(--g);text-align:right;margin-bottom:2px}
+
+/* 알람 편집 그리드 */
+.ae-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:5px}
+.ae-cell{background:var(--bg);border-radius:var(--radius-sm);padding:7px;text-align:center}
+.ae-lbl{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.ae-inp{
+  border:none;background:transparent;
+  font-size:14px;font-weight:700;font-family:var(--fn);
+  text-align:center;width:100%;
+}
+
+/* 적용 버튼 */
+.apply-btn{
+  width:100%;padding:8px;border:none;
+  background:var(--acc);color:#fff;
+  border-radius:var(--radius-sm);font-size:12px;font-weight:700;
+  cursor:pointer;font-family:var(--fs);letter-spacing:.5px;
+  margin-top:10px;transition:opacity .15s;
+}
+.apply-btn:hover{opacity:.88}
+
+/* ════════════════════════════════════════════════════════
+   테마별 특수 효과
+════════════════════════════════════════════════════════ */
+
+/* T1 — 격자 배경 */
+.t1 #center{
+  background-image:radial-gradient(#1e254022 1px,transparent 1px);
+  background-size:22px 22px;
+}
+
+/* T2 — 밝은 그림자 + 라운드 */
+.t2 .card{box-shadow:0 1px 4px rgba(0,80,200,.06)}
+.t2 .panel{box-shadow:inset -1px 0 0 var(--border)}
+.t2 .xbtn.pri{box-shadow:0 2px 8px var(--acc)44}
+.t2 #center{
+  background-image:radial-gradient(#c4cdd916 1px,transparent 1px);
+  background-size:20px 20px;
+}
+
+/* T3 — 네온 글로우 */
+.t3 .card{box-shadow:0 0 20px var(--acc)07,inset 0 0 40px var(--acc)03}
+.t3 .ti.sel{text-shadow:0 0 8px var(--acc)}
+.t3 .card-title,.t3 .pt{text-shadow:0 0 6px var(--acc)}
+.t3 .sc-v{text-shadow:0 0 10px currentColor}
+.t3 .sb-val.eng{text-shadow:0 0 12px var(--g)}
+.t3 .sp-eng{text-shadow:0 0 8px var(--g)}
+.t3 .card,.t3 .panel{border-color:var(--acc)22}
+.t3 .panel .ph{border-bottom-color:var(--acc)22}
+.t3 .xbtn{border-color:var(--acc)33;color:var(--acc)}
+.t3 .xbtn.pri{background:transparent;border:1px solid var(--acc);box-shadow:0 0 12px var(--acc)44}
+.t3 .apply-btn{background:transparent;border:1px solid var(--acc);box-shadow:0 0 12px var(--acc)33}
+.t3 .stab.on{text-shadow:0 0 6px var(--acc)}
+.t3 #center{
+  background-image:
+    linear-gradient(var(--acc)06 1px,transparent 1px),
+    linear-gradient(90deg,var(--acc)06 1px,transparent 1px);
+  background-size:28px 28px;
+}
+/* T3 스캔라인 */
+.t3::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);
+  pointer-events:none;z-index:9998;
+}
+
+/* T4 — 따뜻한 그라디언트 */
+.t4 .topbar-accent{color:var(--acc);text-shadow:0 0 12px var(--acc)44}
+.t4 .card{box-shadow:inset 0 1px 0 var(--b2)}
+.t4 #center{
+  background-image:
+    linear-gradient(var(--border)88 1px,transparent 1px),
+    linear-gradient(90deg,var(--border)88 1px,transparent 1px);
+  background-size:24px 24px;
+}
+
+/* T5 — 얼음 결정 */
+.t5 .card{
+  background:rgba(255,255,255,.9);
+  box-shadow:0 2px 12px rgba(0,100,200,.08),inset 0 0 0 1px rgba(255,255,255,.6);
+  backdrop-filter:blur(4px);
+}
+.t5 .panel{background:rgba(255,255,255,.85);backdrop-filter:blur(4px)}
+.t5 #center{
+  background-image:
+    radial-gradient(#96bfe844 1px,transparent 1px),
+    radial-gradient(#96bfe822 1px,transparent 1px);
+  background-size:24px 24px,12px 12px;
+  background-position:0 0,12px 12px;
+}
+.t5 .sb-val.eng{color:var(--g)}
+.t5 .xbtn.pri{box-shadow:0 2px 8px var(--acc)44}
+
+/* T6 — 레트로 터미널 */
+.t6 *{font-family:'Share Tech Mono',monospace!important;letter-spacing:.5px}
+.t6 .card{border-color:var(--acc)33;background:var(--card)}
+.t6 .card-title,.t6 .pt{color:var(--acc);text-shadow:0 0 5px var(--acc)}
+.t6 .sc-v,.t6 .sb-val,.t6 .sp-eng{text-shadow:0 0 8px currentColor}
+.t6 .stab.on,.t6 .ti.sel{text-shadow:0 0 6px var(--acc)}
+.t6 .panel,.t6 .card{border-color:var(--acc)33}
+.t6 .ph{color:var(--acc);border-bottom-color:var(--acc)33}
+.t6 .xbtn{border-color:var(--acc)44;color:var(--acc)}
+.t6 .xbtn.pri{background:transparent;border-color:var(--acc);box-shadow:0 0 8px var(--acc)33}
+.t6 .apply-btn{background:transparent;border:1px solid var(--acc);color:var(--acc);box-shadow:0 0 10px var(--acc)22}
+.t6 #center{
+  background-image:
+    linear-gradient(var(--acc)08 1px,transparent 1px),
+    linear-gradient(90deg,var(--acc)08 1px,transparent 1px);
+  background-size:16px 16px;
+}
+/* 스캔라인 */
+.t6::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(0,255,65,.02) 1px,rgba(0,255,65,.02) 2px);
+  pointer-events:none;z-index:9998;
+}
+
+/* T7 — 카본 골드 */
+.t7 .card{
+  background:linear-gradient(135deg,#161616,#121212);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.t7 #center{
+  background-image:
+    repeating-linear-gradient(45deg,#0c0c0c 0px,#0c0c0c 1px,transparent 1px,transparent 6px),
+    repeating-linear-gradient(-45deg,#0c0c0c 0px,#0c0c0c 1px,transparent 1px,transparent 6px);
+  background-size:6px 6px;
+}
+.t7 .card-title,.t7 .pt{
+  color:var(--acc);
+  background:linear-gradient(90deg,var(--acc),var(--acc2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.t7 .sc-v{
+  background:linear-gradient(90deg,var(--acc),var(--acc2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.t7 .apply-btn{
+  background:linear-gradient(90deg,var(--acc),var(--acc2));
+  color:#000;font-weight:900;letter-spacing:2px;
+}
+.t7 .xbtn.pri{
+  background:linear-gradient(90deg,var(--acc),var(--acc2));
+  color:#000;font-weight:800;border:none;
+}
+.t7 .panel{border-color:#1c1c1c}
+.t7 .ph{
+  background:linear-gradient(90deg,#111,#0c0c0c);
+  border-bottom-color:#1c1c1c;
+}
+
+/* ════════════════════════════════════════════════════════
+   뷰 전환
+════════════════════════════════════════════════════════ */
+.view{display:none}
+.view.on{display:flex;flex-direction:column;gap:13px}
+
+/* ════════════════════════════════════════════════════════
+   수집/모니터링 전용 컴포넌트
+════════════════════════════════════════════════════════ */
+
+/* 파이프라인 */
+.pipeline{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  border-radius:var(--radius);border:1px solid var(--b2);overflow:hidden;
+}
+.ps-cell{
+  padding:11px 8px;border-right:1px solid var(--b2);
+  position:relative;
+}
+.ps-cell:last-child{border-right:none}
+.ps-lbl{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+.ps-val{font-size:14px;font-family:var(--fn);font-weight:700;margin-top:3px}
+.ps-sub{font-size:9px;color:var(--t3);margin-top:1px}
+
+/* 태그 리스트 */
+.tag-list-row{
+  display:grid;grid-template-columns:8px 1fr 70px 50px 38px;
+  align-items:center;gap:6px;padding:5px 8px;
+  border-bottom:1px solid var(--border)55;
+  font-size:11px;font-family:var(--fn);cursor:pointer;
+  transition:background .1s;
+}
+.tag-list-row:hover{background:var(--card)}
+.tag-list-row.sel{background:var(--acc)12}
+.tl-name{font-family:var(--fs);font-size:12px;font-weight:500;color:var(--tx)}
+.tl-val{color:var(--g);font-weight:700;text-align:right}
+.tl-time{color:var(--t3);font-size:10px}
+
+/* 알람 아이템 */
+.alarm-item{
+  padding:8px 10px;margin-bottom:4px;
+  border-left:3px solid;border-radius:var(--radius-sm);
+  font-size:11px;cursor:pointer;
+  transition:opacity .12s;
+}
+.alarm-item:hover{opacity:.85}
+.ai-tag{font-weight:600;font-size:12px}
+.ai-val{font-family:var(--fn);font-size:14px;font-weight:700;margin:2px 0}
+.ai-row{display:flex;justify-content:space-between;align-items:center}
+.ai-time{font-size:10px;color:var(--t3)}
+
+/* SVG 트렌드 */
+.trend-svg{width:100%;border-radius:var(--radius-sm);overflow:hidden}
+
+/* 감지기 행 */
+.det-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:var(--radius-sm);margin-bottom:3px;
+  background:var(--bg);border:1px solid var(--border);font-size:11px;
+}
+.det-name{flex:1;font-weight:600;color:var(--tx)}
+.det-type{font-size:10px;color:var(--t3)}
+
+/* ════════════════════════════════════════════════════════
+   애니메이션
+════════════════════════════════════════════════════════ */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.blink{animation:pulse 1.5s ease infinite}
+.fade-in{animation:fadeIn .28s ease both}
+</style>
+</head>
+<body class="t1">
+
+<!-- ══ 테마 선택 바 ════════════════════════════════════════ -->
+<div id="theme-bar">
+  <div class="tb-logo">IIOT/<br>SCADA</div>
+
+  <div class="tb-tab on" style="--tab-color:#4f7cff"  onclick="setTheme(1,this)">
+    <div class="tb-dot"></div>① Dark Navy
+  </div>
+  <div class="tb-tab" style="--tab-color:#0057d8"  onclick="setTheme(2,this)">
+    <div class="tb-dot"></div>② Steel Light
+  </div>
+  <div class="tb-tab" style="--tab-color:#00ffa3"  onclick="setTheme(3,this)">
+    <div class="tb-dot"></div>③ Neon Cyber
+  </div>
+  <div class="tb-tab" style="--tab-color:#f59e0b"  onclick="setTheme(4,this)">
+    <div class="tb-dot"></div>④ Warm Amber
+  </div>
+  <div class="tb-tab" style="--tab-color:#0284c7"  onclick="setTheme(5,this)">
+    <div class="tb-dot"></div>⑤ Arctic Frost
+  </div>
+  <div class="tb-tab" style="--tab-color:#00ff41"  onclick="setTheme(6,this)">
+    <div class="tb-dot"></div>⑥ Terminal
+  </div>
+  <div class="tb-tab" style="--tab-color:#c9a84c"  onclick="setTheme(7,this)">
+    <div class="tb-dot"></div>⑦ Carbon Elite
+  </div>
+</div>
+
+<!-- ══ 앱 ════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- 서브탭 바 -->
+  <div id="subtab-bar">
+    <div class="stab on" id="stab1" onclick="setView('cfg')">🏭 설정 프로그램</div>
+    <div class="stab"    id="stab2" onclick="setView('col')">📊 수집 프로그램</div>
+    <div class="stab"    id="stab3" onclick="setView('mon')">🔔 모니터링</div>
+    <div class="tb-actions">
+      <button class="xbtn pri">💾 저장 (Ctrl+S)</button>
+      <button class="xbtn">✅ 유효성 검사</button>
+      <button class="xbtn">📥 CSV Import</button>
+      <button class="xbtn" style="color:var(--r);">↩ 롤백</button>
+      <span style="font-size:11px;color:var(--y);font-weight:700;margin-left:4px;" class="blink">● 미저장</span>
+    </div>
+  </div>
+
+  <!-- 메인 3분할 -->
+  <div id="main-area">
+
+    <!-- ══ 좌: 장비 트리 ══════════════════════════════════ -->
+    <div class="panel" id="left-panel">
+      <div class="ph" id="left-ph">장비 구조 트리</div>
+      <div class="tree-tb">
+        <button class="tbtn">+ 그룹</button>
+        <button class="tbtn">+ 장비</button>
+        <button class="tbtn">+ PLC</button>
+        <button class="tbtn">+ Tag</button>
+        <button class="tbtn" style="color:var(--r);">🗑</button>
+      </div>
+      <div class="pb" id="tree-body">
+        <!-- 설정 트리 -->
+        <div id="tree-cfg">
+          <div class="ti"><span class="ico">🏭</span><span style="font-weight:600;color:var(--tx)">제1공장</span>
+            <span class="xbadge" style="margin-left:auto;background:var(--b2);color:var(--t2);font-size:9px;">3장비</span></div>
+          <div class="ti i1"><span class="ico">⚙</span><span>압출기 #1</span></div>
+          <div class="ti i2"><span class="ico">🔌</span><span>ModbusTCP</span>
+            <span class="xbadge" style="margin-left:auto;background:var(--acc)1a;color:var(--acc);font-size:9px;">6T</span></div>
+          <div class="ti i3 sel" id="tree-tag-t"><span class="ico">🏷</span><span>온도</span></div>
+          <div class="ti i3"><span class="ico">🏷</span><span>압력</span></div>
+          <div class="ti i3"><span class="ico">🏷</span><span>속도</span></div>
+          <div class="ti i3"><span class="ico">🏷</span><span>전류</span></div>
+          <div class="ti i1"><span class="ico">⚙</span><span>압출기 #2</span></div>
+          <div class="ti i2"><span class="ico">🔌</span><span>ModbusTCP</span></div>
+          <div class="ti i1"><span class="ico">⚙</span><span>사출기 #1</span></div>
+          <div class="ti i2"><span class="ico">🔌</span><span>SerialRaw</span></div>
+          <div class="ti" style="margin-top:6px"><span class="ico">🏭</span><span style="font-weight:600;color:var(--tx)">제2공장</span></div>
+          <div class="ti i1"><span class="ico">⚙</span><span>CNC 머신 #1</span></div>
+          <div class="ti i2"><span class="ico">🔌</span><span>OPC-UA</span>
+            <span class="xbadge" style="margin-left:auto;background:var(--r)1a;color:var(--r);font-size:9px;">오류</span></div>
+        </div>
+        <!-- 수집 태그 리스트 -->
+        <div id="tree-col" style="display:none;padding:0">
+          <div style="padding:5px 8px;font-size:10px;font-weight:700;color:var(--t3);background:var(--card);border-bottom:1px solid var(--border);letter-spacing:1px;text-transform:uppercase">압출기 #1</div>
+          <div class="tag-list-row sel">
+            <span class="dot5" style="background:var(--g)"></span>
+            <span class="tl-name">온도</span>
+            <span class="tl-val">150.3</span>
+            <span class="xbadge" style="background:var(--g)15;color:var(--g);font-size:9px;padding:1px 5px">GOOD</span>
+            <span class="tl-time">0.3s</span>
+          </div>
+          <div class="tag-list-row">
+            <span class="dot5" style="background:var(--g)"></span>
+            <span class="tl-name">압력</span>
+            <span class="tl-val">7.42</span>
+            <span class="xbadge" style="background:var(--g)15;color:var(--g);font-size:9px;padding:1px 5px">GOOD</span>
+            <span class="tl-time">0.3s</span>
+          </div>
+          <div class="tag-list-row">
+            <span class="dot5" style="background:var(--y)"></span>
+            <span class="tl-name">속도</span>
+            <span class="tl-val" style="color:var(--y)">1842</span>
+            <span class="xbadge" style="background:var(--y)15;color:var(--y);font-size:9px;padding:1px 5px">UNC</span>
+            <span class="tl-time">0.8s</span>
+          </div>
+          <div class="tag-list-row">
+            <span class="dot5" style="background:var(--g)"></span>
+            <span class="tl-name">전류</span>
+            <span class="tl-val">28.7</span>
+            <span class="xbadge" style="background:var(--g)15;color:var(--g);font-size:9px;padding:1px 5px">GOOD</span>
+            <span class="tl-time">0.3s</span>
+          </div>
+          <div class="tag-list-row">
+            <span class="dot5" style="background:var(--r)"></span>
+            <span class="tl-name">진동</span>
+            <span class="tl-val" style="color:var(--r)">ERR</span>
+            <span class="xbadge" style="background:var(--r)15;color:var(--r);font-size:9px;padding:1px 5px">BAD</span>
+            <span class="tl-time">—</span>
+          </div>
+        </div>
+        <!-- 모니터링 알람 목록 -->
+        <div id="tree-mon" style="display:none;padding:6px">
+          <div style="font-size:10px;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:1px;padding:4px 2px 6px">활성 알람 — 7건</div>
+          <div class="alarm-item" style="border-color:var(--r);background:var(--r)08">
+            <div class="ai-row"><span class="ai-tag">압출기#1 › 온도</span>
+              <span class="xbadge" style="background:var(--r)20;color:var(--r);font-size:9px">HH</span></div>
+            <div class="ai-val" style="color:var(--r)">286.3 °C</div>
+            <div class="ai-row"><span class="ai-time">09:23:14 (8분 전)</span>
+              <button class="tbtn" style="font-size:9px;padding:2px 6px">확인</button></div>
+          </div>
+          <div class="alarm-item" style="border-color:var(--r);background:var(--r)08">
+            <div class="ai-row"><span class="ai-tag">사출기#1 › 압력</span>
+              <span class="xbadge" style="background:var(--r)20;color:var(--r);font-size:9px">HH</span></div>
+            <div class="ai-val" style="color:var(--r)">9.87 bar</div>
+            <div class="ai-row"><span class="ai-time">09:28:44 (3분 전)</span>
+              <button class="tbtn" style="font-size:9px;padding:2px 6px">확인</button></div>
+          </div>
+          <div class="alarm-item" style="border-color:var(--o);background:var(--o)08">
+            <div class="ai-row"><span class="ai-tag">압출기#2 › 전류</span>
+              <span class="xbadge" style="background:var(--o)20;color:var(--o);font-size:9px">H</span></div>
+            <div class="ai-val" style="color:var(--o)">34.2 A</div>
+            <div class="ai-row"><span class="ai-time">09:30:01 (1분 전)</span>
+              <button class="tbtn" style="font-size:9px;padding:2px 6px">확인</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 중앙: 뷰 전환 영역 ══════════════════════════════ -->
+    <div id="center">
+
+      <!-- 설정 뷰 -->
+      <div class="view on fade-in" id="view-cfg">
+
+        <!-- 헤더 -->
+        <div class="center-hd">
+          <div class="ch-icon" id="ch-icon">🏷</div>
+          <div>
+            <div class="ch-title" id="ch-title">온도 (Temperature)</div>
+            <div class="ch-sub">압출기 #1 › ModbusTCP › tag-001 · Float32</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:7px">
+            <span class="xbadge" style="background:var(--g)18;color:var(--g);border:1px solid var(--g)33"><span class="dot5"></span>활성</span>
+            <span class="xbadge" style="background:var(--acc)18;color:var(--acc);border:1px solid var(--acc)33">1000ms</span>
+          </div>
+        </div>
+
+        <!-- 스케일 시각화 카드 -->
+        <div class="card">
+          <div class="card-title">스케일 변환 — Linear</div>
+          <div class="scale-viz">
+            <div class="scale-box">
+              <div class="sb-lbl">RAW</div>
+              <div class="sb-val">2048</div>
+              <div class="sb-rng">0 ~ 4095</div>
+            </div>
+            <div class="scale-arrow">
+              <div class="sa-line"></div>
+              <div class="sa-label">LINEAR →</div>
+            </div>
+            <div class="scale-box eng">
+              <div class="sb-lbl" style="color:var(--g)">ENG</div>
+              <div class="sb-val eng">150.0</div>
+              <div class="sb-rng" style="color:var(--g)">°C · 0~300</div>
+            </div>
+          </div>
+          <div class="scale-bar"><div class="scale-fill"></div></div>
+        </div>
+
+        <!-- 알람 임계값 카드 -->
+        <div class="card">
+          <div class="card-title">알람 임계값 분포</div>
+          <div class="alarm-track">
+            <div class="at-bar"></div>
+            <div class="at-marker" style="left:3.3%">
+              <div class="at-line" style="background:#60a5fa;height:14px"></div>
+              <div class="at-lbl" style="color:#60a5fa">LL·10</div>
+            </div>
+            <div class="at-marker" style="left:6.7%">
+              <div class="at-line" style="background:var(--o);height:18px"></div>
+              <div class="at-lbl" style="color:var(--o)">L·20</div>
+            </div>
+            <div class="at-cur" style="left:50%">▼ 150°C</div>
+            <div class="at-marker" style="left:86.7%">
+              <div class="at-line" style="background:var(--o);height:18px"></div>
+              <div class="at-lbl" style="color:var(--o)">H·260</div>
+            </div>
+            <div class="at-marker" style="left:93.3%">
+              <div class="at-line" style="background:var(--r);height:14px"></div>
+              <div class="at-lbl" style="color:var(--r)">HH·280</div>
+            </div>
+          </div>
+          <div class="alarm-grid">
+            <div class="ac" style="border-color:var(--r)"><div class="ac-lbl" style="color:var(--r)">HH</div><div class="ac-v" style="color:var(--r)">280</div><div class="ac-u">°C</div></div>
+            <div class="ac" style="border-color:var(--o)"><div class="ac-lbl" style="color:var(--o)">H</div><div class="ac-v" style="color:var(--o)">260</div><div class="ac-u">°C</div></div>
+            <div class="ac" style="border-color:#60a5fa"><div class="ac-lbl" style="color:#60a5fa">L</div><div class="ac-v" style="color:#60a5fa">20</div><div class="ac-u">°C</div></div>
+            <div class="ac" style="border-color:var(--acc2)"><div class="ac-lbl" style="color:var(--acc2)">LL</div><div class="ac-v" style="color:var(--acc2)">10</div><div class="ac-u">°C</div></div>
+          </div>
+        </div>
+
+        <!-- 통계 -->
+        <div class="stat-row">
+          <div class="sc"><div class="sc-l">TPS</div><div class="sc-v" style="color:var(--acc)">847</div><div class="sc-s">태그/초</div></div>
+          <div class="sc"><div class="sc-l">SDT 압축</div><div class="sc-v" style="color:var(--g)">94.3%</div><div class="sc-s">저장 절감</div></div>
+          <div class="sc"><div class="sc-l">오류율</div><div class="sc-v" style="color:var(--y)">0.12%</div><div class="sc-s">통신</div></div>
+          <div class="sc"><div class="sc-l">활성 Tag</div><div class="sc-v">142</div><div class="sc-s">/ 148 전체</div></div>
+        </div>
+
+      </div><!-- /view-cfg -->
+
+      <!-- 수집 뷰 -->
+      <div class="view fade-in" id="view-col">
+
+        <!-- 현재값 헤더 -->
+        <div class="center-hd">
+          <div>
+            <div style="font-size:11px;color:var(--t3)">온도 — 압출기 #1</div>
+            <div style="font-size:34px;font-weight:700;font-family:var(--fn);color:var(--g)">150.3 <span style="font-size:16px;color:var(--t2)">°C</span></div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:7px">
+            <span class="xbadge blink" style="background:var(--g)15;color:var(--g);border:1px solid var(--g)33"><span class="dot5"></span>수집 중</span>
+            <span class="xbadge" style="background:var(--acc)15;color:var(--acc)">SDT 압축</span>
+          </div>
+        </div>
+
+        <!-- 트렌드 차트 -->
+        <div class="card">
+          <div class="card-title">실시간 트렌드 (최근 60초)</div>
+          <svg class="trend-svg" height="100" viewBox="0 0 600 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="grad-trend" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--g)" stop-opacity=".25"/>
+                <stop offset="100%" stop-color="var(--g)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="25" x2="600" y2="25" stroke="var(--border)" stroke-width="1"/>
+            <line x1="0" y1="50" x2="600" y2="50" stroke="var(--border)" stroke-width="1"/>
+            <line x1="0" y1="75" x2="600" y2="75" stroke="var(--border)" stroke-width="1"/>
+            <line x1="0" y1="18" x2="600" y2="18" stroke="var(--r)" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
+            <text x="2" y="16" font-size="8" fill="var(--r)" opacity=".8">HH</text>
+            <path d="M0,70 L30,67 L60,65 L90,63 L120,61 L150,59 L180,57 L210,55 L240,54 L270,52 L300,53 L330,51 L360,50 L390,52 L420,51 L450,53 L480,54 L510,55 L540,56 L570,57 L600,58"
+              stroke="var(--g)" stroke-width="2" fill="none"/>
+            <path d="M0,70 L30,67 L60,65 L90,63 L120,61 L150,59 L180,57 L210,55 L240,54 L270,52 L300,53 L330,51 L360,50 L390,52 L420,51 L450,53 L480,54 L510,55 L540,56 L570,57 L600,58 L600,100 L0,100Z"
+              fill="url(#grad-trend)"/>
+          </svg>
+        </div>
+
+        <!-- 파이프라인 -->
+        <div class="card">
+          <div class="card-title">수집 파이프라인 처리량</div>
+          <div class="pipeline">
+            <div class="ps-cell" style="background:var(--card)"><div class="ps-lbl">INPUT</div><div class="ps-val" style="color:var(--acc)">847/s</div><div class="ps-sub">ModbusTCP</div></div>
+            <div class="ps-cell"><div class="ps-lbl">PARSER</div><div class="ps-val" style="color:var(--acc)">846/s</div><div class="ps-sub">BufSchema</div></div>
+            <div class="ps-cell"><div class="ps-lbl">SCALE</div><div class="ps-val" style="color:var(--acc)">846/s</div><div class="ps-sub">Linear</div></div>
+            <div class="ps-cell"><div class="ps-lbl">FILTER</div><div class="ps-val" style="color:var(--y)">312/s</div><div class="ps-sub">DeadBand</div></div>
+            <div class="ps-cell"><div class="ps-lbl">SDT</div><div class="ps-val" style="color:var(--g)">48/s</div><div class="ps-sub">94.3% 절감</div></div>
+            <div class="ps-cell"><div class="ps-lbl">STORE</div><div class="ps-val" style="color:var(--g)">48/s</div><div class="ps-sub">SQLite</div></div>
+          </div>
+        </div>
+
+        <!-- 통계 -->
+        <div class="stat-row">
+          <div class="sc"><div class="sc-l">TPS</div><div class="sc-v" style="color:var(--acc)">847</div><div class="sc-s">초당 처리</div></div>
+          <div class="sc"><div class="sc-l">SDT 압축</div><div class="sc-v" style="color:var(--g)">94.3%</div><div class="sc-s">저장 절감</div></div>
+          <div class="sc"><div class="sc-l">오류율</div><div class="sc-v" style="color:var(--y)">0.12%</div><div class="sc-s">통신</div></div>
+          <div class="sc"><div class="sc-l">가동 시간</div><div class="sc-v" style="color:var(--acc)">14h</div><div class="sc-s">32m 경과</div></div>
+        </div>
+
+      </div><!-- /view-col -->
+
+      <!-- 모니터링 뷰 -->
+      <div class="view fade-in" id="view-mon">
+
+        <!-- 알람 상세 -->
+        <div class="card" style="border-color:var(--r)44;border-left:4px solid var(--r)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:18px">🔴</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--tx)">압출기 #1 › 온도 — HH 알람</div>
+              <div style="font-size:10px;color:var(--t3)">발생: 09:23:14 · 지속: 8분 22초 · tag-001</div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:7px">
+              <button class="xbtn" style="color:var(--g);border-color:var(--g)44;font-size:11px">✓ 확인</button>
+              <button class="xbtn" style="font-size:11px">📧 에스컬레이션</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div style="background:var(--bg);border-radius:var(--radius-sm);padding:9px;text-align:center">
+              <div style="font-size:9px;color:var(--t3);font-weight:700">현재값</div>
+              <div style="font-size:22px;font-family:var(--fn);font-weight:700;color:var(--r)">286.3</div>
+              <div style="font-size:9px;color:var(--t3)">°C</div>
+            </div>
+            <div style="background:var(--bg);border-radius:var(--radius-sm);padding:9px;text-align:center">
+              <div style="font-size:9px;color:var(--t3);font-weight:700">HH 임계값</div>
+              <div style="font-size:22px;font-family:var(--fn);font-weight:700;color:var(--r)">280.0</div>
+              <div style="font-size:9px;color:var(--t3)">°C</div>
+            </div>
+            <div style="background:var(--bg);border-radius:var(--radius-sm);padding:9px;text-align:center">
+              <div style="font-size:9px;color:var(--t3);font-weight:700">초과량</div>
+              <div style="font-size:22px;font-family:var(--fn);font-weight:700;color:var(--o)">+6.3</div>
+              <div style="font-size:9px;color:var(--t3)">°C</div>
+            </div>
+            <div style="background:var(--bg);border-radius:var(--radius-sm);padding:9px;text-align:center">
+              <div style="font-size:9px;color:var(--t3);font-weight:700">추세</div>
+              <div style="font-size:14px;font-family:var(--fn);font-weight:700;color:var(--y);margin:4px 0">↑상승</div>
+              <div style="font-size:9px;color:var(--t3)">0.8°C/min</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 이상 구간 차트 -->
+        <div class="card">
+          <div class="card-title">이상 구간 트렌드 (최근 30분)</div>
+          <svg class="trend-svg" height="90" viewBox="0 0 600 90" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="grad-alarm" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--r)" stop-opacity=".25"/>
+                <stop offset="100%" stop-color="var(--r)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <rect x="360" y="0" width="240" height="90" fill="var(--r)" opacity=".04"/>
+            <line x1="0" y1="22" x2="600" y2="22" stroke="var(--r)" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
+            <text x="2" y="20" font-size="8" fill="var(--r)" opacity=".7">HH 280°C</text>
+            <path d="M0,80 L60,74 L120,68 L180,62 L240,56 L300,50 L360,42 L420,32 L480,22 L540,17 L600,14"
+              stroke="var(--r)" stroke-width="2.5" fill="none"/>
+            <path d="M0,80 L60,74 L120,68 L180,62 L240,56 L300,50 L360,42 L420,32 L480,22 L540,17 L600,14 L600,90 L0,90Z"
+              fill="url(#grad-alarm)"/>
+            <circle cx="360" cy="42" r="5" fill="var(--r)"/>
+            <text x="364" y="56" font-size="8" fill="var(--r)">알람 발생</text>
+          </svg>
+        </div>
+
+        <!-- 예측 + 감지기 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="card" style="border-color:var(--y)33;border-left:3px solid var(--y)">
+            <div class="card-title" style="color:var(--y)">TrendPredictor 예측</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.7">
+              현재 상승 추세 지속 시<br>
+              <span style="font-size:20px;font-weight:700;color:var(--r);font-family:var(--fn)">18분 후</span><br>
+              HH 한계 초과 예상
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">감지기 상태</div>
+            <div class="det-row"><div style="width:7px;height:7px;border-radius:50%;background:var(--r);flex-shrink:0"></div><div class="det-name">ThresholdDetector</div><div class="det-type" style="color:var(--r)">HH 발생</div></div>
+            <div class="det-row"><div style="width:7px;height:7px;border-radius:50%;background:var(--y);flex-shrink:0"></div><div class="det-name">TrendDetector</div><div class="det-type" style="color:var(--y)">경고</div></div>
+            <div class="det-row"><div style="width:7px;height:7px;border-radius:50%;background:var(--g);flex-shrink:0"></div><div class="det-name">SpcEngine</div><div class="det-type" style="color:var(--g)">정상</div></div>
+          </div>
+        </div>
+
+        <!-- 통계 -->
+        <div class="stat-row">
+          <div class="sc"><div class="sc-l">활성 알람</div><div class="sc-v" style="color:var(--r)">7</div><div class="sc-s">HH:2 H:5</div></div>
+          <div class="sc"><div class="sc-l">OEE</div><div class="sc-v" style="color:var(--y)">78.4%</div><div class="sc-s">전체</div></div>
+          <div class="sc"><div class="sc-l">미확인</div><div class="sc-v" style="color:var(--o)">5</div><div class="sc-s">알람</div></div>
+          <div class="sc"><div class="sc-l">Cp/Cpk</div><div class="sc-v" style="color:var(--g)">1.24</div><div class="sc-s">SPC</div></div>
+        </div>
+
+      </div><!-- /view-mon -->
+
+    </div><!-- /#center -->
+
+    <!-- ══ 우: 속성 편집 패널 ══════════════════════════════ -->
+    <div class="panel panel-r" id="right-panel">
+      <div class="ph" id="right-ph">Tag 속성 편집</div>
+      <div class="pb">
+
+        <!-- 설정 속성 패널 -->
+        <div id="prop-cfg">
+          <div class="ps">
+            <div class="pt">기본 정보</div>
+            <div class="fr2">
+              <div class="field"><label>Tag 이름 *</label><input value="온도"/></div>
+              <div class="field"><label>주소 *</label><input value="D100" style="font-family:var(--fn)"/></div>
+            </div>
+            <div class="fr2">
+              <div class="field"><label>데이터 타입</label>
+                <select><option>Float32</option><option>Int16</option><option>Bool</option></select>
+              </div>
+              <div class="field"><label>폴링 (ms)</label><input type="number" value="1000"/></div>
+            </div>
+            <div class="fr2">
+              <div class="field"><label>데드밴드</label><input type="number" value="0.5"/></div>
+              <div class="field" style="display:flex;align-items:flex-end;padding-bottom:9px">
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer">
+                  <input type="checkbox" style="width:auto;accent-color:var(--acc)"/>
+                  <span style="font-size:11px;color:var(--t2)">가상 Tag</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="ps">
+            <div class="pt">스케일 변환</div>
+            <div class="field"><label>변환 방식</label>
+              <select><option>Linear</option><option>None</option><option>Expression</option></select>
+            </div>
+            <div class="fr3">
+              <div class="field"><label>Raw Min</label><input type="number" value="0"/></div>
+              <div class="field"><label>Raw Max</label><input type="number" value="4095"/></div>
+              <div class="field"><label>단위</label><input value="°C"/></div>
+            </div>
+            <div class="fr2">
+              <div class="field"><label>Eng Min</label><input type="number" value="0"/></div>
+              <div class="field"><label>Eng Max</label><input type="number" value="300"/></div>
+            </div>
+            <div class="sp-box">
+              <div>
+                <div class="sp-raw-lbl">Raw 입력 미리보기</div>
+                <input class="sp-raw" type="number" value="2048" oninput="updatePreview(this.value)"/>
+              </div>
+              <div>
+                <div class="sp-eng-lbl">→ Eng</div>
+                <div class="sp-eng" id="sp-eng-val">150.0 °C</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ps">
+            <div class="pt">알람 임계값</div>
+            <div class="field" style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+              <input type="checkbox" checked style="width:auto;accent-color:var(--acc)"/>
+              <span style="font-size:11px;color:var(--t2)">알람 사용</span>
+            </div>
+            <div class="ae-grid">
+              <div class="ae-cell"><div class="ae-lbl" style="color:var(--r)">HH</div>
+                <input class="ae-inp" type="number" value="280" style="color:var(--r)"/></div>
+              <div class="ae-cell"><div class="ae-lbl" style="color:var(--o)">H</div>
+                <input class="ae-inp" type="number" value="260" style="color:var(--o)"/></div>
+              <div class="ae-cell"><div class="ae-lbl" style="color:#60a5fa">L</div>
+                <input class="ae-inp" type="number" value="20" style="color:#60a5fa"/></div>
+              <div class="ae-cell"><div class="ae-lbl" style="color:var(--acc2)">LL</div>
+                <input class="ae-inp" type="number" value="10" style="color:var(--acc2)"/></div>
+            </div>
+            <div class="fr2" style="margin-top:8px">
+              <div class="field"><label>히스테리시스</label><input type="number" value="2"/></div>
+              <div class="field"><label>알람 지연(초)</label><input type="number" value="3"/></div>
+            </div>
+            <button class="apply-btn" id="apply-btn">✓ Tag 적용</button>
+          </div>
+        </div>
+
+        <!-- 수집 속성 패널 -->
+        <div id="prop-col" style="display:none">
+          <div class="ps">
+            <div class="pt">수집 상태</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:var(--card);border-radius:var(--radius-sm);border-left:2px solid var(--acc)">
+                <span>입력 (Input)</span><span style="font-family:var(--fn);color:var(--g)">847/s</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:var(--card);border-radius:var(--radius-sm);border-left:2px solid var(--y)">
+                <span>파서 (BufParser)</span><span style="font-family:var(--fn);color:var(--g)">846/s</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:var(--card);border-radius:var(--radius-sm);border-left:2px solid var(--g)">
+                <span>스케일 변환</span><span style="font-family:var(--fn);color:var(--g)">846/s</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:var(--card);border-radius:var(--radius-sm);border-left:2px solid var(--o)">
+                <span>데드밴드 필터</span><span style="font-family:var(--fn);color:var(--y)">312/s</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;padding:6px 8px;background:var(--card);border-radius:var(--radius-sm);border-left:2px solid var(--r)">
+                <span>SDT 압축 저장</span><span style="font-family:var(--fn);color:var(--g)">48/s</span></div>
+            </div>
+          </div>
+          <div class="ps">
+            <div class="pt">자동 재시작</div>
+            <div style="background:var(--card);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);font-size:11px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="color:var(--t3)">마지막 재시작</span>
+                <span style="font-family:var(--fn)">09:14:22</span></div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--t3)">원인</span>
+                <span style="color:var(--y)">config.json 변경</span></div>
+            </div>
+          </div>
+          <div class="ps">
+            <div class="pt">프로토콜 상태</div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div class="det-row"><span class="dot5" style="background:var(--g)"></span><span class="det-name" style="font-size:11px">ModbusTCP #1</span><span style="color:var(--g);font-size:10px">정상</span></div>
+              <div class="det-row"><span class="dot5" style="background:var(--g)"></span><span class="det-name" style="font-size:11px">ModbusTCP #2</span><span style="color:var(--g);font-size:10px">정상</span></div>
+              <div class="det-row"><span class="dot5" style="background:var(--y);animation:pulse 1s infinite"></span><span class="det-name" style="font-size:11px">SerialRaw COM3</span><span style="color:var(--y);font-size:10px">백업 전환</span></div>
+              <div class="det-row"><span class="dot5" style="background:var(--r)"></span><span class="det-name" style="font-size:11px">OPC-UA CNC#1</span><span style="color:var(--r);font-size:10px">연결 오류</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 모니터링 속성 패널 -->
+        <div id="prop-mon" style="display:none">
+          <div class="ps">
+            <div class="pt">알림 채널</div>
+            <div style="background:var(--card);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+                <span>📧 이메일</span>
+                <span class="xbadge" style="background:var(--g)15;color:var(--g);font-size:9px">발송됨</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+                <span>📱 SMS</span>
+                <span class="xbadge" style="background:var(--y)15;color:var(--y);font-size:9px">대기중</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px">
+                <span>💬 Slack</span>
+                <span class="xbadge" style="background:var(--g)15;color:var(--g);font-size:9px">발송됨</span></div>
+            </div>
+          </div>
+          <div class="ps">
+            <div class="pt">감지기 목록</div>
+            <div class="det-row"><div style="width:7px;height:7px;border-radius:50%;background:var(--r)"></div><div class="det-name">ThresholdDetector</div><div style="font-size:10px;color:var(--r)">HH 발생</div></div>
+            <div class="det-row"><div style="width:7px;height:7px;border-radius:50%;background:var(--y)"></div><div class="det-name">TrendDetector</div><div style="font-size:10px;color:var(--y)">경고</div></div>
+            <div class="det-row"><div style="width:7px;height:7px;border-radius:50%;background:var(--g)"></div><div class="det-name">SpcEngine</div><div style="font-size:10px;color:var(--g)">정상</div></div>
+            <div class="det-row"><div style="width:7px;height:7px;border-radius:50%;background:var(--g)"></div><div class="det-name">TrendPredictor</div><div style="font-size:10px;color:var(--y)">18분 예측</div></div>
+          </div>
+          <div class="ps">
+            <div class="pt">SPC 지표</div>
+            <div style="background:var(--card);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                <span style="color:var(--t3)">Cp</span>
+                <span style="font-family:var(--fn);color:var(--g)">1.38</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                <span style="color:var(--t3)">Cpk</span>
+                <span style="font-family:var(--fn);color:var(--y)">1.24</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px">
+                <span style="color:var(--t3)">Nelson Rule</span>
+                <span style="color:var(--r)">Rule 3 위반</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /#right-panel -->
+
+  </div><!-- /#main-area -->
+</div><!-- /#app -->
+
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   테마 전환
+══════════════════════════════════════════════════════════ */
+const themeNames = {
+  1:['t1','Dark Navy'],
+  2:['t2','Steel Light'],
+  3:['t3','Neon Cyber'],
+  4:['t4','Warm Amber'],
+  5:['t5','Arctic Frost'],
+  6:['t6','Terminal Green'],
+  7:['t7','Carbon Elite']
+};
+
+const phLabels = {
+  cfg: {left:'장비 구조 트리', right:'Tag 속성 편집'},
+  col: {left:'수집 태그 목록', right:'수집 상태'},
+  mon: {left:'알람 목록',      right:'감지기 & 알림'}
+};
+
+function setTheme(n, el) {
+  const body = document.body;
+  // 기존 테마 클래스 제거
+  for(let i=1;i<=7;i++) body.classList.remove('t'+i);
+  body.classList.add(themeNames[n][0]);
+
+  // 탭 활성화
+  document.querySelectorAll('.tb-tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* ══════════════════════════════════════════════════════════
+   뷰 전환
+══════════════════════════════════════════════════════════ */
+let currentView = 'cfg';
+
+function setView(v) {
+  currentView = v;
+
+  // 중앙 뷰
+  ['cfg','col','mon'].forEach(k => {
+    const el = document.getElementById('view-'+k);
+    el.classList.toggle('on', k===v);
+  });
+
+  // 속성 패널
+  ['cfg','col','mon'].forEach(k => {
+    document.getElementById('prop-'+k).style.display = k===v ? 'block' : 'none';
+  });
+
+  // 트리 패널
+  ['cfg','col','mon'].forEach(k => {
+    document.getElementById('tree-'+k).style.display = k===v ? 'block' : 'none';
+  });
+
+  // 패널 헤더 텍스트
+  document.getElementById('left-ph').textContent  = phLabels[v].left;
+  document.getElementById('right-ph').textContent = phLabels[v].right;
+
+  // 서브탭 강조
+  document.querySelectorAll('.stab').forEach((t,i) => {
+    t.classList.toggle('on', i === ['cfg','col','mon'].indexOf(v));
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   스케일 미리보기
+══════════════════════════════════════════════════════════ */
+function updatePreview(raw) {
+  const v = (parseFloat(raw)||0) / 4095 * 300;
+  document.getElementById('sp-eng-val').textContent = v.toFixed(1) + ' °C';
+}
+
+/* ══════════════════════════════════════════════════════════
+   트리 선택 인터랙션
+══════════════════════════════════════════════════════════ */
+document.querySelectorAll('.ti').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.ti').forEach(t => t.classList.remove('sel'));
+    el.classList.add('sel');
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   Ctrl+S
+══════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if(e.key==='s' && (e.ctrlKey||e.metaKey)) {
+    e.preventDefault();
+    // 저장 버튼 flash
+    const btn = document.querySelector('.xbtn.pri');
+    btn.style.opacity = '.5';
+    setTimeout(() => btn.style.opacity = '', 200);
+  }
+});
+
+/* ══════════════════════════════════════════════════════════
+   실시간 값 시뮬레이션 (TPS + 트렌드)
+══════════════════════════════════════════════════════════ */
+setInterval(() => {
+  const tps = Math.floor(830 + Math.random()*30);
+  document.querySelectorAll('.sc-v').forEach((el,i) => {
+    if(i===0 && currentView==='col') el.textContent = tps;
+  });
+}, 1800);
+</script>
+</body>
+</html>

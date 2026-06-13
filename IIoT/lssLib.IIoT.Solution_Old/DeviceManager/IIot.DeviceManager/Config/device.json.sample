@@ -1,0 +1,61 @@
+{
+  "_comment": "IIoT DeviceManager — 장비 트리 설정 파일 (lssLib.Config.ConfigTree 형식)",
+  "_version": "1.0",
+  "id": "root",
+  "name": "Root",
+  "type": "Root",
+  "properties": {},
+  "children": [
+    {
+      "id": "grp-001",
+      "name": "1공장",
+      "type": "Group",
+      "properties": {
+        "description": "1공장 라인"
+      },
+      "children": [
+        {
+          "id": "dev-001",
+          "name": "PLC-001",
+          "type": "Device",
+          "properties": {
+            "protocol": "Modbus TCP",
+            "ip": "192.168.1.10",
+            "port": "502",
+            "pollMs": "1000"
+          },
+          "children": [
+            {
+              "id": "tag-001",
+              "name": "온도_1",
+              "type": "Tag",
+              "properties": {
+                "address": "40001",
+                "bufType": "FloatBE",
+                "deadBand": "0.1",
+                "pollMs": "1000",
+                "scaleConfigId": "sc-001",
+                "alarmRuleId": "ar-001"
+              },
+              "children": []
+            },
+            {
+              "id": "tag-002",
+              "name": "압력_1",
+              "type": "Tag",
+              "properties": {
+                "address": "40003",
+                "bufType": "FloatBE",
+                "deadBand": "0.05",
+                "pollMs": "500",
+                "scaleConfigId": "sc-002",
+                "alarmRuleId": ""
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

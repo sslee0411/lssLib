@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#0e081c"/>
+  <!-- Chart frame -->
+  <rect x="36" y="44" width="440" height="252" rx="16" fill="#150d28" stroke="#534ab7" stroke-width="2.5"/>
+  <!-- Grid -->
+  <line x1="36" y1="112" x2="476" y2="112" stroke="#1e1040" stroke-width="1.5"/>
+  <line x1="36" y1="170" x2="476" y2="170" stroke="#1e1040" stroke-width="1.5"/>
+  <line x1="36" y1="228" x2="476" y2="228" stroke="#1e1040" stroke-width="1.5"/>
+  <!-- UCL / LCL dashed -->
+  <line x1="52" y1="80" x2="460" y2="80" stroke="#7f77dd" stroke-width="2" stroke-dasharray="8,5"/>
+  <line x1="52" y1="258" x2="460" y2="258" stroke="#7f77dd" stroke-width="2" stroke-dasharray="8,5"/>
+  <!-- CL -->
+  <line x1="52" y1="170" x2="460" y2="170" stroke="#534ab7" stroke-width="1.5" stroke-dasharray="4,8" opacity="0.7"/>
+  <!-- Normal waveform -->
+  <polyline points="56,170 92,148 128,188 164,152 200,174 236,146 272,165 308,140 332,175" stroke="#afa9ec" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Anomaly spike -->
+  <polyline points="332,175 356,68 380,212 410,168 440,163 464,166" stroke="#d2a8ff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Anomaly circle -->
+  <circle cx="356" cy="68" r="16" fill="none" stroke="#e84040" stroke-width="3"/>
+  <circle cx="356" cy="68" r="8" fill="#e84040"/>
+  <!-- ANOMALY pill -->
+  <rect x="308" y="44" width="96" height="24" rx="8" fill="#3d0a0a" stroke="#e84040" stroke-width="1.5"/>
+  <rect x="320" y="52" width="72" height="8" rx="3" fill="#ff7070" opacity="0.9"/>
+
+  <!-- UCL / LCL labels -->
+  <rect x="460" y="72" width="36" height="16" rx="4" fill="#241640"/>
+  <rect x="462" y="76" width="32" height="7" rx="3" fill="#7f77dd" opacity="0.8"/>
+  <rect x="460" y="250" width="36" height="16" rx="4" fill="#241640"/>
+  <rect x="462" y="254" width="32" height="7" rx="3" fill="#7f77dd" opacity="0.8"/>
+
+  <!-- Alarm panel -->
+  <rect x="36" y="316" width="214" height="96" rx="14" fill="#150d28" stroke="#534ab7" stroke-width="2"/>
+  <rect x="52" y="332" width="72" height="10" rx="4" fill="#7f77dd" opacity="0.8"/>
+  <line x1="46" y1="350" x2="240" y2="350" stroke="#1e1040" stroke-width="1.5"/>
+  <rect x="52" y="360" width="52" height="18" rx="6" fill="#500a0a" stroke="#e84040" stroke-width="1.5"/>
+  <rect x="60" y="366" width="36" height="7" rx="3" fill="#ff6060" opacity="0.9"/>
+  <rect x="116" y="360" width="112" height="8" rx="3" fill="#3a2060" opacity="0.8"/>
+  <rect x="52" y="384" width="52" height="18" rx="6" fill="#3d2800" stroke="#ffa040" stroke-width="1.5"/>
+  <rect x="60" y="390" width="36" height="7" rx="3" fill="#ffc060" opacity="0.9"/>
+  <rect x="116" y="384" width="112" height="8" rx="3" fill="#3a2060" opacity="0.6"/>
+
+  <!-- SPC stats panel -->
+  <rect x="262" y="316" width="214" height="96" rx="14" fill="#150d28" stroke="#534ab7" stroke-width="2"/>
+  <rect x="278" y="332" width="72" height="10" rx="4" fill="#7f77dd" opacity="0.8"/>
+  <line x1="272" y1="350" x2="466" y2="350" stroke="#1e1040" stroke-width="1.5"/>
+  <rect x="278" y="362" width="24" height="8" rx="3" fill="#534ab7" opacity="0.8"/>
+  <rect x="310" y="362" width="40" height="8" rx="3" fill="#d2a8ff" opacity="0.9"/>
+  <rect x="372" y="362" width="30" height="8" rx="3" fill="#534ab7" opacity="0.8"/>
+  <rect x="410" y="362" width="40" height="8" rx="3" fill="#d2a8ff" opacity="0.9"/>
+  <rect x="278" y="382" width="24" height="8" rx="3" fill="#3a2a6a" opacity="0.8"/>
+  <rect x="310" y="382" width="40" height="8" rx="3" fill="#afa9ec" opacity="0.8"/>
+  <rect x="372" y="382" width="36" height="8" rx="3" fill="#3a2a6a" opacity="0.8"/>
+  <rect x="416" y="382" width="36" height="8" rx="3" fill="#3fb950" opacity="0.9"/>
+
+  <!-- Badge row -->
+  <rect x="36" y="428" width="110" height="32" rx="10" fill="#0c2240" stroke="#185fa5" stroke-width="1.5"/>
+  <rect x="50" y="439" width="82" height="9" rx="4" fill="#4fa3e8" opacity="0.8"/>
+  <rect x="158" y="428" width="110" height="32" rx="10" fill="#150d28" stroke="#534ab7" stroke-width="1.5"/>
+  <rect x="172" y="439" width="82" height="9" rx="4" fill="#afa9ec" opacity="0.8"/>
+  <rect x="280" y="428" width="196" height="32" rx="10" fill="#051f10" stroke="#0f6e56" stroke-width="1.5"/>
+  <rect x="294" y="439" width="168" height="9" rx="4" fill="#5dcaa5" opacity="0.7"/>
+  <rect x="184" y="472" width="144" height="6" rx="3" fill="#7f77dd"/>
+</svg>

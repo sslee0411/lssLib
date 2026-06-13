@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#1c1000"/>
+  <!-- Input nodes left column -->
+  <rect x="28" y="86" width="128" height="52" rx="12" fill="#3a2000" stroke="#c97d0a" stroke-width="2"/>
+  <rect x="28" y="86" width="10" height="52" rx="5" fill="#ef9f27"/>
+  <rect x="50" y="103" width="48" height="8" rx="3" fill="#fac775" opacity="0.9"/>
+  <rect x="50" y="118" width="68" height="7" rx="3" fill="#7a4e00" opacity="0.8"/>
+  <circle cx="156" cy="112" r="9" fill="#ef9f27" stroke="#1c1000" stroke-width="2"/>
+
+  <rect x="28" y="166" width="128" height="52" rx="12" fill="#3a2000" stroke="#c97d0a" stroke-width="2"/>
+  <rect x="28" y="166" width="10" height="52" rx="5" fill="#ef9f27"/>
+  <rect x="50" y="183" width="48" height="8" rx="3" fill="#fac775" opacity="0.9"/>
+  <rect x="50" y="198" width="68" height="7" rx="3" fill="#7a4e00" opacity="0.8"/>
+  <circle cx="156" cy="192" r="9" fill="#ef9f27" stroke="#1c1000" stroke-width="2"/>
+
+  <rect x="28" y="246" width="128" height="52" rx="12" fill="#3a2000" stroke="#c97d0a" stroke-width="2"/>
+  <rect x="28" y="246" width="10" height="52" rx="5" fill="#ef9f27"/>
+  <rect x="50" y="263" width="48" height="8" rx="3" fill="#fac775" opacity="0.9"/>
+  <rect x="50" y="278" width="68" height="7" rx="3" fill="#7a4e00" opacity="0.8"/>
+  <circle cx="156" cy="272" r="9" fill="#ef9f27" stroke="#1c1000" stroke-width="2"/>
+
+  <rect x="28" y="326" width="128" height="52" rx="12" fill="#3a2000" stroke="#c97d0a" stroke-width="2"/>
+  <rect x="28" y="326" width="10" height="52" rx="5" fill="#ef9f27"/>
+  <rect x="50" y="343" width="48" height="8" rx="3" fill="#fac775" opacity="0.9"/>
+  <rect x="50" y="358" width="68" height="7" rx="3" fill="#7a4e00" opacity="0.8"/>
+  <circle cx="156" cy="352" r="9" fill="#ef9f27" stroke="#1c1000" stroke-width="2"/>
+
+  <!-- Bezier wires to center -->
+  <path d="M165 112 C218 112 218 238 288 238" stroke="#ef9f27" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M165 192 C218 192 218 246 288 246" stroke="#ef9f27" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M165 272 C218 272 218 254 288 254" stroke="#ef9f27" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M165 352 C218 352 218 262 288 262" stroke="#c97d0a" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Center BufParser node -->
+  <rect x="288" y="190" width="140" height="120" rx="14" fill="#3d2800" stroke="#f5a623" stroke-width="3"/>
+  <rect x="288" y="190" width="12" height="120" rx="6" fill="#f5a623"/>
+  <rect x="312" y="210" width="60" height="9" rx="4" fill="#fac775" opacity="0.9"/>
+  <rect x="312" y="226" width="96" height="7" rx="3" fill="#7a4e00" opacity="0.7"/>
+  <rect x="312" y="240" width="96" height="7" rx="3" fill="#7a4e00" opacity="0.6"/>
+  <rect x="312" y="254" width="96" height="7" rx="3" fill="#7a4e00" opacity="0.5"/>
+  <rect x="312" y="268" width="80" height="7" rx="3" fill="#7a4e00" opacity="0.4"/>
+  <circle cx="288" cy="250" r="9" fill="#f5a623" stroke="#1c1000" stroke-width="2"/>
+  <circle cx="428" cy="250" r="9" fill="#f5a623" stroke="#1c1000" stroke-width="2"/>
+
+  <!-- Output wires & nodes right -->
+  <path d="M437 240 C468 240 468 152 428 152" stroke="#c97d0a" stroke-width="2" fill="none"/>
+  <path d="M437 260 C468 260 468 378 428 378" stroke="#c97d0a" stroke-width="2" fill="none"/>
+
+  <rect x="316" y="108" width="124" height="52" rx="12" fill="#3a2000" stroke="#ba7517" stroke-width="2"/>
+  <rect x="316" y="108" width="10" height="52" rx="5" fill="#854f0b"/>
+  <rect x="338" y="125" width="44" height="8" rx="3" fill="#fac775" opacity="0.9"/>
+  <rect x="338" y="140" width="76" height="7" rx="3" fill="#7a4e00" opacity="0.7"/>
+  <circle cx="316" cy="134" r="9" fill="#854f0b" stroke="#1c1000" stroke-width="2"/>
+
+  <rect x="316" y="348" width="124" height="52" rx="12" fill="#3a2000" stroke="#ba7517" stroke-width="2"/>
+  <rect x="316" y="348" width="10" height="52" rx="5" fill="#854f0b"/>
+  <rect x="338" y="365" width="44" height="8" rx="3" fill="#fac775" opacity="0.9"/>
+  <rect x="338" y="380" width="76" height="7" rx="3" fill="#7a4e00" opacity="0.7"/>
+  <circle cx="316" cy="374" r="9" fill="#854f0b" stroke="#1c1000" stroke-width="2"/>
+
+  <rect x="184" y="444" width="144" height="6" rx="3" fill="#ef9f27"/>
+</svg>

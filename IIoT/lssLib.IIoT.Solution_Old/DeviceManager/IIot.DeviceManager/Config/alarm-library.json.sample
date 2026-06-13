@@ -1,0 +1,15 @@
+{
+  "Meta": {
+    "Version": "1.0",
+    "UpdatedAt": "2025-01-01T00:00:00Z"
+  },
+  "AlarmLibrary:ar-001": {
+    "name": "온도 알람",
+    "hh": "95",
+    "h":  "85",
+    "l":  "5",
+    "ll": "-5",
+    "deadBand": "1.0",
+    "message": "{tagName} {level} 알람: {value} °C"
+  }
+}

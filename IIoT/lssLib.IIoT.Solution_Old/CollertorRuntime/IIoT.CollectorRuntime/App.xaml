@@ -1,0 +1,14 @@
+﻿<Application x:Class="IIoT.CollectorRuntime.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:IIoT.CollectorRuntime">
+    <!--
+        ★ StartupUri 제거 필수:
+           App.xaml.cs OnStartup() 에서 new MainWindow(_vm).Show() 로 직접 생성.
+           StartupUri 와 OnStartup 수동 생성을 동시에 사용하면
+           MainWindow 가 2개 생성되거나 DataContext 없이 열립니다.
+    -->
+    <Application.Resources>
+        <ResourceDictionary/>
+    </Application.Resources>
+</Application>

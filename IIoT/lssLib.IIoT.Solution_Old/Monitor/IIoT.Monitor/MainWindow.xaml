@@ -1,0 +1,498 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Monitor · MainWindow.xaml
+     역할: 모니터링 메인 윈도우
+     레이아웃:
+       [헤더 56px] 제어버튼 | 상태배지 | 통계 | 테마버튼
+       [탭 본문]   ① 실시간 태그 | ② 활성 알람 | ③ 알람 이력
+       [하단 160px] 실시간 로그
+     WPF 규칙:
+       · DynamicResource 필수 (StaticResource 금지)
+       · TextBlock 혼합 콘텐츠 금지
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.Monitor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        mc:Ignorable="d"
+        Title="IIoT Monitor — 실시간 모니터링"
+        Width="1280" Height="860"
+        MinWidth="1000" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}">
+
+    <DockPanel LastChildFill="True">
+
+        <!-- ══════════════════════════════════════════════
+             헤더 (56px)
+             ══════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top" Height="56"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel Margin="14,0">
+
+                <!-- 좌: 타이틀 -->
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="0,0,20,0">
+                    <TextBlock Text="🔔" FontSize="22" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="IIoT Monitor"
+                                   FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="{Binding Engine.ConfigInfo}"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource Text3Brush}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- 우: 테마 버튼 -->
+                <uc:ThemePickerButton DockPanel.Dock="Right" VerticalAlignment="Center"/>
+
+                <!-- 중: 제어 + 상태 + 통계 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center" HorizontalAlignment="Center">
+
+                    <!-- 제어 버튼 -->
+                    <Button Command="{Binding StartCommand}"
+                            Style="{DynamicResource PrimaryBtn}"
+                            Content="▶ 시작" Padding="14,6" FontSize="12" Margin="0,0,6,0"/>
+                    <Button Command="{Binding StopCommand}"
+                            Style="{DynamicResource SecondaryBtn}"
+                            Content="■ 중지" Padding="14,6" FontSize="12" Margin="0,0,6,0"/>
+                    <Button Command="{Binding RestartCommand}"
+                            Style="{DynamicResource SecondaryBtn}"
+                            Content="↺ 재시작" Padding="14,6" FontSize="12" Margin="0,0,24,0"/>
+
+                    <!-- 상태 배지 -->
+                    <Border CornerRadius="12" Padding="12,5" Margin="0,0,16,0"
+                            Background="{DynamicResource CardBrush}"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource BorderBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8"
+                                     VerticalAlignment="Center" Margin="0,0,7,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{DynamicResource Text3Brush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Engine.IsRunning}" Value="True">
+                                                <Setter Property="Fill" Value="{DynamicResource GreenBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="{Binding Engine.StateText}"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Engine.IsRunning}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource GreenBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 통계 배지: GOOD / BAD / 활성알람 -->
+                    <Border CornerRadius="6" Padding="12,5" Margin="0,0,6,0"
+                            Background="{DynamicResource CardBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="✅ " FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding GoodCount}"
+                                       FontSize="14" FontWeight="Bold"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       Foreground="{DynamicResource GreenBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="6" Padding="12,5" Margin="0,0,6,0"
+                            Background="{DynamicResource CardBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="❌ " FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding BadCount}"
+                                       FontSize="14" FontWeight="Bold"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       Foreground="{DynamicResource RedBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="6" Padding="12,5"
+                            Background="{DynamicResource CardBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔔 " FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding ActiveAlarmCount}"
+                                       FontSize="14" FontWeight="Bold"
+                                       FontFamily="{DynamicResource MonoFont}"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActiveAlarmCount}" Value="0">
+                                                <Setter Property="Foreground" Value="{DynamicResource Text3Brush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             하단 로그 패널 (160px)
+             ══════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Bottom" Height="160"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1" Padding="12,5">
+                    <DockPanel>
+                        <TextBlock Text="📋 모니터 로그"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   VerticalAlignment="Center"/>
+                        <Button DockPanel.Dock="Right"
+                                Command="{Binding ClearLogCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Content="지우기" Padding="8,2" FontSize="10"/>
+                    </DockPanel>
+                </Border>
+                <ListBox ItemsSource="{Binding LogRows}"
+                         Background="Transparent" BorderThickness="0"
+                         FontFamily="{DynamicResource MonoFont}" FontSize="11"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="True">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="2,1"/>
+                            <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Time}" Width="88"
+                                           Foreground="{DynamicResource Text3Brush}"/>
+                                <Border Width="44" Margin="4,0" CornerRadius="2" Padding="3,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Level}" Value="ERROR">
+                                                    <Setter Property="Background" Value="{DynamicResource RedFaintBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="WARN">
+                                                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Level}" FontSize="9" FontWeight="Bold"
+                                               HorizontalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource GreenBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Level}" Value="ERROR">
+                                                        <Setter Property="Foreground" Value="{DynamicResource RedBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Level}" Value="WARN">
+                                                        <Setter Property="Foreground" Value="{DynamicResource OrangeBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Level}" Value="DEBUG">
+                                                        <Setter Property="Foreground" Value="{DynamicResource Text3Brush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                                <TextBlock Text="{Binding Source}" Width="100"
+                                           Foreground="{DynamicResource Text3Brush}"/>
+                                <TextBlock Text="{Binding Msg}"
+                                           Foreground="{DynamicResource TextBrush}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             본문 3탭
+             ══════════════════════════════════════════════ -->
+        <TabControl Background="{DynamicResource BgBrush}"
+                    BorderThickness="0">
+
+            <!-- ── 탭 1: 실시간 태그 현황 ── -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📊 실시간 태그  "/>
+                        <TextBlock Text="{Binding LiveTags.Count}"
+                                   FontFamily="{DynamicResource MonoFont}"
+                                   Foreground="{DynamicResource AccBrush}"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <DockPanel>
+                    <!-- 필터 바 -->
+                    <Border DockPanel.Dock="Top"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1" Padding="10,6">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="검색:" FontSize="11"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox Text="{Binding TagSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}"
+                                     Width="200" Margin="0,0,8,0"/>
+                            <Button Command="{Binding ClearTagFilterCommand}"
+                                    Style="{DynamicResource GhostBtn}"
+                                    Content="초기화" Padding="8,3" FontSize="11"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- 태그 DataGrid -->
+                    <DataGrid ItemsSource="{Binding FilteredTags}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False"
+                              GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column"
+                              SelectionMode="Single" IsReadOnly="True"
+                              Background="{DynamicResource BgBrush}"
+                              RowBackground="{DynamicResource BgBrush}"
+                              AlternatingRowBackground="{DynamicResource CardBrush}"
+                              BorderThickness="0" RowHeight="32" FontSize="12"
+                              Foreground="{DynamicResource TextBrush}"
+                              EnableRowVirtualization="True">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="10,6"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Quality}" Value="Bad">
+                                        <Setter Property="Background" Value="{DynamicResource RedFaintBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <!-- 품질 점 -->
+                            <DataGridTemplateColumn Header="" Width="30" CanUserResize="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Ellipse Width="8" Height="8"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Fill" Value="{DynamicResource Text3Brush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Quality}" Value="Good">
+                                                            <Setter Property="Fill" Value="{DynamicResource GreenBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Quality}" Value="Bad">
+                                                            <Setter Property="Fill" Value="{DynamicResource RedBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="태그 ID"   Binding="{Binding TagId}"   Width="160"/>
+                            <DataGridTextColumn Header="태그 이름" Binding="{Binding TagName}"  Width="160"/>
+                            <DataGridTemplateColumn Header="현재 값" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding ValueText}"
+                                                   FontFamily="{DynamicResource MonoFont}"
+                                                   FontSize="13" FontWeight="Bold"
+                                                   VerticalAlignment="Center" Margin="6,0">
+                                            <TextBlock.Foreground>
+                                                <DynamicResource ResourceKey="GreenBrush"/>
+                                            </TextBlock.Foreground>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="품질" Binding="{Binding Quality}" Width="80"/>
+                            <DataGridTextColumn Header="갱신 시각"
+                                Binding="{Binding LastUpdated, StringFormat='HH:mm:ss'}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ── 탭 2: 활성 알람 ── -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🔔 활성 알람  "/>
+                        <TextBlock Text="{Binding ActiveAlarms.Count}"
+                                   FontFamily="{DynamicResource MonoFont}"
+                                   Foreground="{DynamicResource OrangeBrush}"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <DockPanel>
+                    <!-- ACK 툴바 -->
+                    <Border DockPanel.Dock="Top"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1" Padding="10,6">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Command="{Binding AckAlarmCommand}"
+                                    Style="{DynamicResource PrimaryBtn}"
+                                    Content="✔ 선택 ACK" Padding="12,4"
+                                    FontSize="12" Margin="0,0,8,0"/>
+                            <Button Command="{Binding AckAllCommand}"
+                                    Style="{DynamicResource SecondaryBtn}"
+                                    Content="✔✔ 전체 ACK" Padding="12,4"
+                                    FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <!-- 활성 알람 DataGrid -->
+                    <DataGrid ItemsSource="{Binding ActiveAlarms}"
+                              SelectedItem="{Binding SelectedAlarm}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False"
+                              GridLinesVisibility="Horizontal"
+                              HeadersVisibility="Column"
+                              SelectionMode="Single" IsReadOnly="True"
+                              Background="{DynamicResource BgBrush}"
+                              BorderThickness="0" RowHeight="34" FontSize="12"
+                              Foreground="{DynamicResource TextBrush}">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+                                <Setter Property="FontSize" Value="11"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Padding" Value="10,6"/>
+                                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Level}" Value="HH">
+                                        <Setter Property="Background" Value="{DynamicResource RedFaintBrush}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Level}" Value="H">
+                                        <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                                    </DataTrigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource GreenFaintBrush}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <!-- 레벨 배지 -->
+                            <DataGridTemplateColumn Header="레벨" Width="60">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="6,2"
+                                                HorizontalAlignment="Center"
+                                                Background="{DynamicResource CardBrush}">
+                                            <TextBlock Text="{Binding Level}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="감지기"    Binding="{Binding DetectorId}" Width="130"/>
+                            <DataGridTextColumn Header="태그"      Binding="{Binding TagId}"      Width="130"/>
+                            <DataGridTextColumn Header="메시지"    Binding="{Binding Message}"    Width="*"/>
+                            <DataGridTextColumn Header="상태"      Binding="{Binding StateText}"  Width="60"/>
+                            <DataGridTextColumn Header="발생"
+                                Binding="{Binding FiredAt, StringFormat='HH:mm:ss'}"  Width="80"/>
+                            <DataGridTextColumn Header="경과"      Binding="{Binding ElapsedText}" Width="70"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ── 탭 3: 알람 이력 ── -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📜 알람 이력  "/>
+                        <TextBlock Text="{Binding AlarmHistory.Count}"
+                                   FontFamily="{DynamicResource MonoFont}"
+                                   Foreground="{DynamicResource Text3Brush}"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <DataGrid ItemsSource="{Binding AlarmHistory}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False" CanUserDeleteRows="False"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          SelectionMode="Single" IsReadOnly="True"
+                          Background="{DynamicResource BgBrush}"
+                          BorderThickness="0" RowHeight="32" FontSize="11"
+                          Foreground="{DynamicResource TextBrush}"
+                          EnableRowVirtualization="True">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+                            <Setter Property="FontSize" Value="11"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="8,6"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="레벨"    Binding="{Binding Level}"      Width="55"/>
+                        <DataGridTextColumn Header="감지기"  Binding="{Binding DetectorId}" Width="120"/>
+                        <DataGridTextColumn Header="태그"    Binding="{Binding TagId}"      Width="120"/>
+                        <DataGridTextColumn Header="메시지"  Binding="{Binding Message}"    Width="*"/>
+                        <DataGridTextColumn Header="상태"    Binding="{Binding StateText}"  Width="60"/>
+                        <DataGridTextColumn Header="발생시각"
+                            Binding="{Binding FiredAt, StringFormat='HH:mm:ss'}"   Width="80"/>
+                        <DataGridTextColumn Header="ACK시각"
+                            Binding="{Binding AckedAt, StringFormat='HH:mm:ss', TargetNullValue='-'}"  Width="80"/>
+                        <DataGridTextColumn Header="복귀시각"
+                            Binding="{Binding ClearedAt, StringFormat='HH:mm:ss', TargetNullValue='-'}" Width="80"/>
+                        <DataGridTextColumn Header="ACK자"   Binding="{Binding AckedBy}"   Width="70"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+        </TabControl>
+    </DockPanel>
+</Window>
