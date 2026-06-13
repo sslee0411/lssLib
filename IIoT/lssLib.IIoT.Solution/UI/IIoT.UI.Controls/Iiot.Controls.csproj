@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+    <ProjectReference Include="..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
   </ItemGroup>
 
 </Project>
