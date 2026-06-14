@@ -1,19 +1,18 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · MainWindow.xaml.cs
-//  Fix:
-//    ① namespace "IIot.Studio" → "IIoT.Studio"
-//    ② 기본 생성자 제거 → ViewModel 주입 생성자 (WPF 규칙 6)
+//  Fix: namespace IIoT.Studio (IIot → IIoT)
+//  생성: 2026-06-14
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.ViewModels;
 using IIoT.Studio.ViewModels.DeviceTree;
 using System.Windows;
 
-namespace IIoT.Studio;   // ★ Fix ①: IIot → IIoT
+namespace IIoT.Studio;   // ★ IIot → IIoT
 
 public partial class MainWindow : Window
 {
-    // ★ Fix ②: 기본 생성자 제거, ViewModel 주입
+    // §1 ─ 생성자 ─────────────────────────────────────────────
     public MainWindow(StudioMainViewModel vm, DeviceTreeViewModel tree)
     {
         InitializeComponent();
