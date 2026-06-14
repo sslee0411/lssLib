@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
+		<!--
+      ★ Fix: UseWPF=true 제거 → net8.0 순수 라이브러리
+         Studio·Collector·Manager·Analytics 모두 참조 가능
+    -->
 		<OutputType>Library</OutputType>
-		<TargetFramework>net8.0-windows</TargetFramework>
-		<UseWPF>true</UseWPF>
+		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<AssemblyName>IIoT.Shared</AssemblyName>
@@ -13,30 +16,20 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!-- LiveTagValue ObservableObject 기반 -->
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Models\" />
+		<!--
+      ★ Fix: lssLib.Messaging 추가 (EventMessage 상속 — TagValueUpdatedEvent 등)
+         경로는 실제 솔루션 위치에 맞게 조정
+    -->
+		<ProjectReference Include="..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
 	</ItemGroup>
 
-	<!--
-    ★ 각 프로그램에서 참조 방법:
-
-    ConfigApp (IIoT.Studio 예정):
-    <ProjectReference Include="..\..\IIoT.Shared\IIoT.Shared.csproj" />
-
-    CollectorRuntime (IIoT.Collector 예정):
-    <ProjectReference Include="..\..\IIoT.Shared\IIoT.Shared.csproj" />
-
-    Monitor:
-    <ProjectReference Include="..\..\IIoT.Shared\IIoT.Shared.csproj" />
-
-    Manager:
-    <ProjectReference Include="..\..\IIoT.Shared\IIoT.Shared.csproj" />
-
-    IIoT.UI.Controls:
-    <ProjectReference Include="..\..\IIoT.Shared\IIoT.Shared.csproj" />
-  -->
+	<ItemGroup>
+		<Folder Include="Models\" />
+	</ItemGroup>
 
 </Project>

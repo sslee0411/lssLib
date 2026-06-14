@@ -6,11 +6,6 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
-		<!--
-      ★ 구 IIoT.DeviceManager → IIoT.Studio 으로 통합
-         AssemblyName / RootNamespace 모두 변경
-         EmbeddedResource ResourcePrefix 도 이에 맞춰 변경 필요
-    -->
 		<AssemblyName>IIoT.Studio</AssemblyName>
 		<RootNamespace>IIoT.Studio</RootNamespace>
 	</PropertyGroup>
@@ -25,34 +20,31 @@
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+		<ProjectReference Include="..\..\Shared\IIoT.Shared.csproj" />
+		<ProjectReference Include="..\..\UI\IIoT.UI.Controls\Iiot.Controls.csproj" />
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+		<!-- ★ Fix: IIoT.Shared 참조 추가 -->
+		<!-- ★ Fix: IIoT.UI.Controls 참조 추가 -->
 	</ItemGroup>
 
 	<ItemGroup>
-		<!--
-      ★ EmbeddedResource: RootNamespace = IIoT.Studio 이므로
-         리소스 이름 → "IIoT.Studio.Config.device.json.sample"
-         ConfigInitializer.ResourcePrefix 도 동일하게 변경 필요
-    -->
+		<!-- EmbeddedResource prefix: "IIoT.Studio.Config." -->
 		<EmbeddedResource Include="Config\*.json.sample" />
 	</ItemGroup>
 
+	<!-- ★ Fix: 중복 Folder 항목 제거 (각 1개씩) -->
 	<ItemGroup>
 		<Folder Include="Core\Canvas\" />
 		<Folder Include="Core\Config\" />
 		<Folder Include="Core\DataModel\" />
-		<Folder Include="Core\Canvas\" />
-		<Folder Include="Core\Config\" />
 		<Folder Include="ViewModels\Canvas\" />
 		<Folder Include="ViewModels\DeviceTree\" />
 		<Folder Include="ViewModels\Editors\" />
 		<Folder Include="ViewModels\Library\" />
-		<Folder Include="ViewModels\Canvas\" />
 		<Folder Include="Views\Canvas\" />
 		<Folder Include="Views\DeviceTree\" />
 		<Folder Include="Views\Editors\" />
 		<Folder Include="Views\Library\" />
-		<Folder Include="Views\Canvas\" />
 	</ItemGroup>
 
 </Project>

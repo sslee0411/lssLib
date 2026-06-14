@@ -17,18 +17,29 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
-    <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
+	  <PackageReference Include="CommunityToolkit.Mvvm"               Version="8.4.2" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+	  <PackageReference Include="Microsoft.AspNetCore.SignalR.Client"  Version="8.0.0" />
+	  <PackageReference Include="MQTTnet"                              Version="4.3.7.1207" />
+	  <!-- ★ Fix: TagHistoryDb SQLite 저장용 -->
+	  <PackageReference Include="Microsoft.Data.Sqlite"               Version="9.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
-    <ProjectReference Include="..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
-    <ProjectReference Include="..\Shared\IIoT.Shared.csproj" />
-    <ProjectReference Include="..\UI\IIoT.UI.Controls\Iiot.Controls.csproj" />
-    <ProjectReference Include="..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
-  </ItemGroup>
+
+	<ItemGroup>
+		<!-- ★ Fix: 누락된 BCL 참조 추가 -->
+		<ProjectReference Include="..\..\..\Base\BCL\Config\lssLib.Config\lssLib.Config.csproj" />
+		<ProjectReference Include="..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+		<ProjectReference Include="..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+		<ProjectReference Include="..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+		<!-- ★ Fix: Modbus TCP/RTU 드라이버 구현용 -->
+		<ProjectReference Include="..\..\..\Base\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj" />
+		<!-- 공유 모델 -->
+		<ProjectReference Include="..\Shared\IIoT.Shared.csproj" />
+		<!-- UI -->
+		<ProjectReference Include="..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+		<ProjectReference Include="..\UI\IIoT.UI.Controls\Iiot.Controls.csproj" />
+	</ItemGroup>
+
 
 </Project>

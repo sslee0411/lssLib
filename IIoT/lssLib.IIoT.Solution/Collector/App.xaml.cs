@@ -1,18 +1,12 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Collector · App.xaml.cs
-//  역할: Collector 통합 앱 진입점
-//        구 CollectorRuntime + Monitor 완전 통합
-//  V3 Step4: 신규
-//
-//  핵심 변경:
-//    CollectionEngine + MonitorEngine → 동일 프로세스
-//    → EventBus.Subscribe<TagValueUpdatedEvent> 정상 동작
-//    → cross-process EventBus 버그 근본 해결
-//    → MQTT 브로커 의존성 제거
+//  Fix: EventBus.Subscribe 반환값(IDisposable) → 필드 저장
+//       OnExit 에서 Dispose() 호출 (메모리 누수 방지)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core;
 using IIoT.Collector.ViewModels;
+using IIoT.Shared.Models;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using lssLib.Messaging;
@@ -23,26 +17,24 @@ namespace IIoT.Collector;
 
 public partial class App : Application
 {
-    // §1 ─ 필드 ──────────────────────────────────────────────
-    private ThemeSettingsService?  _themeSettings;
-    private CollectionEngine?      _collectionEngine;
-    private MonitorEngine?         _monitorEngine;
-    private ConfigReloadWatcher?   _watcher;
-    private MainViewModel?         _vm;
+    private ThemeSettingsService? _themeSettings;
+    private CollectionEngine?     _collectionEngine;
+    private MonitorEngine?        _monitorEngine;
+    private ConfigReloadWatcher?  _watcher;
+    private MainViewModel?        _vm;
+    // ★ Fix: IDisposable 필드 저장
+    private IDisposable?          _tagEventSub;
 
     private static string ConfigDir =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
 
-    // §2 ─ 시작 ───────────────────────────────────────────────
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        // ① 테마 — 반드시 첫 번째
         _themeSettings = new ThemeSettingsService();
         _themeSettings.LoadAndApply(this);
 
-        // ② LogManager
         LogManager.Instance.Start(new LogConfig
         {
             LogRootPath  = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
@@ -50,7 +42,7 @@ public partial class App : Application
             FileFormat   = LogFileFormat.Both,
             MinimumLevel = LogLevel.Debug,
         });
-        LogManager.Instance.Info("App", "IIoT Collector 시작 (수집+감지 통합)");
+        LogManager.Instance.Info("App", "IIoT Collector 시작 (수집+감지 통합 — V3)");
 
         Directory.CreateDirectory(ConfigDir);
 
@@ -58,29 +50,27 @@ public partial class App : Application
         _collectionEngine = new CollectionEngine(ConfigDir);
         _monitorEngine    = new MonitorEngine(ConfigDir);
 
-        // ④ ★ 핵심: 동일 프로세스 내 EventBus → 정상 동작
-        //    이전(V2): CollectorRuntime → EventBus → Monitor (cross-process, 수신 불가)
-        //    현재(V3): 동일 App 내 EventBus.Publish/Subscribe (in-process, 정상)
-        EventBus.Instance.Subscribe<TagValueUpdatedEvent>(async e =>
-            await _monitorEngine.ProcessTagAsync(e));
+        // ④ ★ EventBus 연결 (in-process 정상) — Fix: 반환값 저장
+        _tagEventSub = EventBus.Instance.Subscribe<TagValueUpdatedEvent>(async ev =>
+            await _monitorEngine.ProcessTagAsync(ev.Value));
 
-        // ⑤ ViewModel (수집+알람 통합)
+        // ⑤ ViewModel
         _vm = new MainViewModel(_collectionEngine, _monitorEngine);
 
-        // ⑥ FSW: config.json .signal 감지 → 자동 재시작
+        // ⑥ FSW: *.signal 감지 → 자동 재시작
         _watcher = new ConfigReloadWatcher(ConfigDir);
-        _watcher.ReloadRequested += async _ =>
+        _watcher.ReloadRequested += async signalFile =>
         {
-            LogManager.Instance.Info("App", "설정 변경 감지 → 재시작");
+            LogManager.Instance.Info("App", $"설정 변경 → 재시작 ({signalFile})");
             await _collectionEngine.RestartAsync();
             await _monitorEngine.RestartAsync();
         };
         _watcher.Start();
 
-        // ⑦ ★ Singleton 패턴 — Window 1개만 생성
+        // ⑦ Singleton — Window 1개만 생성
         new MainWindow(_vm).Show();
 
-        // ⑧ 엔진 시작
+        // ⑧ 엔진 시작 (비동기)
         _ = Task.Run(async () =>
         {
             await _collectionEngine.StartAsync();
@@ -88,22 +78,20 @@ public partial class App : Application
         });
     }
 
-    // §3 ─ 종료 ───────────────────────────────────────────────
     protected override async void OnExit(ExitEventArgs e)
     {
         _watcher?.Dispose();
+        // ★ Fix: EventBus 구독 해제
+        _tagEventSub?.Dispose();
 
-        if (_collectionEngine is not null)
-            await _collectionEngine.DisposeAsync();
-        if (_monitorEngine is not null)
-            await _monitorEngine.DisposeAsync();
+        if (_collectionEngine is not null) await _collectionEngine.DisposeAsync();
+        if (_monitorEngine    is not null) await _monitorEngine.DisposeAsync();
 
         _vm?.Dispose();
         _themeSettings?.Dispose();
 
         LogManager.Instance.Info("App", "IIoT Collector 종료");
         await LogManager.Instance.StopAsync();
-
         base.OnExit(e);
     }
 }

@@ -17,9 +17,7 @@
 
     <DockPanel LastChildFill="True">
 
-        <!-- ══════════════════════════════════════════════
-             헤더 (56px)
-             ══════════════════════════════════════════════ -->
+        <!-- ══ 헤더 56px ══════════════════════════════════════ -->
         <Border DockPanel.Dock="Top" Height="56"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -30,22 +28,24 @@
                 <StackPanel DockPanel.Dock="Left"
                             Orientation="Horizontal" VerticalAlignment="Center"
                             Margin="0,0,20,0">
-                    <TextBlock Text="⚙️" FontSize="22" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="⚙️" FontSize="22"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="IIoT Studio"
                                    FontSize="14" FontWeight="Bold"
                                    Foreground="{DynamicResource TextBrush}"/>
-                        <TextBlock Text="설정·수집흐름·라이브러리 통합 관리"
-                                   FontSize="10" Foreground="{DynamicResource Text3Brush}"/>
+                        <TextBlock Text="장비·수집흐름·라이브러리 설정"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource Text3Brush}"/>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- 우: 테마 + 저장 -->
+                <!-- 우: 테마 + 저장 버튼 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Command="{Binding SaveAllCommand}"
                             Style="{DynamicResource PrimaryBtn}"
-                            Content="💾 저장" Padding="12,5" FontSize="12"
+                            Content="💾 전체 저장" Padding="12,5" FontSize="12"
                             Margin="0,0,8,0"/>
                     <Button Command="{Binding LoadAllCommand}"
                             Style="{DynamicResource GhostBtn}"
@@ -60,30 +60,30 @@
                            HorizontalAlignment="Center"
                            FontSize="11"
                            Foreground="{DynamicResource Text2Brush}"/>
-
             </DockPanel>
         </Border>
 
-        <!-- ══════════════════════════════════════════════
-             하단 상태바
-             ══════════════════════════════════════════════ -->
+        <!-- ══ 상태바 24px ═════════════════════════════════════ -->
         <StatusBar DockPanel.Dock="Bottom" Height="24"
                    Background="{DynamicResource SurfaceBrush}"
                    BorderBrush="{DynamicResource BorderBrush}"
                    BorderThickness="0,1,0,0">
             <StatusBarItem>
                 <TextBlock Text="{Binding SaveStatus}"
-                           FontSize="10" Foreground="{DynamicResource Text2Brush}"/>
+                           FontSize="10"
+                           Foreground="{DynamicResource Text2Brush}"/>
             </StatusBarItem>
             <Separator/>
             <StatusBarItem>
-                <TextBlock Text="● 미저장"
-                           FontSize="10" Foreground="{DynamicResource YellowBrush}">
+                <TextBlock FontSize="10"
+                           Foreground="{DynamicResource YellowBrush}">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
+                            <Setter Property="Text"    Value=""/>
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                                    <Setter Property="Text"       Value="● 미저장 변경사항 있음"/>
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </Style.Triggers>
@@ -93,50 +93,72 @@
             </StatusBarItem>
         </StatusBar>
 
-        <!-- ══════════════════════════════════════════════
-             본문 — 탭 (장비·수집흐름·스케일·알람·통신)
-             ══════════════════════════════════════════════ -->
+        <!-- ══ 본문 탭 ═════════════════════════════════════════ -->
         <TabControl SelectedIndex="{Binding ActiveTabIndex}"
                     Background="{DynamicResource BgBrush}"
                     BorderThickness="0">
 
             <!-- 탭 ① 장비 관리 -->
-            <TabItem Header="🖥️ 장비 관리">
-                <!-- DeviceTree 좌 + 편집기 우 — ContentControl로 이식 예정 -->
-                <TextBlock Text="장비 관리 탭 (DeviceTree + Editor)"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="{DynamicResource Text3Brush}" FontSize="13"/>
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="🖥️ 장비 관리" FontSize="12"/>
+                </TabItem.Header>
+                <!-- DeviceTree + Editor ContentControl 이식 예정 -->
+                <TextBlock Text="장비 관리 (DeviceTree + Editor)"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Text3Brush}"
+                           FontSize="13"/>
             </TabItem>
 
             <!-- 탭 ② 수집 흐름 -->
-            <TabItem Header="🔗 수집 흐름">
-                <TextBlock Text="수집 흐름 탭 (NodeRed Canvas)"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="{DynamicResource Text3Brush}" FontSize="13"/>
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="🔗 수집 흐름" FontSize="12"/>
+                </TabItem.Header>
+                <TextBlock Text="수집 흐름 (NodeRed Canvas)"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Text3Brush}"
+                           FontSize="13"/>
             </TabItem>
 
-            <!-- 탭 ③ 스케일 관리 -->
-            <TabItem Header="📐 스케일">
-                <TextBlock Text="스케일 라이브러리 탭"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="{DynamicResource Text3Brush}" FontSize="13"/>
+            <!-- 탭 ③ 스케일 -->
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="📐 스케일" FontSize="12"/>
+                </TabItem.Header>
+                <TextBlock Text="스케일 라이브러리"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Text3Brush}"
+                           FontSize="13"/>
             </TabItem>
 
             <!-- 탭 ④ 알람 규칙 -->
-            <TabItem Header="🔔 알람 규칙">
-                <TextBlock Text="알람 규칙 탭"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="{DynamicResource Text3Brush}" FontSize="13"/>
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="🔔 알람 규칙" FontSize="12"/>
+                </TabItem.Header>
+                <TextBlock Text="알람 규칙 라이브러리"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Text3Brush}"
+                           FontSize="13"/>
             </TabItem>
 
             <!-- 탭 ⑤ 통신 설정 -->
-            <TabItem Header="📡 통신 설정">
-                <TextBlock Text="통신 설정 탭"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="{DynamicResource Text3Brush}" FontSize="13"/>
+            <TabItem>
+                <TabItem.Header>
+                    <TextBlock Text="📡 통신 설정" FontSize="12"/>
+                </TabItem.Header>
+                <TextBlock Text="통신 설정 라이브러리"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Text3Brush}"
+                           FontSize="13"/>
             </TabItem>
 
         </TabControl>
-
     </DockPanel>
 </Window>
