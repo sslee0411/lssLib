@@ -6,7 +6,7 @@
          Studio·Collector·Manager·Analytics 모두 참조 가능
     -->
 		<OutputType>Library</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<AssemblyName>IIoT.Shared</AssemblyName>
