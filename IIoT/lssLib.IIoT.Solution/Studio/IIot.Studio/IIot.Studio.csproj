@@ -1,4 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Studio · IIot.Studio.csproj
+     Fix:
+       ① Views\DeviceTree\ Folder 항목 추가
+       ② Views\Library\ Folder 항목 추가
+       (UseWPF=true SDK 자동 포함이므로 Page/Compile 명시 불필요)
+     ══════════════════════════════════════════════════════════ -->
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
@@ -23,8 +30,6 @@
 		<ProjectReference Include="..\..\Shared\IIoT.Shared.csproj" />
 		<ProjectReference Include="..\..\UI\IIoT.UI.Controls\Iiot.Controls.csproj" />
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
-		<!-- ★ Fix: IIoT.Shared 참조 추가 -->
-		<!-- ★ Fix: IIoT.UI.Controls 참조 추가 -->
 	</ItemGroup>
 
 	<ItemGroup>
@@ -32,7 +37,6 @@
 		<EmbeddedResource Include="Config\*.json.sample" />
 	</ItemGroup>
 
-	<!-- ★ Fix: 중복 Folder 항목 제거 (각 1개씩) -->
 	<ItemGroup>
 		<Folder Include="Core\Canvas\" />
 		<Folder Include="Core\Config\" />
@@ -42,7 +46,11 @@
 		<Folder Include="ViewModels\Editors\" />
 		<Folder Include="ViewModels\Library\" />
 		<Folder Include="Views\Canvas\" />
+		<!-- ★ Fix ①: DeviceTree 폴더 추가 -->
+		<Folder Include="Views\DeviceTree\" />
 		<Folder Include="Views\Editors\" />
+		<!-- ★ Fix ②: Library 폴더 추가 -->
+		<Folder Include="Views\Library\" />
 	</ItemGroup>
 
 </Project>
