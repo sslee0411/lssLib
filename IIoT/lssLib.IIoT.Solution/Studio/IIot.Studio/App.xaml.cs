@@ -1,36 +1,40 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · App.xaml.cs
 //  Fix:
-//    ① using IIot.Studio 제거 (소문자 i — 잘못된 네임스페이스)
-//    ② ConfigBundle 번들 패턴 적용 (8→2 파라미터)
-//    ③ AddSingleton<MainWindow> 유지
-//    ④ ConfigInitializer.ResourcePrefix = "IIoT.Studio.Config." 명시
+//    ① using 누락 추가
+//       - IIoT.Studio.ViewModels.DeviceTree  (CS0234)
+//       - IIoT.Studio.ViewModels.Library     (CS0234)
+//       - IIoT.Studio.Core.Config            (CS0246: JsonWriteService 등)
+//    ② ConfigInitializer.EnsureConfigFiles() resourcePrefix 파라미터 제거
+//       실제 시그니처: EnsureConfigFiles(string configDirectory) — 파라미터 1개 (CS1739)
+//    ③ MainWindow 생성자: (StudioMainViewModel, DeviceTreeViewModel) 2 파라미터 유지
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Shared.Config;
-using IIoT.Studio.Core.Config;
-using IIoT.Studio.ViewModels;
-using IIoT.Studio.ViewModels.Canvas;
-using IIoT.Studio.ViewModels.DeviceTree;
-using IIoT.Studio.ViewModels.Library;
 using IIoT.UI.Themes;
+using IIoT.Studio.Core.Config;                  // ★ Fix ①: JsonWriteService, JsonConfigLoader,
+                                                 //          CollectConfigService, ConfigInitializer
+using IIoT.Studio.ViewModels;                   // StudioMainViewModel
+using IIoT.Studio.ViewModels.Canvas;            // CanvasViewModel
+using IIoT.Studio.ViewModels.DeviceTree;        // ★ Fix ①: DeviceTreeViewModel
+using IIoT.Studio.ViewModels.Library;           // ★ Fix ①: ScaleLibraryViewModel 등
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System.Windows;
 
-// ★ Fix ①: using IIot.Studio 제거
-
 namespace IIoT.Studio;
 
 public partial class App : Application
 {
+    // §1 ─ 필드 ──────────────────────────────────────────────
     private ThemeSettingsService? _themeSettings;
     private IServiceProvider?     _services;
 
     private static string ConfigDirectory =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
 
+    // §2 ─ 시작 ───────────────────────────────────────────────
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -48,15 +52,14 @@ public partial class App : Application
         });
         LogManager.Instance.Info("App", "IIoT Studio 시작 (V3)");
 
-        // ★ Fix ④: ResourcePrefix 명시 (RootNamespace = IIoT.Studio)
-        ConfigInitializer.EnsureConfigFiles(
-            ConfigDirectory,
-            resourcePrefix: "IIoT.Studio.Config.");
+        // ★ Fix ②: resourcePrefix 파라미터 없음 — 1개 파라미터만
+        ConfigInitializer.EnsureConfigFiles(ConfigDirectory);
 
         _services = _ConfigureServices();
         _services.GetRequiredService<MainWindow>().Show();
     }
 
+    // §3 ─ 종료 ───────────────────────────────────────────────
     protected override async void OnExit(ExitEventArgs e)
     {
         LogManager.Instance.Info("App", "IIoT Studio 종료");
@@ -65,11 +68,12 @@ public partial class App : Application
         base.OnExit(e);
     }
 
+    // §4 ─ DI 구성 ────────────────────────────────────────────
     private static IServiceProvider _ConfigureServices()
     {
         var services = new ServiceCollection();
 
-        // ── 기반 서비스 ──
+        // ── 기반 서비스 ──────────────────────────────────────
         services.AddSingleton<JsonWriteService>(
             _ => new JsonWriteService(ConfigDirectory));
         services.AddSingleton<JsonConfigLoader>(
@@ -77,7 +81,7 @@ public partial class App : Application
         services.AddSingleton<CollectConfigService>(
             _ => new CollectConfigService(ConfigDirectory));
 
-        // ── 라이브러리 ViewModel ──
+        // ── 라이브러리 ViewModel ──────────────────────────────
         services.AddSingleton<ScaleLibraryViewModel>(sp =>
             new ScaleLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
         services.AddSingleton<AlarmLibraryViewModel>(sp =>
@@ -86,7 +90,7 @@ public partial class App : Application
             new CommLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
         services.AddSingleton<CanvasViewModel>();
 
-        // ── ★ Fix ②: ConfigBundle (8→1 번들) ──
+        // ── ConfigBundle (8→2 파라미터 번들) ─────────────────
         services.AddSingleton<ConfigBundle>(sp => new ConfigBundle
         {
             Loader  = sp.GetRequiredService<JsonConfigLoader>(),
@@ -98,13 +102,14 @@ public partial class App : Application
             Canvas  = sp.GetRequiredService<CanvasViewModel>(),
         });
 
+        // ── DeviceTree + Main ViewModel ───────────────────────
         services.AddSingleton<DeviceTreeViewModel>();
         services.AddSingleton<StudioMainViewModel>(sp => new StudioMainViewModel(
             sp.GetRequiredService<DeviceTreeViewModel>(),
-            sp.GetRequiredService<ConfigBundle>()   // ← 2 파라미터
+            sp.GetRequiredService<ConfigBundle>()
         ));
 
-        // ── ★ Fix ③: Singleton (Transient → 이중 창 버그) ──
+        // ── ★ Singleton 필수 (Transient 이중 창 버그 방지) ───
         services.AddSingleton<MainWindow>(sp => new MainWindow(
             sp.GetRequiredService<StudioMainViewModel>(),
             sp.GetRequiredService<DeviceTreeViewModel>()

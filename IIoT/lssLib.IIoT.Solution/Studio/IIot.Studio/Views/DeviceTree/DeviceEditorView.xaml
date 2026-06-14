@@ -1,0 +1,110 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Studio · Views/DeviceTree/DeviceEditorView.xaml
+     역할: 장비 노드 편집기 (이름·모델·위치·제조사)
+           DeviceTreeView 우측 패널 — IsDeviceSelected 시 표시
+     생성: 2026-06-14
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Studio.Views.DeviceTree.DeviceEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+
+            <!-- 헤더 -->
+            <Border Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{DynamicResource Radius}"
+                    Padding="16,12" Margin="0,0,0,20">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🏭" FontSize="18" Margin="0,0,10,0"
+                               VerticalAlignment="Center"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="장비 편집"
+                                   FontSize="13" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="{Binding Name}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource Text3Brush}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 이름 -->
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="장비 이름"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,4"/>
+                <TextBox Style="{DynamicResource PropInput}"
+                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                         Tag="예: 압출기-01"/>
+            </StackPanel>
+
+            <!-- 모델 / 제조사 -->
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="모델"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,4"/>
+                    <TextBox Style="{DynamicResource PropInput}"
+                             Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="예: EXT-3000"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="제조사"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,4"/>
+                    <TextBox Style="{DynamicResource PropInput}"
+                             Text="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="예: LS Electric"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- 설치 위치 -->
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="설치 위치"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,4"/>
+                <TextBox Style="{DynamicResource PropInput}"
+                         Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
+                         Tag="예: A동 1층 라인1"/>
+            </StackPanel>
+
+            <!-- 설명 -->
+            <StackPanel Margin="0,0,0,20">
+                <TextBlock Text="설명"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,4"/>
+                <TextBox Style="{DynamicResource PropInput}"
+                         Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                         Tag="선택 사항"
+                         Height="72"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Auto"/>
+            </StackPanel>
+
+            <!-- 저장 -->
+            <Button Style="{DynamicResource PrimaryBtn}"
+                    Command="{Binding SaveCommand}"
+                    Content="저장"
+                    HorizontalAlignment="Right"
+                    Padding="24,8"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
