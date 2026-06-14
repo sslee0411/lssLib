@@ -1,24 +1,21 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+// ══════════════════════════════════════════════════════════
+//  IIoT.Studio · MainWindow.xaml.cs
+//  Fix: namespace "IIot.Studio" → "IIoT.Studio" (대소문자)
+//       기본 생성자 제거 → ViewModel 주입 생성자 (WPF 규칙 6)
+// ══════════════════════════════════════════════════════════
 
-namespace IIot.Studio
+using IIoT.Studio.ViewModels;
+using IIoT.Studio.ViewModels.DeviceTree;
+using System.Windows;
+
+namespace IIoT.Studio;   // ★ Fix: IIot → IIoT
+
+public partial class MainWindow : Window
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    // ★ 규칙 6: 기본 생성자 제거 → ViewModel 주입 생성자 필수
+    public MainWindow(StudioMainViewModel vm, DeviceTreeViewModel tree)
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+        DataContext = vm;
     }
 }
