@@ -1,17 +1,23 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · Views/Library/CommLibraryView.xaml
      역할: 통신 라이브러리 관리 화면
-     Fix: MC3089 — ScrollViewer 단일 자식 규칙 준수
-          미선택+편집폼을 Grid로 묶어서 ScrollViewer에 전달
+     Fix MC3089: ScrollViewer 단일 자식 → Grid 래핑
+     Fix BoolToVisibility: UserControl.Resources에 Converter 등록
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.Library.CommLibraryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:conv="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
              xmlns:vm="clr-namespace:IIoT.Studio.ViewModels.Library"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              d:DataContext="{d:DesignInstance Type=vm:CommLibraryViewModel}">
+
+    <!-- ★ Fix: UserControl.Resources — Grid 이전, UserControl 직계 자식으로 배치 -->
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -89,14 +95,13 @@
             </DockPanel>
         </Border>
 
-        <!-- 스플리터 -->
         <GridSplitter Grid.Column="1" Width="4"
                       HorizontalAlignment="Stretch"
                       Background="{DynamicResource BorderBrush}"
                       Cursor="SizeWE"/>
 
         <!-- ══════════════ 우: 편집 패널 ══════════════ -->
-        <!-- ★ Fix MC3089: ScrollViewer 단일 자식 → Grid로 래핑 -->
+        <!-- MC3089 Fix: ScrollViewer 단일 자식 → Grid 래핑 -->
         <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
             <Grid>
 
@@ -133,38 +138,31 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 이름 -->
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="설정 이름"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Text2Brush}"
-                                   Margin="0,0,0,4"/>
+                                   Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4"/>
                         <TextBox Style="{DynamicResource PropInput}"
-                                 Text="{Binding SelectedConfig.Name,
-                                     UpdateSourceTrigger=PropertyChanged}"/>
+                                 Text="{Binding SelectedConfig.Name, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
-                    <!-- 프로토콜 -->
                     <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="프로토콜"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Text2Brush}"
-                                   Margin="0,0,0,4"/>
+                                   Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4"/>
                         <ComboBox Style="{DynamicResource PropCombo}"
                                   SelectedValue="{Binding SelectedConfig.Protocol}"
                                   ItemsSource="{Binding ProtocolOptions}"/>
                     </StackPanel>
 
-                    <Border Height="1" Background="{DynamicResource BorderBrush}"
-                            Margin="0,4,0,16"/>
+                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4,0,16"/>
 
                     <!-- Modbus TCP -->
                     <StackPanel Visibility="{Binding IsModbusTcp,
                                     Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="Modbus TCP 설정"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource AccBrush}"
-                                   Margin="0,0,0,10"/>
+                                   Foreground="{DynamicResource AccBrush}" Margin="0,0,0,10"/>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -210,8 +208,7 @@
                                     Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="Serial 설정"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource AccBrush}"
-                                   Margin="0,0,0,10"/>
+                                   Foreground="{DynamicResource AccBrush}" Margin="0,0,0,10"/>
                         <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -239,8 +236,7 @@
                                     Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="MQTT 설정"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource AccBrush}"
-                                   Margin="0,0,0,10"/>
+                                   Foreground="{DynamicResource AccBrush}" Margin="0,0,0,10"/>
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -277,8 +273,7 @@
                         <StackPanel>
                             <TextBlock Text="재시도 설정"
                                        FontSize="11" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource Text2Brush}"
-                                       Margin="0,0,0,10"/>
+                                       Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,10"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>

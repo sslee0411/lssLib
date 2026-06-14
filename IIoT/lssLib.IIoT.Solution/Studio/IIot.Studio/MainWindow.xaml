@@ -1,10 +1,8 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · MainWindow.xaml
-     Fix:
-       ① x:Class "IIot.Studio" → "IIoT.Studio"
-       ② xmlns: vTree/vCanvas/vLib 추가 (View 참조용)
-       ③ BoolToVisibility 키 통일 (App.xaml 등록 키와 일치)
-       ④ SaveAllCommand → 탭 전환과 저장 커맨드 바인딩 정리
+     Fix XamlParseException 'BoolToVisibility':
+       Window.Resources에 Converter 직접 등록
+       → App.xaml 의존 없이 항상 로드 보장
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Studio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,6 +10,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        xmlns:conv="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
         xmlns:vTree="clr-namespace:IIoT.Studio.Views.DeviceTree"
         xmlns:vCanvas="clr-namespace:IIoT.Studio.Views.Canvas"
         xmlns:vLib="clr-namespace:IIoT.Studio.Views.Library"
@@ -22,18 +21,20 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
 
+    <!-- ★ Fix: Window 자체 Resources에 Converter 등록 -->
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+    </Window.Resources>
+
     <DockPanel LastChildFill="True">
 
-        <!-- ══════════════════════════════════════════════
-             헤더 (56px)
-             ══════════════════════════════════════════════ -->
+        <!-- ══════════════ 헤더 (56px) ══════════════ -->
         <Border DockPanel.Dock="Top" Height="56"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel Margin="14,0">
 
-                <!-- 우: 테마 버튼 + 저장 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
@@ -46,13 +47,12 @@
                                    Foreground="{DynamicResource BgBrush}"/>
                     </Border>
                     <Button Style="{DynamicResource PrimaryBtn}"
-                            Command="{Binding SaveAllCommand}"
+                            Command="{Binding SaveCurrentTabAsyncCommand}"
                             Content="💾 전체 저장"
                             Padding="14,0" Margin="0,0,12,0"/>
                     <uc:ThemePickerButton/>
                 </StackPanel>
 
-                <!-- 좌: 타이틀 -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="⚙" FontSize="22"
                                Margin="0,0,10,0"
@@ -70,9 +70,7 @@
             </DockPanel>
         </Border>
 
-        <!-- ══════════════════════════════════════════════
-             탭 바 (40px)
-             ══════════════════════════════════════════════ -->
+        <!-- ══════════════ 탭 바 (40px) ══════════════ -->
         <Border DockPanel.Dock="Top" Height="40"
                 Background="{DynamicResource CardBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -137,41 +135,33 @@
             </StackPanel>
         </Border>
 
-        <!-- ══════════════════════════════════════════════
-             탭 본문
-             ══════════════════════════════════════════════ -->
+        <!-- ══════════════ 탭 본문 ══════════════ -->
         <Grid>
-
-            <!-- ① 장비 관리 탭 -->
             <vTree:DeviceTreeView
                 DataContext="{Binding DeviceTree}"
                 Visibility="{Binding IsDeviceTab,
                     Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ② 수집 흐름 탭 -->
             <vCanvas:CanvasView
                 DataContext="{Binding Canvas}"
                 Visibility="{Binding IsCanvasTab,
                     Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ③ 스케일 탭 -->
             <vLib:ScaleLibraryView
                 DataContext="{Binding ScaleLibrary}"
                 Visibility="{Binding IsScaleTab,
                     Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ④ 알람 탭 -->
             <vLib:AlarmLibraryView
                 DataContext="{Binding AlarmLibrary}"
                 Visibility="{Binding IsAlarmTab,
                     Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ⑤ 통신 탭 -->
             <vLib:CommLibraryView
                 DataContext="{Binding CommLibrary}"
                 Visibility="{Binding IsCommTab,
                     Converter={StaticResource BoolToVisibility}}"/>
-
         </Grid>
+
     </DockPanel>
 </Window>

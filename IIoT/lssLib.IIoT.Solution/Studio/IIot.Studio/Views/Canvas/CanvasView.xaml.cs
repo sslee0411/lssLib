@@ -5,7 +5,9 @@
 //        · 노드 선택 (단일 클릭)
 //        · 캔버스 패닝 (중간 버튼 드래그 / Space+드래그)
 //        · 휠 줌
-//  Phase 11: 신규
+//  Fix CS1061:
+//    Border.MouseMiddleButtonDown / MouseMiddleButtonUp 이벤트 없음
+//    → PreviewMouseDown / PreviewMouseUp + e.ChangedButton == Middle 체크
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Core.Canvas;
@@ -33,16 +35,16 @@ public partial class CanvasView : UserControl
 
         // 키보드 이벤트 (Space 패닝)
         Focusable = true;
-        KeyDown  += (_, e) => { if (e.Key == Key.Space) _spaceDown = true; };
+        KeyDown  += (_, e) => { if (e.Key == Key.Space) _spaceDown = true;  };
         KeyUp    += (_, e) => { if (e.Key == Key.Space) _spaceDown = false; };
 
-        // 캔버스 이벤트
-        CanvasBorder.MouseWheel           += _OnMouseWheel;
-        CanvasBorder.MouseMiddleButtonDown += _OnPanStart;
-        CanvasBorder.MouseMove            += _OnPanMove;
-        CanvasBorder.MouseMiddleButtonUp  += _OnPanEnd;
+        // ★ Fix: MouseMiddleButtonDown/Up → PreviewMouseDown/Up + ChangedButton 체크
+        CanvasBorder.MouseWheel       += _OnMouseWheel;
+        CanvasBorder.PreviewMouseDown += _OnMiddleDown;   // ← 수정
+        CanvasBorder.MouseMove        += _OnPanMove;
+        CanvasBorder.PreviewMouseUp   += _OnMiddleUp;     // ← 수정
 
-        // 노드 선택/드래그 (NodesControl 에서 이벤트 버블링)
+        // 노드 선택/드래그
         NodesControl.PreviewMouseLeftButtonDown += _OnNodeMouseDown;
         NodesControl.PreviewMouseMove           += _OnNodeMouseMove;
         NodesControl.PreviewMouseLeftButtonUp   += _OnNodeMouseUp;
@@ -66,8 +68,11 @@ public partial class CanvasView : UserControl
     }
 
     // §4 ─ 패닝 ───────────────────────────────────────────────
-    private void _OnPanStart(object sender, MouseButtonEventArgs e)
+
+    // ★ Fix: PreviewMouseDown + Middle 버튼 or Space 확인
+    private void _OnMiddleDown(object sender, MouseButtonEventArgs e)
     {
+        if (e.ChangedButton != MouseButton.Middle && !_spaceDown) return;
         _isPanning = true;
         _panStart  = e.GetPosition(CanvasBorder);
         CanvasBorder.CaptureMouse();
@@ -77,20 +82,21 @@ public partial class CanvasView : UserControl
     {
         if (!_isPanning) return;
         if (DataContext is not CanvasViewModel vm) return;
-        var pos    = e.GetPosition(CanvasBorder);
+        var pos     = e.GetPosition(CanvasBorder);
         vm.OffsetX += pos.X - _panStart.X;
         vm.OffsetY += pos.Y - _panStart.Y;
         _panStart   = pos;
     }
 
-    private void _OnPanEnd(object sender, MouseButtonEventArgs e)
+    // ★ Fix: PreviewMouseUp + Middle 버튼 or Space 확인
+    private void _OnMiddleUp(object sender, MouseButtonEventArgs e)
     {
+        if (e.ChangedButton != MouseButton.Middle && !_spaceDown) return;
         _isPanning = false;
         CanvasBorder.ReleaseMouseCapture();
     }
 
     // §5 ─ 노드 드래그 ────────────────────────────────────────
-
     private void _OnNodeMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.Source is not FrameworkElement fe) return;
@@ -109,8 +115,11 @@ public partial class CanvasView : UserControl
     private void _OnNodeMouseMove(object sender, MouseEventArgs e)
     {
         if (_draggingNode is null) return;
-        if (e.LeftButton != MouseButtonState.Pressed) { _OnNodeMouseUp(sender, null); return; }
-
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            _OnNodeMouseUp(sender, null);
+            return;
+        }
         var pos = e.GetPosition(MainCanvas);
         _draggingNode.X = Math.Max(0, _nodeStartPos.X + (pos.X - _dragStart.X));
         _draggingNode.Y = Math.Max(0, _nodeStartPos.Y + (pos.Y - _dragStart.Y));

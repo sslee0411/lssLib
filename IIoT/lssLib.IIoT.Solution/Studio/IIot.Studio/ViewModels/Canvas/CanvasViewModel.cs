@@ -10,7 +10,9 @@ using CommunityToolkit.Mvvm.Input;
 using IIoT.Studio.Core.Canvas;
 using lssLib.Log;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Text.Json;
+using System.Windows.Data;
 
 namespace IIoT.Studio.ViewModels.Canvas;
 
@@ -23,8 +25,8 @@ public partial class CanvasViewModel : ObservableObject
     public ObservableCollection<AbstractNode>     Nodes       { get; } = [];
     public ObservableCollection<NodeConnection>   Connections { get; } = [];
 
-    // §3 ─ 팔레트 ─────────────────────────────────────────────
-    public IReadOnlyList<PaletteItem> Palette { get; } = _BuildPalette();
+    // §3 ─ 팔레트 (카테고리별 그룹핑 적용) ──────────────────────
+    public ICollectionView Palette { get; } = _BuildGroupedPalette();
 
     // §4 ─ 선택 상태 ──────────────────────────────────────────
     [ObservableProperty]
@@ -337,19 +339,25 @@ public partial class CanvasViewModel : ObservableObject
         ConnectPorts(src, tgt);
     }
 
-    private static IReadOnlyList<PaletteItem> _BuildPalette() =>
-    [
-        new("Input",  "📡", "ModbusInput",     "Modbus Input",     "#4F7CFF"),
-        new("Input",  "🌐", "OpcUaInput",       "OPC-UA Input",     "#0284C7"),
-        new("Input",  "🔬", "VirtualInput",     "Virtual Input",    "#22D3A0"),
-        new("Parser", "📦", "BufParser",        "Buf Parser",       "#7C5CFF"),
-        new("Parser", "📐", "ScaleMap",         "Scale Map",        "#F59E0B"),
-        new("Filter", "🚦", "ThresholdFilter",  "Threshold Filter", "#FF8C42"),
-        new("Filter", "🗜️",  "SDTFilter",        "SDT Filter",       "#059669"),
-        new("Output", "💾", "DbOutput",         "DB Output",        "#DC2626"),
-        new("Output", "📤", "MqttOutput",       "MQTT Output",      "#7C3AED"),
-        new("Output", "🐛", "DebugOutput",      "Debug",            "#4A5568"),
-    ];
+    private static ICollectionView _BuildGroupedPalette()
+    {
+        var items = new List<PaletteItem>
+        {
+            new("Input",  "📡", "ModbusInput",     "Modbus Input",     "#4F7CFF"),
+            new("Input",  "🌐", "OpcUaInput",       "OPC-UA Input",     "#0284C7"),
+            new("Input",  "🔬", "VirtualInput",     "Virtual Input",    "#22D3A0"),
+            new("Parser", "📦", "BufParser",        "Buf Parser",       "#7C5CFF"),
+            new("Parser", "📐", "ScaleMap",         "Scale Map",        "#F59E0B"),
+            new("Filter", "🚦", "ThresholdFilter",  "Threshold Filter", "#FF8C42"),
+            new("Filter", "🗜️",  "SDTFilter",        "SDT Filter",       "#059669"),
+            new("Output", "💾", "DbOutput",         "DB Output",        "#DC2626"),
+            new("Output", "📤", "MqttOutput",       "MQTT Output",      "#7C3AED"),
+            new("Output", "🐛", "DebugOutput",      "Debug",            "#4A5568"),
+        };
+        var cv = new ListCollectionView(items);
+        cv.GroupDescriptions.Add(new PropertyGroupDescription(nameof(PaletteItem.Category)));
+        return cv;
+    }
 }
 
 // §14 ─ 팔레트 항목 모델 ──────────────────────────────────

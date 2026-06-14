@@ -1,17 +1,23 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · Views/Library/AlarmLibraryView.xaml
      역할: 알람 규칙 라이브러리 관리 화면
-     Fix: MC3089 — ScrollViewer 단일 자식 규칙 준수
-          미선택+편집폼 두 패널을 Grid로 묶어서 ScrollViewer에 전달
+     Fix MC3089: ScrollViewer 단일 자식 → Grid 래핑
+     Fix BoolToVisibility: UserControl.Resources에 Converter 등록
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.Library.AlarmLibraryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:conv="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
              xmlns:vm="clr-namespace:IIoT.Studio.ViewModels.Library"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              d:DataContext="{d:DesignInstance Type=vm:AlarmLibraryViewModel}">
+
+    <!-- ★ Fix: UserControl 닫기 태그(>) 이후, 첫 자식 요소 이전에 위치 -->
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -99,14 +105,13 @@
             </DockPanel>
         </Border>
 
-        <!-- 스플리터 -->
         <GridSplitter Grid.Column="1" Width="4"
                       HorizontalAlignment="Stretch"
                       Background="{DynamicResource BorderBrush}"
                       Cursor="SizeWE"/>
 
         <!-- ══════════════ 우: 편집 패널 ══════════════ -->
-        <!-- ★ Fix MC3089: ScrollViewer 단일 자식 → Grid로 래핑 -->
+        <!-- MC3089 Fix: ScrollViewer 단일 자식 → Grid 래핑 -->
         <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
             <Grid>
 
@@ -138,21 +143,17 @@
                                    Text="{Binding SelectedRule.Name}"/>
                     </Border>
 
-                    <!-- 이름 -->
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="규칙 이름"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Text2Brush}"
-                                   Margin="0,0,0,4"/>
+                                   Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4"/>
                         <TextBox Style="{DynamicResource PropInput}"
-                                 Text="{Binding SelectedRule.Name,
-                                     UpdateSourceTrigger=PropertyChanged}"/>
+                                 Text="{Binding SelectedRule.Name, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
-                    <Border Height="1" Background="{DynamicResource BorderBrush}"
-                            Margin="0,4,0,16"/>
+                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4,0,16"/>
 
-                    <!-- HH 상상한 -->
+                    <!-- HH -->
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource RedBrush}"
                             BorderThickness="3,0,0,0"
@@ -168,28 +169,22 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <Border Background="{DynamicResource RedBrush}"
                                         CornerRadius="3" Padding="6,2" HorizontalAlignment="Left">
-                                    <TextBlock Text="HH" FontSize="11"
-                                               FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="HH" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                 </Border>
                                 <TextBlock Text="상상한" FontSize="10"
-                                           Foreground="{DynamicResource Text3Brush}"
-                                           Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource Text3Brush}" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}"
-                                     Tag="임계값"
-                                     Text="{Binding SelectedRule.HiHi,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Column="2" Text="→"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Tag="임계값"
+                                     Text="{Binding SelectedRule.HiHi, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="2" Text="→" VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
                                        Foreground="{DynamicResource Text3Brush}"/>
-                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}"
-                                     Tag="메시지"
-                                     Text="{Binding SelectedRule.HiHiMsg,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}" Tag="메시지"
+                                     Text="{Binding SelectedRule.HiHiMsg, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                     </Border>
 
-                    <!-- H 상한 -->
+                    <!-- H -->
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource OrangeBrush}"
                             BorderThickness="3,0,0,0"
@@ -205,28 +200,22 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <Border Background="{DynamicResource OrangeBrush}"
                                         CornerRadius="3" Padding="6,2" HorizontalAlignment="Left">
-                                    <TextBlock Text="H" FontSize="11"
-                                               FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="H" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                 </Border>
                                 <TextBlock Text="상한" FontSize="10"
-                                           Foreground="{DynamicResource Text3Brush}"
-                                           Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource Text3Brush}" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}"
-                                     Tag="임계값"
-                                     Text="{Binding SelectedRule.Hi,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Column="2" Text="→"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Tag="임계값"
+                                     Text="{Binding SelectedRule.Hi, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="2" Text="→" VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
                                        Foreground="{DynamicResource Text3Brush}"/>
-                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}"
-                                     Tag="메시지"
-                                     Text="{Binding SelectedRule.HiMsg,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}" Tag="메시지"
+                                     Text="{Binding SelectedRule.HiMsg, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                     </Border>
 
-                    <!-- L 하한 -->
+                    <!-- L -->
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource AccBrush}"
                             BorderThickness="3,0,0,0"
@@ -242,28 +231,22 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <Border Background="{DynamicResource AccBrush}"
                                         CornerRadius="3" Padding="6,2" HorizontalAlignment="Left">
-                                    <TextBlock Text="L" FontSize="11"
-                                               FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="L" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                 </Border>
                                 <TextBlock Text="하한" FontSize="10"
-                                           Foreground="{DynamicResource Text3Brush}"
-                                           Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource Text3Brush}" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}"
-                                     Tag="임계값"
-                                     Text="{Binding SelectedRule.Lo,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Column="2" Text="→"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Tag="임계값"
+                                     Text="{Binding SelectedRule.Lo, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="2" Text="→" VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
                                        Foreground="{DynamicResource Text3Brush}"/>
-                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}"
-                                     Tag="메시지"
-                                     Text="{Binding SelectedRule.LoMsg,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}" Tag="메시지"
+                                     Text="{Binding SelectedRule.LoMsg, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                     </Border>
 
-                    <!-- LL 하하한 -->
+                    <!-- LL -->
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource Acc2Brush}"
                             BorderThickness="3,0,0,0"
@@ -279,24 +262,18 @@
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <Border Background="{DynamicResource Acc2Brush}"
                                         CornerRadius="3" Padding="6,2" HorizontalAlignment="Left">
-                                    <TextBlock Text="LL" FontSize="11"
-                                               FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="LL" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                 </Border>
                                 <TextBlock Text="하하한" FontSize="10"
-                                           Foreground="{DynamicResource Text3Brush}"
-                                           Margin="0,2,0,0"/>
+                                           Foreground="{DynamicResource Text3Brush}" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}"
-                                     Tag="임계값"
-                                     Text="{Binding SelectedRule.LoLo,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Column="2" Text="→"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                            <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Tag="임계값"
+                                     Text="{Binding SelectedRule.LoLo, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Grid.Column="2" Text="→" VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
                                        Foreground="{DynamicResource Text3Brush}"/>
-                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}"
-                                     Tag="메시지"
-                                     Text="{Binding SelectedRule.LoLoMsg,
-                                         UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Grid.Column="3" Style="{DynamicResource PropInput}" Tag="메시지"
+                                     Text="{Binding SelectedRule.LoLoMsg, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                     </Border>
 

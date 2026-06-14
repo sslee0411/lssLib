@@ -29,6 +29,11 @@ public abstract partial class AbstractTreeNode : ObservableObject
     public abstract string Badge     { get; }
 
     public ObservableCollection<AbstractTreeNode> Children { get; } = [];
+
+    // §2 ─ 공통 저장 커맨드 ───────────────────────────────────
+    // 실제 저장은 StudioMainViewModel.SaveCurrentTabAsync()에서 처리
+    [RelayCommand]
+    protected virtual void Save() { }
 }
 
 /// <summary>그룹 노드 (공장·라인·사이트)</summary>
@@ -85,8 +90,7 @@ public sealed partial class TagTreeNode : AbstractTreeNode
     // SaveCommand — 저장 처리 (ViewModel에서 구독)
     public event Action<TagTreeNode>? SaveRequested;
 
-    [RelayCommand]
-    private void Save() => SaveRequested?.Invoke(this);
+    protected override void Save() => SaveRequested?.Invoke(this);
 
     public override string IconGlyph => "🏷";
     public override string Badge     => string.Empty;

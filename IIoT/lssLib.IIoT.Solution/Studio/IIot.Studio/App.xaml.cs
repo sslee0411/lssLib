@@ -36,6 +36,24 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // 전역 예외 핸들러 — 크래시 원인 로깅
+        AppDomain.CurrentDomain.UnhandledException += (s, ex) =>
+        {
+            var msg = ex.ExceptionObject?.ToString() ?? "unknown";
+            try { LogManager.Instance.Error("App", $"UnhandledException: {msg}"); } catch { }
+            System.IO.File.WriteAllText(
+                System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.txt"),
+                $"UnhandledException:\n{msg}");
+        };
+        DispatcherUnhandledException += (s, ex) =>
+        {
+            var msg = ex.Exception?.ToString() ?? "unknown";
+            try { LogManager.Instance.Error("App", $"DispatcherUnhandledException: {msg}"); } catch { }
+            System.IO.File.WriteAllText(
+                System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.txt"),
+                $"DispatcherUnhandledException:\n{msg}");
+        };
+
         _themeSettings = new ThemeSettingsService();
         _themeSettings.LoadAndApply(this);
 
@@ -53,7 +71,20 @@ public partial class App : Application
         ConfigInitializer.EnsureConfigFiles(ConfigDirectory);
 
         _services = _ConfigureServices();
-        _services.GetRequiredService<MainWindow>().Show();
+
+        try
+        {
+            _services.GetRequiredService<MainWindow>().Show();
+        }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Error("App", $"MainWindow.Show() 예외: {ex}");
+            System.IO.File.WriteAllText(
+                System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.txt"),
+                $"MainWindow.Show() Exception:\n{ex}");
+            MessageBox.Show($"시작 오류:\n{ex.Message}\n\n{ex.InnerException?.Message}",
+                            "IIoT Studio 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     // §3 ─ 종료 ───────────────────────────────────────────────
