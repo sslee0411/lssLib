@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════
-//  IIoT.ConfigApp · Views/Canvas/CanvasView.xaml.cs
+//  IIoT.Studio · Views/Canvas/CanvasView.xaml.cs
 //  역할: 캔버스 코드비하인드
 //        · 노드 드래그 이동 (MouseDown/Move/Up)
 //        · 노드 선택 (단일 클릭)
@@ -8,13 +8,13 @@
 //  Phase 11: 신규
 // ══════════════════════════════════════════════════════════
 
-using IIoT.ConfigApp.Core.Canvas;
-using IIoT.ConfigApp.ViewModels.Canvas;
+using IIoT.Studio.Core.Canvas;
+using IIoT.Studio.ViewModels.Canvas;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace IIoT.ConfigApp.Views.Canvas;
+namespace IIoT.Studio.Views.Canvas;
 
 public partial class CanvasView : UserControl
 {

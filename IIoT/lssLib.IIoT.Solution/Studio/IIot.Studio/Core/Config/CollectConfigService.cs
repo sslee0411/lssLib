@@ -1,17 +1,17 @@
 // ══════════════════════════════════════════════════════════
-//  IIoT.ConfigApp · Core/Config/CollectConfigService.cs
+//  IIoT.Studio · Core/Config/CollectConfigService.cs
 //  역할: collect.json 원자적 저장 + .signal 발신
 //        CanvasViewModel → collect.json → CollectorRuntime 재시작
 //  Phase 11: 신규
 // ══════════════════════════════════════════════════════════
 
-using IIoT.ConfigApp.ViewModels.Canvas;
+using IIoT.Studio.ViewModels.Canvas;
 using lssLib.Log;
 using lssLib.Utils;
 using System.IO;
 using System.Text;
 
-namespace IIoT.ConfigApp.Core.Config;
+namespace IIoT.Studio.Core.Config;
 
 /// <summary>
 /// collect.json 저장 서비스.
@@ -92,7 +92,7 @@ public sealed class CollectConfigService
             var signalPath = Path.Combine(_configDir, targetFile + ".signal");
             var content    = $$"""
                 {
-                  "source":    "IIoT.ConfigApp",
+                  "source":    "IIoT.Studio",
                   "target":    "{{targetFile}}",
                   "reason":    "{{reason}}",
                   "timestamp": "{{DateTime.UtcNow:O}}"

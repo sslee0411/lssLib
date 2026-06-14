@@ -1,35 +1,31 @@
 // ══════════════════════════════════════════════════════════
-//  IIoT.ConfigApp · App.xaml.cs
-//  역할: ConfigApp 통합 진입점
+//  IIoT.Studio · App.xaml.cs
+//  역할: Config 통합 진입점
 //        구 DeviceManager + CollectConfig 통합 앱
-//  Phase 11: 신규 (구 DeviceManager App.xaml.cs 기반 확장)
-//
-//  변경점 (DeviceManager → ConfigApp):
-//    · 네임스페이스: IIoT.DeviceManager → IIoT.ConfigApp
-//    · CollectConfigService DI 추가
-//    · CanvasViewModel DI 추가
-//    · ConfigInitializer.ResourcePrefix 변경 필요:
-//        "IIoT.DeviceManager.Config." → "IIoT.ConfigApp.Config."
+//  Phase 11: 신규
+//  V3 Step1: AddTransient<MainWindow> → AddSingleton<MainWindow> 수정
+//            (이중 창 버그 해결)
 // ══════════════════════════════════════════════════════════
 
-using IIoT.ConfigApp.Core.Config;
-using IIoT.ConfigApp.ViewModels;
-using IIoT.ConfigApp.ViewModels.Canvas;
-using IIoT.ConfigApp.ViewModels.DeviceTree;
-using IIoT.ConfigApp.ViewModels.Library;
+using IIot.Studio;
+using IIoT.Studio.Core.Config;
+using IIoT.Studio.ViewModels;
+using IIoT.Studio.ViewModels.Canvas;
+using IIoT.Studio.ViewModels.DeviceTree;
+using IIoT.Studio.ViewModels.Library;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System.Windows;
 
-namespace IIoT.ConfigApp;
+namespace IIoT.Studio;
 
 public partial class App : Application
 {
     // §1 ─ 필드 ──────────────────────────────────────────────
     private ThemeSettingsService? _themeSettings;
-    private IServiceProvider?     _services;
+    private IServiceProvider? _services;
 
     private static string ConfigDirectory =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
@@ -46,17 +42,15 @@ public partial class App : Application
         // ② LogManager
         LogManager.Instance.Start(new LogConfig
         {
-            LogRootPath     = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
-            ValidDays       = 30,
-            FileFormat      = LogFileFormat.Both,
-            MinimumLevel    = LogLevel.Debug,
+            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
+            ValidDays = 30,
+            FileFormat = LogFileFormat.Both,
+            MinimumLevel = LogLevel.Debug,
             MaxDisplayCount = 2000,
         });
-        LogManager.Instance.Info("App", "IIoT ConfigApp 시작 (구 DeviceManager + CollectConfig 통합)");
+        LogManager.Instance.Info("App", "IIoT Config 시작 (구 DeviceManager + CollectConfig 통합)");
 
         // ③ 설정 파일 초기화
-        //    ★ ConfigInitializer.ResourcePrefix 를
-        //      "IIoT.ConfigApp.Config." 으로 변경 후 사용
         ConfigInitializer.EnsureConfigFiles(ConfigDirectory);
 
         // ④ DI + 윈도우 표시
@@ -66,7 +60,7 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        LogManager.Instance.Info("App", "IIoT ConfigApp 종료");
+        LogManager.Instance.Info("App", "IIoT Config 종료");
         await LogManager.Instance.StopAsync();
         _themeSettings?.Dispose();
         base.OnExit(e);
@@ -96,11 +90,11 @@ public partial class App : Application
         services.AddSingleton<CommLibraryViewModel>(sp =>
             new CommLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
 
-        // ── Canvas VM (Phase 11 신규) ──
+        // ── Canvas VM ──
         services.AddSingleton<CanvasViewModel>();
 
-        // ── ConfigApp 통합 MainViewModel ──
-        services.AddSingleton<ConfigAppMainViewModel>(sp => new ConfigAppMainViewModel(
+        // ── Config 통합 MainViewModel ──
+        services.AddSingleton<ConfigMainViewModel>(sp => new ConfigMainViewModel(
             sp.GetRequiredService<DeviceTreeViewModel>(),
             sp.GetRequiredService<JsonConfigLoader>(),
             sp.GetRequiredService<JsonWriteService>(),
@@ -111,9 +105,11 @@ public partial class App : Application
             sp.GetRequiredService<CollectConfigService>()
         ));
 
-        // ── MainWindow ──
-        services.AddTransient<MainWindow>(sp => new MainWindow(
-            sp.GetRequiredService<ConfigAppMainViewModel>(),
+        // ★ V3 Step1 수정: AddTransient → AddSingleton
+        //   이전: services.AddTransient<MainWindow>(...)
+        //   이유: Transient = 호출마다 새 Window 인스턴스 → 이중 창 버그
+        services.AddSingleton<MainWindow>(sp => new MainWindow(
+            sp.GetRequiredService<ConfigMainViewModel>(),
             sp.GetRequiredService<DeviceTreeViewModel>()
         ));
 

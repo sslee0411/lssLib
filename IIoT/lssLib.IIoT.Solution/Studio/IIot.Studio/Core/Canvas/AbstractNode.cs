@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════
-//  IIoT.ConfigApp · Core/Canvas/AbstractNode.cs
+//  IIoT.Studio · Core/Canvas/AbstractNode.cs
 //  역할: NodeRed 스타일 캔버스 노드 추상 기반 클래스
 //        상속 → 팔레트 노드(Input·Parser·Filter·Output) 구현
 //  Phase 11: 신규
@@ -17,7 +17,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
-namespace IIoT.ConfigApp.Core.Canvas;
+namespace IIoT.Studio.Core.Canvas;
 
 // §1 ─ 포트 방향 ──────────────────────────────────────────
 public enum PortDirection { Input, Output }

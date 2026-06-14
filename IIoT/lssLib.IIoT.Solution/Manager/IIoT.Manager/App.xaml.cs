@@ -2,6 +2,8 @@
 //  IIoT.Manager · App.xaml.cs
 //  역할: Manager 앱 진입점 — DI 구성 + 테마 + 로그 초기화
 //  Phase 12: 신규
+//  V3 Step1: AddTransient<MainWindow> → AddSingleton<MainWindow> 수정
+//            (이중 창 버그 해결)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Core;
@@ -18,10 +20,9 @@ public partial class App : Application
 {
     // §1 ─ 필드 ──────────────────────────────────────────────
     private ThemeSettingsService? _themeSettings;
-    private IServiceProvider?     _services;
+    private IServiceProvider? _services;
 
     // §2 ─ 시작 ───────────────────────────────────────────────
-    // ★ 규칙 5: StartupUri 제거 → OnStartup 수동 생성
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -33,10 +34,10 @@ public partial class App : Application
         // ② LogManager
         LogManager.Instance.Start(new LogConfig
         {
-            LogRootPath     = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
-            ValidDays       = 30,
-            FileFormat      = LogFileFormat.Both,
-            MinimumLevel    = LogLevel.Debug,
+            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
+            ValidDays = 30,
+            FileFormat = LogFileFormat.Both,
+            MinimumLevel = LogLevel.Debug,
             MaxDisplayCount = 2000,
         });
         LogManager.Instance.Info("App", "IIoT Manager 시작");
@@ -48,7 +49,6 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        // ProcessManager 비동기 정리
         if (_services?.GetService<ProcessManager>() is { } mgr)
             await mgr.DisposeAsync();
 
@@ -65,7 +65,11 @@ public partial class App : Application
 
         services.AddSingleton<ProcessManager>();
         services.AddSingleton<ManagerViewModel>();
-        services.AddTransient<MainWindow>(sp =>
+
+        // ★ V3 Step1 수정: AddTransient → AddSingleton
+        //   이전: services.AddTransient<MainWindow>(...)
+        //   이유: Transient = 호출마다 새 Window 인스턴스 → 이중 창 버그
+        services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<ManagerViewModel>()));
 
         return services.BuildServiceProvider();

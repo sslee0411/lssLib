@@ -25,7 +25,7 @@
     <ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
     <ProjectReference Include="..\..\..\..\Base\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj" />
     <ProjectReference Include="..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
-    <ProjectReference Include="..\..\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+    <ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
   </ItemGroup>
 
 </Project>

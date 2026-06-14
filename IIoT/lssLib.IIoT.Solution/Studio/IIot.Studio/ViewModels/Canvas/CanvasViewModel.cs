@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════
-//  IIoT.ConfigApp · ViewModels/Canvas/CanvasViewModel.cs
+//  IIoT.Studio · ViewModels/Canvas/CanvasViewModel.cs
 //  역할: NodeRed 스타일 캔버스 편집 ViewModel
 //        노드 CRUD·연결선 관리·팔레트·collect.json 저장
 //  Phase 11: 신규
@@ -7,12 +7,12 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using IIoT.ConfigApp.Core.Canvas;
+using IIoT.Studio.Core.Canvas;
 using lssLib.Log;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 
-namespace IIoT.ConfigApp.ViewModels.Canvas;
+namespace IIoT.Studio.ViewModels.Canvas;
 
 public partial class CanvasViewModel : ObservableObject
 {

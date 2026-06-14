@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>IIoT.Collector</AssemblyName>
+    <RootNamespace>IIoT.Collector</RootNamespace>
+    <!--
+      V3 Step4: 신규 프로젝트 (CollectorRuntime + Monitor 통합)
+      핵심 효과: CollectionEngine + MonitorEngine 동일 프로세스
+               → EventBus in-process 정상 동작
+               → cross-process EventBus 버그 근본 해결
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
+    <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+    <ProjectReference Include="..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+    <ProjectReference Include="..\Shared\IIoT.Shared.csproj" />
+    <ProjectReference Include="..\UI\IIoT.UI.Controls\Iiot.Controls.csproj" />
+    <ProjectReference Include="..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+  </ItemGroup>
+
+</Project>

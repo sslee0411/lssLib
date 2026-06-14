@@ -1,5 +1,5 @@
 <!-- ══════════════════════════════════════════════════════════
-     IIoT.ConfigApp · Views/Canvas/CanvasView.xaml
+     IIoT.Studio · Views/Canvas/CanvasView.xaml
      역할: NodeRed 스타일 수집 흐름 캔버스 편집기
      구성:
        좌(200px) — 노드 팔레트 (카테고리별 드래그 소스)
@@ -9,12 +9,12 @@
        · DynamicResource 필수
        · TextBlock 혼합 콘텐츠 금지
      ══════════════════════════════════════════════════════════ -->
-<UserControl x:Class="IIoT.ConfigApp.Views.Canvas.CanvasView"
+<UserControl x:Class="IIoT.Studio.Views.Canvas.CanvasView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:vm="clr-namespace:IIoT.ConfigApp.ViewModels.Canvas"
+             xmlns:vm="clr-namespace:IIoT.Studio.ViewModels.Canvas"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700">
 
     <Grid>

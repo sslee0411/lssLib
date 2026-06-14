@@ -2,7 +2,8 @@
 //  IIoT.DeviceManager · App.xaml.cs
 //  역할: 애플리케이션 진입점
 //  Phase 5R: MainViewModel 생성자에 라이브러리 VM 직접 주입
-//            MainWindow 생성자 단순화 (MainViewModel 하나만 주입)
+//  V3 Step1: AddTransient<MainWindow> → AddSingleton<MainWindow> 수정
+//            (이중 창 버그 해결)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.DeviceManager.Core.Config;
@@ -58,15 +59,14 @@ public partial class App : Application
     // §3 ─ LogManager 초기화 ──────────────────────────────────
     private static void _InitLogManager()
     {
-        var logConfig = new LogConfig
+        LogManager.Instance.Start(new LogConfig
         {
-            LogRootPath     = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
-            ValidDays       = 30,
-            FileFormat      = LogFileFormat.Both,
-            MinimumLevel    = LogLevel.Debug,
+            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs"),
+            ValidDays = 30,
+            FileFormat = LogFileFormat.Both,
+            MinimumLevel = LogLevel.Debug,
             MaxDisplayCount = 2000,
-        };
-        LogManager.Instance.Start(logConfig);
+        });
     }
 
     // §4 ─ DI 구성 ────────────────────────────────────────────
@@ -83,7 +83,7 @@ public partial class App : Application
         // DeviceTree VM
         services.AddSingleton<DeviceTreeViewModel>();
 
-        // 라이브러리 VM (MainViewModel 에 직접 주입)
+        // 라이브러리 VM
         services.AddSingleton<ScaleLibraryViewModel>(sp =>
             new ScaleLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
         services.AddSingleton<AlarmLibraryViewModel>(sp =>
@@ -91,18 +91,20 @@ public partial class App : Application
         services.AddSingleton<CommLibraryViewModel>(sp =>
             new CommLibraryViewModel(sp.GetRequiredService<JsonWriteService>()));
 
-        // ★ Phase 5R: MainViewModel 에 라이브러리 VM 모두 주입
+        // MainViewModel
         services.AddSingleton<MainViewModel>(sp => new MainViewModel(
             sp.GetRequiredService<DeviceTreeViewModel>(),
             sp.GetRequiredService<JsonConfigLoader>(),
             sp.GetRequiredService<JsonWriteService>(),
-            sp.GetRequiredService<ScaleLibraryViewModel>(),   // ← 신규
-            sp.GetRequiredService<AlarmLibraryViewModel>(),   // ← 신규
-            sp.GetRequiredService<CommLibraryViewModel>()     // ← 신규
+            sp.GetRequiredService<ScaleLibraryViewModel>(),
+            sp.GetRequiredService<AlarmLibraryViewModel>(),
+            sp.GetRequiredService<CommLibraryViewModel>()
         ));
 
-        // ★ Phase 5R: MainWindow 생성자 단순화 (MainViewModel + DeviceTreeViewModel)
-        services.AddTransient<MainWindow>(sp => new MainWindow(
+        // ★ V3 Step1 수정: AddTransient → AddSingleton
+        //   이전: services.AddTransient<MainWindow>(...)
+        //   이유: Transient = 호출마다 새 Window 인스턴스 → 이중 창 버그
+        services.AddSingleton<MainWindow>(sp => new MainWindow(
             sp.GetRequiredService<MainViewModel>(),
             sp.GetRequiredService<DeviceTreeViewModel>()
         ));

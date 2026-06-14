@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Log", "..\..\..\Base
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Utils", "..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj", "{7846ACA6-1A51-C8CE-605B-075B21338EEE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj", "{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{7846ACA6-1A51-C8CE-605B-075B21338EEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7846ACA6-1A51-C8CE-605B-075B21338EEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7846ACA6-1A51-C8CE-605B-075B21338EEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

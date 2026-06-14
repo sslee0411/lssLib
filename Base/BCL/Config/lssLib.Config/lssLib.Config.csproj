@@ -7,4 +7,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\IIoT\lssLib.IIoT.Solution\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+    <ProjectReference Include="..\..\log\lssLib.Log\lssLib.Log.csproj" />
+    <ProjectReference Include="..\..\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+    <ProjectReference Include="..\..\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+  </ItemGroup>
+
 </Project>

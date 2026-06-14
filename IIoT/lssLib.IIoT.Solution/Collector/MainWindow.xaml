@@ -1,0 +1,185 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Collector · MainWindow.xaml
+     역할: 수집+감지 통합 메인 윈도우 (구 CollectorRuntime + Monitor)
+     레이아웃:
+       [헤더 56px] 제어버튼 | 상태배지 | 통계 | 테마버튼
+       [탭 본문]
+         ① 수집 현황  — 실시간 태그 DataGrid (구 CollectorRuntime)
+         ② 알람 관리  — 활성 알람 + 알람 이력 (구 Monitor)
+       [하단 160px] 실시간 로그
+     WPF 규칙:
+       · DynamicResource 필수 (StaticResource 금지)
+       · TextBlock 혼합 콘텐츠 금지
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.Collector.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        mc:Ignorable="d"
+        Title="IIoT Collector — 수집·감지 통합"
+        Width="1440" Height="900"
+        MinWidth="1100" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}">
+
+    <DockPanel LastChildFill="True">
+
+        <!-- ══════════════════════════════════════════════
+             헤더 (56px)
+             ══════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top" Height="56"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel Margin="14,0">
+
+                <!-- 좌: 타이틀 -->
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="0,0,20,0">
+                    <TextBlock Text="📡" FontSize="22"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="IIoT Collector"
+                                   FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="{Binding ConfigInfo}"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource Text3Brush}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- 우: 테마 버튼 -->
+                <uc:ThemePickerButton DockPanel.Dock="Right"
+                                      VerticalAlignment="Center"/>
+
+                <!-- 중: 제어 버튼 + 상태 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+
+                    <Button Content="▶ 시작"
+                            Command="{Binding StartCommand}"
+                            Style="{DynamicResource PrimaryBtn}"
+                            Padding="14,6" Margin="0,0,6,0"/>
+                    <Button Content="■ 중지"
+                            Command="{Binding StopCommand}"
+                            Style="{DynamicResource SecondaryBtn}"
+                            Padding="14,6" Margin="0,0,20,0"/>
+
+                    <!-- 수집 상태 배지 -->
+                    <Border Style="{DynamicResource BadgeInfo}"
+                            Padding="10,3" VerticalAlignment="Center"
+                            Margin="0,0,8,0">
+                        <TextBlock Text="{Binding CollectorStatus}"
+                                   FontSize="11" FontWeight="SemiBold"/>
+                    </Border>
+
+                    <!-- 알람 상태 배지 -->
+                    <Border Style="{DynamicResource BadgeDanger}"
+                            Padding="10,3" VerticalAlignment="Center"
+                            Visibility="{Binding HasActiveAlarms,
+                                Converter={StaticResource BoolToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔔 " FontSize="11"/>
+                            <TextBlock Text="{Binding ActiveAlarmCount}"
+                                       FontSize="11" FontWeight="Bold"/>
+                            <TextBlock Text=" 건" FontSize="11"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             하단 로그 (160px)
+             ══════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Bottom" Height="160"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1" Padding="12,6">
+                    <TextBlock Text="📋 실시간 로그"
+                               FontSize="11" FontWeight="Bold"
+                               Foreground="{DynamicResource Text2Brush}"/>
+                </Border>
+                <ListBox ItemsSource="{Binding LogEntries}"
+                         Background="Transparent" BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="True">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="4,1">
+                                <TextBlock Text="{Binding Time}"
+                                           Width="80" FontSize="11"
+                                           FontFamily="{DynamicResource MonoFont}"
+                                           Foreground="{DynamicResource Text3Brush}"/>
+                                <TextBlock Text="{Binding Level}"
+                                           Width="40" FontSize="11"
+                                           Foreground="{DynamicResource Text2Brush}"/>
+                                <TextBlock Text="{Binding Source}"
+                                           Width="100" FontSize="11"
+                                           Foreground="{DynamicResource Text3Brush}"/>
+                                <TextBlock Text="{Binding Msg}"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextBrush}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════
+             본문 탭 — 수집 현황 + 알람 관리
+             ══════════════════════════════════════════════ -->
+        <TabControl Background="Transparent" BorderThickness="0"
+                    SelectedIndex="{Binding ActiveTabIndex}">
+
+            <!-- ── 탭 ① 수집 현황 (구 CollectorRuntime MainWindow) ── -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📡 수집 현황" FontSize="12"/>
+                        <Border Background="{DynamicResource AccBrush}"
+                                CornerRadius="8" Padding="5,1"
+                                Margin="6,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding LiveTagCount}"
+                                       FontSize="10" FontWeight="Bold"
+                                       Foreground="White"/>
+                        </Border>
+                    </StackPanel>
+                </TabItem.Header>
+                <!-- 수집 현황 콘텐츠: CollectorRuntime MainWindow 본문 3열 그대로 이식 -->
+                <ContentControl Content="{Binding CollectorView}"/>
+            </TabItem>
+
+            <!-- ── 탭 ② 알람 관리 (구 Monitor MainWindow) ── -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🔔 알람 관리" FontSize="12"/>
+                        <Border Background="{DynamicResource RedBrush}"
+                                CornerRadius="8" Padding="5,1"
+                                Margin="6,0,0,0" VerticalAlignment="Center"
+                                Visibility="{Binding HasActiveAlarms,
+                                    Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding ActiveAlarmCount}"
+                                       FontSize="10" FontWeight="Bold"
+                                       Foreground="White"/>
+                        </Border>
+                    </StackPanel>
+                </TabItem.Header>
+                <!-- 알람 콘텐츠: Monitor MainWindow 본문 그대로 이식 -->
+                <ContentControl Content="{Binding MonitorView}"/>
+            </TabItem>
+
+        </TabControl>
+
+    </DockPanel>
+</Window>

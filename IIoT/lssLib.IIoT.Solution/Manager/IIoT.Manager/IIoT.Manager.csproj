@@ -29,6 +29,7 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 	  <ProjectReference Include="..\..\..\..\Base\BCL\Utils\lssLib.Utils\lssLib.Utils.csproj" />
+	  <ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
 	</ItemGroup>
 
 </Project>
