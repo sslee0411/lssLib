@@ -3,14 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Iiot.Collector", "Collector\Iiot.Collector.csproj", "{13D2B646-4D18-8441-C402-D455A3F9847F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Manager", "Manager\IIoT.Manager\IIoT.Manager.csproj", "{6E8E66FD-2344-7F3D-C3F2-5C1E2F3885C1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Shared", "Shared\IIoT.Shared.csproj", "{AF7DCBB7-A3B2-178F-302F-9935A71C91BF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIot.Studio", "Studio\IIot.Studio\IIot.Studio.csproj", "{4460E821-F1D6-7A9B-D7B9-804DC468E95B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj", "{1F7D53F1-3DC2-C3E6-48F4-34D097EF82A1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Iiot.Controls", "UI\IIoT.UI.Controls\Iiot.Controls.csproj", "{1774BA17-077F-E645-4788-6D45E00DEA32}"
@@ -53,22 +45,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{13D2B646-4D18-8441-C402-D455A3F9847F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{13D2B646-4D18-8441-C402-D455A3F9847F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{13D2B646-4D18-8441-C402-D455A3F9847F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{13D2B646-4D18-8441-C402-D455A3F9847F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6E8E66FD-2344-7F3D-C3F2-5C1E2F3885C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E8E66FD-2344-7F3D-C3F2-5C1E2F3885C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E8E66FD-2344-7F3D-C3F2-5C1E2F3885C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E8E66FD-2344-7F3D-C3F2-5C1E2F3885C1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AF7DCBB7-A3B2-178F-302F-9935A71C91BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AF7DCBB7-A3B2-178F-302F-9935A71C91BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AF7DCBB7-A3B2-178F-302F-9935A71C91BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AF7DCBB7-A3B2-178F-302F-9935A71C91BF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4460E821-F1D6-7A9B-D7B9-804DC468E95B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4460E821-F1D6-7A9B-D7B9-804DC468E95B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4460E821-F1D6-7A9B-D7B9-804DC468E95B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4460E821-F1D6-7A9B-D7B9-804DC468E95B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1F7D53F1-3DC2-C3E6-48F4-34D097EF82A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1F7D53F1-3DC2-C3E6-48F4-34D097EF82A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F7D53F1-3DC2-C3E6-48F4-34D097EF82A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
