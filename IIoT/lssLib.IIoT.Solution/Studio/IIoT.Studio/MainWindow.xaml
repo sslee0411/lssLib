@@ -13,6 +13,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        xmlns:vTree="clr-namespace:IIoT.Studio.Views.DeviceTree"
         Title="IIoT Studio — 설정"
         Width="1440" Height="900"
         MinWidth="1100" MinHeight="680"
@@ -132,26 +133,10 @@
              ══════════════════════════════════════════════════ -->
         <Grid>
 
-            <!-- 탭 0: 장비 관리 -->
+            <!-- 탭 0: 장비 관리 — DeviceTreeView -->
             <Grid Visibility="{Binding IsDeviceTab,
                                Converter={StaticResource BoolToVisibility}}">
-                <Rectangle Fill="#0F2744" />
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="🖥️"
-                               FontSize="48"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="장비 관리"
-                               FontSize="22"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,6" />
-                    <TextBlock Text="S-01 에서 그룹/장비/PLC/Tag 트리가 추가됩니다."
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center" />
-                </StackPanel>
+                <vTree:DeviceTreeView DataContext="{Binding DeviceTree}" />
             </Grid>
 
             <!-- 탭 1: 수집 흐름 -->
