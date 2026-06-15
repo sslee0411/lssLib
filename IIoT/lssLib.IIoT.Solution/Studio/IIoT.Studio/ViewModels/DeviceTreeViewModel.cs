@@ -3,7 +3,7 @@
 //  역할: 장비 트리 ViewModel
 //        - 트리 노드 CRUD (그룹/장비/PLC/Tag 추가·삭제)
 //        - 선택 노드 관리 → 우측 패널 전환
-//  S-01: 초기 구현
+//  S-01 rev2: 같은 레벨(형제) 추가 기능 적용
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IIoT.Studio.Models;
 using System.Collections.ObjectModel;
+
 namespace IIoT.Studio.ViewModels;
 
 public partial class DeviceTreeViewModel : ObservableObject
@@ -20,7 +21,7 @@ public partial class DeviceTreeViewModel : ObservableObject
     /// <summary>트리 루트 노드 컬렉션 (TreeView ItemsSource)</summary>
     public ObservableCollection<AbstractTreeNode> RootNodes { get; } = new();
 
-    // §1-1 ─ 상태 메시지 (하단 안내) ────────────────────────
+    // §1-1 ─ 상태 메시지 ─────────────────────────────────────
 
     /// <summary>조작 결과 안내 메시지 (Tag 추가 실패 등)</summary>
     [ObservableProperty]
@@ -32,11 +33,6 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     // §2 ─ 선택 노드 ──────────────────────────────────────────
 
-    /// <summary>
-    /// 현재 선택된 노드.
-    /// ★ [NotifyPropertyChangedFor] 필수
-    ///    소스 생성 프로퍼티를 nameof() 로 PropertyChanged 구독 시 컴파일 실패
-    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNoneSelected))]
     [NotifyPropertyChangedFor(nameof(IsGroupSelected))]
@@ -49,29 +45,23 @@ public partial class DeviceTreeViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(TagEditor))]
     private AbstractTreeNode? _selectedNode;
 
-    // §3 ─ 선택 타입 판별 프로퍼티 ───────────────────────────
+    // §3 ─ 선택 타입 판별 ─────────────────────────────────────
 
-    public bool IsNoneSelected   => SelectedNode is null;
-    public bool IsGroupSelected  => SelectedNode is GroupTreeNode;
+    public bool IsNoneSelected => SelectedNode is null;
+    public bool IsGroupSelected => SelectedNode is GroupTreeNode;
     public bool IsDeviceSelected => SelectedNode is DeviceTreeNode;
-    public bool IsPlcSelected    => SelectedNode is PlcTreeNode;
-    public bool IsTagSelected    => SelectedNode is TagTreeNode;
+    public bool IsPlcSelected => SelectedNode is PlcTreeNode;
+    public bool IsTagSelected => SelectedNode is TagTreeNode;
 
-    // §4 ─ 편집기 캐스팅 프로퍼티 ────────────────────────────
-    // S-02~S-05 에서 각 편집기 View 의 DataContext 로 사용
+    // §4 ─ 편집기 캐스팅 ──────────────────────────────────────
 
-    public GroupTreeNode?  GroupEditor  => SelectedNode as GroupTreeNode;
+    public GroupTreeNode? GroupEditor => SelectedNode as GroupTreeNode;
     public DeviceTreeNode? DeviceEditor => SelectedNode as DeviceTreeNode;
-    public PlcTreeNode?    PlcEditor    => SelectedNode as PlcTreeNode;
-    public TagTreeNode?    TagEditor    => SelectedNode as TagTreeNode;
+    public PlcTreeNode? PlcEditor => SelectedNode as PlcTreeNode;
+    public TagTreeNode? TagEditor => SelectedNode as TagTreeNode;
 
     // §5 ─ 선택 메서드 ────────────────────────────────────────
 
-    /// <summary>
-    /// TreeView SelectedItemChanged 코드비하인드에서 호출.
-    /// ★ WPF TreeView.SelectedItem 은 TwoWay 바인딩 미지원
-    ///    → 코드비하인드 이벤트로 직접 호출 필수
-    /// </summary>
     public void SelectNode(object? item)
     {
         SelectedNode = item as AbstractTreeNode;
@@ -79,113 +69,71 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     // §6 ─ 커맨드 ─────────────────────────────────────────────
 
-    /*  허용 계층 규칙 (확정)
+    /*  ★ 추가 위치 결정 규칙 (확정)
      *
-     *  그룹  → 그룹 하위 가능  (그룹 중첩)
-     *  그룹  → 장비 하위 가능
-     *  장비  → 장비 하위 가능  (장비 중첩)
-     *  장비  → PLC  하위 가능
-     *  장비  → Tag  하위 가능
-     *  PLC   → PLC  하위 가능  (PLC 중첩)
-     *  PLC   → Tag  하위 가능
-     *  Tag   → (자식 없음)
+     *  [선택 노드 있음]
+     *    → 선택 노드와 같은 레벨(형제)에 추가
+     *      (= 선택 노드의 부모 컬렉션에 삽입)
+     *    단, Tag 는 부모가 PLC 또는 장비여야만 허용
      *
-     *  루트 배치 가능:  그룹 / 장비 / PLC
-     *  루트 배치 불가:  Tag  ← ★ 반드시 PLC 또는 장비 하위에만 추가 가능
+     *  [선택 노드 없음 / 루트 노드 선택]
+     *    → 루트에 추가 (그룹/장비/PLC 만 가능, Tag 불가)
+     *
+     *  허용 계층 규칙:
+     *    그룹 → 그룹·장비 하위
+     *    장비 → 장비·PLC·Tag 하위
+     *    PLC  → PLC·Tag 하위
+     *    Tag  → 자식 없음, 반드시 PLC/장비 하위
      */
 
     /// <summary>
     /// 그룹 추가.
-    /// - 선택: 그룹 → 그룹 하위
-    /// - 그 외 / 미선택 → 루트
+    /// 선택 노드 있음 → 같은 레벨(형제) 추가
+    /// 미선택 → 루트 추가
     /// </summary>
     [RelayCommand]
     private void AddGroup()
     {
         var node = new GroupTreeNode($"그룹 {_CountAll<GroupTreeNode>() + 1}");
-
-        if (SelectedNode is GroupTreeNode parentGroup)
-            parentGroup.Children.Add(node);
-        else
-            RootNodes.Add(node);
-
-        SelectedNode = node;
+        _AddSibling(node, allowedParentTypes: null); // 어느 부모 아래든 허용
     }
 
     /// <summary>
     /// 장비 추가.
-    /// - 선택: 그룹  → 그룹 하위
-    /// - 선택: 장비  → 장비 하위  (장비 중첩)
-    /// - 그 외 / 미선택 → 루트
+    /// 선택 노드 있음 → 같은 레벨(형제) 추가
+    /// 미선택 → 루트 추가
     /// </summary>
     [RelayCommand]
     private void AddDevice()
     {
-        var device = new DeviceTreeNode($"장비 {_CountAll<DeviceTreeNode>() + 1}");
-
-        if (SelectedNode is GroupTreeNode group)
-            group.Children.Add(device);
-        else if (SelectedNode is DeviceTreeNode parentDevice)
-            parentDevice.Children.Add(device);
-        else
-            RootNodes.Add(device);
-
-        SelectedNode = device;
+        var node = new DeviceTreeNode($"장비 {_CountAll<DeviceTreeNode>() + 1}");
+        _AddSibling(node, allowedParentTypes: null);
     }
 
     /// <summary>
     /// PLC 추가.
-    /// - 선택: 장비  → 장비 하위
-    /// - 선택: PLC   → PLC 하위   (PLC 중첩)
-    /// - 그 외 / 미선택 → 루트
+    /// 선택 노드 있음 → 같은 레벨(형제) 추가
+    /// 미선택 → 루트 추가
     /// </summary>
     [RelayCommand]
     private void AddPlc()
     {
-        var plc = new PlcTreeNode($"PLC {_CountAll<PlcTreeNode>() + 1}");
-
-        if (SelectedNode is DeviceTreeNode device)
-            device.Children.Add(plc);
-        else if (SelectedNode is PlcTreeNode parentPlc)
-            parentPlc.Children.Add(plc);
-        else
-            RootNodes.Add(plc);
-
-        SelectedNode = plc;
+        var node = new PlcTreeNode($"PLC {_CountAll<PlcTreeNode>() + 1}");
+        _AddSibling(node, allowedParentTypes: null);
     }
 
     /// <summary>
     /// Tag 추가.
-    /// ★ 규칙: Tag 는 반드시 PLC 또는 장비 하위에만 추가 가능
-    ///         루트 추가 불가 / 그룹·Tag 하위 추가 불가
-    /// - 선택: PLC  → PLC 하위
-    /// - 선택: 장비 → 장비 하위
-    /// - 그 외 / 미선택 → 추가 안 함 (StatusText 경고)
+    /// ★ 부모가 PLC 또는 장비여야만 허용 (루트·그룹 하위 불가)
+    /// 선택 노드 있음 → 같은 레벨(형제) 추가
     /// </summary>
     [RelayCommand]
     private void AddTag()
     {
-        if (SelectedNode is PlcTreeNode plc)
-        {
-            var tag = new TagTreeNode($"Tag {_CountAll<TagTreeNode>() + 1}");
-            plc.Children.Add(tag);
-            SelectedNode = tag;
-        }
-        else if (SelectedNode is DeviceTreeNode device)
-        {
-            var tag = new TagTreeNode($"Tag {_CountAll<TagTreeNode>() + 1}");
-            device.Children.Add(tag);
-            SelectedNode = tag;
-        }
-        else
-        {
-            // PLC 또는 장비를 먼저 선택해야 Tag 추가 가능
-            StatusMessage = "⚠ Tag 는 PLC 또는 장비를 선택한 후 추가하세요.";
-            // 3초 후 메시지 자동 클리어
-            _ = Task.Delay(3000).ContinueWith(_ =>
-                System.Windows.Application.Current?.Dispatcher.Invoke(
-                    () => StatusMessage = string.Empty));
-        }
+        var node = new TagTreeNode($"Tag {_CountAll<TagTreeNode>() + 1}");
+        _AddSibling(node,
+            allowedParentTypes: new[] { typeof(PlcTreeNode), typeof(DeviceTreeNode) },
+            failMessage: "⚠ Tag 는 PLC 또는 장비 하위에만 추가할 수 있습니다.");
     }
 
     /// <summary>선택된 노드 삭제</summary>
@@ -194,21 +142,116 @@ public partial class DeviceTreeViewModel : ObservableObject
     {
         if (SelectedNode is null) return;
 
-        // 루트에서 삭제 시도
         if (RootNodes.Remove(SelectedNode))
         {
             SelectedNode = null;
             return;
         }
 
-        // 자식 노드에서 재귀 탐색 후 삭제
         _RemoveFromChildren(RootNodes, SelectedNode);
         SelectedNode = null;
     }
 
-    // §7 ─ 내부 헬퍼 ──────────────────────────────────────────
+    // §7 ─ 핵심 헬퍼: 형제 추가 ──────────────────────────────
 
-    /// <summary>전체 트리에서 특정 타입 노드 수 카운트</summary>
+    /// <summary>
+    /// 선택 노드와 같은 레벨(형제)에 노드를 추가한다.
+    ///
+    /// [선택 노드 있음]
+    ///   - 부모 컬렉션을 역추적하여 선택 노드 바로 뒤에 삽입
+    ///   - allowedParentTypes 지정 시: 부모 타입이 허용 목록에 없으면 failMessage 표시
+    ///
+    /// [선택 노드 없음]
+    ///   - allowedParentTypes == null → 루트에 추가
+    ///   - allowedParentTypes != null → failMessage 표시 (Tag 루트 불가)
+    /// </summary>
+    private void _AddSibling(
+        AbstractTreeNode newNode,
+        Type[]? allowedParentTypes,
+        string failMessage = "")
+    {
+        if (SelectedNode is null)
+        {
+            // 미선택
+            if (allowedParentTypes is null)
+                _AppendToRoot(newNode);
+            else
+                _ShowWarning(failMessage);
+            return;
+        }
+
+        // 선택 노드의 부모 컬렉션 탐색
+        var (parentCollection, parentNode) =
+            _FindParentCollection(RootNodes, SelectedNode);
+
+        if (parentCollection is null)
+        {
+            // 선택 노드가 루트 레벨
+            if (allowedParentTypes is null)
+                _AppendToRoot(newNode);
+            else
+                _ShowWarning(failMessage);
+            return;
+        }
+
+        // 부모 타입 허용 검사
+        if (allowedParentTypes is not null && parentNode is not null)
+        {
+            if (!allowedParentTypes.Contains(parentNode.GetType()))
+            {
+                _ShowWarning(failMessage);
+                return;
+            }
+        }
+
+        // 선택 노드 바로 뒤에 삽입
+        var idx = parentCollection.IndexOf(SelectedNode);
+        if (idx >= 0)
+            parentCollection.Insert(idx + 1, newNode);
+        else
+            parentCollection.Add(newNode);
+
+        SelectedNode = newNode;
+    }
+
+    private void _AppendToRoot(AbstractTreeNode node)
+    {
+        RootNodes.Add(node);
+        SelectedNode = node;
+    }
+
+    private void _ShowWarning(string message)
+    {
+        StatusMessage = message;
+        _ = Task.Delay(3000).ContinueWith(_ =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(
+                () => StatusMessage = string.Empty));
+    }
+
+    // §8 ─ 내부 헬퍼: 부모 역추적 / 카운트 / 삭제 ────────────
+
+    /// <summary>
+    /// target 노드의 부모 컬렉션과 부모 노드를 반환한다.
+    /// 루트 레벨이면 (null, null) 반환.
+    /// </summary>
+    private (ObservableCollection<AbstractTreeNode>? collection,
+             AbstractTreeNode? parent)
+        _FindParentCollection(
+            ObservableCollection<AbstractTreeNode> nodes,
+            AbstractTreeNode target)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Children.Contains(target))
+                return (node.Children, node);
+
+            var (col, par) = _FindParentCollection(node.Children, target);
+            if (col is not null)
+                return (col, par);
+        }
+        return (null, null);
+    }
+
     private int _CountAll<T>() where T : AbstractTreeNode
     {
         int count = 0;
@@ -217,7 +260,8 @@ public partial class DeviceTreeViewModel : ObservableObject
     }
 
     private static void _CountRecursive<T>(
-        IEnumerable<AbstractTreeNode> nodes, ref int count) where T : AbstractTreeNode
+        IEnumerable<AbstractTreeNode> nodes, ref int count)
+        where T : AbstractTreeNode
     {
         foreach (var node in nodes)
         {
