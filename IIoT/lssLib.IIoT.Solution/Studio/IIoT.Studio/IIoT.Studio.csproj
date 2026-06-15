@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<!-- ★ net8.0-windows 필수 (lssLib.Messaging 참조 시 net8.0 불가 — NU1201) -->
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AssemblyName>IIoT.Studio</AssemblyName>
+		<!-- ★ RootNamespace 명시 필수
+         파일명(IIoT.Studio.csproj)과 네임스페이스(IIoT.Studio) 대소문자
+         불일치 시 GetManifestResourceStream() null 반환 오류 방지 -->
+		<RootNamespace>IIoT.Studio</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm"                    Version="8.4.2"  />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0"  />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- lssLib — 솔루션 기준 상대 경로 (실제 환경에 맞게 조정) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+		<!-- IIoT.UI.Themes — 테마 라이브러리 -->
+		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+</Project>
