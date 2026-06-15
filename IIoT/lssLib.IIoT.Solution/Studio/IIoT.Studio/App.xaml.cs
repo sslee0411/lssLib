@@ -8,6 +8,7 @@
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Studio.ViewModels;
 using IIoT.UI.Themes;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
@@ -33,14 +34,12 @@ public partial class App : Application
         _services = _ConfigureServices();
 
         // ③ MainWindow 표시
-        //    ★ GetRequiredService — Singleton 이므로 항상 같은 인스턴스 반환
         _services.GetRequiredService<MainWindow>().Show();
     }
 
     // §3 ─ 종료 ───────────────────────────────────────────────
     protected override void OnExit(ExitEventArgs e)
     {
-        // ★ 이벤트 구독 해제 필수 (메모리 누수 방지)
         _themeSettings?.Dispose();
         base.OnExit(e);
     }
@@ -50,11 +49,15 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
-        // ── ViewModel ────────────────────────────────────────
-        services.AddSingleton<MainViewModel>();
+        // ── 서브 ViewModel ───────────────────────────────────
+        services.AddSingleton<DeviceTreeViewModel>();
+
+        // ── 메인 ViewModel (DeviceTreeViewModel 주입) ────────
+        services.AddSingleton<MainViewModel>(sp =>
+            new MainViewModel(sp.GetRequiredService<DeviceTreeViewModel>()));
 
         // ── MainWindow ───────────────────────────────────────
-        // ★ 반드시 AddSingleton (AddTransient → Resolve 마다 새 창 → 이중 창 버그)
+        // ★ 반드시 AddSingleton (AddTransient → 이중 창 버그)
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<MainViewModel>()));
 
