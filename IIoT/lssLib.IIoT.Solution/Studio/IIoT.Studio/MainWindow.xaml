@@ -1,11 +1,12 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · MainWindow.xaml
      역할: 메인 창
-     Base-1: 헤더(56px) + 탭바(40px) + 본문 3단 레이아웃
+     Base-2: 탭 버튼 Command 연결 + 본문 패널 5개 (임시 색상 블록)
      규칙:
        ① 모든 색상·스타일은 DynamicResource (StaticResource 금지)
-       ② ThemePickerButton: xmlns:uc assembly=IIoT.UI.Themes
-       ③ 탭 전환 기능은 Base-2에서 추가 (현재는 버튼만 배치)
+       ② BoolToVisibility: Window.Resources 에 직접 등록
+          (App.xaml 의존 금지 — 테마 전환 시 소멸 가능)
+       ③ CommandParameter 는 string ("0"~"4") — int 직접 사용 금지
      생성: 2026-06-15
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Studio.MainWindow"
@@ -17,6 +18,13 @@
         MinWidth="1100" MinHeight="680"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
+
+    <Window.Resources>
+        <!-- ★ BoolToVisibility: Window.Resources 에 직접 등록 필수
+             App.xaml 에 등록한 것은 테마 전환 시 소멸될 수 있으므로
+             각 Window / UserControl 에 별도 등록 -->
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
 
     <DockPanel LastChildFill="True">
 
@@ -38,7 +46,7 @@
                     <uc:ThemePickerButton />
                 </StackPanel>
 
-                <!-- 좌측: 타이틀 + 저장 상태 -->
+                <!-- 좌측: 타이틀 + 저장 상태 배지 -->
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <TextBlock Text="IIoT"
@@ -49,8 +57,6 @@
                                FontSize="20"
                                FontWeight="Bold"
                                Foreground="{DynamicResource TextBrush}" />
-
-                    <!-- 저장 상태 배지 -->
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
@@ -79,28 +85,40 @@
                         VerticalAlignment="Stretch"
                         Margin="8,0,0,0">
 
-                <!-- 탭 버튼 5개 (Base-2에서 Command 연결) -->
+                <!-- ★ CommandParameter 반드시 string ("0"~"4")
+                     XAML 에서 숫자 리터럴은 string 으로 전달됨
+                     ViewModel SwitchTab(string) + int.TryParse 로 처리 -->
                 <Button Content="🖥  장비 관리"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="0"
                         Style="{DynamicResource GhostBtn}"
                         Height="40"
                         Padding="16,0" />
 
                 <Button Content="🔀  수집 흐름"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="1"
                         Style="{DynamicResource GhostBtn}"
                         Height="40"
                         Padding="16,0" />
 
                 <Button Content="📐  스케일"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="2"
                         Style="{DynamicResource GhostBtn}"
                         Height="40"
                         Padding="16,0" />
 
                 <Button Content="🔔  알람 규칙"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="3"
                         Style="{DynamicResource GhostBtn}"
                         Height="40"
                         Padding="16,0" />
 
                 <Button Content="🔌  통신 설정"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="4"
                         Style="{DynamicResource GhostBtn}"
                         Height="40"
                         Padding="16,0" />
@@ -110,25 +128,120 @@
 
         <!-- ══════════════════════════════════════════════════
              § 본문 (나머지 영역)
-             Base-1: 안내 텍스트 — Base-2에서 탭 패널로 교체
+             임시 색상 블록 — S-01 이후 실제 View 로 교체
              ══════════════════════════════════════════════════ -->
-        <Grid Background="{DynamicResource BgBrush}">
-            <StackPanel HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                <TextBlock Text="⚙️"
-                           FontSize="48"
-                           HorizontalAlignment="Center" />
-                <TextBlock Text="탭을 선택하세요"
-                           FontSize="20"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextBrush}"
-                           HorizontalAlignment="Center"
-                           Margin="0,12,0,6" />
-                <TextBlock Text="Base-2 에서 탭 전환 기능이 추가됩니다."
-                           FontSize="13"
-                           Foreground="{DynamicResource Text2Brush}"
-                           HorizontalAlignment="Center" />
-            </StackPanel>
+        <Grid>
+
+            <!-- 탭 0: 장비 관리 -->
+            <Grid Visibility="{Binding IsDeviceTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="#0F2744" />
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="🖥️"
+                               FontSize="48"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="장비 관리"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,6" />
+                    <TextBlock Text="S-01 에서 그룹/장비/PLC/Tag 트리가 추가됩니다."
+                               FontSize="13"
+                               Foreground="{DynamicResource Text2Brush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <!-- 탭 1: 수집 흐름 -->
+            <Grid Visibility="{Binding IsCanvasTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="#0F2D1A" />
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="🔀"
+                               FontSize="48"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="수집 흐름"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,6" />
+                    <TextBlock Text="S-11 에서 NodeRed 스타일 캔버스가 추가됩니다."
+                               FontSize="13"
+                               Foreground="{DynamicResource Text2Brush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <!-- 탭 2: 스케일 -->
+            <Grid Visibility="{Binding IsScaleTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="#1F1A0A" />
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="📐"
+                               FontSize="48"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="스케일 라이브러리"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,6" />
+                    <TextBlock Text="S-06 에서 Raw→공학단위 변환 설정이 추가됩니다."
+                               FontSize="13"
+                               Foreground="{DynamicResource Text2Brush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <!-- 탭 3: 알람 규칙 -->
+            <Grid Visibility="{Binding IsAlarmTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="#2A0A0A" />
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="🔔"
+                               FontSize="48"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="알람 규칙"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,6" />
+                    <TextBlock Text="S-07 에서 HH/H/L/LL 4단계 알람 설정이 추가됩니다."
+                               FontSize="13"
+                               Foreground="{DynamicResource Text2Brush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <!-- 탭 4: 통신 설정 -->
+            <Grid Visibility="{Binding IsCommTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="#1A0A2A" />
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="🔌"
+                               FontSize="48"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="통신 설정"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,6" />
+                    <TextBlock Text="S-08 에서 Modbus/Serial/MQTT 통신 설정이 추가됩니다."
+                               FontSize="13"
+                               Foreground="{DynamicResource Text2Brush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
         </Grid>
 
     </DockPanel>
