@@ -1,10 +1,11 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · MainWindow.xaml
-     역할: 메인 창 — Base-0: 테마 적용된 빈 창
+     역할: 메인 창
+     Base-1: 헤더(56px) + 탭바(40px) + 본문 3단 레이아웃
      규칙:
-       ① 모든 색상·스타일은 DynamicResource 참조
-          (StaticResource → 테마 전환 시 색상 고정 → 런타임 전환 불가)
-       ② ThemePickerButton: xmlns:uc assembly=IIoT.UI.Themes 로 참조
+       ① 모든 색상·스타일은 DynamicResource (StaticResource 금지)
+       ② ThemePickerButton: xmlns:uc assembly=IIoT.UI.Themes
+       ③ 탭 전환 기능은 Base-2에서 추가 (현재는 버튼만 배치)
      생성: 2026-06-15
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Studio.MainWindow"
@@ -17,70 +18,119 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
 
-    <Grid>
+    <DockPanel LastChildFill="True">
 
-        <!-- 헤더 영역 (임시 — Base-1 에서 레이아웃 분리) -->
-        <DockPanel>
+        <!-- ══════════════════════════════════════════════════
+             § 헤더 (56px)
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top"
+                Height="56"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel Margin="16,0">
 
-            <!-- 헤더 바 -->
-            <Border DockPanel.Dock="Top"
-                    Height="56"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,0,0,1">
-                <DockPanel Margin="16,0">
-
-                    <!-- 우측: 테마 선택 버튼 -->
-                    <StackPanel DockPanel.Dock="Right"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                        <!-- ★ ThemePickerButton: assembly= 선언 필수 (cross-project) -->
-                        <uc:ThemePickerButton />
-                    </StackPanel>
-
-                    <!-- 좌측: 타이틀 -->
-                    <StackPanel Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="IIoT"
-                                   FontSize="20"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource AccBrush}" />
-                        <TextBlock Text=" Studio"
-                                   FontSize="20"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource TextBrush}" />
-                    </StackPanel>
-
-                </DockPanel>
-            </Border>
-
-            <!-- 본문: 안내 텍스트 (Base-1 에서 레이아웃 교체 예정) -->
-            <Grid Background="{DynamicResource BgBrush}">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="⚙️"
-                               FontSize="56"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="IIoT Studio"
-                               FontSize="26"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,6" />
-                    <TextBlock Text="Base-0 완료 — 테마가 적용된 빈 창입니다."
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="우측 상단 🎨 버튼으로 7가지 테마를 전환할 수 있습니다."
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,4,0,0" />
+                <!-- 우측: 테마 버튼 -->
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="8,0,0,0">
+                    <uc:ThemePickerButton />
                 </StackPanel>
-            </Grid>
 
-        </DockPanel>
+                <!-- 좌측: 타이틀 + 저장 상태 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="IIoT"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource AccBrush}" />
+                    <TextBlock Text=" Studio"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}" />
 
-    </Grid>
+                    <!-- 저장 상태 배지 -->
+                    <Border Background="{DynamicResource CardBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            Padding="8,2"
+                            Margin="16,0,0,0"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SaveStatus}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource Text2Brush}" />
+                    </Border>
+                </StackPanel>
+
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 탭바 (40px)
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top"
+                Height="40"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Stretch"
+                        Margin="8,0,0,0">
+
+                <!-- 탭 버튼 5개 (Base-2에서 Command 연결) -->
+                <Button Content="🖥  장비 관리"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40"
+                        Padding="16,0" />
+
+                <Button Content="🔀  수집 흐름"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40"
+                        Padding="16,0" />
+
+                <Button Content="📐  스케일"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40"
+                        Padding="16,0" />
+
+                <Button Content="🔔  알람 규칙"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40"
+                        Padding="16,0" />
+
+                <Button Content="🔌  통신 설정"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40"
+                        Padding="16,0" />
+
+            </StackPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 본문 (나머지 영역)
+             Base-1: 안내 텍스트 — Base-2에서 탭 패널로 교체
+             ══════════════════════════════════════════════════ -->
+        <Grid Background="{DynamicResource BgBrush}">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <TextBlock Text="⚙️"
+                           FontSize="48"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="탭을 선택하세요"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,12,0,6" />
+                <TextBlock Text="Base-2 에서 탭 전환 기능이 추가됩니다."
+                           FontSize="13"
+                           Foreground="{DynamicResource Text2Brush}"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+    </DockPanel>
 
 </Window>
