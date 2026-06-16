@@ -290,25 +290,11 @@
                 Visibility="{Binding IsDeviceSelected,
                              Converter={StaticResource BoolToVisibility}}" />
 
-            <!-- PLC 선택 시 임시 표시 -->
-            <StackPanel Margin="24"
-                        VerticalAlignment="Top"
-                        Visibility="{Binding IsPlcSelected,
-                                     Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="🔧  PLC"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource AccBrush}"
-                           Margin="0,0,0,8" />
-                <TextBlock Text="{Binding PlcEditor.Name}"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           Foreground="{DynamicResource TextBrush}" />
-                <TextBlock Text="S-04 에서 PLC 편집기가 추가됩니다."
-                           FontSize="12"
-                           Foreground="{DynamicResource Text2Brush}"
-                           Margin="0,12,0,0" />
-            </StackPanel>
+            <!-- PLC 선택 시 → PlcEditorView -->
+            <local:PlcEditorView
+                DataContext="{Binding PlcEditor}"
+                Visibility="{Binding IsPlcSelected,
+                             Converter={StaticResource BoolToVisibility}}" />
 
             <!-- Tag 선택 시 임시 표시 -->
             <StackPanel Margin="24"

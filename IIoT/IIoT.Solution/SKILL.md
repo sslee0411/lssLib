@@ -2,8 +2,8 @@
 name: iiot-system-arch
 description: |
   IIoT/SCADA 산업용 데이터 수집 시스템 설계·개발 가이드.
-  ★ 2026-06-15 확정: 4개 프로그램 분리 구조 + 증분 개발 방식(Step-by-Step Base-First).
-  IIoT.Studio(설정) · IIoT.Collector(수집) · IIoT.Monitor(감지+모니터링) · IIoT.Manager(관리).
+  ★ 2026-06-14 확정: 증분 개발 방식(Step-by-Step Base-First).
+  IIoT.Studio(설정) · IIoT.Collector(수집+감지) · IIoT.Manager(관리).
 
   핵심 원칙: 빈 프로젝트(Base)에서 시작, 기능 하나씩 추가하며 항상 빌드 가능 상태 유지.
   각 Step은 독립적으로 실행 가능한 최소 단위.
@@ -11,19 +11,17 @@ description: |
 
   포함 내용: 증분 Step 정의·컴파일 확인 절차·각 Step 사용 설명·
   lssLib v5 패턴·ConfigBundle DI·WPF 테마(IIoT.UI.Themes v1.5)·
-  AbstractNode/Detector·SDT 압축·Code-Only UserControl 패턴·SignalR 웹 확장.
+  AbstractNode/Detector·SDT 압축·Code-Only UserControl 패턴.
 
   다음 상황에서 반드시 이 스킬을 사용하라:
   - IIoT 코드 작성·클래스 설계·아키텍처 결정 시
   - 어느 Step에 있는지·다음 Step이 무엇인지 판단 시
   - lssLib EventBus·AsyncScheduler·CommandQueue·BufSchema 사용 시
-  - 프로그램 간 연동(FSW·NamedPipe·SignalR·MQTT) 설계 시
+  - 프로그램 간 연동(FSW·NamedPipe·SignalR) 설계 시
   - AbstractNode·AbstractDetector·IProtocolDriver 설계 시
   - SDT 압축·SPC·OEE·가상Tag·시뮬레이터 구현 시
   - WPF 테마 통합·ThemePickerButton·XAML 오류 해결 시
   - ConfigBundle 패턴·AddSingleton/Transient DI 문제 시
-  - Monitor 확장(AbstractDetector 상속·커스텀 감지기) 설계 시
-  - SignalR 웹 뷰어·로컬 WPF 동시 연동 설계 시
 ---
 
 # IIoT 시스템 아키텍처 스킬
@@ -96,40 +94,12 @@ Step 코드를 생성한 뒤 반드시 아래 두 섹션을 추가로 작성한�
 
 ```
 IIoT.Solution/  ← 단일 sln
-├─ ① IIoT.Studio    (WPF)             — 설정 (JSON·NodeRed·장비트리·스케일)
-├─ ② IIoT.Collector (WPF)             — 수집 (폴링·SDT 압축·DB 저장·FSW 재시작)
-├─ ③ IIoT.Monitor   (WPF + ASP.NET)  — 감지+모니터링 (로컬WPF + 웹SignalR)
-├─ ④ IIoT.Manager   (WPF)             — 오케스트레이션 (프로세스 관리)
-├─ IIoT.Shared                         — 공유 모델·인터페이스
-├─ IIoT.UI.Themes v1.5                — 7가지 테마
-└─ IIoT.UI.Controls v1.0              — 공용 컴포넌트
-```
-
-### 프로그램 간 연결 구조
-
-```
-[IIoT.Studio]
-    │ device.json + .signal 파일 발행
-    ▼
-[IIoT.Collector]  ←──── FSW .signal 감지 → 자동 재시작
-    │ MQTT (TagValueEvent) 브로드캐스트
-    │ SQLite (SDT 압축 저장)
-    ▼
-[IIoT.Monitor]   ←──── MQTT Subscribe (TagValueEvent)
-    │ SignalR Hub (웹 뷰어)
-    │ NamedPipe (알람 이벤트 → Manager)
-    ▼
-[IIoT.Manager]  ─────── NamedPipe → Start/Stop/HealthCheck → 전체 프로그램
-```
-
-### cross-process 이벤트 전달 패턴
-
-```
-★ in-process:     lssLib EventBus (동일 프로세스 내부만)
-★ cross-process:  MQTT (Collector → Monitor 수집값 전달)
-★ 웹 확장:        SignalR Hub (Monitor → 브라우저 실시간 푸시)
-★ 프로세스 제어:  NamedPipe (Manager → 전체)
-★ 설정 변경:      FileSystemWatcher + .signal 파일
+├─ ① IIoT.Studio    (WPF) — 설정
+├─ ② IIoT.Collector (WPF) — 수집+감지
+├─ ③ IIoT.Manager   (WPF) — 오케스트레이션
+├─ IIoT.Shared           — 공유 모델
+├─ IIoT.UI.Themes v1.5   — 7가지 테마
+└─ IIoT.UI.Controls v1.0 — 공용 컴포넌트
 ```
 
 ---
@@ -155,34 +125,23 @@ IIoT.Solution/  ← 단일 sln
  S-12    캔버스 노드 CRUD + 연결선
  S-13    collect.json 저장
 
-[IIoT.Collector]  ← 순수 수집 전담 (감지·알람 없음)
+[IIoT.Collector]
  Base-0  빈 WPF 프로젝트 + 테마 연결
  Base-1  메인 레이아웃 (헤더 + 탭 구조)
  C-01    device.json 로드 → 메모리 모델
  C-02    VirtualDriver (사인파 시뮬레이터)
  C-03    AsyncScheduler 폴링 루프
  C-04    수집 현황 ListView (LiveTag 실시간 표시)
- C-05    스케일 변환 (Raw → 공학단위, ScaleConfig 적용)
- C-06    SDT 압축 + CommandQueue → SQLite 저장
- C-07    MQTT 브로드캐스트 (TagValueEvent → Monitor 전달)
- C-08    FSW .signal 감지 → 자동 재시작
-
-[IIoT.Monitor]  ★ 신규 분리 프로그램
- Base-0  빈 WPF + ASP.NET Core 혼합 프로젝트 + 테마 연결
- Base-1  메인 레이아웃 (헤더 + 탭 구조)
- MO-01   MQTT Subscribe → TagValueEvent 수신
- MO-02   실시간 태그 현황 화면 (LiveTag ListView)
- MO-03   AbstractDetector 추상 클래스 + ThresholdDetector 구현
- MO-04   MonitorEngine (감지기 등록·실행 관리)
- MO-05   AlarmStateManager (알람 발행/ACK/복귀)
- MO-06   알람 뷰 (활성알람 ListView + ACK 버튼)
- MO-07   SignalR Hub (웹 브라우저 실시간 푸시)
- MO-08   웹 뷰어 (HTML/JS 단일 파일 — 태그현황 + 알람)
- MO-09   커스텀 감지기 확장 예제 (RateOfChangeDetector)
+ C-05    EventBus 수집↔감지 연결
+ C-06    ThresholdDetector (임계값 감지)
+ C-07    AlarmStateManager (알람 발행/ACK)
+ C-08    SDT 압축 + CommandQueue → SQLite 저장
+ C-09    FSW .signal 감지 → 자동 재시작
+ C-10    SignalR Hub (웹 브라우저 연동)
 
 [IIoT.Manager]
  Base-0  빈 WPF 프로젝트 + 테마 연결
- M-01    프로세스 상태 표시 (Studio·Collector·Monitor 실행 여부)
+ M-01    프로세스 상태 표시 (Studio·Collector 실행 여부)
  M-02    Start/Stop 버튼 → 프로세스 제어
  M-03    NamedPipe 헬스체크
  M-04    로그 뷰어 통합
@@ -438,6 +397,24 @@ Views/DeviceTree/DeviceTreeView.xaml + .cs
   ← 좌(280px): TreeView + 추가 버튼 + 검색 TextBox
   ← 우(*): 미선택 안내 StackPanel (IsNoneSelected)
   ← TreeView_SelectedItemChanged → vm.SelectNode(e.NewValue)
+```
+
+**★ 노드 설계 확정 규칙 (2026-06-15)**
+```
+[DeviceTreeNode — 장비]
+  기본 정보: Name, Description, Model, Manufacturer, Location
+  통신 설정: CommType(없음/Modbus TCP/Serial/MQTT/OPC-UA), Host, Port, PollMs
+  ★ CommType="없음" 이면 통신 폼 미표시 (IsCommEnabled=false)
+  ★ 장비 자체 통신 OR 하위 PLC 통신 둘 다 지원
+  판별 프로퍼티: IsCommEnabled, IsModbusTcp, IsSerial, IsMqtt, IsOpcUa
+
+[PlcTreeNode — PLC]
+  CommType: Modbus TCP / Serial / MQTT / OPC-UA (없음 없음 — 항상 통신 필요)
+  공통 필드: Host, Port, PollMs
+  판별 프로퍼티: IsModbusTcp, IsSerial, IsMqtt, IsOpcUa
+
+[공통 패턴]
+  CommType 변경 → [NotifyPropertyChangedFor] → IsXxx 알림 → 편집기 폼 즉시 전환
 ```
 
 **핵심 패턴:**
@@ -1040,408 +1017,109 @@ Unloaded += (_, _) => _sub?.Dispose();
 
 ---
 
-### C-05: 스케일 변환
+### C-05 ~ C-07: 감지 + 알람
 
 **추가 파일:**
 ```
-Core/ScaleConverter.cs  ← ApplyScale(TagValue, ScaleConfig) → TagValue (공학단위)
-```
-
-**핵심 패턴:**
-```csharp
-// ★ Linear / Expression 두 모드 지원
-public static TagValue ApplyScale(TagValue raw, ScaleConfig cfg) => cfg.Mode switch {
-    ScaleMode.Linear     => raw with { Value = cfg.Slope * raw.Value + cfg.Offset, Unit = cfg.Unit },
-    ScaleMode.Expression => raw with { Value = _Eval(cfg.Expression, raw.Value), Unit = cfg.Unit },
-    _                    => raw
-};
+Core/AbstractDetector.cs    ← abstract OnDetectAsync(TagValue) → DetectResult
+Core/ThresholdDetector.cs   ← HH/H/L/LL 임계값 비교
+Core/MonitorEngine.cs       ← 감지기 등록/실행 관리
+Core/AlarmStateManager.cs   ← 알람 발행/ACK/복귀 상태 관리
+Models/AlarmRecord.cs       ← AlarmId, TagId, Level, Message, OccurredAt, AckedAt
+Views/AlarmView.xaml + .cs  ← 활성 알람 ListView + ACK 버튼
 ```
 
 **✅ 컴파일 확인 체크리스트:**
 ```
 2단계: 런타임
-  [ ] 수집 현황 UI에서 Raw값과 변환값(공학단위) 함께 표시 확인
-  [ ] Linear 모드: (Raw × Slope + Offset) 계산 정확도 확인
-  [ ] 단위 문자열이 Tag 행에 올바르게 표시됨 확인
+  [ ] 가상 드라이버 값이 임계값 초과 → [알람 관리] 탭에 알람 항목 자동 추가
+  [ ] 알람 레벨별 색상 구분 (HH=빨강, H=주황, L=파랑, LL=보라)
+  [ ] [ACK] 버튼 클릭 → "확인됨" 상태로 변경
+  [ ] 값이 정상 복귀 → "복귀" 상태 표시
+  [ ] 헤더 알람 카운터 숫자 실시간 변동
 ```
 
 **📖 사용 설명:**
 ```
-이번 Step에서 추가된 기능: Raw 값 → 공학단위 자동 변환
+이번 Step에서 추가된 기능: 임계값 감지 및 알람 관리
 
-사용 방법:
-  1. Studio에서 Tag에 스케일 라이브러리 연결 후 저장
-  2. Collector 재시작 → 수집 현황에 변환된 값과 단위 표시
-     예) PLC Raw 0~4000 → 0.0~10.0 bar 변환
+화면 조작 방법:
+  [알람 발생]
+  1. 수집값이 설정한 임계값 초과 시 자동으로 알람 발생
+  2. [알람 관리] 탭 → 활성 알람 목록에 자동 추가
+  3. 헤더에 빨간색 알람 카운터 표시
 
-확인 포인트:
-  - 수집 현황 ListView: "값: 5.23 bar" 형태 표시
-  - Raw값과 변환값 모두 컬럼에 표시 가능
+  [알람 확인(ACK)]
+  4. 알람 항목 선택 후 [ACK] 버튼 클릭
+  5. 상태: "발생(Active)" → "확인됨(Acked)"
+
+  [자동 복귀]
+  6. 수집값이 임계값 이하로 복귀 → 상태: "복귀(Recovered)"
+
+알람 레벨 색상:
+  🔴 HH (상상한) — 즉시 조치 필요
+  🟠 H  (상한)   — 주의
+  🔵 L  (하한)   — 주의
+  🟣 LL (하하한) — 즉시 조치 필요
 ```
 
 ---
 
-### C-06 ~ C-07: SDT 압축 + MQTT 브로드캐스트
+### C-08 ~ C-09: SDT 압축 + FSW 자동재시작
 
 **추가 파일:**
 ```
 Core/SwingingDoorCompressor.cs  ← ShouldStore(TagValue) → bool
 Storage/TagHistoryDb.cs         ← SQLite INSERT (CommandQueue 경유)
-Core/MqttPublisher.cs           ← MQTTnet → TagValueEvent JSON 발행
+Core/ConfigReloadWatcher.cs     ← FSW .signal 감지 → 재시작
 ```
 
 **핵심 패턴:**
 ```csharp
-// ★ SDT → CommandQueue → DB (순서 보장)
+// ★ SDT → CommandQueue → DB (순서 보장, while-true 없이)
 if (_compressor.ShouldStore(tagValue)) {
     CommandQueue.Instance.Enqueue(LambdaCommand.Create(
         async ct => await _db.InsertAsync(tagValue, ct),
         CommandPriority.Normal));
 }
 
-// ★ MQTT 브로드캐스트 (Monitor가 Subscribe)
-await _mqtt.PublishAsync(
-    topic:   $"iiot/tags/{tagValue.TagId}",
-    payload: JsonSerializer.Serialize(tagValue));
-```
-
-**✅ 컴파일 확인 체크리스트:**
-```
-C-06 런타임:
-  [ ] Collector 실행 → 수집값이 SQLite DB에 기록됨
-  [ ] DB 파일 확인 (DB Browser for SQLite 등으로)
-  [ ] 1분 후 저장 건수 → SDT 압축으로 이론치의 5~15%만 저장
-
-C-07 런타임:
-  [ ] MQTT 브로커(예: Mosquitto localhost:1883) 실행 확인
-  [ ] MQTT Explorer 등으로 "iiot/tags/#" 구독 → 수집값 수신 확인
-  [ ] Monitor 실행 시 MQTT로 수집값 수신 확인
-```
-
-**📖 사용 설명:**
-```
-[SDT 압축 (C-06)]
-  효과: 1초 주기 10개 Tag → 86,400건/일 중 변동분만 저장 (약 5~10%)
-  확인: DB 파일 크기가 이론 최대치보다 90% 이상 작음
-
-[MQTT 브로드캐스트 (C-07)]
-  용도: Monitor 프로그램이 수집값을 실시간으로 받아 감지 처리
-  토픽: iiot/tags/{TagId} — 각 Tag별 별도 토픽
-  페이로드: TagValue JSON (TagId, Value, Unit, Quality, Timestamp)
-  ★ Monitor와 cross-process 연동의 핵심 채널
-```
-
----
-
-### C-08: FSW 자동재시작
-
-**추가 파일:**
-```
-Core/ConfigReloadWatcher.cs  ← FSW *.signal 감지 → CollectionEngine 재시작
-```
-
-**핵심 패턴:**
-```csharp
 // ★ FSW: *.signal 파일만 감시
 new FileSystemWatcher(_configDir, "*.signal") {
     EnableRaisingEvents = true
 }.Created += async (_, e) => {
     File.Delete(e.FullPath);    // signal 파일 즉시 삭제
-    await _RestartAsync();      // CollectionEngine + MqttPublisher 재시작
+    await _RestartAsync();      // CollectionEngine 재시작
 };
 ```
 
 **✅ 컴파일 확인 체크리스트:**
 ```
-2단계: 런타임
-  [ ] Collector 실행 상태에서 Studio [💾 전체 저장]
+C-08 런타임:
+  [ ] Collector 실행 → 수집값이 SQLite DB에 기록됨
+  [ ] DB 파일 확인 (DB Browser for SQLite 등으로)
+  [ ] 1분 후 저장 건수 확인 → SDT 압축으로 이론 건수의 5~15%만 저장됨
+
+C-09 런타임:
+  [ ] Collector 실행 상태에서 Studio에서 [💾 전체 저장]
   [ ] Config 폴더에 .signal 파일 생성 → 즉시 삭제됨 확인
-  [ ] Collector 로그: "설정 변경 감지 → 재시작" 메시지 확인
-  [ ] 재시작 후 새 설정으로 수집 + MQTT 발행 재개 확인
+  [ ] Collector 로그에 "설정 변경 감지 → 재시작" 메시지 확인
+  [ ] 재시작 후 새 설정으로 수집 재개 확인
 ```
 
 **📖 사용 설명:**
 ```
-이번 Step에서 추가된 기능: 설정 변경 자동 반영
+이번 Step에서 추가된 기능: 효율적 데이터 저장 + 설정 자동 반영
 
-흐름: Studio [저장] → .signal 파일 생성 → Collector FSW 감지
-      → 수집·MQTT 중단 → 새 device.json 로드 → 재개 (약 2~3초)
-확인: Studio에서 Tag 추가 저장 → Collector가 자동으로 새 Tag 수집·발행 시작
-```
+[SDT 압축 (C-08)]
+  용도: 변화 없는 데이터 저장 생략으로 DB 용량 절감
+  효과: 1초 주기 10개 Tag → 약 86,400건/일 중 실제 변동분만 저장 (약 5,000~10,000건)
+  확인: DB 파일 크기가 이론 최대치보다 90% 이상 작음
 
----
-
-## Step 상세 — IIoT.Monitor ★ 신규
-
----
-
-### IIoT.Monitor 설계 원칙
-
-```
-① WPF + ASP.NET Core 혼합 (단일 프로세스)
-   - WPF MainWindow: 로컬 모니터링 UI
-   - Kestrel 내장: SignalR Hub → 웹 브라우저 실시간 푸시
-
-② MQTT Subscribe → in-process EventBus 변환
-   - MQTTnet으로 수신 → 내부 EventBus.Publish → UI/감지기 배포
-   - cross-process 문제 해결: MQTT가 브릿지 역할
-
-③ AbstractDetector 확장 설계
-   - 상속으로 커스텀 감지기 추가 가능
-   - 플러그인 방식: MonitorEngine에 Register(detector) 한 줄
-
-④ 웹 뷰어: 별도 프레임워크 없는 HTML 단일 파일
-   - SignalR JS 클라이언트만 사용
-   - C#·JS 어느 언어로든 연동 가능 (표준 SignalR 프로토콜)
-```
-
-**csproj 핵심:**
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
-  <!-- ASP.NET Core 내장을 위한 패키지 -->
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="*"/>
-    <PackageReference Include="MQTTnet" Version="*"/>
-  </ItemGroup>
-</Project>
-```
-
----
-
-### Monitor Base-0: 빈 WPF + ASP.NET 혼합 프로젝트
-
-**추가 파일:**
-```
-IIoT.Monitor.csproj     ← net8.0-windows, UseWPF=true, SignalR + MQTTnet 패키지
-App.xaml + App.xaml.cs  ← ThemeSettingsService 연동
-MainWindow.xaml + .cs   ← 빈 창 + 테마
-Core/MonitorHost.cs     ← WebApplication.CreateBuilder → Kestrel 내장 시작
-```
-
-**핵심 패턴:**
-```csharp
-// ★ WPF 앱 안에서 Kestrel 내장 실행
-public class MonitorHost {
-    private WebApplication? _app;
-    public async Task StartAsync() {
-        var builder = WebApplication.CreateBuilder();
-        builder.Services.AddSignalR();
-        _app = builder.Build();
-        _app.MapHub<MonitorHub>("/monitor");
-        await _app.StartAsync();   // 블로킹 아님 — WPF와 공존
-    }
-}
-```
-
-**✅ 컴파일 확인 체크리스트:**
-```
-1단계: 빌드
-  [ ] Clean → Rebuild → 오류 0개
-  [ ] NU1201 없음 (net8.0-windows TFM 확인)
-
-2단계: 런타임
-  [ ] F5 실행 → 테마 적용된 창 표시
-  [ ] 로그: "Kestrel started on http://localhost:5200" 확인
-  [ ] 브라우저에서 http://localhost:5200 접속 → 404 (아직 라우트 없음, 정상)
-```
-
----
-
-### MO-01: MQTT Subscribe → EventBus 변환
-
-**추가 파일:**
-```
-Core/MqttReceiver.cs  ← MQTTnet Subscribe("iiot/tags/#")
-                         → JsonSerializer.Deserialize<TagValue>
-                         → EventBus.Publish<TagValueUpdatedEvent>()
-```
-
-**핵심 패턴:**
-```csharp
-// ★ MQTT 수신 → in-process EventBus 변환 브릿지
-_client.ApplicationMessageReceivedAsync += e => {
-    var json = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
-    var tagValue = JsonSerializer.Deserialize<TagValue>(json);
-    EventBus.Instance.Publish(new TagValueUpdatedEvent(tagValue!));
-    return Task.CompletedTask;
-};
-```
-
-**✅ 컴파일 확인 체크리스트:**
-```
-2단계: 런타임
-  [ ] Collector 실행 (MQTT 발행 중)
-  [ ] Monitor 실행 → 로그: "MQTT 연결 완료 — iiot/tags/# 구독 중"
-  [ ] Monitor 로그에 수집값 수신 메시지 출력 확인
-```
-
----
-
-### MO-02: 실시간 태그 현황 화면
-
-**추가 파일:**
-```
-Models/LiveTagViewModel.cs            ← TagId, DisplayValue, Unit, Quality, UpdatedAt
-ViewModels/MonitorMainViewModel.cs    ← LiveTags(ObservableCollection)
-Views/LiveTagView.xaml + .cs          ← DataGrid (TagValueCell 사용)
-```
-
-**핵심 패턴:**
-```csharp
-// ★ EventBus 구독 → UI 스레드 업데이트
-_sub = EventBus.Instance.Subscribe<TagValueUpdatedEvent>(e => {
-    Application.Current.Dispatcher.InvokeAsync(() => {
-        var vm = LiveTags.FirstOrDefault(t => t.TagId == e.Value.TagId)
-                 ?? _AddLiveTag(e.Value.TagId);
-        vm.Update(e.Value);
-    });
-});
-Unloaded += (_, _) => _sub?.Dispose();  // ★ 구독 해제 필수
-```
-
----
-
-### MO-03 ~ MO-06: 감지기 + 알람
-
-**추가 파일:**
-```
-Core/AbstractDetector.cs    ← abstract DetectAsync(TagValue) → DetectResult?
-                               DetectResult(TagId, Level, Message, Value)
-Core/ThresholdDetector.cs   ← HH/H/L/LL 임계값 비교 구현
-Core/MonitorEngine.cs       ← Register(detector), ProcessAsync(TagValue)
-Core/AlarmStateManager.cs   ← Active/Acked/Recovered 상태 관리
-                               EventBus.Publish<AlarmEvent>() 발행
-Models/AlarmRecord.cs       ← AlarmId, TagId, Level, Message, OccurredAt, AckedAt
-Views/AlarmView.xaml + .cs  ← 활성 알람 ListView + [ACK] 버튼
-```
-
-**AbstractDetector 확장 패턴:**
-```csharp
-// ★ 커스텀 감지기 추가 방법 — MonitorEngine.Register() 한 줄
-public abstract class AbstractDetector {
-    public string DetectorId { get; init; } = string.Empty;
-    public abstract Task<DetectResult?> DetectAsync(TagValue value, CancellationToken ct);
-}
-
-// 예) 변화율 감지기 커스텀 구현
-public class RateOfChangeDetector : AbstractDetector {
-    private TagValue? _prev;
-    public double MaxRatePerSec { get; init; }
-    public override Task<DetectResult?> DetectAsync(TagValue v, CancellationToken ct) {
-        if (_prev is null) { _prev = v; return Task.FromResult<DetectResult?>(null); }
-        var rate = Math.Abs(v.Value - _prev.Value)
-                   / (v.Timestamp - _prev.Timestamp).TotalSeconds;
-        _prev = v;
-        return Task.FromResult(rate > MaxRatePerSec
-            ? new DetectResult(v.TagId, AlarmLevel.H, $"변화율 초과: {rate:F2}/s", v.Value)
-            : null);
-    }
-}
-
-// 등록: MonitorEngine.Instance.Register(new RateOfChangeDetector { ... });
-```
-
-**✅ MO-06 컴파일 확인 체크리스트:**
-```
-2단계: 런타임
-  [ ] 수집값이 임계값 초과 → [알람] 탭 자동 추가
-  [ ] 알람 레벨별 색상 (HH=빨강, H=주황, L=파랑, LL=보라)
-  [ ] [ACK] 버튼 → "확인됨" 상태로 변경
-  [ ] 헤더 알람 카운터 실시간 변동
-```
-
----
-
-### MO-07 ~ MO-08: SignalR Hub + 웹 뷰어
-
-**추가 파일:**
-```
-Hubs/MonitorHub.cs      ← IMonitorClient 인터페이스
-                           SendTagValue / SendAlarm 메서드
-Core/SignalRBridge.cs   ← EventBus 구독 → Hub.Clients.All.SendTagValue()
-wwwroot/index.html      ← SignalR JS 클라이언트 단일 파일
-                           태그 현황 테이블 + 알람 목록
-```
-
-**핵심 패턴:**
-```csharp
-// ★ SignalR Bridge — EventBus → 웹 브라우저 푸시
-public class SignalRBridge {
-    private readonly IHubContext<MonitorHub, IMonitorClient> _hub;
-    private IDisposable? _sub;
-
-    public void Start() {
-        _sub = EventBus.Instance.Subscribe<TagValueUpdatedEvent>(async e =>
-            await _hub.Clients.All.SendTagValue(e.Value));
-    }
-}
-
-// ★ 웹 클라이언트 (HTML 단일 파일, 프레임워크 무관)
-// <script src="https://cdnjs.cloudflare.com/.../signalr.min.js"></script>
-// const conn = new signalR.HubConnectionBuilder()
-//     .withUrl("http://localhost:5200/monitor").build();
-// conn.on("SendTagValue", (tag) => { /* 테이블 업데이트 */ });
-```
-
-**✅ MO-08 컴파일 확인 체크리스트:**
-```
-2단계: 런타임
-  [ ] Monitor 실행 → Kestrel 시작 확인
-  [ ] 브라우저 http://localhost:5200 접속 → 웹 뷰어 화면 표시
-  [ ] 웹 뷰어에서 수집값 실시간 갱신 확인 (1초마다)
-  [ ] 알람 발생 시 웹 뷰어에도 알람 표시 확인
-  [ ] WPF 창과 웹 뷰어가 동시에 동일 데이터 표시 확인
-```
-
-**📖 사용 설명:**
-```
-이번 Step에서 추가된 기능: 로컬 WPF + 웹 브라우저 동시 모니터링
-
-사용 방법:
-  [로컬 WPF 뷰어]
-  - Monitor 실행 → 창에서 바로 실시간 태그·알람 확인
-
-  [웹 뷰어]
-  - 브라우저 → http://localhost:5200
-  - 동일 데이터가 실시간으로 표시됨
-  - 동일 네트워크 내 다른 PC에서도 접속 가능
-    (http://{Monitor PC IP}:5200)
-
-확인 포인트:
-  - 여러 브라우저 탭 동시 접속 → 모두 동일하게 업데이트됨
-  - WPF 창 최소화해도 웹 뷰어는 계속 동작
-
-다음 Step 예고:
-  MO-09에서는 AbstractDetector를 상속한 커스텀 감지기 예제를 추가합니다.
-```
-
----
-
-### MO-09: 커스텀 감지기 확장 예제
-
-**추가 파일:**
-```
-Detectors/RateOfChangeDetector.cs  ← 변화율 감지 (AbstractDetector 상속)
-Detectors/SpikeDetector.cs         ← 스파이크 이상값 감지
-```
-
-**📖 사용 설명:**
-```
-커스텀 감지기 추가 절차:
-  1. AbstractDetector 상속 클래스 작성
-  2. App.xaml.cs에서 MonitorEngine.Instance.Register(new MyDetector())
-  3. Monitor 실행 → 새 감지 로직 즉시 적용
-
-지원하는 감지 패턴 예시:
-  - ThresholdDetector: HH/H/L/LL 절대값 임계
-  - RateOfChangeDetector: 단위시간당 변화율 초과
-  - SpikeDetector: 통계적 이상값 (평균±3σ)
-  - (커스텀) 원하는 감지 로직 자유 구현 가능
+[자동 재시작 (C-09)]
+  용도: Studio에서 설정 변경 후 Collector를 수동으로 재시작할 필요 없음
+  흐름: Studio [저장] → .signal 파일 생성 → Collector FSW 감지
+        → 수집 중단 → 새 device.json 로드 → 수집 재개 (약 2~3초 소요)
+  확인: Studio에서 Tag 추가 저장 → Collector가 자동으로 새 Tag 수집 시작
 ```
 
 ---
@@ -1456,35 +1134,28 @@ Detectors/SpikeDetector.cs         ← 스파이크 이상값 감지
 ```
 Base-0: App.xaml/cs + MainWindow (빈 창 + 테마)
 M-01:   Core/ProcessInfo.cs + ViewModels/ProcessViewModel.cs
-        + Views/ProcessStatusView.xaml  ← Studio·Collector·Monitor 상태 카드 (3개)
+        + Views/ProcessStatusView.xaml  ← Studio·Collector 상태 카드
 M-02:   Core/ProcessManager.cs  ← Process.Start/Kill
 M-03:   Core/HealthCheckService.cs  ← NamedPipe 핑/퐁
 M-04:   LogViewer 통합
 ```
 
-**관리 대상 프로그램:**
-```
-① IIoT.Studio.exe    — 설정 프로그램
-② IIoT.Collector.exe — 수집 프로그램
-③ IIoT.Monitor.exe   — 모니터링 프로그램
-```
-
 **✅ M-02 컴파일 확인 체크리스트:**
 ```
 2단계: 런타임
-  [ ] Manager 실행 → Studio·Collector·Monitor 상태 카드 3개 표시
-  [ ] [시작] 버튼 클릭 → 각 .exe 프로세스 실행됨 확인 (작업 관리자)
+  [ ] Manager 실행 → Studio·Collector 상태 카드 표시
+  [ ] [시작] 버튼 클릭 → Studio.exe 프로세스 실행됨 확인 (작업 관리자)
   [ ] 상태 카드: 정지(회색) → 실행 중(녹색)으로 변경
   [ ] [정지] 버튼 클릭 → 프로세스 종료 확인
-  [ ] 각 창을 직접 닫으면 → Manager 상태 카드 자동으로 정지로 변경
+  [ ] Studio 창을 직접 닫으면 → Manager 상태 카드 자동으로 정지로 변경
 ```
 
 **📖 사용 설명:**
 ```
-이번 Step에서 추가된 기능: 전체 시스템 통합 관리
+이번 Step에서 추가된 기능: 프로그램 통합 관리
 
 화면 조작 방법:
-  1. Manager 실행 → Studio·Collector·Monitor 상태 카드 표시
+  1. Manager 실행 → Studio·Collector 상태 카드 표시
      - 🟢 실행 중 / 🔴 정지 / 🟡 오류
   2. [▶ 시작] 버튼 → 해당 프로그램 실행
   3. [⏹ 정지] 버튼 → 해당 프로그램 정상 종료
@@ -1495,9 +1166,8 @@ M-04:   LogViewer 통합
   6. 응답 없음 → 자동으로 오류(🟡) 상태 표시 + 재시작 시도
 
 확인 포인트:
-  - Manager 하나에서 전체 3개 프로그램 제어 가능
-  - 권장 실행 순서: Studio → Collector → Monitor
-  - Monitor가 없어도 Collector는 독립 동작 (MQTT 발행만 없어짐)
+  - Manager 하나에서 전체 시스템 제어 가능
+  - 각 프로그램의 실행 상태가 실시간으로 표시됨
 ```
 
 ---
@@ -1541,8 +1211,7 @@ services.AddSingleton<MainWindow>(sp =>
 ① EventBus → in-process 전용 (cross-process 절대 금지)
 ② AsyncScheduler → while-true 루프 대체 필수
 ③ CommandQueue → DB 저장 순서 보장에 사용
-④ SDT SwingDoor 압축 → C-06부터 필수 적용
-⑤ cross-process 이벤트 → MQTT (MQTTnet) 사용 (EventBus 대체 불가)
+④ SDT SwingDoor 압축 → C-08부터 필수 적용
 ```
 
 ### 파일 헤더 & 섹션 구분자
@@ -1611,12 +1280,11 @@ public class ExampleClass {
 | v2.3 | 2026-06-10 | lssLib 확정 API·WPF 패턴·버그 수정 이력 추가 |
 | v3.0 | 2026-06-13 | 구조 단순화 확정 (6→3개 통합) |
 | v4.0 | 2026-06-14 | 증분 개발(Base-First) 방식 전면 재편, Step 맵 정의 |
-| v4.1 | 2026-06-14 | 매 Step 컴파일 확인 체크리스트 추가 |
-| | | 매 Step 사용 설명(조작 방법·확인 포인트·예고) 추가 |
+| **v4.1** | **2026-06-14** | **매 Step 컴파일 확인 체크리스트 추가** |
+| | | **매 Step 사용 설명(조작 방법·확인 포인트·예고) 추가** |
 | | | Claude 응답 형식 표준화 (코드+체크리스트+사용설명 3세트) |
-| **v4.2** | **2026-06-15** | **IIoT.Monitor 독립 프로그램으로 분리 (3개→4개 구조)** |
-| | | **Collector: 순수 수집 전담 (감지·알람 제거, MQTT 발행 추가)** |
-| | | **Monitor: WPF+ASP.NET 혼합, AbstractDetector 확장, SignalR 웹 뷰어** |
-| | | **cross-process 이벤트 채널: MQTT (Collector→Monitor)** |
-| | | **Manager: 관리 대상 3개로 확장 (Studio·Collector·Monitor)** |
-| | | **시스템 구조도·Step 맵·lssLib 규칙 업데이트** |
+| **v4.3** | **2026-06-15** | **DeviceTreeNode 통신 설정 추가 확정 (A안)** |
+| | | **장비도 Modbus TCP/Serial/MQTT/OPC-UA 직접 통신 가능** |
+| | | **CommType="없음" 기본값, 선택 시 IsXxx 동적 폼 전환** |
+| | | **트리 툴바 B안 확정 (＋타입▾ 형제/하위 팝업)** |
+| | | **Tag 연속 추가: Tag 선택 상태에서 ＋Tag → 형제 추가** |
