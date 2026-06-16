@@ -14,6 +14,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
         xmlns:vTree="clr-namespace:IIoT.Studio.Views.DeviceTree"
+        xmlns:vScale="clr-namespace:IIoT.Studio.Views.Scale"
         Title="IIoT Studio — 설정"
         Width="1440" Height="900"
         MinWidth="1100" MinHeight="680"
@@ -161,26 +162,10 @@
                 </StackPanel>
             </Grid>
 
-            <!-- 탭 2: 스케일 -->
+            <!-- 탭 2: 스케일 라이브러리 -->
             <Grid Visibility="{Binding IsScaleTab,
                                Converter={StaticResource BoolToVisibility}}">
-                <Rectangle Fill="#1F1A0A" />
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="📐"
-                               FontSize="48"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="스케일 라이브러리"
-                               FontSize="22"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,6" />
-                    <TextBlock Text="S-06 에서 Raw→공학단위 변환 설정이 추가됩니다."
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center" />
-                </StackPanel>
+                <vScale:ScaleLibraryView DataContext="{Binding ScaleLibrary}" />
             </Grid>
 
             <!-- 탭 3: 알람 규칙 -->
