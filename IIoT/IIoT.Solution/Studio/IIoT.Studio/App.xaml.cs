@@ -9,7 +9,8 @@
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.ViewModels;
-using IIoT.UI.Themes;using Microsoft.Extensions.DependencyInjection;
+using IIoT.UI.Themes;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace IIoT.Studio;
@@ -18,7 +19,7 @@ public partial class App : Application
 {
     // §1 ─ 필드 ──────────────────────────────────────────────
     private ThemeSettingsService? _themeSettings;
-    private IServiceProvider?     _services;
+    private IServiceProvider? _services;
 
     // §2 ─ 시작 ───────────────────────────────────────────────
     protected override void OnStartup(StartupEventArgs e)
@@ -49,10 +50,15 @@ public partial class App : Application
         var services = new ServiceCollection();
 
         // ── 서브 ViewModel ───────────────────────────────────
-        services.AddSingleton<DeviceTreeViewModel>();
         services.AddSingleton<ScaleLibraryViewModel>();
         services.AddSingleton<AlarmLibraryViewModel>();
         services.AddSingleton<CommLibraryViewModel>();
+
+        // ★ DeviceTreeViewModel: 스케일·알람 VM 주입 (Tag 편집기 콤보박스용)
+        services.AddSingleton<DeviceTreeViewModel>(sp =>
+            new DeviceTreeViewModel(
+                sp.GetRequiredService<ScaleLibraryViewModel>(),
+                sp.GetRequiredService<AlarmLibraryViewModel>()));
 
         // ── 메인 ViewModel ───────────────────────────────────
         services.AddSingleton<MainViewModel>(sp =>

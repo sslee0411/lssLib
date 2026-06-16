@@ -2,24 +2,13 @@
 //  IIoT.Studio · Models/ScaleLibrary.cs
 //  역할: 스케일 라이브러리 항목 모델
 //        Raw 값 → 공학단위 변환 설정
-//  S-06 rev2: RadioButton 바인딩 오류 수정
-//             IsLinear/IsExpression setter 추가
-//             PreviewFormula 실시간 알림 추가
+//  ScaleMode Enum → Models/Enums.cs 로 분리됨
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace IIoT.Studio.Models;
-
-/// <summary>스케일 변환 모드</summary>
-public enum ScaleMode
-{
-    /// <summary>선형 변환: Y = Slope × X + Offset</summary>
-    Linear,
-    /// <summary>수식 변환: NCalc Expression (변수 x = Raw 값)</summary>
-    Expression
-}
 
 /// <summary>
 /// 스케일 라이브러리 항목.

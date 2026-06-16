@@ -7,10 +7,20 @@
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.DeviceTree.DeviceEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:model="clr-namespace:IIoT.Studio.Models">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <!-- ★ NodeCommType Enum 값 목록 → ItemsSource -->
+        <ObjectDataProvider x:Key="CommTypeValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:NodeCommType" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -110,14 +120,9 @@
                        Foreground="{DynamicResource Text2Brush}"
                        Margin="0,0,0,6" />
             <ComboBox SelectedValue="{Binding CommType}"
+                      ItemsSource="{Binding Source={StaticResource CommTypeValues}}"
                       Style="{DynamicResource PropCombo}"
-                      Margin="0,0,0,16">
-                <ComboBoxItem Content="없음" />
-                <ComboBoxItem Content="Modbus TCP" />
-                <ComboBoxItem Content="Serial" />
-                <ComboBoxItem Content="MQTT" />
-                <ComboBoxItem Content="OPC-UA" />
-            </ComboBox>
+                      Margin="0,0,0,16" />
 
             <!-- ── 통신 방식별 동적 폼 ── -->
 

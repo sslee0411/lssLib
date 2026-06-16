@@ -1,10 +1,8 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · ViewModels/DeviceTreeViewModel.cs
 //  역할: 장비 트리 ViewModel
-//        - 트리 노드 CRUD
-//        - 선택 노드 관리 → 우측 패널 전환
-//  S-01 rev3: B안 적용 — 타입별 형제/하위 커맨드 분리
-//             Tag 는 하위 전용 단독 버튼
+//  S-09 rev: 스케일·알람 라이브러리 VM 주입 추가
+//            → TagEditorView 콤보박스 ItemsSource 제공
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -17,6 +15,26 @@ namespace IIoT.Studio.ViewModels;
 
 public partial class DeviceTreeViewModel : ObservableObject
 {
+    // §1 ─ 라이브러리 참조 ────────────────────────────────────
+
+    /// <summary>
+    /// 스케일 라이브러리 — TagEditorView 콤보박스 ItemsSource.
+    /// MainViewModel 이 동일 인스턴스를 DeviceTree 와 ScaleLibrary 양쪽에 주입.
+    /// </summary>
+    public ScaleLibraryViewModel ScaleLibrary { get; }
+
+    /// <summary>알람 라이브러리 — TagEditorView 콤보박스 ItemsSource.</summary>
+    public AlarmLibraryViewModel AlarmLibrary { get; }
+
+    // §2 ─ 생성자 ─────────────────────────────────────────────
+
+    public DeviceTreeViewModel(
+        ScaleLibraryViewModel scaleLibrary,
+        AlarmLibraryViewModel alarmLibrary)
+    {
+        ScaleLibrary = scaleLibrary;
+        AlarmLibrary = alarmLibrary;
+    }
     // §1 ─ 루트 + 상태 메시지 ────────────────────────────────
 
     public ObservableCollection<AbstractTreeNode> RootNodes { get; } = new();
@@ -68,6 +86,24 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     public void SelectNode(object? item)
         => SelectedNode = item as AbstractTreeNode;
+
+    // §5-1 ─ 라이브러리 연결 해제 커맨드 ─────────────────────
+
+    /// <summary>선택된 Tag 의 스케일 연결 해제</summary>
+    [RelayCommand]
+    private void ClearScale()
+    {
+        if (SelectedNode is TagTreeNode tag)
+            tag.ScaleEntryId = null;
+    }
+
+    /// <summary>선택된 Tag 의 알람 연결 해제</summary>
+    [RelayCommand]
+    private void ClearAlarm()
+    {
+        if (SelectedNode is TagTreeNode tag)
+            tag.AlarmEntryId = null;
+    }
 
     // §6 ─ 커맨드 (B안: 타입별 형제/하위 분리) ────────────────
 
