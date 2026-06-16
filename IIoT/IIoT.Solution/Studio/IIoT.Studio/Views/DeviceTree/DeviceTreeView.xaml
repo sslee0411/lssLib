@@ -296,25 +296,11 @@
                 Visibility="{Binding IsPlcSelected,
                              Converter={StaticResource BoolToVisibility}}" />
 
-            <!-- Tag 선택 시 임시 표시 -->
-            <StackPanel Margin="24"
-                        VerticalAlignment="Top"
-                        Visibility="{Binding IsTagSelected,
-                                     Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="🏷  Tag"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource AccBrush}"
-                           Margin="0,0,0,8" />
-                <TextBlock Text="{Binding TagEditor.Name}"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           Foreground="{DynamicResource TextBrush}" />
-                <TextBlock Text="S-05 에서 Tag 편집기가 추가됩니다."
-                           FontSize="12"
-                           Foreground="{DynamicResource Text2Brush}"
-                           Margin="0,12,0,0" />
-            </StackPanel>
+            <!-- Tag 선택 시 → TagEditorView -->
+            <local:TagEditorView
+                DataContext="{Binding TagEditor}"
+                Visibility="{Binding IsTagSelected,
+                             Converter={StaticResource BoolToVisibility}}" />
 
         </Grid>
 
