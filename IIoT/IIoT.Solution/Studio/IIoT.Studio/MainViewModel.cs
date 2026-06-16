@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · MainViewModel.cs
 //  역할: Studio 메인 ViewModel
-//  S-01: DeviceTreeViewModel 주입 추가
+//  S-06: ScaleLibraryViewModel 주입 추가
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -15,18 +15,24 @@ public partial class MainViewModel : ObservableObject
 {
     // §1 ─ 서브 ViewModel ─────────────────────────────────────
 
-    /// <summary>장비 트리 ViewModel — DeviceTreeView DataContext</summary>
+    /// <summary>장비 트리 ViewModel</summary>
     public DeviceTreeViewModel DeviceTree { get; }
 
+    /// <summary>스케일 라이브러리 ViewModel</summary>
+    public ScaleLibraryViewModel ScaleLibrary { get; }
+
     // §2 ─ 생성자 ─────────────────────────────────────────────
-    public MainViewModel(DeviceTreeViewModel deviceTree)
+
+    public MainViewModel(
+        DeviceTreeViewModel deviceTree,
+        ScaleLibraryViewModel scaleLibrary)
     {
         DeviceTree = deviceTree;
+        ScaleLibrary = scaleLibrary;
     }
 
     // §3 ─ 저장 상태 ──────────────────────────────────────────
 
-    /// <summary>헤더 저장 상태 표시 텍스트</summary>
     [ObservableProperty]
     private string _saveStatus = "준비됨";
 

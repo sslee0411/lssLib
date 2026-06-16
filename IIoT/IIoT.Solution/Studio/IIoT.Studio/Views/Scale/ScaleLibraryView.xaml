@@ -1,0 +1,355 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Studio · Views/Scale/ScaleLibraryView.xaml
+     역할: 스케일 라이브러리 화면
+           좌(280px) 목록 + 우(*) 편집기
+     S-06: 초기 구현
+     생성: 2026-06-15
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Studio.Views.Scale.ScaleLibraryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:model="clr-namespace:IIoT.Studio.Models">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- 좌: 목록 (280px) -->
+            <ColumnDefinition Width="280" />
+            <!-- 구분선 -->
+            <ColumnDefinition Width="1" />
+            <!-- 우: 편집기 -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ══════════════════════════════════════════════════
+             § 좌측 목록 패널
+             ══════════════════════════════════════════════════ -->
+        <Grid Grid.Column="0"
+              Background="{DynamicResource SurfaceBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- 툴바 -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="6,0">
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+
+                    <Button Content="＋ 추가"
+                            Command="{Binding AddEntryCommand}"
+                            Style="{DynamicResource SecondaryBtn}"
+                            Padding="10,4"
+                            Margin="0,0,4,0"
+                            FontSize="11" />
+
+                    <Button Content="🗑"
+                            Command="{Binding DeleteEntryCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4"
+                            Margin="0,0,4,0"
+                            FontSize="13"
+                            ToolTip="선택 항목 삭제" />
+
+                    <Border Width="1"
+                            Background="{DynamicResource BorderBrush}"
+                            Margin="4,6,4,6" />
+
+                    <Button Content="↑"
+                            Command="{Binding MoveUpCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4"
+                            FontSize="13"
+                            ToolTip="위로 이동" />
+
+                    <Button Content="↓"
+                            Command="{Binding MoveDownCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4"
+                            FontSize="13"
+                            ToolTip="아래로 이동" />
+
+                </StackPanel>
+            </Border>
+
+            <!-- 스케일 목록 -->
+            <ListBox Grid.Row="1"
+                     ItemsSource="{Binding Entries}"
+                     SelectedItem="{Binding SelectedEntry}"
+                     Background="{DynamicResource SurfaceBrush}"
+                     BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type model:ScaleEntry}">
+                        <StackPanel Margin="4,6">
+                            <!-- 이름 -->
+                            <TextBlock Text="{Binding Name}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextBrush}" />
+                            <!-- 미리보기 수식 -->
+                            <TextBlock Text="{Binding PreviewFormula}"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,2,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="8,2" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+        </Grid>
+
+        <!-- 구분선 -->
+        <Border Grid.Column="1"
+                Background="{DynamicResource BorderBrush}" />
+
+        <!-- ══════════════════════════════════════════════════
+             § 우측 편집기 패널
+             ══════════════════════════════════════════════════ -->
+        <Grid Grid.Column="2"
+              Background="{DynamicResource BgBrush}">
+
+            <!-- 미선택 안내 -->
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding HasSelection,
+                                     Converter={StaticResource BoolToVisibility}}">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasSelection}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <TextBlock Text="📐"
+                           FontSize="48"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="스케일 항목을 선택하거나 추가하세요"
+                           FontSize="15"
+                           Foreground="{DynamicResource Text2Brush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,12,0,0" />
+            </StackPanel>
+
+            <!-- 편집기 (항목 선택 시) -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding HasSelection,
+                                       Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Margin="28,24,28,24"
+                            DataContext="{Binding SelectedEntry}">
+
+                    <!-- 헤더 -->
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,0,0,20">
+                        <TextBlock Text="📐"
+                                   FontSize="22"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="스케일 편집"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AccBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <Border Height="1"
+                            Background="{DynamicResource BorderBrush}"
+                            Margin="0,0,0,24" />
+
+                    <!-- 이름 -->
+                    <TextBlock Text="이름"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,6" />
+                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}"
+                             Margin="0,0,0,20" />
+
+                    <!-- 변환 모드 -->
+                    <TextBlock Text="변환 모드"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,6" />
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,0,0,20">
+                        <RadioButton Content="선형 (Linear)"
+                                     IsChecked="{Binding IsLinear}"
+                                     Foreground="{DynamicResource TextBrush}"
+                                     Margin="0,0,20,0" />
+                        <RadioButton Content="수식 (Expression)"
+                                     IsChecked="{Binding IsExpression}"
+                                     Foreground="{DynamicResource TextBrush}" />
+                    </StackPanel>
+
+                    <!-- ── Linear 파라미터 ── -->
+                    <StackPanel Visibility="{Binding IsLinear,
+                                             Converter={StaticResource BoolToVisibility}}">
+
+                        <!-- Raw 범위 -->
+                        <TextBlock Text="Raw 범위"
+                                   FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   Margin="0,0,0,6" />
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding RawMin, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="~"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource Text2Brush}" />
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding RawMax, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}" />
+                        </Grid>
+
+                        <!-- 공학단위 범위 -->
+                        <TextBlock Text="공학단위 범위"
+                                   FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   Margin="0,0,0,6" />
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding EngMin, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="~"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource Text2Brush}" />
+                            <TextBox Grid.Column="2"
+                                     Text="{Binding EngMax, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}" />
+                        </Grid>
+
+                        <!-- 미리보기 수식 -->
+                        <Border Background="{DynamicResource CardBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="12,8"
+                                Margin="0,0,0,20">
+                            <TextBlock Text="{Binding PreviewFormula}"
+                                       FontSize="12"
+                                       FontFamily="Consolas"
+                                       Foreground="{DynamicResource AccBrush}" />
+                        </Border>
+
+                    </StackPanel>
+
+                    <!-- ── Expression 파라미터 ── -->
+                    <StackPanel Visibility="{Binding IsExpression,
+                                             Converter={StaticResource BoolToVisibility}}">
+
+                        <TextBlock Text="NCalc 수식 (변수: x = Raw 값)"
+                                   FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   Margin="0,0,0,6" />
+                        <TextBox Text="{Binding Expression, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource PropInput}"
+                                 FontFamily="Consolas"
+                                 Margin="0,0,0,4" />
+                        <TextBlock Text="예) (x / 4000.0) * 10.0  또는  x * 0.1 + 2.5"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   Margin="2,0,0,20" />
+
+                    </StackPanel>
+
+                    <!-- 단위 + 소수점 자릿수 -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="120" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="단위"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,0,0,6" />
+                            <TextBox Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="소수점 자릿수"
+                                       FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,0,0,6" />
+                            <ComboBox SelectedValue="{Binding DecimalPlaces}"
+                                      Style="{DynamicResource PropCombo}">
+                                <ComboBoxItem Content="0" />
+                                <ComboBoxItem Content="1" />
+                                <ComboBoxItem Content="2" />
+                                <ComboBoxItem Content="3" />
+                                <ComboBoxItem Content="4" />
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 설명 -->
+                    <TextBlock Text="설명"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,6" />
+                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}"
+                             Height="72"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             VerticalContentAlignment="Top"
+                             Margin="0,0,0,24" />
+
+                    <!-- 안내 -->
+                    <Border Background="{DynamicResource CardBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="12,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="ℹ "
+                                       Foreground="{DynamicResource AccBrush}"
+                                       FontSize="12" />
+                            <TextBlock Text="저장 기능은 S-10 단계에서 추가됩니다. Tag 연결은 S-09에서 추가됩니다."
+                                       FontSize="11"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+
+        </Grid>
+
+    </Grid>
+</UserControl>
