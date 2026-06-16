@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · MainViewModel.cs
 //  역할: Studio 메인 ViewModel
-//  S-07: AlarmLibraryViewModel 주입 추가
+//  S-08: CommLibraryViewModel 주입 추가
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -18,17 +18,20 @@ public partial class MainViewModel : ObservableObject
     public DeviceTreeViewModel   DeviceTree   { get; }
     public ScaleLibraryViewModel ScaleLibrary { get; }
     public AlarmLibraryViewModel AlarmLibrary { get; }
+    public CommLibraryViewModel  CommLibrary  { get; }
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public MainViewModel(
         DeviceTreeViewModel   deviceTree,
         ScaleLibraryViewModel scaleLibrary,
-        AlarmLibraryViewModel alarmLibrary)
+        AlarmLibraryViewModel alarmLibrary,
+        CommLibraryViewModel  commLibrary)
     {
         DeviceTree   = deviceTree;
         ScaleLibrary = scaleLibrary;
         AlarmLibrary = alarmLibrary;
+        CommLibrary  = commLibrary;
     }
 
     // §3 ─ 저장 상태 ──────────────────────────────────────────

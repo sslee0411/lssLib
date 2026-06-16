@@ -52,13 +52,15 @@ public partial class App : Application
         services.AddSingleton<DeviceTreeViewModel>();
         services.AddSingleton<ScaleLibraryViewModel>();
         services.AddSingleton<AlarmLibraryViewModel>();
+        services.AddSingleton<CommLibraryViewModel>();
 
         // ── 메인 ViewModel ───────────────────────────────────
         services.AddSingleton<MainViewModel>(sp =>
             new MainViewModel(
                 sp.GetRequiredService<DeviceTreeViewModel>(),
                 sp.GetRequiredService<ScaleLibraryViewModel>(),
-                sp.GetRequiredService<AlarmLibraryViewModel>()));
+                sp.GetRequiredService<AlarmLibraryViewModel>(),
+                sp.GetRequiredService<CommLibraryViewModel>()));
 
         // ── MainWindow ───────────────────────────────────────
         // ★ 반드시 AddSingleton (AddTransient → 이중 창 버그)
