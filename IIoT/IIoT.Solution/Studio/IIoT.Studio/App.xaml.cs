@@ -1,4 +1,4 @@
-﻿// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  IIoT.Studio · App.xaml.cs
 //  역할: 애플리케이션 시작·종료 진입점
 //        - 테마 복원
@@ -9,8 +9,7 @@
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.ViewModels;
-using IIoT.UI.Themes;
-using Microsoft.Extensions.DependencyInjection;
+using IIoT.UI.Themes;using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace IIoT.Studio;
@@ -19,7 +18,7 @@ public partial class App : Application
 {
     // §1 ─ 필드 ──────────────────────────────────────────────
     private ThemeSettingsService? _themeSettings;
-    private IServiceProvider? _services;
+    private IServiceProvider?     _services;
 
     // §2 ─ 시작 ───────────────────────────────────────────────
     protected override void OnStartup(StartupEventArgs e)
@@ -52,12 +51,14 @@ public partial class App : Application
         // ── 서브 ViewModel ───────────────────────────────────
         services.AddSingleton<DeviceTreeViewModel>();
         services.AddSingleton<ScaleLibraryViewModel>();
+        services.AddSingleton<AlarmLibraryViewModel>();
 
         // ── 메인 ViewModel ───────────────────────────────────
         services.AddSingleton<MainViewModel>(sp =>
             new MainViewModel(
                 sp.GetRequiredService<DeviceTreeViewModel>(),
-                sp.GetRequiredService<ScaleLibraryViewModel>()));
+                sp.GetRequiredService<ScaleLibraryViewModel>(),
+                sp.GetRequiredService<AlarmLibraryViewModel>()));
 
         // ── MainWindow ───────────────────────────────────────
         // ★ 반드시 AddSingleton (AddTransient → 이중 창 버그)
