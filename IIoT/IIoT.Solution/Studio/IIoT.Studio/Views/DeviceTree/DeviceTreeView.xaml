@@ -243,14 +243,16 @@
                 Background="{DynamicResource BorderBrush}" />
 
         <!-- ══════════════════════════════════════════════════
-             § 우측 선택 정보 패널
-             S-01: 미선택 안내 + 노드 타입 표시
-             S-02~05: 각 편집기 View 로 교체 예정
+             § 우측 편집기 패널
+             ★ ContentControl + DataTemplate 패턴
+               ActiveEditor(AbstractTreeNode?) 타입에 따라
+               자동으로 해당 편집기 View 하나만 렌더링
+               null → 미선택 안내 표시
              ══════════════════════════════════════════════════ -->
         <Grid Grid.Column="2"
               Background="{DynamicResource BgBrush}">
 
-            <!-- 미선택 안내 -->
+            <!-- 미선택 안내 (ActiveEditor=null 일 때) -->
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Visibility="{Binding IsNoneSelected,
@@ -270,37 +272,36 @@
                            Margin="0,6,0,0" />
             </StackPanel>
 
-            <!-- 선택된 노드 정보 (S-02~05에서 편집기로 교체) -->
-            <Border Padding="24"
-                    Visibility="{Binding IsNoneSelected,
-                                 Converter={StaticResource BoolToVisibility}}">
-                <!-- IsNoneSelected 반전 처리:
-                     S-02 이후 IsGroupSelected/IsDeviceSelected 등 각각 분기 -->
-            </Border>
+            <!-- ★ ContentControl: ActiveEditor 타입에 따라 편집기 1개만 렌더링
+                 DataTemplate 이 타입을 보고 자동으로 올바른 View 선택
+                 null 이면 ContentTemplate 미적용 → 아무것도 표시 안 함 -->
+            <ContentControl Content="{Binding ActiveEditor}"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch">
+                <ContentControl.Resources>
 
-            <!-- 그룹 선택 시 → GroupEditorView -->
-            <local:GroupEditorView
-                DataContext="{Binding GroupEditor}"
-                Visibility="{Binding IsGroupSelected,
-                             Converter={StaticResource BoolToVisibility}}" />
+                    <!-- 그룹 → GroupEditorView -->
+                    <DataTemplate DataType="{x:Type model:GroupTreeNode}">
+                        <local:GroupEditorView />
+                    </DataTemplate>
 
-            <!-- 장비 선택 시 → DeviceEditorView -->
-            <local:DeviceEditorView
-                DataContext="{Binding DeviceEditor}"
-                Visibility="{Binding IsDeviceSelected,
-                             Converter={StaticResource BoolToVisibility}}" />
+                    <!-- 장비 → DeviceEditorView -->
+                    <DataTemplate DataType="{x:Type model:DeviceTreeNode}">
+                        <local:DeviceEditorView />
+                    </DataTemplate>
 
-            <!-- PLC 선택 시 → PlcEditorView -->
-            <local:PlcEditorView
-                DataContext="{Binding PlcEditor}"
-                Visibility="{Binding IsPlcSelected,
-                             Converter={StaticResource BoolToVisibility}}" />
+                    <!-- PLC → PlcEditorView -->
+                    <DataTemplate DataType="{x:Type model:PlcTreeNode}">
+                        <local:PlcEditorView />
+                    </DataTemplate>
 
-            <!-- Tag 선택 시 → TagEditorView -->
-            <local:TagEditorView
-                DataContext="{Binding TagEditor}"
-                Visibility="{Binding IsTagSelected,
-                             Converter={StaticResource BoolToVisibility}}" />
+                    <!-- Tag → TagEditorView -->
+                    <DataTemplate DataType="{x:Type model:TagTreeNode}">
+                        <local:TagEditorView />
+                    </DataTemplate>
+
+                </ContentControl.Resources>
+            </ContentControl>
 
         </Grid>
 

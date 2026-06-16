@@ -39,6 +39,7 @@ public partial class DeviceTreeViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(DeviceEditor))]
     [NotifyPropertyChangedFor(nameof(PlcEditor))]
     [NotifyPropertyChangedFor(nameof(TagEditor))]
+    [NotifyPropertyChangedFor(nameof(ActiveEditor))]
     private AbstractTreeNode? _selectedNode;
 
     // §3 ─ 선택 타입 판별 ─────────────────────────────────────
@@ -55,6 +56,13 @@ public partial class DeviceTreeViewModel : ObservableObject
     public DeviceTreeNode? DeviceEditor => SelectedNode as DeviceTreeNode;
     public PlcTreeNode? PlcEditor => SelectedNode as PlcTreeNode;
     public TagTreeNode? TagEditor => SelectedNode as TagTreeNode;
+
+    /// <summary>
+    /// 현재 활성 편집기 노드 — ContentControl 바인딩용.
+    /// null 이면 ContentControl 이 아무것도 렌더링하지 않음.
+    /// ★ 편집기 겹침 버그 완전 방지
+    /// </summary>
+    public AbstractTreeNode? ActiveEditor => SelectedNode;
 
     // §5 ─ 선택 메서드 ────────────────────────────────────────
 
