@@ -5,9 +5,11 @@
 //        - DI 구성
 //        - MainWindow 표시
 //  Base-0: 최소 구조 (서비스 없음, MainWindow 만 등록)
+//  S-10: DeviceConfigService DI 등록 추가
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Studio.Core.Config;
 using IIoT.Studio.ViewModels;
 using IIoT.UI.Themes;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,23 +52,27 @@ public partial class App : Application
         var services = new ServiceCollection();
 
         // ── 서브 ViewModel ───────────────────────────────────
+        services.AddSingleton<DeviceTreeViewModel>();
         services.AddSingleton<ScaleLibraryViewModel>();
         services.AddSingleton<AlarmLibraryViewModel>();
         services.AddSingleton<CommLibraryViewModel>();
 
-        // ★ DeviceTreeViewModel: 스케일·알람 VM 주입 (Tag 편집기 콤보박스용)
-        services.AddSingleton<DeviceTreeViewModel>(sp =>
-            new DeviceTreeViewModel(
+        // ── 서비스 (★ S-10 추가) ─────────────────────────────
+        services.AddSingleton<DeviceConfigService>(sp =>
+            new DeviceConfigService(
+                sp.GetRequiredService<DeviceTreeViewModel>(),
                 sp.GetRequiredService<ScaleLibraryViewModel>(),
-                sp.GetRequiredService<AlarmLibraryViewModel>()));
+                sp.GetRequiredService<AlarmLibraryViewModel>(),
+                sp.GetRequiredService<CommLibraryViewModel>()));
 
-        // ── 메인 ViewModel ───────────────────────────────────
+        // ── 메인 ViewModel (★ S-10: configSvc 파라미터 추가) ─
         services.AddSingleton<MainViewModel>(sp =>
             new MainViewModel(
                 sp.GetRequiredService<DeviceTreeViewModel>(),
                 sp.GetRequiredService<ScaleLibraryViewModel>(),
                 sp.GetRequiredService<AlarmLibraryViewModel>(),
-                sp.GetRequiredService<CommLibraryViewModel>()));
+                sp.GetRequiredService<CommLibraryViewModel>(),
+                sp.GetRequiredService<DeviceConfigService>()));   // ★ S-10
 
         // ── MainWindow ───────────────────────────────────────
         // ★ 반드시 AddSingleton (AddTransient → 이중 창 버그)

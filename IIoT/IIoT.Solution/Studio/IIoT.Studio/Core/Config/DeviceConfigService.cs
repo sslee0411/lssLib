@@ -1,0 +1,285 @@
+// ══════════════════════════════════════════════════════════
+//  IIoT.Studio · Core/Config/DeviceConfigService.cs
+//  역할: device.json 저장 + .signal 파일 발행
+//        ViewModel → DTO 변환 → 원자적 파일 쓰기
+//  S-10: 초기 구현
+//  생성: 2026-06-17
+// ══════════════════════════════════════════════════════════
+
+using IIoT.Studio.Models;
+using IIoT.Studio.ViewModels;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace IIoT.Studio.Core.Config;
+
+// §1 ─ 서비스 ─────────────────────────────────────────────
+
+public sealed class DeviceConfigService
+{
+    // §1-1 ─ 직렬화 옵션 ─────────────────────────────────────
+
+    private static readonly JsonSerializerOptions _jsonOpt = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    // §1-2 ─ 경로 ─────────────────────────────────────────────
+
+    /// <summary>Config 폴더 (실행파일 기준)</summary>
+    public static string ConfigDir =>
+        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config");
+
+    public static string DeviceJsonPath => Path.Combine(ConfigDir, "device.json");
+    public static string SignalFilePath => Path.Combine(ConfigDir, "device.json.signal");
+
+    // §1-3 ─ 주입된 ViewModel ─────────────────────────────────
+
+    private readonly DeviceTreeViewModel _treeVm;
+    private readonly ScaleLibraryViewModel _scaleVm;
+    private readonly AlarmLibraryViewModel _alarmVm;
+    private readonly CommLibraryViewModel _commVm;
+
+    // §2 ─ 생성자 ─────────────────────────────────────────────
+
+    public DeviceConfigService(
+        DeviceTreeViewModel treeVm,
+        ScaleLibraryViewModel scaleVm,
+        AlarmLibraryViewModel alarmVm,
+        CommLibraryViewModel commVm)
+    {
+        _treeVm = treeVm;
+        _scaleVm = scaleVm;
+        _alarmVm = alarmVm;
+        _commVm = commVm;
+    }
+
+    // §3 ─ 공개 메서드 ────────────────────────────────────────
+
+    /// <summary>
+    /// 전체 설정을 device.json 으로 저장하고 .signal 파일을 발행한다.
+    /// </summary>
+    public async Task<SaveResult> SaveAsync()
+    {
+        try
+        {
+            _EnsureConfigDir();
+
+            var root = _BuildDto();
+
+            // ① 1차 직렬화 (Sha256 빈 상태)
+            var json = JsonSerializer.Serialize(root, _jsonOpt);
+
+            // ② SHA-256 계산 후 삽입
+            root.Sha256 = _ComputeSha256(json);
+            json = JsonSerializer.Serialize(root, _jsonOpt);
+
+            // ③ 원자적 쓰기: .tmp → File.Replace → .bak
+            _AtomicWrite(DeviceJsonPath, json);
+
+            // ④ .signal 파일 발행 → IIoT.Collector FSW 감지
+            await _WriteSignalAsync();
+
+            return SaveResult.Ok(DeviceJsonPath);
+        }
+        catch (Exception ex)
+        {
+            return SaveResult.Fail(ex.Message);
+        }
+    }
+
+    // §4 ─ 내부 메서드 ────────────────────────────────────────
+
+    private DeviceConfigRoot _BuildDto()
+    {
+        var root = new DeviceConfigRoot { SavedAt = DateTime.Now };
+
+        // ── 트리 ──────────────────────────────────────────────
+        foreach (var node in _treeVm.RootNodes)
+            root.Tree.Add(_MapNode(node));
+
+        // ── 스케일 라이브러리 ──────────────────────────────────
+        foreach (var s in _scaleVm.Entries)
+        {
+            root.ScaleLibrary.Add(new ScaleEntryDto
+            {
+                Id = s.Id.ToString(),
+                Name = s.Name,
+                Mode = s.Mode.ToString(),
+                RawMin = s.RawMin,
+                RawMax = s.RawMax,
+                EngMin = s.EngMin,
+                EngMax = s.EngMax,
+                Expression = s.Expression ?? string.Empty,
+                Unit = s.Unit ?? string.Empty,
+                DecimalPlaces = s.DecimalPlaces
+            });
+        }
+
+        // ── 알람 라이브러리 ────────────────────────────────────
+        foreach (var a in _alarmVm.Entries)
+        {
+            root.AlarmLibrary.Add(new AlarmEntryDto
+            {
+                Id = a.Id.ToString(),
+                Name = a.Name,
+                Description = a.Description ?? string.Empty,
+                HhEnabled = a.HhEnabled,
+                HhValue = a.HhValue,
+                HhMessage = a.HhMessage ?? string.Empty,
+                HEnabled = a.HEnabled,
+                HValue = a.HValue,
+                HMessage = a.HMessage ?? string.Empty,
+                LEnabled = a.LEnabled,
+                LValue = a.LValue,
+                LMessage = a.LMessage ?? string.Empty,
+                LlEnabled = a.LlEnabled,
+                LlValue = a.LlValue,
+                LlMessage = a.LlMessage ?? string.Empty,
+                DelayMs = a.DelayMs,
+                RecoveryDelayMs = a.RecoveryDelayMs
+            });
+        }
+
+        // ── 통신 라이브러리 ────────────────────────────────────
+        foreach (var c in _commVm.Entries)
+        {
+            root.CommLibrary.Add(new CommEntryDto
+            {
+                Id = c.Id.ToString(),
+                Name = c.Name,
+                Description = c.Description ?? string.Empty,
+                Type = c.Type.ToString(),
+                // Modbus TCP
+                Host = c.Host ?? string.Empty,
+                Port = c.Port,
+                SlaveId = c.SlaveId,
+                // Serial
+                ComPort = c.ComPort ?? string.Empty,
+                BaudRate = c.BaudRate,
+                Parity = c.Parity ?? string.Empty,
+                DataBits = c.DataBits,
+                StopBits = c.StopBits ?? string.Empty,
+                // MQTT
+                BrokerHost = c.BrokerHost ?? string.Empty,
+                BrokerPort = c.BrokerPort,
+                ClientId = c.ClientId ?? string.Empty,
+                Topic = c.Topic ?? string.Empty,
+                UseTls = c.UseTls,
+                MqttUser = c.MqttUser ?? string.Empty,
+                MqttPassword = c.MqttPassword ?? string.Empty,
+                // OPC-UA
+                EndpointUrl = c.EndpointUrl ?? string.Empty,
+                OpcUser = c.OpcUser ?? string.Empty,
+                OpcPassword = c.OpcPassword ?? string.Empty,
+                // 공통
+                PollMs = c.PollMs,
+                TimeoutMs = c.TimeoutMs,
+                RetryIntervalMs = c.RetryIntervalMs
+            });
+        }
+
+        return root;
+    }
+
+    private static DeviceNodeDto _MapNode(AbstractTreeNode node)
+    {
+        var dto = new DeviceNodeDto
+        {
+            Name = node.Name,
+            Description = node.Description ?? string.Empty
+        };
+
+        switch (node)
+        {
+            case GroupTreeNode g:
+                dto.NodeType = "Group";
+                dto.Id = g.Id.ToString();
+                break;
+
+            case DeviceTreeNode d:
+                dto.NodeType = "Device";
+                dto.Id = d.Id.ToString();
+                dto.Model = d.Model;
+                dto.Manufacturer = d.Manufacturer;
+                dto.Location = d.Location;
+                dto.CommType = d.CommType.ToString();
+                dto.Host = d.Host;
+                dto.Port = d.Port;
+                dto.PollMs = d.PollMs;
+                break;
+
+            case PlcTreeNode p:
+                dto.NodeType = "PLC";
+                dto.Id = p.Id.ToString();
+                dto.CommType = p.CommType.ToString();
+                dto.Host = p.Host;
+                dto.Port = p.Port;
+                dto.PollMs = p.PollMs;
+                break;
+
+            case TagTreeNode t:
+                dto.NodeType = "Tag";
+                dto.Id = t.Id.ToString();
+                dto.Address = t.Address;
+                dto.DataType = t.DataType;
+                dto.Unit = t.Unit;
+                // S-09에서 추가된 라이브러리 연결 ID (없으면 null)
+                dto.ScaleEntryId = t.ScaleEntryId?.ToString();
+                dto.AlarmEntryId = t.AlarmEntryId?.ToString();
+                break;
+        }
+
+        foreach (var child in node.Children)
+            dto.Children.Add(_MapNode(child));
+
+        return dto;
+    }
+
+    private static void _EnsureConfigDir()
+    {
+        if (!Directory.Exists(ConfigDir))
+            Directory.CreateDirectory(ConfigDir);
+    }
+
+    /// <summary>원자적 쓰기: .tmp → File.Replace → .bak</summary>
+    private static void _AtomicWrite(string path, string content)
+    {
+        var tmp = path + ".tmp";
+        var bak = path + ".bak";
+
+        File.WriteAllText(tmp, content, Encoding.UTF8);
+
+        if (File.Exists(path))
+            File.Replace(tmp, path, bak);
+        else
+            File.Move(tmp, path);
+    }
+
+    private static string _ComputeSha256(string text)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(text));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    /// <summary>.signal 파일 발행 — Collector FSW 감지용</summary>
+    private static async Task _WriteSignalAsync()
+    {
+        await File.WriteAllTextAsync(
+            SignalFilePath,
+            DateTime.Now.ToString("O"),
+            Encoding.UTF8);
+    }
+}
+
+// §5 ─ 결과 타입 ──────────────────────────────────────────
+
+public sealed record SaveResult(bool IsSuccess, string Message)
+{
+    public static SaveResult Ok(string path) => new(true, $"저장 완료: {Path.GetFileName(path)}");
+    public static SaveResult Fail(string error) => new(false, $"저장 실패: {error}");
+}

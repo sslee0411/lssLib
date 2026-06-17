@@ -2,6 +2,7 @@
      IIoT.Studio · MainWindow.xaml
      역할: 메인 창
      Base-2: 탭 버튼 Command 연결 + 본문 패널 5개 (임시 색상 블록)
+     S-10: 헤더에 [💾 전체 저장] 버튼 + IsSaveEnabled 바인딩 추가
      규칙:
        ① 모든 색상·스타일은 DynamicResource (StaticResource 금지)
        ② BoolToVisibility: Window.Resources 에 직접 등록
@@ -42,11 +43,21 @@
                 BorderThickness="0,0,0,1">
             <DockPanel Margin="16,0">
 
-                <!-- 우측: 테마 버튼 -->
+                <!-- 우측: 저장 버튼 + 테마 버튼 -->
+                <!-- ★ S-10: 저장 버튼 추가 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="8,0,0,0">
+
+                    <!-- ★ S-10: 전체 저장 버튼 -->
+                    <Button Content="💾  전체 저장"
+                            Command="{Binding SaveCommand}"
+                            IsEnabled="{Binding IsSaveEnabled}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="14,6"
+                            Margin="0,0,8,0" />
+
                     <uc:ThemePickerButton />
                 </StackPanel>
 
