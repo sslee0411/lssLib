@@ -3,11 +3,11 @@
      역할: PLC 노드 편집기
            통신방식(CommType) 선택에 따라 입력 폼 동적 전환
      S-04: 초기 구현
+     S-14: 하단에 [📋 태그 템플릿 적용] 버튼 추가
      규칙:
        ① CommType 콤보박스 → IsModbusTcp/IsSerial/IsMqtt 가시성 전환
        ② 모든 색상 DynamicResource
        ③ DataContext = PlcTreeNode
-       ④ CommType 전환용 IsXxx 프로퍼티는 PlcTreeNode 에 추가
      생성: 2026-06-15
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.DeviceTree.PlcEditorView"
@@ -18,9 +18,6 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-        <!-- PLC 는 None 제외 — PlcCommTypeValues 별도 정의 불가
-             → Enum 전체 바인딩 후 None 항목은 UI 에서 제외하지 않고
-               ViewModel IsXxx 프로퍼티로 폼 전환만 처리 (None 선택 시 폼 없음) -->
         <ObjectDataProvider x:Key="PlcCommTypeValues"
                             MethodName="GetValues"
                             ObjectType="{x:Type sys:Enum}">
@@ -35,15 +32,11 @@
         <StackPanel Margin="28,24,28,24">
 
             <!-- 헤더 -->
-            <StackPanel Orientation="Horizontal"
-                        Margin="0,0,0,20">
-                <TextBlock Text="🔧"
-                           FontSize="22"
-                           VerticalAlignment="Center"
-                           Margin="0,0,8,0" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                <TextBlock Text="🔧" FontSize="22"
+                           VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBlock Text="PLC 편집"
-                           FontSize="16"
-                           FontWeight="SemiBold"
+                           FontSize="16" FontWeight="SemiBold"
                            Foreground="{DynamicResource AccBrush}"
                            VerticalAlignment="Center" />
             </StackPanel>
@@ -75,7 +68,6 @@
             <!-- ── Modbus TCP 전용 필드 ── -->
             <StackPanel Visibility="{Binding IsModbusTcp,
                                      Converter={StaticResource BoolToVisibility}}">
-
                 <TextBlock Text="IP 주소"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
@@ -83,7 +75,6 @@
                 <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,20" />
-
                 <TextBlock Text="포트"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
@@ -91,13 +82,11 @@
                 <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,20" />
-
             </StackPanel>
 
             <!-- ── Serial 전용 필드 ── -->
             <StackPanel Visibility="{Binding IsSerial,
                                      Converter={StaticResource BoolToVisibility}}">
-
                 <TextBlock Text="COM 포트"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
@@ -105,27 +94,18 @@
                 <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,20" />
-
                 <TextBlock Text="보드레이트"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
                            Margin="0,0,0,6" />
-                <ComboBox SelectedValue="{Binding Port}"
-                          Style="{DynamicResource PropCombo}"
-                          Margin="0,0,0,20">
-                    <ComboBoxItem Content="9600" />
-                    <ComboBoxItem Content="19200" />
-                    <ComboBoxItem Content="38400" />
-                    <ComboBoxItem Content="57600" />
-                    <ComboBoxItem Content="115200" />
-                </ComboBox>
-
+                <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource PropInput}"
+                         Margin="0,0,0,20" />
             </StackPanel>
 
             <!-- ── MQTT 전용 필드 ── -->
             <StackPanel Visibility="{Binding IsMqtt,
                                      Converter={StaticResource BoolToVisibility}}">
-
                 <TextBlock Text="브로커 주소"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
@@ -133,7 +113,6 @@
                 <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,20" />
-
                 <TextBlock Text="포트"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
@@ -141,13 +120,11 @@
                 <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,20" />
-
             </StackPanel>
 
             <!-- ── OPC-UA 전용 필드 ── -->
             <StackPanel Visibility="{Binding IsOpcUa,
                                      Converter={StaticResource BoolToVisibility}}">
-
                 <TextBlock Text="엔드포인트 URL"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
@@ -155,7 +132,6 @@
                 <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,20" />
-
             </StackPanel>
 
             <!-- 폴링 주기 (공통) -->
@@ -186,7 +162,8 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="4"
-                    Padding="12,10">
+                    Padding="12,10"
+                    Margin="0,0,0,24">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="ℹ "
                                Foreground="{DynamicResource AccBrush}"
@@ -197,6 +174,36 @@
                                TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
+
+            <!-- ══════════════════════════════════════════════
+                 ★ S-14: 태그 템플릿 일괄 적용
+                 ══════════════════════════════════════════════ -->
+            <Border Height="1"
+                    Background="{DynamicResource BorderBrush}"
+                    Margin="0,0,0,16"/>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="태그 템플릿 일괄 적용"
+                               FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Text="BufSchema 기반 Tag를 시작주소 하나로 자동 생성합니다."
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,3,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Content="📋  템플릿 적용"
+                        Style="{DynamicResource ToolbarBtn}"
+                        Padding="12,7"
+                        Click="OnApplyTemplate"/>
+            </Grid>
 
         </StackPanel>
     </ScrollViewer>

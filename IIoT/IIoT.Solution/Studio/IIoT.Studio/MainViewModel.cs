@@ -4,7 +4,7 @@
 //  S-08: CommLibraryViewModel 주입 추가
 //  S-10: DeviceConfigService 주입 + SaveCommand 추가
 //  S-11: CanvasViewModel + CollectConfigService 주입
-//        SaveAsync → device.json + collect.json 동시 저장
+//  S-12B: SwitchTab → 탭1 진입 시 Canvas.RefreshDevicePalette() 호출
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -23,12 +23,12 @@ public partial class MainViewModel : ObservableObject
     public ScaleLibraryViewModel ScaleLibrary { get; }
     public AlarmLibraryViewModel AlarmLibrary { get; }
     public CommLibraryViewModel  CommLibrary  { get; }
-    public CanvasViewModel       Canvas       { get; }   // ★ S-11
+    public CanvasViewModel       Canvas       { get; }
 
     // §1-1 ─ 서비스 ───────────────────────────────────────────
 
     private readonly DeviceConfigService  _deviceSvc;
-    private readonly CollectConfigService _collectSvc;  // ★ S-11
+    private readonly CollectConfigService _collectSvc;
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
@@ -37,9 +37,9 @@ public partial class MainViewModel : ObservableObject
         ScaleLibraryViewModel scaleLibrary,
         AlarmLibraryViewModel alarmLibrary,
         CommLibraryViewModel  commLibrary,
-        CanvasViewModel       canvas,          // ★ S-11
+        CanvasViewModel       canvas,
         DeviceConfigService   deviceSvc,
-        CollectConfigService  collectSvc)      // ★ S-11
+        CollectConfigService  collectSvc)
     {
         DeviceTree   = deviceTree;
         ScaleLibrary = scaleLibrary;
@@ -78,8 +78,14 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SwitchTab(string tabParam)
     {
-        if (int.TryParse(tabParam, out var idx))
-            ActiveTabIndex = idx;
+        if (!int.TryParse(tabParam, out var idx)) return;
+        ActiveTabIndex = idx;
+
+        // ★ S-12B: 수집 흐름 탭 진입 시 장비 팔레트 강제 갱신
+        // RootNodes.CollectionChanged 재귀 구독 대신
+        // 탭 전환 시점에 한 번만 갱신 — 단순하고 안정적
+        if (idx == 1)
+            Canvas.RefreshDevicePalette();
     }
 
     // §7 ─ 저장 커맨드 ────────────────────────────────────────
@@ -98,7 +104,6 @@ public partial class MainViewModel : ObservableObject
         IsSaving   = true;
         SaveStatus = "저장 중…";
 
-        // ★ S-11: device.json + collect.json 동시 저장
         var deviceResult  = await _deviceSvc.SaveAsync();
         var collectResult = await _collectSvc.SaveAsync();
 

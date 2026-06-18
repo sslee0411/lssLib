@@ -24,6 +24,18 @@
                     BorderThickness="2"
                     CornerRadius="6"
                     Cursor="SizeAll">
+
+                <!-- ★ S-13B: DeviceNode 우클릭 컨텍스트 메뉴 -->
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="📋 템플릿 적용..."
+                                  Click="OnContextMenuApplyTemplate"/>
+                        <Separator/>
+                        <MenuItem Header="🗑 삭제"
+                                  Command="{Binding DataContext.DeleteSelectedCommand,
+                                      Source={x:Reference Name=RootCanvas}}"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="BorderBrush"

@@ -4,26 +4,27 @@
 //  S-11: 노드 드래그·줌·패닝
 //  S-12: 포트 드래그 → 연결선 생성
 //  S-12B: PortsLayer 절대좌표 갱신 (HitTest 완전 해결)
-//         DeviceTypeIconConverter 추가
+//  S-13B: ApplyTemplateDialog → Views/DeviceTree/ 로 이동
+//         using 참조 변경
 //  생성: 2026-06-17
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Core.Canvas;
+using IIoT.Studio.Models;
 using IIoT.Studio.ViewModels;
-using System.Globalization;
+using IIoT.Studio.Views.DeviceTree;    // ★ S-13B: ApplyTemplateDialog 위치 변경
 using System.Windows;
 using System.Windows.Controls;
+using WpfCanvas = System.Windows.Controls.Canvas;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
 namespace IIoT.Studio.Views.Canvas;
 
-// §2 ─ CanvasView ─────────────────────────────────────────
-
 public partial class CanvasView : UserControl
 {
-    // §2-1 ─ 필드 ─────────────────────────────────────────────
+    // §1 ─ 필드 ──────────────────────────────────────────────
 
     private CanvasViewModel? _vm;
 
@@ -41,11 +42,23 @@ public partial class CanvasView : UserControl
     private bool   _spaceDown;
 
     // 포트 연결 드래그
-    private bool              _isDraggingPort;
-    private NodePort?         _dragSourcePort;
+    private bool               _isDraggingPort;
+    private NodePort?          _dragSourcePort;
     private AbstractCanvasNode? _dragSourceNode;
 
-    // §2-2 ─ 생성자 ───────────────────────────────────────────
+    // §2 ─ 외부 주입 속성 ─────────────────────────────────────
+
+    /// <summary>DeviceTreeViewModel — ApplyTemplate 시 Tag 트리에 추가 용도</summary>
+    public DeviceTreeViewModel? DeviceTreeVm { get; set; }
+
+    /// <summary>
+    /// 템플릿 목록 제공자 (Func 델리게이트).
+    /// App.xaml.cs에서 () => tagTemplateVm.Templates 로 주입.
+    /// CanvasView는 TagTemplateViewModel 타입을 직접 참조하지 않음.
+    /// </summary>
+    public Func<IEnumerable<TagTemplate>>? GetTemplates { get; set; }
+
+    // §3 ─ 생성자 ─────────────────────────────────────────────
 
     public CanvasView()
     {
@@ -74,19 +87,15 @@ public partial class CanvasView : UserControl
     {
         _vm = DataContext as CanvasViewModel;
         if (_vm is not null)
-        {
-            // 노드 추가/삭제 시 PortsLayer 갱신
             _vm.Nodes.CollectionChanged += (_, _) => _RebuildPortsLayer();
-        }
     }
 
-    // §3 ─ 마우스 다운 ────────────────────────────────────────
+    // §4 ─ 마우스 다운 ────────────────────────────────────────
 
     private void OnCanvasMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (_vm is null) return;
 
-        // 패닝
         if (e.ChangedButton == MouseButton.Middle
             || (e.ChangedButton == MouseButton.Left && _spaceDown))
         {
@@ -103,7 +112,7 @@ public partial class CanvasView : UserControl
 
         var posOnCanvas = e.GetPosition(RootCanvas);
 
-        // ── ★ S-12B: PortsLayer에서 포트 먼저 감지 ───────────
+        // 포트 감지 (PortsLayer — 최상단)
         var portHit = VisualTreeHelper.HitTest(PortsLayer, posOnCanvas)?.VisualHit;
         var (portNode, port) = _FindPortFromVisual(portHit);
 
@@ -119,7 +128,6 @@ public partial class CanvasView : UserControl
             return;
         }
 
-        // ── 노드 카드 클릭 ────────────────────────────────────
         var nodeHit = VisualTreeHelper.HitTest(NodesLayer, posOnCanvas)?.VisualHit;
         var node    = _FindNodeFromVisual(nodeHit);
 
@@ -139,7 +147,7 @@ public partial class CanvasView : UserControl
         }
     }
 
-    // §4 ─ 마우스 이동 ────────────────────────────────────────
+    // §5 ─ 마우스 이동 ────────────────────────────────────────
 
     private void OnCanvasMouseMove(object sender, MouseEventArgs e)
     {
@@ -168,12 +176,11 @@ public partial class CanvasView : UserControl
             _draggingNode.X = _nodeStartX + (cur.X - _dragStart.X);
             _draggingNode.Y = _nodeStartY + (cur.Y - _dragStart.Y);
             _vm.RefreshConnections(_draggingNode.NodeId);
-            // ★ 노드 이동 시 포트 위치도 갱신
             _UpdatePortPositions(_draggingNode);
         }
     }
 
-    // §5 ─ 마우스 업 ──────────────────────────────────────────
+    // §6 ─ 마우스 업 ──────────────────────────────────────────
 
     private void OnCanvasMouseUp(object sender, MouseButtonEventArgs e)
     {
@@ -221,7 +228,7 @@ public partial class CanvasView : UserControl
         }
     }
 
-    // §6 ─ 휠 줌 ──────────────────────────────────────────────
+    // §7 ─ 휠 줌 ──────────────────────────────────────────────
 
     private void OnCanvasWheel(object sender, MouseWheelEventArgs e)
     {
@@ -229,27 +236,16 @@ public partial class CanvasView : UserControl
         e.Handled = true;
     }
 
-    // §7 ─ PortsLayer 관리 (★ S-12B 핵심) ────────────────────
+    // §8 ─ PortsLayer 관리 ────────────────────────────────────
 
-    /// <summary>
-    /// 전체 PortsLayer 재구성.
-    /// 노드 추가/삭제 시 호출.
-    /// </summary>
     private void _RebuildPortsLayer()
     {
         PortsLayer.Children.Clear();
         if (_vm is null) return;
-
         foreach (var node in _vm.Nodes)
-        {
             _CreatePortEllipses(node);
-        }
     }
 
-    /// <summary>
-    /// 특정 노드의 포트 Ellipse 위치만 갱신.
-    /// 노드 드래그 중 호출.
-    /// </summary>
     private void _UpdatePortPositions(AbstractCanvasNode node)
     {
         foreach (UIElement el in PortsLayer.Children)
@@ -257,25 +253,15 @@ public partial class CanvasView : UserControl
             if (el is Ellipse ell && ell.Tag is NodePort port
                 && port.OwnerNodeId == node.NodeId)
             {
-                if (port.Direction == PortDirection.Input)
-                {
-                    System.Windows.Controls.Canvas.SetLeft(ell,
-                        node.InputPortX - NodeLayout.PortRadius);
-                    System.Windows.Controls.Canvas.SetTop(ell,
-                        node.GetPortCanvasY(port.Index) - NodeLayout.PortRadius);
-                }
-                else
-                {
-                    System.Windows.Controls.Canvas.SetLeft(ell,
-                        node.OutputPortX - NodeLayout.PortRadius);
-                    System.Windows.Controls.Canvas.SetTop(ell,
-                        node.GetPortCanvasY(port.Index) - NodeLayout.PortRadius);
-                }
+                double left = port.Direction == PortDirection.Input
+                    ? node.InputPortX  - NodeLayout.PortRadius
+                    : node.OutputPortX - NodeLayout.PortRadius;
+                WpfCanvas.SetLeft(ell, left);
+                WpfCanvas.SetTop(ell, node.GetPortCanvasY(port.Index) - NodeLayout.PortRadius);
             }
         }
     }
 
-    /// <summary>노드의 모든 포트 Ellipse를 PortsLayer에 생성</summary>
     private void _CreatePortEllipses(AbstractCanvasNode node)
     {
         double r = NodeLayout.PortRadius;
@@ -284,55 +270,87 @@ public partial class CanvasView : UserControl
         foreach (var port in node.InputPorts)
         {
             var ell = _MakePortEllipse(port, isOutput: false, d: d);
-            System.Windows.Controls.Canvas.SetLeft(ell,
-                node.InputPortX - r);
-            System.Windows.Controls.Canvas.SetTop(ell,
-                node.GetPortCanvasY(port.Index) - r);
+            WpfCanvas.SetLeft(ell, node.InputPortX - r);
+            WpfCanvas.SetTop(ell,  node.GetPortCanvasY(port.Index) - r);
             PortsLayer.Children.Add(ell);
         }
-
         foreach (var port in node.OutputPorts)
         {
             var ell = _MakePortEllipse(port, isOutput: true, d: d);
-            System.Windows.Controls.Canvas.SetLeft(ell,
-                node.OutputPortX - r);
-            System.Windows.Controls.Canvas.SetTop(ell,
-                node.GetPortCanvasY(port.Index) - r);
+            WpfCanvas.SetLeft(ell, node.OutputPortX - r);
+            WpfCanvas.SetTop(ell,  node.GetPortCanvasY(port.Index) - r);
             PortsLayer.Children.Add(ell);
         }
     }
 
-    private Ellipse _MakePortEllipse(NodePort port, bool isOutput, double d)
+    private static Ellipse _MakePortEllipse(NodePort port, bool isOutput, double d)
     {
         var ell = new Ellipse
         {
-            Width           = d,
-            Height          = d,
-            Tag             = port,
-            Cursor          = Cursors.Cross,
-            ToolTip         = new ToolTip { Content = port.Label }
+            Width   = d,
+            Height  = d,
+            Tag     = port,
+            Cursor  = Cursors.Cross,
+            ToolTip = new ToolTip { Content = port.Label }
         };
-
         if (isOutput)
         {
-            ell.Fill   = new SolidColorBrush(
-                (Color)ColorConverter.ConvertFromString("#60a5fa"));
-            ell.Stroke = new SolidColorBrush(
-                (Color)ColorConverter.ConvertFromString("#1e40af"));
+            ell.Fill            = new SolidColorBrush(Color.FromRgb(96, 165, 250));
+            ell.Stroke          = new SolidColorBrush(Color.FromRgb(30, 64, 175));
             ell.StrokeThickness = 1.5;
         }
         else
         {
-            ell.Fill   = new SolidColorBrush(Colors.Transparent);
-            ell.Stroke = new SolidColorBrush(
-                (Color)ColorConverter.ConvertFromString("#60a5fa"));
+            ell.Fill            = Brushes.Transparent;
+            ell.Stroke          = new SolidColorBrush(Color.FromRgb(96, 165, 250));
             ell.StrokeThickness = 2;
         }
-
         return ell;
     }
 
-    // §8 ─ 비주얼 트리 역추적 ─────────────────────────────────
+    // §9 ─ 태그 템플릿 적용 (★ S-13B) ────────────────────────
+
+    public void OpenApplyTemplateDialog(DeviceCanvasNode targetNode)
+    {
+        if (GetTemplates is null || _vm is null) return;
+
+        var templates = GetTemplates().ToList();
+        if (!templates.Any())
+        {
+            MessageBox.Show(
+                "저장된 태그 템플릿이 없습니다.\n장비 관리 탭의 [태그 템플릿] 패널에서 먼저 작성하세요.",
+                "템플릿 없음",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        // ★ ApplyTemplateDialog는 Views/DeviceTree/ 에 위치
+        var dlg = new ApplyTemplateDialog(templates, Window.GetWindow(this));
+        if (dlg.ShowDialog() != true) return;
+        if (dlg.ResultTemplate is null) return;
+
+        _vm.ApplyTemplate(
+            targetNode,
+            dlg.ResultTemplate,
+            dlg.ResultStartAddress,
+            DeviceTreeVm!);
+
+        _RebuildPortsLayer();
+    }
+
+    private void OnContextMenuApplyTemplate(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem mi
+            && mi.Parent is ContextMenu cm
+            && cm.PlacementTarget is FrameworkElement fe
+            && fe.DataContext is DeviceCanvasNode target)
+        {
+            OpenApplyTemplateDialog(target);
+        }
+    }
+
+    // §10 ─ 비주얼 트리 역추적 ────────────────────────────────
 
     private static AbstractCanvasNode? _FindNodeFromVisual(DependencyObject? visual)
     {
@@ -353,8 +371,7 @@ public partial class CanvasView : UserControl
         {
             if (visual is Ellipse el && el.Tag is NodePort port && _vm is not null)
             {
-                var owner = _vm.Nodes.FirstOrDefault(
-                    n => n.NodeId == port.OwnerNodeId);
+                var owner = _vm.Nodes.FirstOrDefault(n => n.NodeId == port.OwnerNodeId);
                 return (owner, port);
             }
             visual = VisualTreeHelper.GetParent(visual);

@@ -2,12 +2,9 @@
 //  IIoT.Studio · ViewModels/DeviceTreeViewModel.cs
 //  역할: 장비 트리 ViewModel
 //  S-09 rev: 스케일·알람 라이브러리 VM 주입 추가
-//            → TagEditorView 콤보박스 ItemsSource 제공
 //  S-10 patch: 계층 규칙 확정
-//              그룹 하위: 그룹·장비·PLC
-//              장비 하위: 장비·PLC·Tag
-//              PLC  하위: PLC·장비·Tag
-//              Tag  하위: 없음
+//  S-14: IsTemplateMode + ShowTemplateCommand 추가
+//        TagTemplateManagerView 전환용
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -22,23 +19,20 @@ public partial class DeviceTreeViewModel : ObservableObject
 {
     // §1 ─ 라이브러리 참조 ────────────────────────────────────
 
-    /// <summary>
-    /// 스케일 라이브러리 — TagEditorView 콤보박스 ItemsSource.
-    /// MainViewModel 이 동일 인스턴스를 DeviceTree 와 ScaleLibrary 양쪽에 주입.
-    /// </summary>
     public ScaleLibraryViewModel ScaleLibrary { get; }
-
-    /// <summary>알람 라이브러리 — TagEditorView 콤보박스 ItemsSource.</summary>
+    public TagTemplateViewModel    TagTemplateVm { get; }
     public AlarmLibraryViewModel AlarmLibrary { get; }
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public DeviceTreeViewModel(
         ScaleLibraryViewModel scaleLibrary,
-        AlarmLibraryViewModel alarmLibrary)
+        AlarmLibraryViewModel alarmLibrary,
+        TagTemplateViewModel  tagTemplateVm)   // ★ S-14
     {
-        ScaleLibrary = scaleLibrary;
-        AlarmLibrary = alarmLibrary;
+        ScaleLibrary  = scaleLibrary;
+        AlarmLibrary  = alarmLibrary;
+        TagTemplateVm = tagTemplateVm;
     }
 
     // §3 ─ 루트 + 상태 메시지 ────────────────────────────────
@@ -68,34 +62,49 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     // §5 ─ 선택 타입 판별 ─────────────────────────────────────
 
-    public bool IsNoneSelected => SelectedNode is null;
-    public bool IsGroupSelected => SelectedNode is GroupTreeNode;
+    public bool IsNoneSelected   => SelectedNode is null && !IsTemplateMode;
+    public bool IsGroupSelected  => SelectedNode is GroupTreeNode;
     public bool IsDeviceSelected => SelectedNode is DeviceTreeNode;
-    public bool IsPlcSelected => SelectedNode is PlcTreeNode;
-    public bool IsTagSelected => SelectedNode is TagTreeNode;
+    public bool IsPlcSelected    => SelectedNode is PlcTreeNode;
+    public bool IsTagSelected    => SelectedNode is TagTreeNode;
 
     // §6 ─ 편집기 캐스팅 ──────────────────────────────────────
 
-    public GroupTreeNode? GroupEditor => SelectedNode as GroupTreeNode;
+    public GroupTreeNode?  GroupEditor  => SelectedNode as GroupTreeNode;
     public DeviceTreeNode? DeviceEditor => SelectedNode as DeviceTreeNode;
-    public PlcTreeNode? PlcEditor => SelectedNode as PlcTreeNode;
-    public TagTreeNode? TagEditor => SelectedNode as TagTreeNode;
+    public PlcTreeNode?    PlcEditor    => SelectedNode as PlcTreeNode;
+    public TagTreeNode?    TagEditor    => SelectedNode as TagTreeNode;
+
+    public AbstractTreeNode? ActiveEditor => IsTemplateMode ? null : SelectedNode;
+
+    // §7 ─ 템플릿 모드 (★ S-14) ──────────────────────────────
 
     /// <summary>
-    /// 현재 활성 편집기 노드 — ContentControl 바인딩용.
-    /// null 이면 ContentControl 이 아무것도 렌더링하지 않음.
-    /// ★ 편집기 겹침 버그 완전 방지
+    /// true 이면 우측 패널이 TagTemplateManagerView 로 전환됨.
+    /// DeviceTreeView ContentControl DataTemplate 에서 바인딩.
     /// </summary>
-    public AbstractTreeNode? ActiveEditor => SelectedNode;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNoneSelected))]
+    [NotifyPropertyChangedFor(nameof(ActiveEditor))]
+    private bool _isTemplateMode;
 
-    // §7 ─ 선택 메서드 ────────────────────────────────────────
+    [RelayCommand]
+    private void ShowTemplate()
+    {
+        IsTemplateMode = !IsTemplateMode;
+        if (IsTemplateMode) SelectedNode = null;
+    }
+
+    // §8 ─ 선택 메서드 ────────────────────────────────────────
 
     public void SelectNode(object? item)
-        => SelectedNode = item as AbstractTreeNode;
+    {
+        SelectedNode   = item as AbstractTreeNode;
+        IsTemplateMode = false;  // 노드 선택 시 템플릿 모드 해제
+    }
 
-    // §7-1 ─ 라이브러리 연결 해제 커맨드 ─────────────────────
+    // §8-1 ─ 라이브러리 연결 해제 커맨드 ─────────────────────
 
-    /// <summary>선택된 Tag 의 스케일 연결 해제</summary>
     [RelayCommand]
     private void ClearScale()
     {
@@ -103,7 +112,6 @@ public partial class DeviceTreeViewModel : ObservableObject
             tag.ScaleEntryId = null;
     }
 
-    /// <summary>선택된 Tag 의 알람 연결 해제</summary>
     [RelayCommand]
     private void ClearAlarm()
     {
@@ -111,20 +119,14 @@ public partial class DeviceTreeViewModel : ObservableObject
             tag.AlarmEntryId = null;
     }
 
-    // §8 ─ 커맨드 (B안: 타입별 형제/하위 분리) ────────────────
+    // §9 ─ 커맨드 ─────────────────────────────────────────────
 
-    /*  ━━━ 확정 계층 규칙 (S-10 patch) ━━━
-     *
+    /*  ━━━ 확정 계층 규칙 ━━━
      *    그룹  하위: 그룹·장비·PLC
      *    장비  하위: 장비·PLC·Tag
      *    PLC   하위: PLC·장비·Tag
-     *    Tag   하위: 없음 (자식 불가)
-     *
-     *    공통: Tag 하위에는 어떤 노드도 추가 불가
-     *    Tag 위치: PLC 또는 장비 하위에만 배치 가능
+     *    Tag   하위: 없음
      */
-
-    // ── 그룹 ──────────────────────────────────────────────
 
     [RelayCommand]
     private void AddGroupSibling()
@@ -136,17 +138,11 @@ public partial class DeviceTreeViewModel : ObservableObject
     [RelayCommand]
     private void AddGroupChild()
     {
-        // Tag 하위에만 추가 불가
         if (SelectedNode is TagTreeNode)
-        {
-            _ShowWarning("⚠ Tag 하위에는 추가할 수 없습니다.");
-            return;
-        }
+        { _ShowWarning("⚠ Tag 하위에는 추가할 수 없습니다."); return; }
         var node = new GroupTreeNode($"그룹 {_CountAll<GroupTreeNode>() + 1}");
         _AddAsChild(node);
     }
-
-    // ── 장비 ──────────────────────────────────────────────
 
     [RelayCommand]
     private void AddDeviceSibling()
@@ -158,17 +154,11 @@ public partial class DeviceTreeViewModel : ObservableObject
     [RelayCommand]
     private void AddDeviceChild()
     {
-        // ★ S-10 patch: Tag 하위에만 불가 (PLC 하위 장비 허용)
         if (SelectedNode is TagTreeNode)
-        {
-            _ShowWarning("⚠ Tag 하위에는 장비를 추가할 수 없습니다.");
-            return;
-        }
+        { _ShowWarning("⚠ Tag 하위에는 장비를 추가할 수 없습니다."); return; }
         var node = new DeviceTreeNode($"장비 {_CountAll<DeviceTreeNode>() + 1}");
         _AddAsChild(node);
     }
-
-    // ── PLC ───────────────────────────────────────────────
 
     [RelayCommand]
     private void AddPlcSibling()
@@ -180,31 +170,17 @@ public partial class DeviceTreeViewModel : ObservableObject
     [RelayCommand]
     private void AddPlcChild()
     {
-        // ★ S-10 patch: Tag 하위에만 불가 (그룹 하위 PLC 허용)
         if (SelectedNode is TagTreeNode)
-        {
-            _ShowWarning("⚠ Tag 하위에는 PLC를 추가할 수 없습니다.");
-            return;
-        }
+        { _ShowWarning("⚠ Tag 하위에는 PLC를 추가할 수 없습니다."); return; }
         var node = new PlcTreeNode($"PLC {_CountAll<PlcTreeNode>() + 1}");
         _AddAsChild(node);
     }
 
-    // ── Tag ───────────────────────────────────────────────
-
-    /// <summary>
-    /// Tag 추가.
-    /// ① PLC / 장비 선택 → 해당 노드 하위에 추가
-    /// ② Tag 선택       → 같은 부모(형제)에 연속 추가
-    /// ③ 미선택 / 그룹  → 경고
-    /// ★ 부모는 반드시 PLC 또는 장비여야 함
-    /// </summary>
     [RelayCommand]
     private void AddTag()
     {
         var newTag = new TagTreeNode($"Tag {_CountAll<TagTreeNode>() + 1}");
 
-        // ① PLC / 장비 선택 → 하위 추가
         if (SelectedNode is PlcTreeNode or DeviceTreeNode)
         {
             SelectedNode.Children.Add(newTag);
@@ -212,92 +188,53 @@ public partial class DeviceTreeViewModel : ObservableObject
             return;
         }
 
-        // ② Tag 선택 → 같은 부모(형제)에 연속 추가
         if (SelectedNode is TagTreeNode)
         {
-            var (parentCol, parentNode) =
-                _FindParentCollection(RootNodes, SelectedNode);
-
-            if (parentCol is not null
-                && parentNode is PlcTreeNode or DeviceTreeNode)
+            var (parentCol, parentNode) = _FindParentCollection(RootNodes, SelectedNode);
+            if (parentCol is not null && parentNode is PlcTreeNode or DeviceTreeNode)
             {
                 var idx = parentCol.IndexOf(SelectedNode);
-                if (idx >= 0)
-                    parentCol.Insert(idx + 1, newTag);
-                else
-                    parentCol.Add(newTag);
-
+                if (idx >= 0) parentCol.Insert(idx + 1, newTag);
+                else          parentCol.Add(newTag);
                 SelectedNode = newTag;
                 return;
             }
         }
 
-        // ③ 그 외 → 경고
         if (SelectedNode is null)
             _ShowWarning("⚠ Tag 추가 전 PLC 또는 장비를 먼저 선택하세요.");
         else
             _ShowWarning("⚠ Tag 는 PLC 또는 장비 하위에만 추가할 수 있습니다.");
     }
 
-    // ── 삭제 ──────────────────────────────────────────────
-
     [RelayCommand]
     private void DeleteSelected()
     {
         if (SelectedNode is null) return;
-
-        if (RootNodes.Remove(SelectedNode))
-        {
-            SelectedNode = null;
-            return;
-        }
-
+        if (RootNodes.Remove(SelectedNode)) { SelectedNode = null; return; }
         _RemoveFromChildren(RootNodes, SelectedNode);
         SelectedNode = null;
     }
 
-    // §9 ─ 핵심 헬퍼: 형제 / 하위 추가 ──────────────────────
+    // §10 ─ 헬퍼 ─────────────────────────────────────────────
 
     private void _AddAsSibling(AbstractTreeNode newNode, Type[]? allowedParentTypes)
     {
-        if (SelectedNode is null)
-        {
-            _AppendToRoot(newNode);
-            return;
-        }
-
+        if (SelectedNode is null) { _AppendToRoot(newNode); return; }
         var (parentCol, parentNode) = _FindParentCollection(RootNodes, SelectedNode);
-
-        if (parentCol is null)
-        {
-            _AppendToRoot(newNode);
-            return;
-        }
-
+        if (parentCol is null) { _AppendToRoot(newNode); return; }
         if (allowedParentTypes is not null && parentNode is not null
             && !allowedParentTypes.Contains(parentNode.GetType()))
-        {
-            _ShowWarning("⚠ 해당 위치에는 추가할 수 없습니다.");
-            return;
-        }
-
+        { _ShowWarning("⚠ 해당 위치에는 추가할 수 없습니다."); return; }
         var idx = parentCol.IndexOf(SelectedNode);
-        if (idx >= 0)
-            parentCol.Insert(idx + 1, newNode);
-        else
-            parentCol.Add(newNode);
-
+        if (idx >= 0) parentCol.Insert(idx + 1, newNode);
+        else          parentCol.Add(newNode);
         SelectedNode = newNode;
     }
 
     private void _AddAsChild(AbstractTreeNode newNode)
     {
-        if (SelectedNode is null)
-        {
-            _AppendToRoot(newNode);
-            return;
-        }
-
+        if (SelectedNode is null) { _AppendToRoot(newNode); return; }
         SelectedNode.Children.Add(newNode);
         SelectedNode = newNode;
     }
@@ -316,8 +253,6 @@ public partial class DeviceTreeViewModel : ObservableObject
                 () => StatusMessage = string.Empty));
     }
 
-    // §10 ─ 내부 헬퍼: 부모 역추적 / 카운트 / 삭제 ───────────
-
     private (ObservableCollection<AbstractTreeNode>? collection,
              AbstractTreeNode? parent)
         _FindParentCollection(
@@ -326,9 +261,7 @@ public partial class DeviceTreeViewModel : ObservableObject
     {
         foreach (var node in nodes)
         {
-            if (node.Children.Contains(target))
-                return (node.Children, node);
-
+            if (node.Children.Contains(target)) return (node.Children, node);
             var (col, par) = _FindParentCollection(node.Children, target);
             if (col is not null) return (col, par);
         }

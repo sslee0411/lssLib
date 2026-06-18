@@ -3,9 +3,8 @@
 //  역할: NodeRed 캔버스 ViewModel
 //  S-11: 초기 구현
 //  S-12: 연결 드래그 상태 + RefreshConnections
-//  S-12B: DeviceTreeViewModel 주입
-//         DevicePaletteItems (장비 섹션 동적 제공)
-//         AddDeviceNodeCommand (장비 팔레트 더블클릭)
+//  S-12B: DeviceTreeViewModel 주입 + DevicePaletteItems + AddDeviceNodeCommand
+//  S-13B: ApplyTemplate() 추가 (템플릿 → Tag + BufferParser 자동생성)
 //  생성: 2026-06-17
 // ══════════════════════════════════════════════════════════
 
@@ -19,7 +18,7 @@ namespace IIoT.Studio.ViewModels;
 
 public partial class CanvasViewModel : ObservableObject
 {
-    // §1 ─ 주입 (★ S-12B) ────────────────────────────────────
+    // §1 ─ 주입 ───────────────────────────────────────────────
 
     private readonly DeviceTreeViewModel _deviceTreeVm;
 
@@ -28,9 +27,8 @@ public partial class CanvasViewModel : ObservableObject
     public CanvasViewModel(DeviceTreeViewModel deviceTreeVm)
     {
         _deviceTreeVm = deviceTreeVm;
-        // 장비 트리 변경 시 팔레트 자동 갱신
-        _deviceTreeVm.RootNodes.CollectionChanged += (_, _)
-            => OnPropertyChanged(nameof(DevicePaletteItems));
+        // ★ RootNodes.CollectionChanged 만으로는 하위 노드 추가 감지 불가
+        //   → MainViewModel.SwitchTab(1) 시 RefreshDevicePalette() 명시 호출
     }
 
     // §3 ─ 컬렉션 ─────────────────────────────────────────────
@@ -44,12 +42,16 @@ public partial class CanvasViewModel : ObservableObject
     public IReadOnlyList<PaletteItem> ProcessItems
         => CanvasNodeFactory.ProcessItems;
 
-    /// <summary>
-    /// 장비 팔레트 (★ S-12B) — 장비 트리의 PLC/장비를 동적으로 열거.
-    /// 트리 변경 시 자동 갱신.
-    /// </summary>
+    /// <summary>장비 팔레트 — 장비 트리의 PLC/장비를 동적 열거</summary>
     public IReadOnlyList<DevicePaletteItem> DevicePaletteItems
         => _CollectDevices(_deviceTreeVm.RootNodes).ToList();
+
+    /// <summary>
+    /// 장비 팔레트 강제 갱신.
+    /// ★ MainViewModel.SwitchTab(1) 진입 시 호출.
+    /// </summary>
+    public void RefreshDevicePalette()
+        => OnPropertyChanged(nameof(DevicePaletteItems));
 
     // §5 ─ 선택 노드 ──────────────────────────────────────────
 
@@ -79,12 +81,11 @@ public partial class CanvasViewModel : ObservableObject
     public bool IsDraggingConnection
         => !string.IsNullOrEmpty(DragConnectionPath);
 
-    public NodePort?              DragSourcePort { get; private set; }
-    public AbstractCanvasNode?    DragSourceNode { get; private set; }
+    public NodePort?           DragSourcePort { get; private set; }
+    public AbstractCanvasNode? DragSourceNode { get; private set; }
 
     // §8 ─ 노드 추가 커맨드 ───────────────────────────────────
 
-    /// <summary>처리 노드 팔레트 버튼 클릭</summary>
     [RelayCommand]
     private void AddNode(string nodeType)
     {
@@ -93,14 +94,9 @@ public partial class CanvasViewModel : ObservableObject
         _PlaceNode(node);
     }
 
-    /// <summary>
-    /// 장비 팔레트 항목 더블클릭 (★ S-12B).
-    /// DeviceId 기준으로 DeviceCanvasNode 생성 후 캔버스에 추가.
-    /// </summary>
     [RelayCommand]
     private void AddDeviceNode(DevicePaletteItem item)
     {
-        // 이미 캔버스에 있으면 중복 추가 방지
         if (Nodes.OfType<DeviceCanvasNode>()
                  .Any(n => n.LinkedDeviceId == item.DeviceId)) return;
 
@@ -205,7 +201,68 @@ public partial class CanvasViewModel : ObservableObject
         DragConnectionPath = string.Empty;
     }
 
-    // §13 ─ 내부 헬퍼 ─────────────────────────────────────────
+    // §13 ─ 태그 템플릿 적용 (★ S-13B) ──────────────────────
+
+    /// <summary>
+    /// DeviceNode에 템플릿 적용:
+    /// ① 장비 트리에 Tag 자동 추가
+    /// ② DeviceNode Tag 미리보기 갱신
+    /// ③ BufferParser 노드 자동 생성
+    /// ④ DeviceNode → BufferParser 연결선 자동 생성
+    /// </summary>
+    public void ApplyTemplate(
+        DeviceCanvasNode    targetNode,
+        TagTemplate         template,
+        int                 startAddress,
+        DeviceTreeViewModel deviceTree)
+    {
+        // ① 장비 트리에 Tag 추가
+        var treeNode = _FindTreeNode(deviceTree.RootNodes, targetNode.LinkedDeviceId);
+        if (treeNode is not null)
+        {
+            foreach (var item in template.Items)
+            {
+                var tag = new TagTreeNode(item.Name)
+                {
+                    Address  = item.CalcAddress(startAddress).ToString(),
+                    DataType = item.BufType,
+                    Unit     = item.Unit
+                };
+                treeNode.Children.Add(tag);
+            }
+        }
+
+        // ② DeviceNode Tag 미리보기 갱신
+        var tagInfos = template.Items.Select(i => new TagInfo(
+            Guid.NewGuid().ToString(),
+            i.Name,
+            i.CalcAddress(startAddress).ToString(),
+            i.BufType,
+            i.Unit));
+        targetNode.SyncTags(tagInfos);
+
+        // ③ BufferParser 노드 자동 생성
+        var parser = new BufferParserNode
+        {
+            Label  = $"{targetNode.Label} Parser",
+            Schema = _BuildSchema(template)
+        };
+        parser.X = targetNode.X + 200;
+        parser.Y = targetNode.Y;
+        Nodes.Add(parser);
+
+        // ④ 연결선 자동 생성
+        var srcPort = targetNode.OutputPorts.FirstOrDefault();
+        var tgtPort = parser.InputPorts.FirstOrDefault();
+        if (srcPort is not null && tgtPort is not null)
+        {
+            AddConnection(
+                targetNode.NodeId, srcPort.PortId,
+                parser.NodeId,     tgtPort.PortId);
+        }
+    }
+
+    // §14 ─ 내부 헬퍼 ─────────────────────────────────────────
 
     private void _PlaceNode(AbstractCanvasNode node)
     {
@@ -229,7 +286,22 @@ public partial class CanvasViewModel : ObservableObject
             tgt.InputPortX,  tgt.GetPortCanvasY(tgtPort?.Index ?? 0));
     }
 
-    /// <summary>장비 트리를 재귀 탐색해 PLC/장비 → DevicePaletteItem 변환</summary>
+    private static string _BuildSchema(TagTemplate template)
+        => string.Join(", ", template.Items.Select(i =>
+            $"{i.ByteOffset}:{i.BufType}:{i.Name}"));
+
+    private static AbstractTreeNode? _FindTreeNode(
+        IEnumerable<AbstractTreeNode> nodes, string id)
+    {
+        foreach (var n in nodes)
+        {
+            if (n.Id.ToString() == id) return n;
+            var found = _FindTreeNode(n.Children, id);
+            if (found is not null) return found;
+        }
+        return null;
+    }
+
     private static IEnumerable<DevicePaletteItem> _CollectDevices(
         IEnumerable<AbstractTreeNode> nodes)
     {
