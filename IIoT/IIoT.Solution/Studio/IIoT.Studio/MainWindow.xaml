@@ -1,13 +1,8 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · MainWindow.xaml
      역할: 메인 창
-     Base-2: 탭 버튼 Command 연결 + 본문 패널 5개 (임시 색상 블록)
-     S-10: 헤더에 [💾 전체 저장] 버튼 + IsSaveEnabled 바인딩 추가
-     규칙:
-       ① 모든 색상·스타일은 DynamicResource (StaticResource 금지)
-       ② BoolToVisibility: Window.Resources 에 직접 등록
-          (App.xaml 의존 금지 — 테마 전환 시 소멸 가능)
-       ③ CommandParameter 는 string ("0"~"4") — int 직접 사용 금지
+     S-11: 탭1 임시 색상 블록 → CanvasView 교체
+           xmlns:vCanvas 추가
      생성: 2026-06-15
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Studio.MainWindow"
@@ -18,6 +13,7 @@
         xmlns:vScale="clr-namespace:IIoT.Studio.Views.Scale"
         xmlns:vAlarm="clr-namespace:IIoT.Studio.Views.Alarm"
         xmlns:vComm="clr-namespace:IIoT.Studio.Views.Comm"
+        xmlns:vCanvas="clr-namespace:IIoT.Studio.Views.Canvas"
         Title="IIoT Studio — 설정"
         Width="1440" Height="900"
         MinWidth="1100" MinHeight="680"
@@ -25,9 +21,6 @@
         Background="{DynamicResource BgBrush}">
 
     <Window.Resources>
-        <!-- ★ BoolToVisibility: Window.Resources 에 직접 등록 필수
-             App.xaml 에 등록한 것은 테마 전환 시 소멸될 수 있으므로
-             각 Window / UserControl 에 별도 등록 -->
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </Window.Resources>
 
@@ -44,17 +37,17 @@
             <DockPanel Margin="16,0">
 
                 <!-- 우측: 저장 버튼 + 테마 버튼 -->
-                <!-- ★ S-10: 저장 버튼 추가 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="8,0,0,0">
 
-                    <!-- ★ S-10: 전체 저장 버튼 -->
                     <Button Content="💾  전체 저장"
                             Command="{Binding SaveCommand}"
                             IsEnabled="{Binding IsSaveEnabled}"
                             Style="{DynamicResource GhostBtn}"
+                            Foreground="{DynamicResource AccBrush}"
+                            FontWeight="SemiBold"
                             Padding="14,6"
                             Margin="0,0,8,0" />
 
@@ -65,19 +58,15 @@
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <TextBlock Text="IIoT"
-                               FontSize="20"
-                               FontWeight="Bold"
+                               FontSize="20" FontWeight="Bold"
                                Foreground="{DynamicResource AccBrush}" />
                     <TextBlock Text=" Studio"
-                               FontSize="20"
-                               FontWeight="Bold"
+                               FontSize="20" FontWeight="Bold"
                                Foreground="{DynamicResource TextBrush}" />
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="3"
-                            Padding="8,2"
-                            Margin="16,0,0,0"
+                            BorderThickness="1" CornerRadius="3"
+                            Padding="8,2" Margin="16,0,0,0"
                             VerticalAlignment="Center">
                         <TextBlock Text="{Binding SaveStatus}"
                                    FontSize="11"
@@ -100,79 +89,54 @@
                         VerticalAlignment="Stretch"
                         Margin="8,0,0,0">
 
-                <!-- ★ CommandParameter 반드시 string ("0"~"4")
-                     XAML 에서 숫자 리터럴은 string 으로 전달됨
-                     ViewModel SwitchTab(string) + int.TryParse 로 처리 -->
                 <Button Content="🖥  장비 관리"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="0"
                         Style="{DynamicResource GhostBtn}"
-                        Height="40"
-                        Padding="16,0" />
+                        Height="40" Padding="16,0" />
 
                 <Button Content="🔀  수집 흐름"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="1"
                         Style="{DynamicResource GhostBtn}"
-                        Height="40"
-                        Padding="16,0" />
+                        Height="40" Padding="16,0" />
 
                 <Button Content="📐  스케일"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="2"
                         Style="{DynamicResource GhostBtn}"
-                        Height="40"
-                        Padding="16,0" />
+                        Height="40" Padding="16,0" />
 
                 <Button Content="🔔  알람 규칙"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="3"
                         Style="{DynamicResource GhostBtn}"
-                        Height="40"
-                        Padding="16,0" />
+                        Height="40" Padding="16,0" />
 
                 <Button Content="🔌  통신 설정"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="4"
                         Style="{DynamicResource GhostBtn}"
-                        Height="40"
-                        Padding="16,0" />
+                        Height="40" Padding="16,0" />
 
             </StackPanel>
         </Border>
 
         <!-- ══════════════════════════════════════════════════
-             § 본문 (나머지 영역)
-             임시 색상 블록 — S-01 이후 실제 View 로 교체
+             § 본문
              ══════════════════════════════════════════════════ -->
         <Grid>
 
-            <!-- 탭 0: 장비 관리 — DeviceTreeView -->
+            <!-- 탭 0: 장비 관리 -->
             <Grid Visibility="{Binding IsDeviceTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vTree:DeviceTreeView DataContext="{Binding DeviceTree}" />
             </Grid>
 
-            <!-- 탭 1: 수집 흐름 -->
+            <!-- 탭 1: 수집 흐름 — ★ S-11: CanvasView 교체 -->
             <Grid Visibility="{Binding IsCanvasTab,
                                Converter={StaticResource BoolToVisibility}}">
-                <Rectangle Fill="#0F2D1A" />
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="🔀"
-                               FontSize="48"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="수집 흐름"
-                               FontSize="22"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,6" />
-                    <TextBlock Text="S-11 에서 NodeRed 스타일 캔버스가 추가됩니다."
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center" />
-                </StackPanel>
+                <vCanvas:CanvasView DataContext="{Binding Canvas}" />
             </Grid>
 
             <!-- 탭 2: 스케일 라이브러리 -->

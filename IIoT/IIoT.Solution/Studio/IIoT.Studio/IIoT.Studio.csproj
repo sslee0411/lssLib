@@ -29,9 +29,11 @@
 
 	<ItemGroup>
 	  <Folder Include="Core\Config\" />
+	  <Folder Include="Core\Canvas\" />
 	  <Folder Include="Models\" />
 	  <Folder Include="ViewModels\" />
 	  <Folder Include="Views\DeviceTree\" />
+	  <Folder Include="Views\Canvas\" />
 	</ItemGroup>
 
 </Project>

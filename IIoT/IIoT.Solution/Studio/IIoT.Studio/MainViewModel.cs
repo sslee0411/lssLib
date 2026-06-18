@@ -3,6 +3,8 @@
 //  역할: Studio 메인 ViewModel
 //  S-08: CommLibraryViewModel 주입 추가
 //  S-10: DeviceConfigService 주입 + SaveCommand 추가
+//  S-11: CanvasViewModel + CollectConfigService 주입
+//        SaveAsync → device.json + collect.json 동시 저장
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -17,29 +19,35 @@ public partial class MainViewModel : ObservableObject
 {
     // §1 ─ 서브 ViewModel ─────────────────────────────────────
 
-    public DeviceTreeViewModel DeviceTree { get; }
+    public DeviceTreeViewModel   DeviceTree   { get; }
     public ScaleLibraryViewModel ScaleLibrary { get; }
     public AlarmLibraryViewModel AlarmLibrary { get; }
-    public CommLibraryViewModel CommLibrary { get; }
+    public CommLibraryViewModel  CommLibrary  { get; }
+    public CanvasViewModel       Canvas       { get; }   // ★ S-11
 
     // §1-1 ─ 서비스 ───────────────────────────────────────────
 
-    private readonly DeviceConfigService _configSvc;  // ★ S-10
+    private readonly DeviceConfigService  _deviceSvc;
+    private readonly CollectConfigService _collectSvc;  // ★ S-11
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public MainViewModel(
-        DeviceTreeViewModel deviceTree,
+        DeviceTreeViewModel   deviceTree,
         ScaleLibraryViewModel scaleLibrary,
         AlarmLibraryViewModel alarmLibrary,
-        CommLibraryViewModel commLibrary,
-        DeviceConfigService configSvc)       // ★ S-10
+        CommLibraryViewModel  commLibrary,
+        CanvasViewModel       canvas,          // ★ S-11
+        DeviceConfigService   deviceSvc,
+        CollectConfigService  collectSvc)      // ★ S-11
     {
-        DeviceTree = deviceTree;
+        DeviceTree   = deviceTree;
         ScaleLibrary = scaleLibrary;
         AlarmLibrary = alarmLibrary;
-        CommLibrary = commLibrary;
-        _configSvc = configSvc;
+        CommLibrary  = commLibrary;
+        Canvas       = canvas;
+        _deviceSvc   = deviceSvc;
+        _collectSvc  = collectSvc;
     }
 
     // §3 ─ 저장 상태 ──────────────────────────────────────────
@@ -61,9 +69,9 @@ public partial class MainViewModel : ObservableObject
 
     public bool IsDeviceTab => ActiveTabIndex == 0;
     public bool IsCanvasTab => ActiveTabIndex == 1;
-    public bool IsScaleTab => ActiveTabIndex == 2;
-    public bool IsAlarmTab => ActiveTabIndex == 3;
-    public bool IsCommTab => ActiveTabIndex == 4;
+    public bool IsScaleTab  => ActiveTabIndex == 2;
+    public bool IsAlarmTab  => ActiveTabIndex == 3;
+    public bool IsCommTab   => ActiveTabIndex == 4;
 
     // §6 ─ 커맨드 ─────────────────────────────────────────────
 
@@ -74,13 +82,12 @@ public partial class MainViewModel : ObservableObject
             ActiveTabIndex = idx;
     }
 
-    // §7 ─ 저장 커맨드 (★ S-10) ─────────────────────────────
+    // §7 ─ 저장 커맨드 ────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSaveEnabled))]
     private bool _isSaving;
 
-    /// <summary>저장 버튼 활성화 여부 (저장 중에는 비활성)</summary>
     public bool IsSaveEnabled => !_isSaving;
 
     [RelayCommand]
@@ -88,20 +95,26 @@ public partial class MainViewModel : ObservableObject
     {
         if (_isSaving) return;
 
-        IsSaving = true;
+        IsSaving   = true;
         SaveStatus = "저장 중…";
 
-        var result = await _configSvc.SaveAsync();
+        // ★ S-11: device.json + collect.json 동시 저장
+        var deviceResult  = await _deviceSvc.SaveAsync();
+        var collectResult = await _collectSvc.SaveAsync();
 
-        SaveStatus = result.IsSuccess
-            ? $"✔ {result.Message}  ({DateTime.Now:HH:mm:ss})"
-            : $"✖ {result.Message}";
+        if (deviceResult.IsSuccess && collectResult.IsSuccess)
+            SaveStatus = $"✔ 저장 완료  ({DateTime.Now:HH:mm:ss})";
+        else
+        {
+            var failed = !deviceResult.IsSuccess
+                ? deviceResult.Message
+                : collectResult.Message;
+            SaveStatus = $"✖ {failed}";
+        }
 
         IsSaving = false;
 
-        // 3초 후 "준비됨" 복귀
         await Task.Delay(3000);
-        if (!_isSaving)
-            SaveStatus = "준비됨";
+        if (!_isSaving) SaveStatus = "준비됨";
     }
 }
