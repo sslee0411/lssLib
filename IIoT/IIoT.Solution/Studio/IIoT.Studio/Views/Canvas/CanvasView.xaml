@@ -2,10 +2,9 @@
      IIoT.Studio · Views/Canvas/CanvasView.xaml
      역할: NodeRed 스타일 수집 흐름 캔버스
      S-11: 초기 구현
-     S-11 fix: XDG0008 해결
-       - HexColorConverter → Core.Canvas 네임스페이스로 이동
-       - DataTemplate: AbstractCanvasNode(abstract) → x:Key 방식으로 변경
-       - PaletteItem DataTemplate: x:Key 방식으로 변경
+     S-12: 포트 점(●) UI 추가
+           드래그 연결선 미리보기 레이어 추가
+           포트는 노드 카드 좌(입력)/우(출력) 중앙에 표시
      생성: 2026-06-17
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.Canvas.CanvasView"
@@ -16,72 +15,122 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <canvas:HexColorConverter    x:Key="HexColor"/>
 
-        <!-- ★ HexColorConverter: Core.Canvas 네임스페이스 → canvas: 로 참조 가능 -->
-        <canvas:HexColorConverter x:Key="HexColor"/>
-
-        <!-- ── 노드 카드 DataTemplate (x:Key 방식 — abstract 클래스 DataType 회피) -->
+        <!-- ── 노드 카드 템플릿 ──────────────────────────────── -->
         <DataTemplate x:Key="NodeCardTemplate">
-            <Border Width="160" MinHeight="60"
-                    Background="{DynamicResource CardBrush}"
-                    BorderThickness="2"
-                    CornerRadius="6"
-                    Cursor="SizeAll">
+            <Grid>
+                <!-- 입력 포트 (좌측) — 노드에 InputPorts 있을 때만 -->
+                <ItemsControl ItemsSource="{Binding InputPorts}"
+                              IsHitTestVisible="True">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- 입력 포트 원: 노드 좌측 중앙 -->
+                            <Ellipse x:Name="InPort"
+                                     Width="14" Height="14"
+                                     Fill="{DynamicResource SurfaceBrush}"
+                                     Stroke="{DynamicResource AccBrush}"
+                                     StrokeThickness="2"
+                                     Cursor="Cross"
+                                     Tag="{Binding}"
+                                     Canvas.Left="-7"
+                                     Canvas.Top="23">
+                                <Ellipse.ToolTip>
+                                    <TextBlock Text="{Binding Label}"/>
+                                </Ellipse.ToolTip>
+                            </Ellipse>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                <!-- 선택 강조 테두리 색상 -->
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="BorderBrush"
-                                Value="{DynamicResource BorderBrush}"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                <Setter Property="BorderBrush"
-                                        Value="{DynamicResource AccBrush}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
+                <!-- 노드 카드 본체 -->
+                <Border Width="160" MinHeight="60"
+                        Background="{DynamicResource CardBrush}"
+                        BorderThickness="2"
+                        CornerRadius="6"
+                        Cursor="SizeAll"
+                        Margin="0,0,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="BorderBrush"
+                                    Value="{DynamicResource BorderBrush}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BorderBrush"
+                                            Value="{DynamicResource AccBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="6"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- 좌측 색상 바 -->
-                    <Border Grid.Column="0" CornerRadius="6,0,0,6">
-                        <Border.Background>
-                            <SolidColorBrush Color="{Binding CategoryColor,
-                                Converter={StaticResource HexColor}}"/>
-                        </Border.Background>
-                    </Border>
+                        <Border Grid.Column="0" CornerRadius="6,0,0,6">
+                            <Border.Background>
+                                <SolidColorBrush Color="{Binding CategoryColor,
+                                    Converter={StaticResource HexColor}}"/>
+                            </Border.Background>
+                        </Border>
 
-                    <!-- 노드 본문 -->
-                    <StackPanel Grid.Column="1" Margin="8,6">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <TextBlock Text="{Binding IconGlyph}"
-                                       FontSize="13" Margin="0,0,4,0"/>
-                            <TextBlock Text="{Binding Label}"
-                                       FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextBrush}"/>
+                        <StackPanel Grid.Column="1" Margin="8,6">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock Text="{Binding IconGlyph}"
+                                           FontSize="13" Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding Label}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextBrush}"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding NodeType}"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource Text2Brush}"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding NodeType}"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource Text2Brush}"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                    </Grid>
+                </Border>
+
+                <!-- 출력 포트 (우측) -->
+                <ItemsControl ItemsSource="{Binding OutputPorts}"
+                              IsHitTestVisible="True">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- 출력 포트 원: 노드 우측 중앙 -->
+                            <Ellipse x:Name="OutPort"
+                                     Width="14" Height="14"
+                                     Fill="{DynamicResource AccBrush}"
+                                     Stroke="{DynamicResource SurfaceBrush}"
+                                     StrokeThickness="2"
+                                     Cursor="Cross"
+                                     Tag="{Binding}"
+                                     Canvas.Left="153"
+                                     Canvas.Top="23">
+                                <Ellipse.ToolTip>
+                                    <TextBlock Text="{Binding Label}"/>
+                                </Ellipse.ToolTip>
+                            </Ellipse>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </Grid>
         </DataTemplate>
 
-        <!-- ── 팔레트 버튼 DataTemplate (x:Key 방식) -->
+        <!-- ── 팔레트 버튼 템플릿 ────────────────────────────── -->
         <DataTemplate x:Key="PaletteItemTemplate">
             <Button Command="{Binding DataContext.AddNodeCommand,
                         RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding NodeType}"
                     Style="{DynamicResource ToolbarBtn}"
                     HorizontalContentAlignment="Left"
-                    Margin="0,0,0,4"
-                    Padding="10,7">
+                    Margin="0,0,0,4" Padding="10,7">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="{Binding Icon}"
                                FontSize="14" Margin="0,0,6,0"
@@ -92,7 +141,6 @@
                 </StackPanel>
             </Button>
         </DataTemplate>
-
     </UserControl.Resources>
 
     <Grid>
@@ -126,7 +174,6 @@
             </ScrollViewer>
         </Grid>
 
-        <!-- 구분선 -->
         <Border Grid.Column="1" Background="{DynamicResource BorderBrush}"/>
 
         <!-- ══════════════════════════════════════════
@@ -139,7 +186,7 @@
                 <RowDefinition Height="24"/>
             </Grid.RowDefinitions>
 
-            <!-- 캔버스 툴바 -->
+            <!-- 툴바 -->
             <Border Grid.Row="0"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -158,8 +205,7 @@
                     <TextBlock Text="{Binding ScalePercent}"
                                FontSize="11"
                                Foreground="{DynamicResource Text2Brush}"
-                               VerticalAlignment="Center"
-                               Margin="0,0,12,0"/>
+                               VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <Button Content="🗑 선택 삭제"
                             Command="{Binding DeleteSelectedCommand}"
                             Style="{DynamicResource DangerBtn}"
@@ -187,7 +233,7 @@
                         </TransformGroup>
                     </Canvas.RenderTransform>
 
-                    <!-- 연결선 레이어 -->
+                    <!-- 레이어 1: 확정 연결선 -->
                     <ItemsControl x:Name="ConnectionsLayer"
                                   ItemsSource="{Binding Connections}">
                         <ItemsControl.ItemsPanel>
@@ -197,14 +243,24 @@
                             <DataTemplate>
                                 <Path Data="{Binding PathData}"
                                       Stroke="{DynamicResource AccBrush}"
-                                      StrokeThickness="2"
-                                      Fill="Transparent"
-                                      StrokeDashArray="4 2"/>
+                                      StrokeThickness="2.5"
+                                      Fill="Transparent"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- 노드 레이어 -->
+                    <!-- 레이어 2: 드래그 중 미리보기 연결선 (★ S-12) -->
+                    <Path x:Name="DragPreviewPath"
+                          Data="{Binding DragConnectionPath}"
+                          Stroke="{DynamicResource AccBrush}"
+                          StrokeThickness="2"
+                          StrokeDashArray="6 3"
+                          Fill="Transparent"
+                          Opacity="0.7"
+                          Visibility="{Binding IsDraggingConnection,
+                              Converter={StaticResource BoolToVisibility}}"/>
+
+                    <!-- 레이어 3: 노드 카드 -->
                     <ItemsControl x:Name="NodesLayer"
                                   ItemsSource="{Binding Nodes}"
                                   ItemTemplate="{StaticResource NodeCardTemplate}">
@@ -228,17 +284,15 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,1,0,0"
                     Padding="12,0">
-                <TextBlock FontSize="10"
-                           VerticalAlignment="Center"
+                <TextBlock FontSize="10" VerticalAlignment="Center"
                            Foreground="{DynamicResource Text2Brush}">
                     <Run Text="노드: "/>
                     <Run Text="{Binding Nodes.Count, Mode=OneWay}"/>
                     <Run Text="  |  연결선: "/>
                     <Run Text="{Binding Connections.Count, Mode=OneWay}"/>
-                    <Run Text="  |  휠: 줌  /  Space+드래그: 패닝  /  중간버튼: 패닝"/>
+                    <Run Text="  |  출력포트(●) 드래그 → 입력포트(○) 에 연결  |  휠: 줌  |  Space+드래그: 패닝"/>
                 </TextBlock>
             </Border>
-
         </Grid>
     </Grid>
 </UserControl>

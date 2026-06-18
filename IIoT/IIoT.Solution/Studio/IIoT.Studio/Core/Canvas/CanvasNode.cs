@@ -1,8 +1,10 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · Core/Canvas/CanvasNode.cs
 //  역할: NodeRed 스타일 캔버스 노드 모델
-//        AbstractCanvasNode + 6종 구체 노드
 //  S-11: 초기 구현
+//  S-12: 포트 위치 계산 프로퍼티 추가
+//        NodeWidth / NodeHeight 상수 추가
+//        GetInputPortY / GetOutputPortY 헬퍼 추가
 //  생성: 2026-06-17
 // ══════════════════════════════════════════════════════════
 
@@ -10,71 +12,115 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace IIoT.Studio.Core.Canvas;
 
-// §1 ─ 노드 방향 열거형 ───────────────────────────────────
+// §1 ─ 노드 크기 상수 ─────────────────────────────────────
+
+public static class NodeLayout
+{
+    public const double Width      = 160;
+    public const double HeaderH    = 60;   // 노드 카드 최소 높이
+    public const double PortRadius = 7;    // 포트 원 반지름
+    public const double PortOffsetY = 30;  // 헤더 중앙 (포트 Y 기본)
+}
+
+// §2 ─ 포트 방향 ──────────────────────────────────────────
 
 public enum PortDirection { Input, Output }
 
-// §2 ─ 포트 ──────────────────────────────────────────────
+// §3 ─ 포트 ──────────────────────────────────────────────
 
 public sealed class NodePort
 {
-    public string        PortId    { get; init; } = Guid.NewGuid().ToString();
-    public PortDirection Direction { get; init; }
-    public string        Label     { get; init; } = string.Empty;
-    public string        OwnerNodeId { get; set; } = string.Empty;
+    public string        PortId      { get; init; } = Guid.NewGuid().ToString();
+    public PortDirection Direction   { get; init; }
+    public string        Label       { get; init; } = string.Empty;
+    public string        OwnerNodeId { get; set;  } = string.Empty;
+    /// <summary>포트 인덱스 (같은 방향 내 순서, 0-based)</summary>
+    public int           Index       { get; init; }
 }
 
-// §3 ─ 추상 노드 ──────────────────────────────────────────
+// §4 ─ 추상 노드 ──────────────────────────────────────────
 
-/// <summary>캔버스 위 모든 노드의 추상 기반 클래스</summary>
 public abstract partial class AbstractCanvasNode : ObservableObject
 {
-    // §3-1 ─ 공통 프로퍼티 ───────────────────────────────────
+    // §4-1 ─ 공통 프로퍼티 ───────────────────────────────────
 
-    public string NodeId   { get; } = Guid.NewGuid().ToString();
-    public abstract string NodeType     { get; }   // "ModbusInput" 등
-    public abstract string DisplayLabel { get; }   // 팔레트 표시 이름
-    public abstract string IconGlyph    { get; }   // 이모지
-    public abstract string CategoryColor { get; }  // 카드 좌측 색상 (hex)
+    public string NodeId { get; } = Guid.NewGuid().ToString();
+    public abstract string NodeType      { get; }
+    public abstract string DisplayLabel  { get; }
+    public abstract string IconGlyph     { get; }
+    public abstract string CategoryColor { get; }
+
+    [ObservableProperty] private string _label = string.Empty;
 
     [ObservableProperty]
-    private string _label = string.Empty;
-
-    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OutputPortX))]
+    [NotifyPropertyChangedFor(nameof(InputPortX))]
     private double _x = 100;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(InputPortCanvasY))]
+    [NotifyPropertyChangedFor(nameof(OutputPortCanvasY))]
     private double _y = 100;
 
     [ObservableProperty]
     private bool _isSelected;
 
-    // §3-2 ─ 포트 ────────────────────────────────────────────
+    // §4-2 ─ 포트 위치 계산 프로퍼티 (캔버스 절대 좌표) ───────
+
+    /// <summary>입력 포트 X (노드 좌측 중앙)</summary>
+    public double InputPortX  => X;
+
+    /// <summary>출력 포트 X (노드 우측 중앙)</summary>
+    public double OutputPortX => X + NodeLayout.Width;
+
+    /// <summary>입력 포트 캔버스 Y (첫 번째 포트 기준)</summary>
+    public double InputPortCanvasY  => Y + NodeLayout.PortOffsetY;
+
+    /// <summary>출력 포트 캔버스 Y (첫 번째 포트 기준)</summary>
+    public double OutputPortCanvasY => Y + NodeLayout.PortOffsetY;
+
+    /// <summary>포트 인덱스별 Y 계산 (포트가 여러 개일 때)</summary>
+    public double GetPortCanvasY(int index) =>
+        Y + NodeLayout.PortOffsetY + index * 24;
+
+    // §4-3 ─ 포트 ────────────────────────────────────────────
 
     public List<NodePort> InputPorts  { get; } = new();
     public List<NodePort> OutputPorts { get; } = new();
 
-    // §3-3 ─ 생성자 ──────────────────────────────────────────
+    // §4-4 ─ 생성자 ──────────────────────────────────────────
 
-    protected AbstractCanvasNode()
-    {
-        Label = DisplayLabel;
-    }
+    protected AbstractCanvasNode() => Label = DisplayLabel;
 
-    // §3-4 ─ 포트 초기화 헬퍼 ───────────────────────────────
+    // §4-5 ─ 포트 초기화 헬퍼 ───────────────────────────────
 
     protected void AddInput(string label = "in")
-        => InputPorts.Add(new NodePort
-            { Direction = PortDirection.Input, Label = label, OwnerNodeId = NodeId });
+    {
+        var port = new NodePort
+        {
+            Direction   = PortDirection.Input,
+            Label       = label,
+            OwnerNodeId = NodeId,
+            Index       = InputPorts.Count
+        };
+        InputPorts.Add(port);
+    }
 
     protected void AddOutput(string label = "out")
-        => OutputPorts.Add(new NodePort
-            { Direction = PortDirection.Output, Label = label, OwnerNodeId = NodeId });
+    {
+        var port = new NodePort
+        {
+            Direction   = PortDirection.Output,
+            Label       = label,
+            OwnerNodeId = NodeId,
+            Index       = OutputPorts.Count
+        };
+        OutputPorts.Add(port);
+    }
 }
 
-// §4 ─ 구체 노드 6종 ─────────────────────────────────────
+// §5 ─ 구체 노드 6종 ─────────────────────────────────────
 
-/// <summary>Modbus TCP 레지스터 읽기 노드</summary>
 public sealed partial class ModbusInputNode : AbstractCanvasNode
 {
     public override string NodeType      => "ModbusInput";
@@ -82,16 +128,15 @@ public sealed partial class ModbusInputNode : AbstractCanvasNode
     public override string IconGlyph     => "🔌";
     public override string CategoryColor => "#2a7fd4";
 
-    [ObservableProperty] private string _host    = "192.168.0.1";
-    [ObservableProperty] private int    _port    = 502;
-    [ObservableProperty] private int    _slaveId = 1;
+    [ObservableProperty] private string _host     = "192.168.0.1";
+    [ObservableProperty] private int    _port     = 502;
+    [ObservableProperty] private int    _slaveId  = 1;
     [ObservableProperty] private string _register = "40001";
     [ObservableProperty] private int    _pollMs   = 1000;
 
     public ModbusInputNode() { AddOutput("데이터"); }
 }
 
-/// <summary>원시 TCP 수신 노드</summary>
 public sealed partial class TcpInputNode : AbstractCanvasNode
 {
     public override string NodeType      => "TcpInput";
@@ -105,7 +150,6 @@ public sealed partial class TcpInputNode : AbstractCanvasNode
     public TcpInputNode() { AddOutput("프레임"); }
 }
 
-/// <summary>바이너리 파싱 노드 (BufSchema)</summary>
 public sealed partial class BufferParserNode : AbstractCanvasNode
 {
     public override string NodeType      => "BufferParser";
@@ -118,7 +162,6 @@ public sealed partial class BufferParserNode : AbstractCanvasNode
     public BufferParserNode() { AddInput("프레임"); AddOutput("값"); }
 }
 
-/// <summary>스케일 변환 노드 (Raw → 공학단위)</summary>
 public sealed partial class ScaleFilterNode : AbstractCanvasNode
 {
     public override string NodeType      => "ScaleFilter";
@@ -135,7 +178,6 @@ public sealed partial class ScaleFilterNode : AbstractCanvasNode
     public ScaleFilterNode() { AddInput("raw"); AddOutput("공학값"); }
 }
 
-/// <summary>SQLite DB 저장 노드</summary>
 public sealed partial class DbOutputNode : AbstractCanvasNode
 {
     public override string NodeType      => "DbOutput";
@@ -148,7 +190,6 @@ public sealed partial class DbOutputNode : AbstractCanvasNode
     public DbOutputNode() { AddInput("값"); }
 }
 
-/// <summary>MQTT 브로커 발행 노드</summary>
 public sealed partial class MqttOutputNode : AbstractCanvasNode
 {
     public override string NodeType      => "MqttOutput";
@@ -163,11 +204,10 @@ public sealed partial class MqttOutputNode : AbstractCanvasNode
     public MqttOutputNode() { AddInput("값"); }
 }
 
-// §5 ─ 노드 팩토리 ────────────────────────────────────────
+// §6 ─ 노드 팩토리 ────────────────────────────────────────
 
 public static class CanvasNodeFactory
 {
-    /// <summary>nodeType 문자열로 노드 인스턴스 생성</summary>
     public static AbstractCanvasNode? Create(string nodeType) => nodeType switch
     {
         "ModbusInput"  => new ModbusInputNode(),
@@ -179,7 +219,6 @@ public static class CanvasNodeFactory
         _              => null
     };
 
-    /// <summary>팔레트용 전체 노드 타입 목록 (순서 고정)</summary>
     public static IReadOnlyList<PaletteItem> AllItems =>
     [
         new("ModbusInput",  "Modbus Input",  "🔌", "#2a7fd4"),
@@ -191,7 +230,7 @@ public static class CanvasNodeFactory
     ];
 }
 
-// §6 ─ 팔레트 항목 ────────────────────────────────────────
+// §7 ─ 팔레트 항목 ────────────────────────────────────────
 
 public sealed record PaletteItem(
     string NodeType,
