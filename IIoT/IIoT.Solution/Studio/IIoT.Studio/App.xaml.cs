@@ -1,9 +1,7 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · App.xaml.cs
-//  역할: 애플리케이션 시작·종료 진입점
-//  Base-0: 최소 구조
-//  S-10: DeviceConfigService DI 등록 추가
-//  S-11: CanvasViewModel + CollectConfigService DI 등록 추가
+//  S-11: CanvasViewModel + CollectConfigService DI 등록
+//  S-12B: CanvasViewModel 생성자에 DeviceTreeViewModel 주입
 //  생성: 2026-06-15
 // ══════════════════════════════════════════════════════════
 
@@ -27,10 +25,8 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-
         _themeSettings = new ThemeSettingsService();
         _themeSettings.LoadAndApply(this);
-
         _services = _ConfigureServices();
         _services.GetRequiredService<MainWindow>().Show();
     }
@@ -49,12 +45,21 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
-        // ── 서브 ViewModel ───────────────────────────────────
-        services.AddSingleton<DeviceTreeViewModel>();
+        // ── 라이브러리 ViewModel ─────────────────────────────
         services.AddSingleton<ScaleLibraryViewModel>();
         services.AddSingleton<AlarmLibraryViewModel>();
         services.AddSingleton<CommLibraryViewModel>();
-        services.AddSingleton<CanvasViewModel>();          // ★ S-11
+
+        // ── 장비 트리 ViewModel ──────────────────────────────
+        services.AddSingleton<DeviceTreeViewModel>(sp =>
+            new DeviceTreeViewModel(
+                sp.GetRequiredService<ScaleLibraryViewModel>(),
+                sp.GetRequiredService<AlarmLibraryViewModel>()));
+
+        // ── CanvasViewModel (★ S-12B: DeviceTreeViewModel 주입) ─
+        services.AddSingleton<CanvasViewModel>(sp =>
+            new CanvasViewModel(
+                sp.GetRequiredService<DeviceTreeViewModel>()));
 
         // ── 서비스 ───────────────────────────────────────────
         services.AddSingleton<DeviceConfigService>(sp =>
@@ -64,13 +69,11 @@ public partial class App : Application
                 sp.GetRequiredService<AlarmLibraryViewModel>(),
                 sp.GetRequiredService<CommLibraryViewModel>()));
 
-        // ★ S-11: CollectConfigService
         services.AddSingleton<CollectConfigService>(sp =>
             new CollectConfigService(
                 sp.GetRequiredService<CanvasViewModel>()));
 
-        // ── 메인 ViewModel ───────────────────────────────────
-        // ★ S-11: CanvasViewModel + CollectConfigService 파라미터 추가
+        // ── MainViewModel ────────────────────────────────────
         services.AddSingleton<MainViewModel>(sp =>
             new MainViewModel(
                 sp.GetRequiredService<DeviceTreeViewModel>(),

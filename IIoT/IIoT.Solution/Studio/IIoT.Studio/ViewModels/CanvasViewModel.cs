@@ -2,31 +2,56 @@
 //  IIoT.Studio · ViewModels/CanvasViewModel.cs
 //  역할: NodeRed 캔버스 ViewModel
 //  S-11: 초기 구현
-//  S-12: 연결 드래그 상태 추가
-//        RefreshConnections() — 노드 이동 시 연결선 PathData 갱신
-//        DragConnection — 드래그 중 미리보기 선
+//  S-12: 연결 드래그 상태 + RefreshConnections
+//  S-12B: DeviceTreeViewModel 주입
+//         DevicePaletteItems (장비 섹션 동적 제공)
+//         AddDeviceNodeCommand (장비 팔레트 더블클릭)
 //  생성: 2026-06-17
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IIoT.Studio.Core.Canvas;
+using IIoT.Studio.Models;
 using System.Collections.ObjectModel;
 
 namespace IIoT.Studio.ViewModels;
 
 public partial class CanvasViewModel : ObservableObject
 {
-    // §1 ─ 컬렉션 ─────────────────────────────────────────────
+    // §1 ─ 주입 (★ S-12B) ────────────────────────────────────
+
+    private readonly DeviceTreeViewModel _deviceTreeVm;
+
+    // §2 ─ 생성자 ─────────────────────────────────────────────
+
+    public CanvasViewModel(DeviceTreeViewModel deviceTreeVm)
+    {
+        _deviceTreeVm = deviceTreeVm;
+        // 장비 트리 변경 시 팔레트 자동 갱신
+        _deviceTreeVm.RootNodes.CollectionChanged += (_, _)
+            => OnPropertyChanged(nameof(DevicePaletteItems));
+    }
+
+    // §3 ─ 컬렉션 ─────────────────────────────────────────────
 
     public ObservableCollection<AbstractCanvasNode> Nodes       { get; } = new();
     public ObservableCollection<CanvasConnection>   Connections { get; } = new();
 
-    // §2 ─ 팔레트 ─────────────────────────────────────────────
+    // §4 ─ 팔레트 ─────────────────────────────────────────────
 
-    public IReadOnlyList<PaletteItem> PaletteItems => CanvasNodeFactory.AllItems;
+    /// <summary>처리 노드 팔레트 (고정)</summary>
+    public IReadOnlyList<PaletteItem> ProcessItems
+        => CanvasNodeFactory.ProcessItems;
 
-    // §3 ─ 선택 노드 ──────────────────────────────────────────
+    /// <summary>
+    /// 장비 팔레트 (★ S-12B) — 장비 트리의 PLC/장비를 동적으로 열거.
+    /// 트리 변경 시 자동 갱신.
+    /// </summary>
+    public IReadOnlyList<DevicePaletteItem> DevicePaletteItems
+        => _CollectDevices(_deviceTreeVm.RootNodes).ToList();
+
+    // §5 ─ 선택 노드 ──────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelection))]
@@ -34,7 +59,7 @@ public partial class CanvasViewModel : ObservableObject
 
     public bool HasSelection => SelectedNode is not null;
 
-    // §4 ─ 줌·패닝 ────────────────────────────────────────────
+    // §6 ─ 줌·패닝 ────────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ScalePercent))]
@@ -45,37 +70,52 @@ public partial class CanvasViewModel : ObservableObject
 
     public string ScalePercent => $"{Scale * 100:F0}%";
 
-    // §5 ─ 드래그 연결선 미리보기 (★ S-12) ───────────────────
+    // §7 ─ 드래그 연결선 미리보기 ────────────────────────────
 
-    /// <summary>포트 드래그 중 미리보기 선 PathData</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDraggingConnection))]
     private string _dragConnectionPath = string.Empty;
 
-    public bool IsDraggingConnection => !string.IsNullOrEmpty(DragConnectionPath);
+    public bool IsDraggingConnection
+        => !string.IsNullOrEmpty(DragConnectionPath);
 
-    /// <summary>드래그 시작 포트 (출발점 고정)</summary>
-    public NodePort? DragSourcePort { get; private set; }
+    public NodePort?              DragSourcePort { get; private set; }
+    public AbstractCanvasNode?    DragSourceNode { get; private set; }
 
-    /// <summary>드래그 시작 노드</summary>
-    public AbstractCanvasNode? DragSourceNode { get; private set; }
+    // §8 ─ 노드 추가 커맨드 ───────────────────────────────────
 
-    // §6 ─ 노드 추가 커맨드 ───────────────────────────────────
-
+    /// <summary>처리 노드 팔레트 버튼 클릭</summary>
     [RelayCommand]
     private void AddNode(string nodeType)
     {
         var node = CanvasNodeFactory.Create(nodeType);
         if (node is null) return;
-
-        node.X = 200 + (Nodes.Count % 5) * 30;
-        node.Y = 120 + (Nodes.Count / 5) * 100;
-
-        Nodes.Add(node);
-        SelectNode(node);
+        _PlaceNode(node);
     }
 
-    // §7 ─ 선택·삭제 ──────────────────────────────────────────
+    /// <summary>
+    /// 장비 팔레트 항목 더블클릭 (★ S-12B).
+    /// DeviceId 기준으로 DeviceCanvasNode 생성 후 캔버스에 추가.
+    /// </summary>
+    [RelayCommand]
+    private void AddDeviceNode(DevicePaletteItem item)
+    {
+        // 이미 캔버스에 있으면 중복 추가 방지
+        if (Nodes.OfType<DeviceCanvasNode>()
+                 .Any(n => n.LinkedDeviceId == item.DeviceId)) return;
+
+        var node = new DeviceCanvasNode
+        {
+            LinkedDeviceId   = item.DeviceId,
+            LinkedDeviceType = item.DeviceType,
+            LinkedDeviceName = item.Name,
+        };
+        node.Label = item.Name;
+        node.SyncTags(item.Tags);
+        _PlaceNode(node);
+    }
+
+    // §9 ─ 선택·삭제 ──────────────────────────────────────────
 
     public void SelectNode(AbstractCanvasNode? node)
     {
@@ -88,18 +128,16 @@ public partial class CanvasViewModel : ObservableObject
     private void DeleteSelected()
     {
         if (SelectedNode is null) return;
-
         var toRemove = Connections
             .Where(c => c.SourceNodeId == SelectedNode.NodeId
                      || c.TargetNodeId == SelectedNode.NodeId)
             .ToList();
         foreach (var c in toRemove) Connections.Remove(c);
-
         Nodes.Remove(SelectedNode);
         SelectedNode = null;
     }
 
-    // §8 ─ 줌 커맨드 ─────────────────────────────────────────
+    // §10 ─ 줌 커맨드 ─────────────────────────────────────────
 
     [RelayCommand] private void ZoomIn()  => Scale = Math.Min(3.0, Scale + 0.1);
     [RelayCommand] private void ZoomOut() => Scale = Math.Max(0.3, Scale - 0.1);
@@ -113,92 +151,46 @@ public partial class CanvasViewModel : ObservableObject
         OnPropertyChanged(nameof(ScalePercent));
     }
 
-    // §9 ─ 연결선 관리 (★ S-12) ──────────────────────────────
+    // §11 ─ 연결선 관리 ───────────────────────────────────────
 
-    /// <summary>연결선 추가 — 중복 방지</summary>
     public void AddConnection(
         string sourceNodeId, string sourcePortId,
         string targetNodeId, string targetPortId)
     {
-        // 같은 포트 간 중복 연결 방지
+        if (sourceNodeId == targetNodeId) return;
         if (Connections.Any(c =>
                 c.SourcePortId == sourcePortId &&
                 c.TargetPortId == targetPortId)) return;
 
-        // 자기 자신 연결 방지
-        if (sourceNodeId == targetNodeId) return;
-
         var conn = new CanvasConnection
         {
-            SourceNodeId = sourceNodeId,
-            SourcePortId = sourcePortId,
-            TargetNodeId = targetNodeId,
-            TargetPortId = targetPortId
+            SourceNodeId = sourceNodeId, SourcePortId = sourcePortId,
+            TargetNodeId = targetNodeId, TargetPortId = targetPortId
         };
-
-        // 초기 PathData 계산
-        var src = Nodes.FirstOrDefault(n => n.NodeId == sourceNodeId);
-        var tgt = Nodes.FirstOrDefault(n => n.NodeId == targetNodeId);
-        if (src is not null && tgt is not null)
-        {
-            var srcPort = src.OutputPorts.FirstOrDefault(p => p.PortId == sourcePortId);
-            var tgtPort = tgt.InputPorts.FirstOrDefault(p => p.PortId == targetPortId);
-            conn.UpdatePath(
-                src.OutputPortX, src.GetPortCanvasY(srcPort?.Index ?? 0),
-                tgt.InputPortX,  tgt.GetPortCanvasY(tgtPort?.Index ?? 0));
-        }
-
+        _RefreshOnePath(conn);
         Connections.Add(conn);
     }
 
-    /// <summary>
-    /// 노드 이동 후 해당 노드에 연결된 모든 연결선 PathData 갱신.
-    /// 코드비하인드 드래그 완료 시 호출.
-    /// </summary>
     public void RefreshConnections(string nodeId)
     {
-        var node = Nodes.FirstOrDefault(n => n.NodeId == nodeId);
-        if (node is null) return;
-
         foreach (var conn in Connections)
         {
-            if (conn.SourceNodeId == nodeId)
-            {
-                var tgt = Nodes.FirstOrDefault(n => n.NodeId == conn.TargetNodeId);
-                if (tgt is null) continue;
-                var srcPort = node.OutputPorts.FirstOrDefault(p => p.PortId == conn.SourcePortId);
-                var tgtPort = tgt.InputPorts.FirstOrDefault(p => p.PortId == conn.TargetPortId);
-                conn.UpdatePath(
-                    node.OutputPortX, node.GetPortCanvasY(srcPort?.Index ?? 0),
-                    tgt.InputPortX,   tgt.GetPortCanvasY(tgtPort?.Index ?? 0));
-            }
-            else if (conn.TargetNodeId == nodeId)
-            {
-                var src = Nodes.FirstOrDefault(n => n.NodeId == conn.SourceNodeId);
-                if (src is null) continue;
-                var srcPort = src.OutputPorts.FirstOrDefault(p => p.PortId == conn.SourcePortId);
-                var tgtPort = node.InputPorts.FirstOrDefault(p => p.PortId == conn.TargetPortId);
-                conn.UpdatePath(
-                    src.OutputPortX, src.GetPortCanvasY(srcPort?.Index ?? 0),
-                    node.InputPortX, node.GetPortCanvasY(tgtPort?.Index ?? 0));
-            }
+            if (conn.SourceNodeId == nodeId || conn.TargetNodeId == nodeId)
+                _RefreshOnePath(conn);
         }
     }
 
-    // §10 ─ 드래그 연결선 미리보기 (★ S-12) ─────────────────
+    // §12 ─ 드래그 미리보기 ───────────────────────────────────
 
-    /// <summary>포트 드래그 시작</summary>
     public void BeginConnectionDrag(AbstractCanvasNode node, NodePort port)
     {
         DragSourceNode = node;
         DragSourcePort = port;
     }
 
-    /// <summary>드래그 중 미리보기 선 업데이트</summary>
     public void UpdateConnectionDrag(double mouseX, double mouseY)
     {
         if (DragSourceNode is null || DragSourcePort is null) return;
-
         double x1 = DragSourceNode.OutputPortX;
         double y1 = DragSourceNode.GetPortCanvasY(DragSourcePort.Index);
         double cx = (x1 + mouseX) / 2;
@@ -206,11 +198,68 @@ public partial class CanvasViewModel : ObservableObject
             $"M {x1:F1},{y1:F1} C {cx:F1},{y1:F1} {cx:F1},{mouseY:F1} {mouseX:F1},{mouseY:F1}";
     }
 
-    /// <summary>드래그 취소 / 완료 후 정리</summary>
     public void EndConnectionDrag()
     {
         DragSourceNode     = null;
         DragSourcePort     = null;
         DragConnectionPath = string.Empty;
+    }
+
+    // §13 ─ 내부 헬퍼 ─────────────────────────────────────────
+
+    private void _PlaceNode(AbstractCanvasNode node)
+    {
+        node.X = 200 + (Nodes.Count % 5) * 30;
+        node.Y = 120 + (Nodes.Count / 5) * 120;
+        Nodes.Add(node);
+        SelectNode(node);
+    }
+
+    private void _RefreshOnePath(CanvasConnection conn)
+    {
+        var src = Nodes.FirstOrDefault(n => n.NodeId == conn.SourceNodeId);
+        var tgt = Nodes.FirstOrDefault(n => n.NodeId == conn.TargetNodeId);
+        if (src is null || tgt is null) return;
+
+        var srcPort = src.OutputPorts.FirstOrDefault(p => p.PortId == conn.SourcePortId);
+        var tgtPort = tgt.InputPorts.FirstOrDefault(p => p.PortId == conn.TargetPortId);
+
+        conn.UpdatePath(
+            src.OutputPortX, src.GetPortCanvasY(srcPort?.Index ?? 0),
+            tgt.InputPortX,  tgt.GetPortCanvasY(tgtPort?.Index ?? 0));
+    }
+
+    /// <summary>장비 트리를 재귀 탐색해 PLC/장비 → DevicePaletteItem 변환</summary>
+    private static IEnumerable<DevicePaletteItem> _CollectDevices(
+        IEnumerable<AbstractTreeNode> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            if (node is PlcTreeNode plc)
+            {
+                var tags = plc.Children
+                    .OfType<TagTreeNode>()
+                    .Select(t => new TagInfo(
+                        t.Id.ToString(), t.Name, t.Address,
+                        t.DataType, t.Unit ?? ""))
+                    .ToList();
+                yield return new DevicePaletteItem(
+                    plc.Id.ToString(), "PLC", plc.Name, tags);
+            }
+            else if (node is DeviceTreeNode dev)
+            {
+                var tags = dev.Children
+                    .OfType<TagTreeNode>()
+                    .Select(t => new TagInfo(
+                        t.Id.ToString(), t.Name, t.Address,
+                        t.DataType, t.Unit ?? ""))
+                    .ToList();
+                yield return new DevicePaletteItem(
+                    dev.Id.ToString(), "Device", dev.Name, tags);
+            }
+
+            foreach (var child in _CollectDevices(node.Children))
+                yield return child;
+        }
     }
 }
