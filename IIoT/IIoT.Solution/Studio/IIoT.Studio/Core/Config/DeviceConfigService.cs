@@ -3,7 +3,8 @@
 //  역할: device.json 저장 + .signal 파일 발행
 //        ViewModel → DTO 변환 → 원자적 파일 쓰기
 //  S-10: 초기 구현
-//  생성: 2026-06-17
+//  S-14 fix: [한글 깨짐] _jsonOpt에 Encoder 추가
+//  생성: 2026-06-17 / 수정: 2026-06-19
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Models;
@@ -11,6 +12,7 @@ using IIoT.Studio.ViewModels;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -22,10 +24,12 @@ public sealed class DeviceConfigService
 {
     // §1-1 ─ 직렬화 옵션 ─────────────────────────────────────
 
+    // ★ S-14 fix: Encoder 추가 → 한글·특수문자를 \uXXXX 이스케이프 없이 그대로 저장
     private static readonly JsonSerializerOptions _jsonOpt = new()
     {
         WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters    = { new JsonStringEnumConverter() },
+        Encoder       = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     // §1-2 ─ 경로 ─────────────────────────────────────────────
@@ -39,23 +43,23 @@ public sealed class DeviceConfigService
 
     // §1-3 ─ 주입된 ViewModel ─────────────────────────────────
 
-    private readonly DeviceTreeViewModel _treeVm;
+    private readonly DeviceTreeViewModel   _treeVm;
     private readonly ScaleLibraryViewModel _scaleVm;
     private readonly AlarmLibraryViewModel _alarmVm;
-    private readonly CommLibraryViewModel _commVm;
+    private readonly CommLibraryViewModel  _commVm;
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public DeviceConfigService(
-        DeviceTreeViewModel treeVm,
+        DeviceTreeViewModel   treeVm,
         ScaleLibraryViewModel scaleVm,
         AlarmLibraryViewModel alarmVm,
-        CommLibraryViewModel commVm)
+        CommLibraryViewModel  commVm)
     {
-        _treeVm = treeVm;
+        _treeVm  = treeVm;
         _scaleVm = scaleVm;
         _alarmVm = alarmVm;
-        _commVm = commVm;
+        _commVm  = commVm;
     }
 
     // §3 ─ 공개 메서드 ────────────────────────────────────────
@@ -107,15 +111,15 @@ public sealed class DeviceConfigService
         {
             root.ScaleLibrary.Add(new ScaleEntryDto
             {
-                Id = s.Id.ToString(),
-                Name = s.Name,
-                Mode = s.Mode.ToString(),
-                RawMin = s.RawMin,
-                RawMax = s.RawMax,
-                EngMin = s.EngMin,
-                EngMax = s.EngMax,
-                Expression = s.Expression ?? string.Empty,
-                Unit = s.Unit ?? string.Empty,
+                Id            = s.Id.ToString(),
+                Name          = s.Name,
+                Mode          = s.Mode.ToString(),
+                RawMin        = s.RawMin,
+                RawMax        = s.RawMax,
+                EngMin        = s.EngMin,
+                EngMax        = s.EngMax,
+                Expression    = s.Expression ?? string.Empty,
+                Unit          = s.Unit ?? string.Empty,
                 DecimalPlaces = s.DecimalPlaces
             });
         }
@@ -125,22 +129,22 @@ public sealed class DeviceConfigService
         {
             root.AlarmLibrary.Add(new AlarmEntryDto
             {
-                Id = a.Id.ToString(),
-                Name = a.Name,
-                Description = a.Description ?? string.Empty,
-                HhEnabled = a.HhEnabled,
-                HhValue = a.HhValue,
-                HhMessage = a.HhMessage ?? string.Empty,
-                HEnabled = a.HEnabled,
-                HValue = a.HValue,
-                HMessage = a.HMessage ?? string.Empty,
-                LEnabled = a.LEnabled,
-                LValue = a.LValue,
-                LMessage = a.LMessage ?? string.Empty,
-                LlEnabled = a.LlEnabled,
-                LlValue = a.LlValue,
-                LlMessage = a.LlMessage ?? string.Empty,
-                DelayMs = a.DelayMs,
+                Id              = a.Id.ToString(),
+                Name            = a.Name,
+                Description     = a.Description ?? string.Empty,
+                HhEnabled       = a.HhEnabled,
+                HhValue         = a.HhValue,
+                HhMessage       = a.HhMessage ?? string.Empty,
+                HEnabled        = a.HEnabled,
+                HValue          = a.HValue,
+                HMessage        = a.HMessage ?? string.Empty,
+                LEnabled        = a.LEnabled,
+                LValue          = a.LValue,
+                LMessage        = a.LMessage ?? string.Empty,
+                LlEnabled       = a.LlEnabled,
+                LlValue         = a.LlValue,
+                LlMessage       = a.LlMessage ?? string.Empty,
+                DelayMs         = a.DelayMs,
                 RecoveryDelayMs = a.RecoveryDelayMs
             });
         }
@@ -150,35 +154,35 @@ public sealed class DeviceConfigService
         {
             root.CommLibrary.Add(new CommEntryDto
             {
-                Id = c.Id.ToString(),
-                Name = c.Name,
-                Description = c.Description ?? string.Empty,
-                Type = c.Type.ToString(),
+                Id              = c.Id.ToString(),
+                Name            = c.Name,
+                Description     = c.Description ?? string.Empty,
+                Type            = c.Type.ToString(),
                 // Modbus TCP
-                Host = c.Host ?? string.Empty,
-                Port = c.Port,
-                SlaveId = c.SlaveId,
+                Host            = c.Host ?? string.Empty,
+                Port            = c.Port,
+                SlaveId         = c.SlaveId,
                 // Serial
-                ComPort = c.ComPort ?? string.Empty,
-                BaudRate = c.BaudRate,
-                Parity = c.Parity ?? string.Empty,
-                DataBits = c.DataBits,
-                StopBits = c.StopBits ?? string.Empty,
+                ComPort         = c.ComPort ?? string.Empty,
+                BaudRate        = c.BaudRate,
+                Parity          = c.Parity ?? string.Empty,
+                DataBits        = c.DataBits,
+                StopBits        = c.StopBits ?? string.Empty,
                 // MQTT
-                BrokerHost = c.BrokerHost ?? string.Empty,
-                BrokerPort = c.BrokerPort,
-                ClientId = c.ClientId ?? string.Empty,
-                Topic = c.Topic ?? string.Empty,
-                UseTls = c.UseTls,
-                MqttUser = c.MqttUser ?? string.Empty,
-                MqttPassword = c.MqttPassword ?? string.Empty,
+                BrokerHost      = c.BrokerHost ?? string.Empty,
+                BrokerPort      = c.BrokerPort,
+                ClientId        = c.ClientId ?? string.Empty,
+                Topic           = c.Topic ?? string.Empty,
+                UseTls          = c.UseTls,
+                MqttUser        = c.MqttUser ?? string.Empty,
+                MqttPassword    = c.MqttPassword ?? string.Empty,
                 // OPC-UA
-                EndpointUrl = c.EndpointUrl ?? string.Empty,
-                OpcUser = c.OpcUser ?? string.Empty,
-                OpcPassword = c.OpcPassword ?? string.Empty,
+                EndpointUrl     = c.EndpointUrl ?? string.Empty,
+                OpcUser         = c.OpcUser ?? string.Empty,
+                OpcPassword     = c.OpcPassword ?? string.Empty,
                 // 공통
-                PollMs = c.PollMs,
-                TimeoutMs = c.TimeoutMs,
+                PollMs          = c.PollMs,
+                TimeoutMs       = c.TimeoutMs,
                 RetryIntervalMs = c.RetryIntervalMs
             });
         }
@@ -190,7 +194,7 @@ public sealed class DeviceConfigService
     {
         var dto = new DeviceNodeDto
         {
-            Name = node.Name,
+            Name        = node.Name,
             Description = node.Description ?? string.Empty
         };
 
@@ -198,37 +202,36 @@ public sealed class DeviceConfigService
         {
             case GroupTreeNode g:
                 dto.NodeType = "Group";
-                dto.Id = g.Id.ToString();
+                dto.Id       = g.Id.ToString();
                 break;
 
             case DeviceTreeNode d:
-                dto.NodeType = "Device";
-                dto.Id = d.Id.ToString();
-                dto.Model = d.Model;
+                dto.NodeType     = "Device";
+                dto.Id           = d.Id.ToString();
+                dto.Model        = d.Model;
                 dto.Manufacturer = d.Manufacturer;
-                dto.Location = d.Location;
-                dto.CommType = d.CommType.ToString();
-                dto.Host = d.Host;
-                dto.Port = d.Port;
-                dto.PollMs = d.PollMs;
+                dto.Location     = d.Location;
+                dto.CommType     = d.CommType.ToString();
+                dto.Host         = d.Host;
+                dto.Port         = d.Port;
+                dto.PollMs       = d.PollMs;
                 break;
 
             case PlcTreeNode p:
                 dto.NodeType = "PLC";
-                dto.Id = p.Id.ToString();
+                dto.Id       = p.Id.ToString();
                 dto.CommType = p.CommType.ToString();
-                dto.Host = p.Host;
-                dto.Port = p.Port;
-                dto.PollMs = p.PollMs;
+                dto.Host     = p.Host;
+                dto.Port     = p.Port;
+                dto.PollMs   = p.PollMs;
                 break;
 
             case TagTreeNode t:
-                dto.NodeType = "Tag";
-                dto.Id = t.Id.ToString();
-                dto.Address = t.Address;
-                dto.DataType = t.DataType;
-                dto.Unit = t.Unit;
-                // S-09에서 추가된 라이브러리 연결 ID (없으면 null)
+                dto.NodeType     = "Tag";
+                dto.Id           = t.Id.ToString();
+                dto.Address      = t.Address;
+                dto.DataType     = t.DataType;
+                dto.Unit         = t.Unit;
                 dto.ScaleEntryId = t.ScaleEntryId?.ToString();
                 dto.AlarmEntryId = t.AlarmEntryId?.ToString();
                 break;
@@ -280,6 +283,6 @@ public sealed class DeviceConfigService
 
 public sealed record SaveResult(bool IsSuccess, string Message)
 {
-    public static SaveResult Ok(string path) => new(true, $"저장 완료: {Path.GetFileName(path)}");
+    public static SaveResult Ok(string path)    => new(true,  $"저장 완료: {Path.GetFileName(path)}");
     public static SaveResult Fail(string error) => new(false, $"저장 실패: {error}");
 }

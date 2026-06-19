@@ -4,8 +4,12 @@
 //        여러 Tag를 하나의 버퍼 스키마로 묶어
 //        시작주소만 입력하면 주소 자동 계산
 //  S-13B: 초기 구현
+//  S-14 fix: Items → ObservableCollection (List이면 AddItem 시 UI 갱신 안 됨)
 //  생성: 2026-06-18
+//  수정: 2026-06-19
 // ══════════════════════════════════════════════════════════
+
+using System.Collections.ObjectModel;
 
 namespace IIoT.Studio.Models;
 
@@ -24,7 +28,11 @@ public sealed class TagTemplate
     /// <summary>총 버퍼 바이트 수 (자동 계산 가능)</summary>
     public int TotalBytes     { get; set; }
 
-    public List<TagTemplateItem> Items { get; set; } = new();
+    // ★ S-14 fix: List<> → ObservableCollection<>
+    //   List 는 Add/Remove 해도 WPF INotifyCollectionChanged 발생 안 함
+    //   → ItemsControl/ListBox 가 갱신되지 않음
+    //   ObservableCollection 으로 교체하면 AddItem 즉시 UI 반영됨
+    public ObservableCollection<TagTemplateItem> Items { get; set; } = new();
 
     /// <summary>총 Modbus 레지스터 수 (TotalBytes / 2, 올림)</summary>
     public int TotalRegisters => (TotalBytes + 1) / 2;

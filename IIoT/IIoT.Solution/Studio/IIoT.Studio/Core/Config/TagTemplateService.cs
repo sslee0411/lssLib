@@ -2,13 +2,20 @@
 //  IIoT.Studio · Core/Config/TagTemplateService.cs
 //  역할: tag-templates.json 저장/로드
 //  S-13B: 초기 구현
-//  생성: 2026-06-18
+//  S-14 fix2: [이슈4] 한글 깨짐 수정
+//    System.Text.Json 기본값은 비ASCII 문자(한글 포함)를
+//    \uXXXX 유니코드 이스케이프로 직렬화함
+//    → Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping 추가
+//      한글·일본어·특수문자 등을 그대로 저장
+//  생성: 2026-06-18 / 수정: 2026-06-19
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Models;
 using System.IO;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 
 namespace IIoT.Studio.Core.Config;
 
@@ -22,9 +29,14 @@ public sealed class TagTemplateService
     public static string TemplatePath =>
         Path.Combine(ConfigDir, "tag-templates.json");
 
+    // ★ 이슈4 fix: UnsafeRelaxedJsonEscaping → 한글을 그대로 저장
+    //   JavaScriptEncoder.Default      → "온도" → "\uC628\uB3C4" (깨짐처럼 보임)
+    //   UnsafeRelaxedJsonEscaping      → "온도" → "온도" (정상)
+    //   Create(UnicodeRanges.All) 도 동일 효과이나 UnsafeRelaxed가 관용적
     private static readonly JsonSerializerOptions _opt = new()
     {
-        WriteIndented = true
+        WriteIndented = true,
+        Encoder       = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     // §2 ─ 저장 ───────────────────────────────────────────────

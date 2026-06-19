@@ -2,7 +2,10 @@
 //  IIoT.Studio · ViewModels/TagTemplateViewModel.cs
 //  역할: 태그 템플릿 목록 CRUD
 //  S-13B: 초기 구현
+//  S-14 fix: AddItem/DeleteItem 후 OnPropertyChanged(nameof(Selected)) 추가
+//            → Items가 ObservableCollection이어도 Selected 바인딩 재평가 필요
 //  생성: 2026-06-18
+//  수정: 2026-06-19
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -49,7 +52,7 @@ public partial class TagTemplateViewModel : ObservableObject
             Name        = $"템플릿 {Templates.Count + 1}",
             Description = string.Empty
         };
-        // 기본 항목 1개
+        // 기본 항목 1개 (ObservableCollection이므로 Add 즉시 반영)
         t.Items.Add(new TagTemplateItem
         {
             Name       = "Tag1",
@@ -80,10 +83,12 @@ public partial class TagTemplateViewModel : ObservableObject
     private void AddItem()
     {
         if (Selected is null) return;
-        var prev = Selected.Items.LastOrDefault();
+
+        var prev   = Selected.Items.LastOrDefault();
         var offset = prev is not null
             ? prev.ByteOffset + prev.ByteSize
             : 0;
+
         Selected.Items.Add(new TagTemplateItem
         {
             Name       = $"Tag{Selected.Items.Count + 1}",
@@ -91,6 +96,12 @@ public partial class TagTemplateViewModel : ObservableObject
             BufType    = "FloatLE"
         });
         Selected.TotalBytes = Selected.Items.Sum(i => i.ByteSize);
+
+        // ★ S-14 fix: Items(ObservableCollection)는 자동 갱신되지만
+        //   우측 편집기 헤더(총 바이트·항목 수)는 Selected 바인딩이라
+        //   Selected에 대한 PropertyChanged가 필요
+        OnPropertyChanged(nameof(Selected));
+
         _svc.Save(Templates);
     }
 
@@ -100,6 +111,10 @@ public partial class TagTemplateViewModel : ObservableObject
         if (Selected is null || item is null) return;
         Selected.Items.Remove(item);
         Selected.TotalBytes = Selected.Items.Sum(i => i.ByteSize);
+
+        // ★ S-14 fix: Selected 바인딩 재평가
+        OnPropertyChanged(nameof(Selected));
+
         _svc.Save(Templates);
     }
 

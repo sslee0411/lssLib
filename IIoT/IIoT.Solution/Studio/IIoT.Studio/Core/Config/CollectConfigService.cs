@@ -2,7 +2,8 @@
 //  IIoT.Studio · Core/Config/CollectConfigService.cs
 //  역할: collect.json 저장 + .signal 발행
 //  S-11: 초기 구현
-//  생성: 2026-06-17
+//  S-14 fix: [한글 깨짐] _jsonOpt에 Encoder 추가
+//  생성: 2026-06-17 / 수정: 2026-06-19
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Core.Canvas;
@@ -10,6 +11,7 @@ using IIoT.Studio.ViewModels;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -62,10 +64,12 @@ public sealed class CollectConfigService
 
     // §2-2 ─ 직렬화 옵션 ─────────────────────────────────────
 
+    // ★ S-14 fix: Encoder 추가 → 한글·특수문자를 \uXXXX 이스케이프 없이 그대로 저장
     private static readonly JsonSerializerOptions _jsonOpt = new()
     {
         WriteIndented = true,
-        Converters    = { new JsonStringEnumConverter() }
+        Converters    = { new JsonStringEnumConverter() },
+        Encoder       = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
     // §3 ─ 주입 ───────────────────────────────────────────────
@@ -149,6 +153,11 @@ public sealed class CollectConfigService
                     dto.Properties["Port"]   = mq.Port;
                     dto.Properties["Topic"]  = mq.Topic;
                     break;
+                case DeviceCanvasNode dc:
+                    dto.Properties["LinkedDeviceId"]   = dc.LinkedDeviceId;
+                    dto.Properties["LinkedDeviceType"] = dc.LinkedDeviceType;
+                    dto.Properties["LinkedDeviceName"] = dc.LinkedDeviceName;
+                    break;
             }
 
             root.Nodes.Add(dto);
@@ -179,17 +188,13 @@ public sealed class CollectConfigService
     {
         var tmp = path + ".tmp";
         var bak = path + ".bak";
+
         File.WriteAllText(tmp, content, Encoding.UTF8);
+
         if (File.Exists(path))
             File.Replace(tmp, path, bak);
         else
             File.Move(tmp, path);
-    }
-
-    private static string _ComputeSha256(string text)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(text));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     private static async Task _WriteSignalAsync()
@@ -198,5 +203,11 @@ public sealed class CollectConfigService
             SignalFilePath,
             DateTime.Now.ToString("O"),
             Encoding.UTF8);
+    }
+
+    private static string _ComputeSha256(string text)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(text));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }
