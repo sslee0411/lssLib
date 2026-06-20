@@ -5,7 +5,11 @@
 //  S-10: DeviceConfigService 주입 + SaveCommand 추가
 //  S-11: CanvasViewModel + CollectConfigService 주입
 //  S-12B: SwitchTab → 탭1 진입 시 Canvas.RefreshDevicePalette() 호출
-//  생성: 2026-06-15
+//  S-15B: HasUnsavedChanges 추가
+//         RootNodes/Canvas.Nodes/Library.Entries CollectionChanged 구독
+//         저장 완료 시 false 리셋
+//  S-19A: Ctrl+S → SaveCommand (XAML InputBinding으로 처리)
+//  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -48,12 +52,30 @@ public partial class MainViewModel : ObservableObject
         Canvas       = canvas;
         _deviceSvc   = deviceSvc;
         _collectSvc  = collectSvc;
+
+        // ★ S-15B: 변경 감지 구독
+        //   CollectionChanged: 노드 추가·삭제 시
+        //   [ObservableProperty] 필드 변경은 각 편집기에서 직접 HasUnsavedChanges=true
+        DeviceTree.RootNodes.CollectionChanged += (_, _) => HasUnsavedChanges = true;
+        Canvas.Nodes.CollectionChanged         += (_, _) => HasUnsavedChanges = true;
+        Canvas.Connections.CollectionChanged   += (_, _) => HasUnsavedChanges = true;
+        ScaleLibrary.Entries.CollectionChanged += (_, _) => HasUnsavedChanges = true;
+        AlarmLibrary.Entries.CollectionChanged += (_, _) => HasUnsavedChanges = true;
+        CommLibrary.Entries.CollectionChanged  += (_, _) => HasUnsavedChanges = true;
     }
 
     // §3 ─ 저장 상태 ──────────────────────────────────────────
 
     [ObservableProperty]
     private string _saveStatus = "준비됨";
+
+    // ★ S-15B: 미저장 여부 플래그
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UnsavedBadgeText))]
+    private bool _hasUnsavedChanges;
+
+    /// <summary>헤더 배지 텍스트 — HasUnsavedChanges=true 시 "● 미저장"</summary>
+    public string UnsavedBadgeText => HasUnsavedChanges ? "● 미저장" : string.Empty;
 
     // §4 ─ 탭 전환 ────────────────────────────────────────────
 
@@ -82,8 +104,6 @@ public partial class MainViewModel : ObservableObject
         ActiveTabIndex = idx;
 
         // ★ S-12B: 수집 흐름 탭 진입 시 장비 팔레트 강제 갱신
-        // RootNodes.CollectionChanged 재귀 구독 대신
-        // 탭 전환 시점에 한 번만 갱신 — 단순하고 안정적
         if (idx == 1)
             Canvas.RefreshDevicePalette();
     }
@@ -108,7 +128,11 @@ public partial class MainViewModel : ObservableObject
         var collectResult = await _collectSvc.SaveAsync();
 
         if (deviceResult.IsSuccess && collectResult.IsSuccess)
+        {
+            // ★ S-15B: 저장 성공 시 미저장 플래그 초기화
+            HasUnsavedChanges = false;
             SaveStatus = $"✔ 저장 완료  ({DateTime.Now:HH:mm:ss})";
+        }
         else
         {
             var failed = !deviceResult.IsSuccess
