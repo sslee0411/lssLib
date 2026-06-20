@@ -1,7 +1,8 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · App.xaml.cs
 //  S-14: DeviceTreeViewModel 생성자에 TagTemplateViewModel 추가
-//  생성: 2026-06-15
+//  S-15: OnStartup에서 설정 로드 (DeviceConfigLoader + CollectConfigLoader)
+//  생성: 2026-06-15 / 수정: 2026-06-19
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Core.Config;
@@ -26,8 +27,9 @@ public partial class App : Application
 
         var win = _services.GetRequiredService<MainWindow>();
 
-        win.Loaded += (_, _) =>
+        win.Loaded += async (_, _) =>
         {
+            // ── CanvasView 속성 주입 ─────────────────────────
             var canvasView = _FindCanvasView(win);
             if (canvasView is not null)
             {
@@ -37,6 +39,17 @@ public partial class App : Application
                 canvasView.DeviceTreeVm = deviceTreeVm;
                 canvasView.GetTemplates = () => tagTemplateVm.Templates;
             }
+
+            // ★ S-15: 설정 로드 — CanvasView 주입 이후에 실행
+            //   순서: ScaleLibrary → AlarmLibrary → CommLibrary → Tree → Canvas
+            var loader        = _services.GetRequiredService<DeviceConfigLoader>();
+            var collectLoader = _services.GetRequiredService<CollectConfigLoader>();
+
+            await loader.LoadAsync();         // device.json → ViewModel 복원
+            await collectLoader.LoadAsync();  // collect.json → CanvasViewModel 복원
+
+            // 캔버스 팔레트 갱신 (장비 트리 복원 후)
+            _services.GetRequiredService<CanvasViewModel>().RefreshDevicePalette();
         };
 
         win.Show();
@@ -57,7 +70,7 @@ public partial class App : Application
         services.AddSingleton<AlarmLibraryViewModel>();
         services.AddSingleton<CommLibraryViewModel>();
 
-        // ── 태그 템플릿 (★ S-14: DeviceTreeViewModel 주입 전 먼저 등록)
+        // ── 태그 템플릿 (★ S-14)
         services.AddSingleton<TagTemplateService>();
         services.AddSingleton<TagTemplateViewModel>(sp =>
             new TagTemplateViewModel(
@@ -68,14 +81,14 @@ public partial class App : Application
             new DeviceTreeViewModel(
                 sp.GetRequiredService<ScaleLibraryViewModel>(),
                 sp.GetRequiredService<AlarmLibraryViewModel>(),
-                sp.GetRequiredService<TagTemplateViewModel>()));   // ★ S-14
+                sp.GetRequiredService<TagTemplateViewModel>()));
 
-        // ── 캔버스 ───────────────────────────────────────────
+        // ── 캔버스
         services.AddSingleton<CanvasViewModel>(sp =>
             new CanvasViewModel(
                 sp.GetRequiredService<DeviceTreeViewModel>()));
 
-        // ── 저장 서비스 ──────────────────────────────────────
+        // ── 저장 서비스
         services.AddSingleton<DeviceConfigService>(sp =>
             new DeviceConfigService(
                 sp.GetRequiredService<DeviceTreeViewModel>(),
@@ -87,7 +100,19 @@ public partial class App : Application
             new CollectConfigService(
                 sp.GetRequiredService<CanvasViewModel>()));
 
-        // ── 메인 ViewModel ───────────────────────────────────
+        // ★ S-15: 로드 서비스 등록
+        services.AddSingleton<DeviceConfigLoader>(sp =>
+            new DeviceConfigLoader(
+                sp.GetRequiredService<DeviceTreeViewModel>(),
+                sp.GetRequiredService<ScaleLibraryViewModel>(),
+                sp.GetRequiredService<AlarmLibraryViewModel>(),
+                sp.GetRequiredService<CommLibraryViewModel>()));
+
+        services.AddSingleton<CollectConfigLoader>(sp =>
+            new CollectConfigLoader(
+                sp.GetRequiredService<CanvasViewModel>()));
+
+        // ── MainViewModel (파라미터 순서: DeviceTree, Scale, Alarm, Comm, Canvas, deviceSvc, collectSvc)
         services.AddSingleton<MainViewModel>(sp =>
             new MainViewModel(
                 sp.GetRequiredService<DeviceTreeViewModel>(),
@@ -98,18 +123,17 @@ public partial class App : Application
                 sp.GetRequiredService<DeviceConfigService>(),
                 sp.GetRequiredService<CollectConfigService>()));
 
-        // ── MainWindow ───────────────────────────────────────
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<MainViewModel>()));
 
         return services.BuildServiceProvider();
     }
 
-    private static Views.Canvas.CanvasView? _FindCanvasView(
-        System.Windows.DependencyObject parent)
+    // ── CanvasView 탐색 (비주얼 트리) ────────────────────────
+
+    private static Views.Canvas.CanvasView? _FindCanvasView(DependencyObject parent)
     {
-        for (int i = 0;
-             i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
         {
             var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
             if (child is Views.Canvas.CanvasView cv) return cv;
