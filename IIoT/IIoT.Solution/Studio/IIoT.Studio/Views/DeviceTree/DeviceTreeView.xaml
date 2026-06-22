@@ -7,13 +7,12 @@
        [이슈1] ＋Tag 버튼: Popup 없이 AddTagCommand 직접 실행 (누를 때마다 추가)
        [이슈2] TagTemplateManagerView Visibility 바인딩을
                ElementName=RootPanel 로 UserControl DataContext에 고정
-               → 코드비하인드에서 DataContext를 TagTemplateVm으로 교체해도
-                 Visibility 소스는 변하지 않음
+     S-17A: 툴바에 ▲ 위로 / ▼ 아래로 버튼 추가 (노드 순서 이동)
      규칙:
        ① UserControl.Resources → <UserControl> 직계 자식 필수
        ② DynamicResource 필수
        ③ TreeView SelectedItemChanged → 코드비하인드 vm.SelectNode() 호출
-     생성: 2026-06-15 / 수정: 2026-06-19
+     생성: 2026-06-15 / 수정: 2026-06-20
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.DeviceTree.DeviceTreeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -22,7 +21,6 @@
              xmlns:local="clr-namespace:IIoT.Studio.Views.DeviceTree"
              x:Name="RootPanel">
 
-    <!-- ★ UserControl.Resources: Grid/Border 밖, UserControl 직계 자식 필수 -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </UserControl.Resources>
@@ -46,7 +44,7 @@
             </Grid.RowDefinitions>
 
             <!-- ── 툴바 ──────────────────────────────────────
-                 DockPanel: 우측 고정(템플릿) + 좌측(그룹·장비·PLC·Tag·삭제)
+                 DockPanel: 우측 고정(템플릿) + 좌측(그룹·장비·PLC·Tag·삭제·▲▼)
             ─────────────────────────────────────────────── -->
             <Border Grid.Row="0"
                     Background="{DynamicResource CardBrush}"
@@ -55,7 +53,7 @@
                     Padding="4,5">
                 <DockPanel>
 
-                    <!-- ★ 우측 고정: 📋 템플릿 -->
+                    <!-- 우측 고정: 📋 템플릿 -->
                     <Button DockPanel.Dock="Right"
                             Content="📋 템플릿"
                             Command="{Binding ShowTemplateCommand}"
@@ -70,7 +68,7 @@
                             Background="{DynamicResource BorderBrush}"
                             Margin="4,5" />
 
-                    <!-- 좌측: 그룹·장비·PLC·Tag·삭제 -->
+                    <!-- 좌측: 그룹·장비·PLC·Tag·삭제·▲▼ -->
                     <StackPanel Orientation="Horizontal">
 
                         <!-- ══ 그룹 드롭다운 ══ -->
@@ -166,7 +164,7 @@
                             </Popup>
                         </Grid>
 
-                        <!-- ＋Tag: Popup 없이 직접 AddTagCommand 실행 -->
+                        <!-- ＋Tag -->
                         <Button Content="＋Tag"
                                 Command="{Binding AddTagCommand}"
                                 Style="{DynamicResource GhostBtn}"
@@ -184,6 +182,23 @@
                                 Style="{DynamicResource GhostBtn}"
                                 Padding="8,4" FontSize="13"
                                 ToolTip="선택 노드 삭제" />
+
+                        <!-- ★ S-17A: 구분선 + 위로/아래로 이동 버튼 -->
+                        <Border Width="1"
+                                Background="{DynamicResource BorderBrush}"
+                                Margin="4,6" />
+
+                        <Button Content="▲"
+                                Command="{Binding MoveUpCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="7,4" FontSize="11"
+                                ToolTip="선택 노드 위로 이동" />
+
+                        <Button Content="▼"
+                                Command="{Binding MoveDownCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="7,4" FontSize="11"
+                                ToolTip="선택 노드 아래로 이동" />
 
                     </StackPanel>
                 </DockPanel>
@@ -239,8 +254,7 @@
                 Background="{DynamicResource BorderBrush}" />
 
         <!-- ══════════════════════════════════════════════════
-             § 우측 편집기 패널 — Grid 레이어 방식
-             우선순위: IsTemplateMode(최상) > 노드편집기 > 미선택안내
+             § 우측 편집기 패널
              ══════════════════════════════════════════════════ -->
         <Grid Grid.Column="2"
               Background="{DynamicResource BgBrush}">
@@ -283,15 +297,7 @@
                 </ContentControl.Resources>
             </ContentControl>
 
-            <!-- ★ 이슈2 fix: TagTemplateManagerView
-                 [문제] 코드비하인드에서 TemplateManagerView.DataContext = vm.TagTemplateVm
-                        으로 교체하면, Visibility="{Binding IsTemplateMode}" 의 소스도
-                        TagTemplateVm 으로 바뀌어 IsTemplateMode를 찾지 못함 → 항상 Visible
-
-                 [해결] ElementName=RootPanel (UserControl x:Name) 을 통해
-                        Visibility 바인딩 소스를 UserControl.DataContext 로 고정
-                        → DataContext.IsTemplateMode = DeviceTreeViewModel.IsTemplateMode
-                        코드비하인드의 DataContext 교체가 Visibility에 영향 없음 -->
+            <!-- 3) 태그 템플릿 관리 뷰 -->
             <local:TagTemplateManagerView
                 x:Name="TemplateManagerView"
                 Background="{DynamicResource BgBrush}"

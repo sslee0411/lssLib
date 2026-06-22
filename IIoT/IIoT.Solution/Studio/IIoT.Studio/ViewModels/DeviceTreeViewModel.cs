@@ -4,8 +4,8 @@
 //  S-09 rev: 스케일·알람 라이브러리 VM 주입 추가
 //  S-10 patch: 계층 규칙 확정
 //  S-14: IsTemplateMode + ShowTemplateCommand 추가
-//        TagTemplateManagerView 전환용
-//  생성: 2026-06-15
+//  S-17A: MoveUpCommand / MoveDownCommand 추가 (노드 순서 이동)
+//  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,16 +19,16 @@ public partial class DeviceTreeViewModel : ObservableObject
 {
     // §1 ─ 라이브러리 참조 ────────────────────────────────────
 
-    public ScaleLibraryViewModel ScaleLibrary { get; }
-    public TagTemplateViewModel    TagTemplateVm { get; }
-    public AlarmLibraryViewModel AlarmLibrary { get; }
+    public ScaleLibraryViewModel ScaleLibrary  { get; }
+    public TagTemplateViewModel  TagTemplateVm { get; }
+    public AlarmLibraryViewModel AlarmLibrary  { get; }
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public DeviceTreeViewModel(
         ScaleLibraryViewModel scaleLibrary,
         AlarmLibraryViewModel alarmLibrary,
-        TagTemplateViewModel  tagTemplateVm)   // ★ S-14
+        TagTemplateViewModel  tagTemplateVm)
     {
         ScaleLibrary  = scaleLibrary;
         AlarmLibrary  = alarmLibrary;
@@ -58,6 +58,9 @@ public partial class DeviceTreeViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PlcEditor))]
     [NotifyPropertyChangedFor(nameof(TagEditor))]
     [NotifyPropertyChangedFor(nameof(ActiveEditor))]
+    // ★ S-17A fix: SelectedNode 변경 시 ▲▼ CanExecute 재평가
+    [NotifyCanExecuteChangedFor(nameof(MoveUpCommand))]
+    [NotifyCanExecuteChangedFor(nameof(MoveDownCommand))]
     private AbstractTreeNode? _selectedNode;
 
     // §5 ─ 선택 타입 판별 ─────────────────────────────────────
@@ -77,12 +80,8 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     public AbstractTreeNode? ActiveEditor => IsTemplateMode ? null : SelectedNode;
 
-    // §7 ─ 템플릿 모드 (★ S-14) ──────────────────────────────
+    // §7 ─ 템플릿 모드 (S-14) ─────────────────────────────────
 
-    /// <summary>
-    /// true 이면 우측 패널이 TagTemplateManagerView 로 전환됨.
-    /// DeviceTreeView ContentControl DataTemplate 에서 바인딩.
-    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNoneSelected))]
     [NotifyPropertyChangedFor(nameof(ActiveEditor))]
@@ -100,10 +99,8 @@ public partial class DeviceTreeViewModel : ObservableObject
     public void SelectNode(object? item)
     {
         SelectedNode   = item as AbstractTreeNode;
-        IsTemplateMode = false;  // 노드 선택 시 템플릿 모드 해제
+        IsTemplateMode = false;
     }
-
-    // §8-1 ─ 라이브러리 연결 해제 커맨드 ─────────────────────
 
     [RelayCommand]
     private void ClearScale()
@@ -119,14 +116,7 @@ public partial class DeviceTreeViewModel : ObservableObject
             tag.AlarmEntryId = null;
     }
 
-    // §9 ─ 커맨드 ─────────────────────────────────────────────
-
-    /*  ━━━ 확정 계층 규칙 ━━━
-     *    그룹  하위: 그룹·장비·PLC
-     *    장비  하위: 장비·PLC·Tag
-     *    PLC   하위: PLC·장비·Tag
-     *    Tag   하위: 없음
-     */
+    // §9 ─ 추가 커맨드 ────────────────────────────────────────
 
     [RelayCommand]
     private void AddGroupSibling()
@@ -216,7 +206,64 @@ public partial class DeviceTreeViewModel : ObservableObject
         SelectedNode = null;
     }
 
-    // §10 ─ 헬퍼 ─────────────────────────────────────────────
+    // §10 ─ ★ S-17A: 순서 이동 커맨드 ────────────────────────
+
+    /// <summary>
+    /// 선택 노드를 같은 부모 컬렉션 내에서 한 칸 위로 이동.
+    /// CanExecute: 노드가 선택돼 있고, 인덱스 > 0
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(_CanMoveUp))]
+    private void MoveUp()
+    {
+        if (SelectedNode is null) return;
+        var list = _GetParentList(SelectedNode);
+        if (list is null) return;
+        var idx = list.IndexOf(SelectedNode);
+        if (idx <= 0) return;
+        list.Move(idx, idx - 1);
+    }
+
+    private bool _CanMoveUp()
+    {
+        if (SelectedNode is null) return false;
+        var list = _GetParentList(SelectedNode);
+        if (list is null) return false;
+        return list.IndexOf(SelectedNode) > 0;
+    }
+
+    /// <summary>
+    /// 선택 노드를 같은 부모 컬렉션 내에서 한 칸 아래로 이동.
+    /// CanExecute: 노드가 선택돼 있고, 인덱스 < Count-1
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(_CanMoveDown))]
+    private void MoveDown()
+    {
+        if (SelectedNode is null) return;
+        var list = _GetParentList(SelectedNode);
+        if (list is null) return;
+        var idx = list.IndexOf(SelectedNode);
+        if (idx < 0 || idx >= list.Count - 1) return;
+        list.Move(idx, idx + 1);
+    }
+
+    private bool _CanMoveDown()
+    {
+        if (SelectedNode is null) return false;
+        var list = _GetParentList(SelectedNode);
+        if (list is null) return false;
+        var idx = list.IndexOf(SelectedNode);
+        return idx >= 0 && idx < list.Count - 1;
+    }
+
+    // §11 ─ 헬퍼 ─────────────────────────────────────────────
+
+    /// <summary>노드가 속한 부모 컬렉션 반환 (루트이면 RootNodes)</summary>
+    private ObservableCollection<AbstractTreeNode>? _GetParentList(AbstractTreeNode node)
+    {
+        if (RootNodes.Contains(node)) return RootNodes;
+        var (col, _) = _FindParentCollection(RootNodes, node);
+        return col;
+    }
 
     private void _AddAsSibling(AbstractTreeNode newNode, Type[]? allowedParentTypes)
     {

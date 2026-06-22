@@ -2,10 +2,10 @@
      IIoT.Studio · MainWindow.xaml
      역할: 메인 창
      S-11: 탭1 임시 색상 블록 → CanvasView 교체
-           xmlns:vCanvas 추가
-     S-15B: 헤더에 "● 미저장" 황색 배지 추가
+     S-15B: 헤더 "● 미저장" 황색 배지 추가
      S-19A: Window.InputBindings Ctrl+S → SaveCommand 추가
-     S-22: MainWindow.xaml.cs OnClosing 처리 (XAML 변경 없음)
+     S-19B: DockPanel.Dock="Bottom" 하단 상태바 추가
+            선택 노드 경로 / PLC수 / Tag수 / 마지막 저장 시각
      생성: 2026-06-15 / 수정: 2026-06-20
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Studio.MainWindow"
@@ -27,7 +27,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </Window.Resources>
 
-    <!-- ★ S-19A: Ctrl+S → SaveCommand 단축키 -->
+    <!-- ★ S-19A: Ctrl+S 단축키 -->
     <Window.InputBindings>
         <KeyBinding Key="S" Modifiers="Control"
                     Command="{Binding SaveCommand}" />
@@ -50,7 +50,6 @@
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="8,0,0,0">
-
                     <Button Content="💾  전체 저장"
                             Command="{Binding SaveCommand}"
                             IsEnabled="{Binding IsSaveEnabled}"
@@ -59,11 +58,10 @@
                             FontWeight="SemiBold"
                             Padding="14,6"
                             Margin="0,0,8,0" />
-
                     <uc:ThemePickerButton />
                 </StackPanel>
 
-                <!-- 좌측: 타이틀 + 저장 상태 배지 + ★ S-15B 미저장 배지 -->
+                <!-- 좌측: 타이틀 + 저장 상태 배지 + 미저장 배지 -->
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <TextBlock Text="IIoT"
@@ -73,7 +71,7 @@
                                FontSize="20" FontWeight="Bold"
                                Foreground="{DynamicResource TextBrush}" />
 
-                    <!-- 저장 상태 배지 (SaveStatus 텍스트) -->
+                    <!-- 저장 상태 -->
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1" CornerRadius="3"
@@ -84,7 +82,7 @@
                                    Foreground="{DynamicResource Text2Brush}" />
                     </Border>
 
-                    <!-- ★ S-15B: 미저장 배지 (HasUnsavedChanges=true 시만 표시) -->
+                    <!-- ★ S-15B: 미저장 배지 -->
                     <Border Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource YellowBrush}"
                             BorderThickness="1" CornerRadius="3"
@@ -101,6 +99,80 @@
             </DockPanel>
         </Border>
 
+        <!-- ★ S-19B: 하단 상태바 (DockPanel.Dock="Bottom" → 반드시 본문 Grid 앞에 선언) -->
+        <Border DockPanel.Dock="Bottom"
+                Height="26"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <DockPanel Margin="12,0">
+
+                <!-- 우측: 마지막 저장 시각 -->
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="저장: "
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}" />
+                    <TextBlock Text="{Binding LastSavedAt}"
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}" />
+                </StackPanel>
+
+                <!-- 구분선 우측 -->
+                <Border DockPanel.Dock="Right"
+                        Width="1" Margin="12,4"
+                        Background="{DynamicResource BorderBrush}" />
+
+                <!-- Tag수 -->
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Tag "
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}" />
+                    <TextBlock Text="{Binding TotalTagCount}"
+                               FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AccBrush}" />
+                    <TextBlock Text="개"
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}" />
+                </StackPanel>
+
+                <!-- 구분선 -->
+                <Border DockPanel.Dock="Right"
+                        Width="1" Margin="12,4"
+                        Background="{DynamicResource BorderBrush}" />
+
+                <!-- PLC수 -->
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="PLC "
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}" />
+                    <TextBlock Text="{Binding TotalPlcCount}"
+                               FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AccBrush}" />
+                    <TextBlock Text="개"
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}" />
+                </StackPanel>
+
+                <!-- 구분선 -->
+                <Border DockPanel.Dock="Right"
+                        Width="1" Margin="12,4"
+                        Background="{DynamicResource BorderBrush}" />
+
+                <!-- 좌측: 선택 노드 경로 -->
+                <TextBlock Text="{Binding StatusBarPath}"
+                           FontSize="10"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
         <!-- ══════════════════════════════════════════════════
              § 탭바 (40px)
              ══════════════════════════════════════════════════ -->
@@ -112,37 +184,31 @@
             <StackPanel Orientation="Horizontal"
                         VerticalAlignment="Stretch"
                         Margin="8,0,0,0">
-
                 <Button Content="🖥  장비 관리"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="0"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
-
                 <Button Content="🔀  수집 흐름"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="1"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
-
                 <Button Content="📐  스케일"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="2"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
-
                 <Button Content="🔔  알람 규칙"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="3"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
-
                 <Button Content="🔌  통신 설정"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="4"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
-
             </StackPanel>
         </Border>
 
@@ -150,39 +216,27 @@
              § 본문
              ══════════════════════════════════════════════════ -->
         <Grid>
-
-            <!-- 탭 0: 장비 관리 -->
             <Grid Visibility="{Binding IsDeviceTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vTree:DeviceTreeView DataContext="{Binding DeviceTree}" />
             </Grid>
-
-            <!-- 탭 1: 수집 흐름 -->
             <Grid Visibility="{Binding IsCanvasTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vCanvas:CanvasView DataContext="{Binding Canvas}" />
             </Grid>
-
-            <!-- 탭 2: 스케일 라이브러리 -->
             <Grid Visibility="{Binding IsScaleTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vScale:ScaleLibraryView DataContext="{Binding ScaleLibrary}" />
             </Grid>
-
-            <!-- 탭 3: 알람 라이브러리 -->
             <Grid Visibility="{Binding IsAlarmTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vAlarm:AlarmLibraryView DataContext="{Binding AlarmLibrary}" />
             </Grid>
-
-            <!-- 탭 4: 통신 라이브러리 -->
             <Grid Visibility="{Binding IsCommTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vComm:CommLibraryView DataContext="{Binding CommLibrary}" />
             </Grid>
-
         </Grid>
 
     </DockPanel>
-
 </Window>
