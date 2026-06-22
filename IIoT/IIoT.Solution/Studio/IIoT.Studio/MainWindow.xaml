@@ -49,11 +49,21 @@
                 BorderThickness="0,0,0,1">
             <DockPanel Margin="16,0">
 
-                <!-- 우측: 저장 버튼 + 테마 버튼 -->
+                <!-- 우측: CSV + 저장 버튼 + 테마 버튼 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="8,0,0,0">
+
+                    <!-- ★ S-20B: CSV 가져오기 버튼 -->
+                    <Button Content="📥 CSV"
+                            Command="{Binding ImportTagsCsvCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Foreground="{DynamicResource Text2Brush}"
+                            Padding="10,6"
+                            Margin="0,0,8,0"
+                            ToolTip="Tag 목록 CSV 파일 가져오기" />
+
                     <Button Content="💾  전체 저장"
                             Command="{Binding SaveCommand}"
                             IsEnabled="{Binding IsSaveEnabled}"

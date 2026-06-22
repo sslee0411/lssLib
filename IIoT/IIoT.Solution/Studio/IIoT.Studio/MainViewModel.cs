@@ -9,6 +9,7 @@
 //  S-19A: Ctrl+S → SaveCommand (XAML InputBinding)
 //  S-19B: StatusBarPath, TotalTagCount, TotalPlcCount, LastSavedAt 추가
 //  S-16: 저장 전 ValidationService 호출 추가
+//  S-20B: ImportTagsCsvCommand 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -18,6 +19,7 @@ using IIoT.Studio.Core.Config;
 using IIoT.Studio.Models;
 using IIoT.Studio.ViewModels;
 using IIoT.Studio.Views;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Windows;
 
@@ -40,6 +42,9 @@ public partial class MainViewModel : ObservableObject
 
     // ★ S-16: 유효성 검사 서비스
     private readonly ValidationService _validationSvc;
+
+    // ★ S-20B: CSV 가져오기 서비스
+    private readonly TagCsvImporter _csvImporter = new();
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
@@ -154,7 +159,56 @@ public partial class MainViewModel : ObservableObject
             Canvas.RefreshDevicePalette();
     }
 
-    // §8 ─ 저장 커맨드 ────────────────────────────────────────
+    // §9 ─ ★ S-20B: CSV 가져오기 커맨드 ─────────────────────
+
+    [RelayCommand]
+    private async Task ImportTagsCsvAsync()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title       = "Tag CSV 파일 선택",
+            Filter      = "CSV 파일 (*.csv)|*.csv|모든 파일 (*.*)|*.*",
+            Multiselect = false
+        };
+
+        if (dlg.ShowDialog() != true) return;
+
+        SaveStatus = "CSV 가져오는 중…";
+
+        var result = await Task.Run(() =>
+            _csvImporter.Import(dlg.FileName, DeviceTree.RootNodes));
+
+        if (result.IsSuccess)
+        {
+            HasUnsavedChanges = true;
+            SaveStatus        = $"✔ {result.Summary}";
+
+            if (result.Errors.Count > 0)
+            {
+                var errorText = string.Join("\n", result.Errors.Take(10));
+                MessageBox.Show(
+                    $"일부 행을 건너뛰었습니다:\n\n{errorText}",
+                    "CSV 가져오기 — 경고",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+        else
+        {
+            SaveStatus = "✖ CSV 가져오기 실패";
+            var errorText = string.Join("\n", result.Errors.Take(5));
+            MessageBox.Show(
+                $"가져오기에 실패했습니다:\n\n{errorText}",
+                "CSV 가져오기 — 오류",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+
+        await Task.Delay(3000);
+        if (!_isSaving) SaveStatus = "준비됨";
+    }
+
+    // §10 ─ 저장 커맨드 ───────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSaveEnabled))]
