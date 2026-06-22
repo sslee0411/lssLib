@@ -38,9 +38,10 @@
         <Grid Grid.Column="0"
               Background="{DynamicResource SurfaceBrush}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />   <!-- 툴바 -->
+                <RowDefinition Height="Auto" />   <!-- ★ S-17C 검색 바 -->
+                <RowDefinition Height="*" />      <!-- 트리 뷰 -->
+                <RowDefinition Height="Auto" />   <!-- 상태 메시지 -->
             </Grid.RowDefinitions>
 
             <!-- ── 툴바 (2행) ─────────────────────────────────
@@ -219,9 +220,66 @@
                 </Grid>
             </Border>
 
-            <!-- 트리 뷰 -->
-            <TreeView Grid.Row="1"
-                      ItemsSource="{Binding RootNodes}"
+            <!-- ★ S-17C: 검색 바 (Row 1) -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="6,4,6,4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- ★ 검색 TextBox + Placeholder 오버레이 -->
+                    <Grid Grid.Column="0">
+
+                        <!-- 실제 입력 TextBox -->
+                        <TextBox x:Name="SearchBox"
+                                 Text="{Binding SearchText,
+                                        UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource PropInput}"
+                                 FontSize="11"
+                                 Height="40"
+                                 Background="Transparent" />
+
+                        <!-- Placeholder — SearchText 없을 때만 표시 -->
+                        <TextBlock Text="🔍 이름 검색..."
+                                   FontSize="11"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   VerticalAlignment="Center"
+                                   Margin="10,0,0,0"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SearchText}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+
+                    <!-- ✕ 검색어 지우기 버튼 -->
+                    <Button Grid.Column="1"
+                            Content="✕"
+                            Command="{Binding ClearSearchCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="6,4" FontSize="11"
+                            Margin="4,0,0,0"
+                            ToolTip="검색어 지우기"
+                            Visibility="{Binding IsSearchActive,
+                                         Converter={StaticResource BoolToVisibility}}" />
+                </Grid>
+            </Border>
+
+            <!-- 트리 뷰 (Row 2) -->
+            <TreeView Grid.Row="2"
+                      ItemsSource="{Binding FilteredRootNodes}"
                       Background="{DynamicResource SurfaceBrush}"
                       BorderThickness="0"
                       SelectedItemChanged="TreeView_SelectedItemChanged">
@@ -288,7 +346,7 @@
             </TreeView>
 
             <!-- 상태 메시지 -->
-            <Border Grid.Row="2"
+            <Border Grid.Row="3"
                     Background="{DynamicResource CardBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,1,0,0"

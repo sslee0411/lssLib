@@ -5,6 +5,7 @@
 //  S-10 patch: 계층 규칙 확정
 //  S-14: IsTemplateMode + ShowTemplateCommand 추가
 //  S-17A: MoveUpCommand / MoveDownCommand 추가 (노드 순서 이동)
+//  S-17C: SearchText + FilteredRootNodes + ClearSearchCommand 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -33,6 +34,10 @@ public partial class DeviceTreeViewModel : ObservableObject
         ScaleLibrary  = scaleLibrary;
         AlarmLibrary  = alarmLibrary;
         TagTemplateVm = tagTemplateVm;
+
+        // ★ S-17C: RootNodes 변경 시 FilteredRootNodes 재계산
+        RootNodes.CollectionChanged +=
+            (_, _) => OnPropertyChanged(nameof(FilteredRootNodes));
     }
 
     // §3 ─ 루트 + 상태 메시지 ────────────────────────────────
@@ -44,6 +49,37 @@ public partial class DeviceTreeViewModel : ObservableObject
     private string _statusMessage = string.Empty;
 
     public bool IsStatusVisible => !string.IsNullOrEmpty(StatusMessage);
+
+    // §3-1 ─ ★ S-17C: 검색 ───────────────────────────────────
+
+    /// <summary>검색어. 변경 시 FilteredRootNodes 자동 재계산.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FilteredRootNodes))]
+    [NotifyPropertyChangedFor(nameof(IsSearchActive))]
+    private string _searchText = string.Empty;
+
+    /// <summary>검색 활성 여부 (✕ 버튼 표시 조건)</summary>
+    public bool IsSearchActive => !string.IsNullOrWhiteSpace(SearchText);
+
+    /// <summary>
+    /// 검색어 기반 필터 결과.
+    /// 빈 문자열 → RootNodes 전체.
+    /// 검색어 있음 → 이름에 검색어 포함된 노드 (부모 노드 포함) 표시.
+    /// ★ TreeView ItemsSource를 RootNodes 대신 이것으로 바인딩.
+    /// </summary>
+    public IEnumerable<AbstractTreeNode> FilteredRootNodes =>
+        string.IsNullOrWhiteSpace(SearchText)
+            ? RootNodes
+            : RootNodes.Where(n => _MatchSearch(n, SearchText));
+
+    /// <summary>검색어 초기화</summary>
+    [RelayCommand]
+    private void ClearSearch() => SearchText = string.Empty;
+
+    /// <summary>재귀 검색 — 자신 또는 하위 자식 중 이름에 검색어 포함 시 true</summary>
+    private static bool _MatchSearch(AbstractTreeNode node, string q) =>
+        node.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+        node.Children.Any(c => _MatchSearch(c, q));
 
     // §4 ─ 선택 노드 ──────────────────────────────────────────
 
