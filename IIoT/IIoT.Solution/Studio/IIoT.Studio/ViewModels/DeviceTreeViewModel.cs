@@ -6,6 +6,7 @@
 //  S-14: IsTemplateMode + ShowTemplateCommand 추가
 //  S-17A: MoveUpCommand / MoveDownCommand 추가 (노드 순서 이동)
 //  S-17C: SearchText + FilteredRootNodes + ClearSearchCommand 추가
+//  S-20A: CopyNodeCommand / PasteNodeCommand / _DeepCopy 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -35,7 +36,7 @@ public partial class DeviceTreeViewModel : ObservableObject
         AlarmLibrary  = alarmLibrary;
         TagTemplateVm = tagTemplateVm;
 
-        // ★ S-17C: RootNodes 변경 시 FilteredRootNodes 재계산
+        // S-17C: RootNodes 변경 시 FilteredRootNodes 재계산
         RootNodes.CollectionChanged +=
             (_, _) => OnPropertyChanged(nameof(FilteredRootNodes));
     }
@@ -50,33 +51,23 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     public bool IsStatusVisible => !string.IsNullOrEmpty(StatusMessage);
 
-    // §3-1 ─ ★ S-17C: 검색 ───────────────────────────────────
+    // §3-1 ─ S-17C: 검색 ─────────────────────────────────────
 
-    /// <summary>검색어. 변경 시 FilteredRootNodes 자동 재계산.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FilteredRootNodes))]
     [NotifyPropertyChangedFor(nameof(IsSearchActive))]
     private string _searchText = string.Empty;
 
-    /// <summary>검색 활성 여부 (✕ 버튼 표시 조건)</summary>
     public bool IsSearchActive => !string.IsNullOrWhiteSpace(SearchText);
 
-    /// <summary>
-    /// 검색어 기반 필터 결과.
-    /// 빈 문자열 → RootNodes 전체.
-    /// 검색어 있음 → 이름에 검색어 포함된 노드 (부모 노드 포함) 표시.
-    /// ★ TreeView ItemsSource를 RootNodes 대신 이것으로 바인딩.
-    /// </summary>
     public IEnumerable<AbstractTreeNode> FilteredRootNodes =>
         string.IsNullOrWhiteSpace(SearchText)
             ? RootNodes
             : RootNodes.Where(n => _MatchSearch(n, SearchText));
 
-    /// <summary>검색어 초기화</summary>
     [RelayCommand]
     private void ClearSearch() => SearchText = string.Empty;
 
-    /// <summary>재귀 검색 — 자신 또는 하위 자식 중 이름에 검색어 포함 시 true</summary>
     private static bool _MatchSearch(AbstractTreeNode node, string q) =>
         node.Name.Contains(q, StringComparison.OrdinalIgnoreCase) ||
         node.Children.Any(c => _MatchSearch(c, q));
@@ -94,9 +85,9 @@ public partial class DeviceTreeViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PlcEditor))]
     [NotifyPropertyChangedFor(nameof(TagEditor))]
     [NotifyPropertyChangedFor(nameof(ActiveEditor))]
-    // ★ S-17A fix: SelectedNode 변경 시 ▲▼ CanExecute 재평가
     [NotifyCanExecuteChangedFor(nameof(MoveUpCommand))]
     [NotifyCanExecuteChangedFor(nameof(MoveDownCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CopyNodeCommand))]
     private AbstractTreeNode? _selectedNode;
 
     // §5 ─ 선택 타입 판별 ─────────────────────────────────────
@@ -242,12 +233,8 @@ public partial class DeviceTreeViewModel : ObservableObject
         SelectedNode = null;
     }
 
-    // §10 ─ ★ S-17A: 순서 이동 커맨드 ────────────────────────
+    // §10 ─ S-17A: 순서 이동 커맨드 ──────────────────────────
 
-    /// <summary>
-    /// 선택 노드를 같은 부모 컬렉션 내에서 한 칸 위로 이동.
-    /// CanExecute: 노드가 선택돼 있고, 인덱스 > 0
-    /// </summary>
     [RelayCommand(CanExecute = nameof(_CanMoveUp))]
     private void MoveUp()
     {
@@ -267,10 +254,6 @@ public partial class DeviceTreeViewModel : ObservableObject
         return list.IndexOf(SelectedNode) > 0;
     }
 
-    /// <summary>
-    /// 선택 노드를 같은 부모 컬렉션 내에서 한 칸 아래로 이동.
-    /// CanExecute: 노드가 선택돼 있고, 인덱스 < Count-1
-    /// </summary>
     [RelayCommand(CanExecute = nameof(_CanMoveDown))]
     private void MoveDown()
     {
@@ -293,7 +276,6 @@ public partial class DeviceTreeViewModel : ObservableObject
 
     // §11 ─ 헬퍼 ─────────────────────────────────────────────
 
-    /// <summary>노드가 속한 부모 컬렉션 반환 (루트이면 RootNodes)</summary>
     private ObservableCollection<AbstractTreeNode>? _GetParentList(AbstractTreeNode node)
     {
         if (RootNodes.Contains(node)) return RootNodes;
@@ -378,5 +360,99 @@ public partial class DeviceTreeViewModel : ObservableObject
             if (_RemoveFromChildren(node.Children, target)) return true;
         }
         return false;
+    }
+
+    // §12 ─ ★ S-20A: 복사·붙여넣기 커맨드 ───────────────────
+
+    private AbstractTreeNode? _clipboardNode;
+
+    [RelayCommand(CanExecute = nameof(_CanCopy))]
+    private void CopyNode()
+    {
+        if (SelectedNode is null) return;
+        _clipboardNode = _DeepCopy(SelectedNode, isCopy: true);
+        _ShowWarning($"📋 '{SelectedNode.Name}' 복사됨 — Ctrl+V 로 붙여넣기");
+
+        // PasteNodeCommand CanExecute 재평가
+        PasteNodeCommand.NotifyCanExecuteChanged();
+    }
+
+    private bool _CanCopy() => SelectedNode is not null;
+
+    [RelayCommand(CanExecute = nameof(_CanPaste))]
+    private void PasteNode()
+    {
+        if (_clipboardNode is null) return;
+
+        // 매번 새 복사본 생성 (여러 번 붙여넣기 지원)
+        var newNode = _DeepCopy(_clipboardNode, isCopy: false);
+
+        if (SelectedNode is null)
+        {
+            RootNodes.Add(newNode);
+        }
+        else if (SelectedNode is GroupTreeNode)
+        {
+            SelectedNode.Children.Add(newNode);
+        }
+        else
+        {
+            var (parentCol, _) = _FindParentCollection(RootNodes, SelectedNode);
+            var list = parentCol ?? RootNodes;
+            var idx  = list.IndexOf(SelectedNode);
+            if (idx >= 0) list.Insert(idx + 1, newNode);
+            else          list.Add(newNode);
+        }
+
+        SelectedNode = newNode;
+    }
+
+    private bool _CanPaste() => _clipboardNode is not null;
+
+    private static AbstractTreeNode _DeepCopy(AbstractTreeNode src, bool isCopy)
+    {
+        var suffix = isCopy ? " (복사본)" : string.Empty;
+
+        AbstractTreeNode copy = src switch
+        {
+            GroupTreeNode g => new GroupTreeNode(g.Name + suffix)
+            {
+                Description = g.Description
+            },
+            DeviceTreeNode d => new DeviceTreeNode(d.Name + suffix)
+            {
+                Description  = d.Description,
+                Model        = d.Model,
+                Manufacturer = d.Manufacturer,
+                Location     = d.Location,
+                CommType     = d.CommType,
+                Host         = d.Host,
+                Port         = d.Port,
+                PollMs       = d.PollMs
+            },
+            PlcTreeNode p => new PlcTreeNode(p.Name + suffix)
+            {
+                Description = p.Description,
+                CommType    = p.CommType,
+                Host        = p.Host,
+                Port        = p.Port,
+                PollMs      = p.PollMs
+            },
+            TagTreeNode t => new TagTreeNode(t.Name + suffix)
+            {
+                Description  = t.Description,
+                Address      = t.Address,
+                DataType     = t.DataType,
+                Unit         = t.Unit,
+                ScaleEntryId = t.ScaleEntryId,
+                AlarmEntryId = t.AlarmEntryId
+            },
+            _ => new GroupTreeNode(src.Name + suffix)
+        };
+
+        foreach (var child in src.Children)
+            copy.Children.Add(_DeepCopy(child, isCopy: false));
+
+        return copy;
     }
 }

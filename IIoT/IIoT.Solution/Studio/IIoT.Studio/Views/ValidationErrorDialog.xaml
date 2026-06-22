@@ -1,0 +1,145 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Studio · Views/ValidationErrorDialog.xaml
+     역할: 저장 전 유효성 검사 결과 팝업
+     S-16: 신규
+     생성: 2026-06-20
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.Studio.Views.ValidationErrorDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="설정 유효성 검사 결과"
+        Width="600" Height="420"
+        MinHeight="300"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Background="{DynamicResource BgBrush}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />   <!-- 요약 헤더 -->
+            <RowDefinition Height="*" />      <!-- 목록 -->
+            <RowDefinition Height="1" />      <!-- 구분선 -->
+            <RowDefinition Height="Auto" />   <!-- 버튼 -->
+        </Grid.RowDefinitions>
+
+        <!-- 요약 헤더 -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="TxtSummary"
+                           FontSize="13" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="  —  항목을 클릭하면 해당 노드로 이동합니다."
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- 오류·경고 목록 -->
+        <ListView x:Name="IssueList"
+                  Grid.Row="1"
+                  Background="{DynamicResource BgBrush}"
+                  BorderThickness="0"
+                  SelectionMode="Single"
+                  MouseDoubleClick="OnIssueDoubleClick">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                    <Setter Property="BorderBrush"
+                            Value="{DynamicResource BorderBrush}"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="12,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 심각도 뱃지 -->
+                        <Border Grid.Column="0"
+                                CornerRadius="3"
+                                Padding="6,2"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background"
+                                            Value="{DynamicResource AccFaintBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Severity}"
+                                                     Value="Error">
+                                            <Setter Property="Background"
+                                                    Value="{DynamicResource RedBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding SeverityLabel}"
+                                       FontSize="10" FontWeight="SemiBold"
+                                       Foreground="White" />
+                        </Border>
+
+                        <!-- 메시지 -->
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="{Binding Message}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding NodePath}"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- 구분선 -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource BorderBrush}" />
+
+        <!-- 버튼 영역 -->
+        <DockPanel Grid.Row="3" Margin="16,10">
+
+            <!-- 좌측: 경고 무시하고 저장 체크박스 -->
+            <CheckBox x:Name="ChkIgnoreWarnings"
+                      DockPanel.Dock="Left"
+                      Content="경고는 무시하고 저장"
+                      FontSize="11"
+                      Foreground="{DynamicResource Text2Brush}"
+                      VerticalAlignment="Center" />
+
+            <!-- 우측: 취소 / 저장 버튼 -->
+            <StackPanel DockPanel.Dock="Right"
+                        Orientation="Horizontal">
+                <Button Content="취소"
+                        Style="{DynamicResource GhostBtn}"
+                        Padding="16,7" Margin="0,0,8,0"
+                        IsCancel="True"
+                        Click="OnCancel" />
+                <Button x:Name="BtnSave"
+                        Content="✔ 저장"
+                        Style="{DynamicResource ToolbarBtn}"
+                        Padding="16,7"
+                        Click="OnSave" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

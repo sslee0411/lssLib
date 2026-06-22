@@ -8,6 +8,7 @@
 //  S-15B: HasUnsavedChanges + CollectionChanged 구독 + 저장 시 리셋
 //  S-19A: Ctrl+S → SaveCommand (XAML InputBinding)
 //  S-19B: StatusBarPath, TotalTagCount, TotalPlcCount, LastSavedAt 추가
+//  S-16: 저장 전 ValidationService 호출 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -16,7 +17,9 @@ using CommunityToolkit.Mvvm.Input;
 using IIoT.Studio.Core.Config;
 using IIoT.Studio.Models;
 using IIoT.Studio.ViewModels;
+using IIoT.Studio.Views;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace IIoT.Studio;
 
@@ -34,6 +37,9 @@ public partial class MainViewModel : ObservableObject
 
     private readonly DeviceConfigService  _deviceSvc;
     private readonly CollectConfigService _collectSvc;
+
+    // ★ S-16: 유효성 검사 서비스
+    private readonly ValidationService _validationSvc;
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
@@ -53,6 +59,9 @@ public partial class MainViewModel : ObservableObject
         Canvas       = canvas;
         _deviceSvc   = deviceSvc;
         _collectSvc  = collectSvc;
+
+        // ★ S-16: ValidationService 초기화
+        _validationSvc = new ValidationService(DeviceTree, ScaleLibrary);
 
         // ★ S-15B: 변경 감지 구독
         DeviceTree.RootNodes.CollectionChanged += (_, _) =>
@@ -158,6 +167,20 @@ public partial class MainViewModel : ObservableObject
     {
         if (_isSaving) return;
 
+        // ★ S-16: 저장 전 유효성 검사
+        var issues = _validationSvc.Validate();
+        if (issues.Count > 0)
+        {
+            // 오류 또는 경고가 있으면 다이얼로그 표시
+            var dlg = new ValidationErrorDialog(
+                issues,
+                DeviceTree,
+                Application.Current.MainWindow);
+
+            if (dlg.ShowDialog() != true || !dlg.ShouldSave)
+                return; // 취소 → 저장 중단
+        }
+
         IsSaving   = true;
         SaveStatus = "저장 중…";
 
@@ -167,7 +190,6 @@ public partial class MainViewModel : ObservableObject
         if (deviceResult.IsSuccess && collectResult.IsSuccess)
         {
             HasUnsavedChanges = false;
-            // ★ S-19B: 마지막 저장 시각 갱신
             LastSavedAt = DateTime.Now.ToString("HH:mm:ss");
             SaveStatus  = $"✔ 저장 완료  ({LastSavedAt})";
         }

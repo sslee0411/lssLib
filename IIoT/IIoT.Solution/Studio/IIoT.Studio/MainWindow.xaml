@@ -27,10 +27,14 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </Window.Resources>
 
-    <!-- ★ S-19A: Ctrl+S 단축키 -->
+    <!-- ★ S-19A: Ctrl+S / S-20A: Ctrl+C / Ctrl+V -->
     <Window.InputBindings>
         <KeyBinding Key="S" Modifiers="Control"
                     Command="{Binding SaveCommand}" />
+        <KeyBinding Key="C" Modifiers="Control"
+                    Command="{Binding DeviceTree.CopyNodeCommand}" />
+        <KeyBinding Key="V" Modifiers="Control"
+                    Command="{Binding DeviceTree.PasteNodeCommand}" />
     </Window.InputBindings>
 
     <DockPanel LastChildFill="True">
