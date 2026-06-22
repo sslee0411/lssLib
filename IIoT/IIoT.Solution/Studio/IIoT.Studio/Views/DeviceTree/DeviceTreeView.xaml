@@ -3,11 +3,11 @@
      역할: 장비 트리 뷰 — 좌(280px) 트리 + 우(*) 선택 정보 패널
      S-01: 초기 구현
      S-14: 툴바 "📋 템플릿" 버튼 + TagTemplateManagerView 전환
-     S-14 fix4:
-       [이슈1] ＋Tag 버튼: Popup 없이 AddTagCommand 직접 실행 (누를 때마다 추가)
-       [이슈2] TagTemplateManagerView Visibility 바인딩을
-               ElementName=RootPanel 로 UserControl DataContext에 고정
-     S-17A: 툴바에 ▲ 위로 / ▼ 아래로 버튼 추가 (노드 순서 이동)
+     S-14 fix4: ＋Tag 직접 실행 / ElementName=RootPanel Visibility 고정
+     S-17A: MoveUpCommand / MoveDownCommand 추가
+     S-17A fix: ▲▼ 버튼을 DockPanel 우측 고정으로 이동
+                (좌측 StackPanel 에 넣으면 280px 툴바에서 잘려 보이지 않음)
+                📋 템플릿 ← [구분선] ← ▼ ← ▲  순서로 우측 고정
      규칙:
        ① UserControl.Resources → <UserControl> 직계 자식 필수
        ② DynamicResource 필수
@@ -43,33 +43,25 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- ── 툴바 ──────────────────────────────────────
-                 DockPanel: 우측 고정(템플릿) + 좌측(그룹·장비·PLC·Tag·삭제·▲▼)
+            <!-- ── 툴바 (2행) ─────────────────────────────────
+                 1행: ＋그룹 ＋장비 ＋PLC ＋Tag
+                 2행: 🗑 삭제 | ↑ ↓ | 📋 템플릿
+                 → 280px 내에 모든 버튼이 표시됨
             ─────────────────────────────────────────────── -->
             <Border Grid.Row="0"
                     Background="{DynamicResource CardBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,0,0,1"
-                    Padding="4,5">
-                <DockPanel>
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <!-- 우측 고정: 📋 템플릿 -->
-                    <Button DockPanel.Dock="Right"
-                            Content="📋 템플릿"
-                            Command="{Binding ShowTemplateCommand}"
-                            Style="{DynamicResource GhostBtn}"
-                            Foreground="{DynamicResource AccBrush}"
-                            Padding="8,4" FontSize="11"
-                            ToolTip="태그 템플릿 목록 관리 (BufSchema 기반 일괄 생성)" />
-
-                    <!-- 우측 구분선 -->
-                    <Border DockPanel.Dock="Right"
-                            Width="1"
-                            Background="{DynamicResource BorderBrush}"
-                            Margin="4,5" />
-
-                    <!-- 좌측: 그룹·장비·PLC·Tag·삭제·▲▼ -->
-                    <StackPanel Orientation="Horizontal">
+                    <!-- 1행: 추가 버튼 4개 -->
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal"
+                                Margin="4,3,4,3">
 
                         <!-- ══ 그룹 드롭다운 ══ -->
                         <Grid Margin="0,0,2,0">
@@ -168,40 +160,63 @@
                         <Button Content="＋Tag"
                                 Command="{Binding AddTagCommand}"
                                 Style="{DynamicResource GhostBtn}"
-                                Padding="7,4" Margin="0,0,2,0" FontSize="11"
+                                Padding="7,4" FontSize="11"
                                 ToolTip="PLC 또는 장비 선택 후 하위에 Tag 추가" />
 
+                    </StackPanel>
+
+                    <!-- 2행: 삭제 | ↑ ↓ | 📋 템플릿 -->
+                    <DockPanel Grid.Row="1"
+                               Margin="4,2,4,2"
+                               LastChildFill="False">
+
+                        <!-- 우측: 📋 템플릿 -->
+                        <Button DockPanel.Dock="Right"
+                                Content="📋 템플릿"
+                                Command="{Binding ShowTemplateCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Foreground="{DynamicResource AccBrush}"
+                                Padding="7,3" FontSize="11"
+                                ToolTip="태그 템플릿 목록 관리" />
+
                         <!-- 구분선 -->
-                        <Border Width="1"
+                        <Border DockPanel.Dock="Right"
+                                Width="1"
                                 Background="{DynamicResource BorderBrush}"
-                                Margin="4,6" />
+                                Margin="3,4" />
 
-                        <!-- 삭제 -->
-                        <Button Content="🗑"
-                                Command="{Binding DeleteSelectedCommand}"
-                                Style="{DynamicResource GhostBtn}"
-                                Padding="8,4" FontSize="13"
-                                ToolTip="선택 노드 삭제" />
-
-                        <!-- ★ S-17A: 구분선 + 위로/아래로 이동 버튼 -->
-                        <Border Width="1"
-                                Background="{DynamicResource BorderBrush}"
-                                Margin="4,6" />
-
-                        <Button Content="▲"
-                                Command="{Binding MoveUpCommand}"
-                                Style="{DynamicResource GhostBtn}"
-                                Padding="7,4" FontSize="11"
-                                ToolTip="선택 노드 위로 이동" />
-
-                        <Button Content="▼"
+                        <!-- ↓ 아래로 -->
+                        <Button DockPanel.Dock="Right"
+                                Content="↓"
                                 Command="{Binding MoveDownCommand}"
                                 Style="{DynamicResource GhostBtn}"
-                                Padding="7,4" FontSize="11"
+                                Padding="8,3" FontSize="13"
                                 ToolTip="선택 노드 아래로 이동" />
 
-                    </StackPanel>
-                </DockPanel>
+                        <!-- ↑ 위로 -->
+                        <Button DockPanel.Dock="Right"
+                                Content="↑"
+                                Command="{Binding MoveUpCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="8,3" FontSize="13"
+                                ToolTip="선택 노드 위로 이동" />
+
+                        <!-- 구분선 -->
+                        <Border DockPanel.Dock="Right"
+                                Width="1"
+                                Background="{DynamicResource BorderBrush}"
+                                Margin="3,4" />
+
+                        <!-- 🗑 삭제 (좌측) -->
+                        <Button DockPanel.Dock="Left"
+                                Content="🗑 삭제"
+                                Command="{Binding DeleteSelectedCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="7,3" FontSize="11"
+                                ToolTip="선택 노드 삭제" />
+
+                    </DockPanel>
+                </Grid>
             </Border>
 
             <!-- 트리 뷰 -->
@@ -213,14 +228,53 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type model:AbstractTreeNode}"
                                               ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal" Margin="2,3">
+                        <StackPanel Orientation="Horizontal" Margin="2,2">
+
+                            <!-- 아이콘 -->
                             <TextBlock Text="{Binding IconGlyph}"
-                                       FontSize="14" Margin="0,0,6,0"
+                                       FontSize="13" Margin="0,0,5,0"
                                        VerticalAlignment="Center" />
+
+                            <!-- ★ S-17B: 이름 표시 (일반 모드) — IsEditing=false 시 표시 -->
                             <TextBlock Text="{Binding Name}"
-                                       FontSize="13"
+                                       FontSize="12"
                                        Foreground="{DynamicResource TextBrush}"
-                                       VerticalAlignment="Center" />
+                                       VerticalAlignment="Center"
+                                       MouseLeftButtonDown="OnNodeLabelMouseDown">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!-- ★ S-17B: 이름 편집 (편집 모드) — IsEditing=true 시 표시 -->
+                            <TextBox Text="{Binding EditBuffer,
+                                            UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="12"
+                                     MinWidth="80"
+                                     VerticalAlignment="Center"
+                                     KeyDown="OnRenameKeyDown"
+                                     LostFocus="OnRenameLostFocus">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Setter Property="Padding" Value="2,1"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
@@ -277,7 +331,7 @@
                            Margin="0,6,0,0" />
             </StackPanel>
 
-            <!-- 2) 노드 편집기 (타입별 DataTemplate) -->
+            <!-- 2) 노드 편집기 -->
             <ContentControl Content="{Binding ActiveEditor}"
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch">
@@ -306,6 +360,5 @@
                              Converter={StaticResource BoolToVisibility}}" />
 
         </Grid>
-
     </Grid>
 </UserControl>
