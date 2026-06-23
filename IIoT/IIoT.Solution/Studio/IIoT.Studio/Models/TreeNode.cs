@@ -1,10 +1,9 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · Models/TreeNode.cs
 //  역할: 장비 트리 노드 추상 기반 + 4종 구체 노드
-//        Group / Device / Plc / Tag
-//  Enum 은 Models/Enums.cs 로 분리됨 (NodeCommType 등)
-//  S-17B: AbstractTreeNode에 IsEditing, EditBuffer 추가
-//         더블클릭 인라인 편집 지원
+//  S-17B: AbstractTreeNode IsEditing, EditBuffer 추가
+//  S-21A B-1: PlcTreeNode → PlcVendor 추가
+//             TagTreeNode → RegisterType + AddressHint 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -17,55 +16,21 @@ namespace IIoT.Studio.Models;
 
 public abstract partial class AbstractTreeNode : ObservableObject
 {
-    // §1-1 ─ 공통 프로퍼티 ───────────────────────────────────
-
-    [ObservableProperty]
-    private string _name = string.Empty;
-
-    [ObservableProperty]
-    private string _description = string.Empty;
+    [ObservableProperty] private string _name        = string.Empty;
+    [ObservableProperty] private string _description = string.Empty;
 
     public abstract string IconGlyph     { get; }
     public abstract string NodeTypeLabel { get; }
 
-    // §1-2 ─ ★ S-17B: 인라인 편집 상태 ──────────────────────
+    // S-17B: 인라인 편집
+    [ObservableProperty] private bool   _isEditing;
+    [ObservableProperty] private string _editBuffer = string.Empty;
 
-    /// <summary>현재 이름 인라인 편집 중 여부</summary>
-    [ObservableProperty]
-    private bool _isEditing;
-
-    /// <summary>편집 중 임시 이름 버퍼 (Enter/Esc로 확정·취소)</summary>
-    [ObservableProperty]
-    private string _editBuffer = string.Empty;
-
-    /// <summary>인라인 편집 시작 — EditBuffer에 현재 Name 복사</summary>
-    public void BeginEdit()
-    {
-        EditBuffer = Name;
-        IsEditing  = true;
-    }
-
-    /// <summary>인라인 편집 확정 — EditBuffer가 비어있지 않으면 Name에 반영</summary>
-    public void CommitEdit()
-    {
-        if (!string.IsNullOrWhiteSpace(EditBuffer))
-            Name = EditBuffer.Trim();
-        IsEditing = false;
-    }
-
-    /// <summary>인라인 편집 취소 — Name 변경 없이 TextBox 닫기</summary>
-    public void CancelEdit()
-    {
-        EditBuffer = Name;   // 버퍼 원복
-        IsEditing  = false;
-    }
-
-    // §1-3 ─ 자식 노드 ───────────────────────────────────────
+    public void BeginEdit()  { EditBuffer = Name; IsEditing = true; }
+    public void CommitEdit() { if (!string.IsNullOrWhiteSpace(EditBuffer)) Name = EditBuffer.Trim(); IsEditing = false; }
+    public void CancelEdit() { EditBuffer = Name; IsEditing = false; }
 
     public ObservableCollection<AbstractTreeNode> Children { get; } = new();
-
-    // §1-4 ─ 헬퍼 ───────────────────────────────────────────
-
     public Guid Id { get; } = Guid.NewGuid();
 }
 
@@ -73,9 +38,8 @@ public abstract partial class AbstractTreeNode : ObservableObject
 
 public partial class GroupTreeNode : AbstractTreeNode
 {
-    public override string IconGlyph     => "📁";
+    public override string IconGlyph    => "📁";
     public override string NodeTypeLabel => "그룹";
-
     public GroupTreeNode(string name = "새 그룹") { Name = name; }
 }
 
@@ -83,7 +47,7 @@ public partial class GroupTreeNode : AbstractTreeNode
 
 public partial class DeviceTreeNode : AbstractTreeNode
 {
-    public override string IconGlyph     => "🏭";
+    public override string IconGlyph    => "🏭";
     public override string NodeTypeLabel => "장비";
 
     [ObservableProperty] private string _model        = string.Empty;
@@ -115,8 +79,15 @@ public partial class DeviceTreeNode : AbstractTreeNode
 
 public partial class PlcTreeNode : AbstractTreeNode
 {
-    public override string IconGlyph     => "🔧";
+    public override string IconGlyph    => "🔧";
     public override string NodeTypeLabel => "PLC";
+
+    // ★ S-21A B-1: PLC 제조사 — 하위 Tag 편집기 RegisterType 필터링에 사용
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VendorLabel))]
+    private PlcVendor _plcVendor = PlcVendor.Modbus;
+
+    public string VendorLabel => PlcVendor.ToLabel();
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsModbusTcp))]
@@ -141,10 +112,44 @@ public partial class PlcTreeNode : AbstractTreeNode
 
 public partial class TagTreeNode : AbstractTreeNode
 {
-    public override string IconGlyph     => "🏷";
+    public override string IconGlyph    => "🏷";
     public override string NodeTypeLabel => "Tag";
 
-    [ObservableProperty] private string _address  = "40001";
+    /// <summary>레지스터 주소 (문자열 — 형식은 제조사+레지스터종류에 따라 다름)</summary>
+    [ObservableProperty]
+    private string _address = "40001";
+
+    /// <summary>
+    /// ★ S-21A B-1: 레지스터 종류 (제조사 공용).
+    /// 변경 시 AddressHint 자동 갱신.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AddressHint))]
+    private RegisterType _registerType = RegisterType.HoldingReg;
+
+    /// <summary>
+    /// 현재 레지스터 종류의 입력 예시 힌트.
+    /// 부모 PLC의 PlcVendor를 알아야 정확한 힌트 표시 가능.
+    /// Tag 편집기에서 RelativeSource로 부모 PLC의 PlcVendor를 전달받음.
+    /// 여기서는 기본 힌트만 제공.
+    /// </summary>
+    public string AddressHint => RegisterType switch
+    {
+        RegisterType.Word         => "예) D100 / %MW100 / D00100",
+        RegisterType.DWord        => "예) D100 / %MD100 / DB1.DBD0",
+        RegisterType.BitInput     => "예) X0.0 / %IX0.0",
+        RegisterType.BitOutput    => "예) Y0.0 / %QX0.0",
+        RegisterType.BitMemory    => "예) M100 / %MX0.0 / DB1.DBX0.0",
+        RegisterType.LinkWord     => "예) W100 / %LW100",
+        RegisterType.Timer        => "예) TN0 / TIM0000",
+        RegisterType.Counter      => "예) CN0 / CNT0000",
+        RegisterType.HoldingReg   => "예) 40001 ~ 49999 (Modbus Holding)",
+        RegisterType.InputReg     => "예) 30001 ~ 39999 (Modbus Input)",
+        RegisterType.Coil         => "예) 1 ~ 9999 (Modbus Coil)",
+        RegisterType.DiscreteInput=> "예) 10001 ~ 19999 (Modbus Discrete)",
+        _                         => "주소를 직접 입력하세요",
+    };
+
     [ObservableProperty] private string _dataType = "Float";
     [ObservableProperty] private string _unit     = string.Empty;
 

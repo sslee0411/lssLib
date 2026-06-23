@@ -1,13 +1,14 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · Views/DeviceTree/TagEditorView.xaml
      역할: Tag 노드 편집기
-           수집 설정 + 스케일·알람 라이브러리 연결
-     S-09: 라이브러리 연결 추가
+     S-09: 라이브러리 연결
+     S-21A B-1: 레지스터 종류(RegisterType) ComboBox 추가
+                → 부모 PLC의 PlcVendor 기반 목록 필터링 (코드비하인드에서 처리)
+                → 주소 형식 힌트 표시
      규칙:
        ① DataContext = TagTreeNode
        ② 라이브러리 목록: RelativeSource → DeviceTreeView.DataContext
-          (DeviceTreeViewModel.ScaleLibrary / AlarmLibrary)
-     생성: 2026-06-15
+     생성: 2026-06-15 / 수정: 2026-06-20
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.DeviceTree.TagEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -23,8 +24,7 @@
         <StackPanel Margin="28,24,28,24">
 
             <!-- 헤더 -->
-            <StackPanel Orientation="Horizontal"
-                        Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                 <TextBlock Text="🏷" FontSize="22"
                            VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBlock Text="Tag 편집" FontSize="16" FontWeight="SemiBold"
@@ -39,23 +39,46 @@
             <TextBlock Text="수집 설정" FontSize="12" FontWeight="Bold"
                        Foreground="{DynamicResource TextBrush}" Margin="0,0,0,14" />
 
+            <!-- Tag 이름 -->
             <TextBlock Text="Tag 이름" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                      Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
 
+            <!-- ★ S-21A B-1: 레지스터 종류 (코드비하인드에서 부모 PLC 기반 필터링) -->
+            <TextBlock Text="레지스터 종류" FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
+            <ComboBox x:Name="RegisterTypeCombo"
+                      SelectedValue="{Binding RegisterType}"
+                      Style="{DynamicResource PropCombo}"
+                      Margin="0,0,0,4">
+                <!-- ItemsSource는 TagEditorView.xaml.cs에서 부모 PLC 기반으로 설정 -->
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" FontSize="12"
+                                   Foreground="{DynamicResource TextBrush}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <!-- 주소 힌트 -->
+            <TextBlock Text="{Binding AddressHint}"
+                       FontSize="10"
+                       Foreground="{DynamicResource Text2Brush}"
+                       Margin="2,0,0,16" />
+
+            <!-- 레지스터 주소 -->
             <TextBlock Text="레지스터 주소" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}" Margin="0,0,0,4" />
-            <TextBlock Text="예) Modbus: 40001  /  OPC-UA: ns=2;s=Temperature"
-                       FontSize="10" Foreground="{DynamicResource Text2Brush}"
-                       Margin="2,0,0,16" />
+                     Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
 
+            <!-- 데이터 타입 -->
             <TextBlock Text="데이터 타입" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <ComboBox SelectedValue="{Binding DataType}"
                       Style="{DynamicResource PropCombo}" Margin="0,0,0,16">
+                <ComboBoxItem Content="FloatLE" />
+                <ComboBoxItem Content="FloatBE" />
                 <ComboBoxItem Content="Float" />
                 <ComboBoxItem Content="Double" />
                 <ComboBoxItem Content="Int16" />
@@ -67,155 +90,53 @@
                 <ComboBoxItem Content="Byte" />
             </ComboBox>
 
+            <!-- 단위 -->
             <TextBlock Text="단위" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <TextBox Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}" Margin="0,0,0,4" />
-            <TextBlock Text="예) bar / °C / rpm / mm"
-                       FontSize="10" Foreground="{DynamicResource Text2Brush}"
-                       Margin="2,0,0,16" />
+                     Style="{DynamicResource PropInput}" Margin="0,0,0,28" />
 
-            <TextBlock Text="설명" FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
-            <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}"
-                     Height="60" TextWrapping="Wrap" AcceptsReturn="True"
-                     VerticalScrollBarVisibility="Auto"
-                     VerticalContentAlignment="Top" Margin="0,0,0,28" />
-
-            <!-- ━━━ 라이브러리 연결 ━━━ -->
+            <!-- ━━━ 스케일 설정 ━━━ -->
             <Border Height="1" Background="{DynamicResource BorderBrush}"
                     Margin="0,0,0,20" />
-            <TextBlock Text="라이브러리 연결" FontSize="12" FontWeight="Bold"
+            <TextBlock Text="스케일 설정" FontSize="12" FontWeight="Bold"
                        Foreground="{DynamicResource TextBrush}" Margin="0,0,0,14" />
 
-            <!-- 스케일 연결 -->
             <TextBlock Text="스케일 라이브러리" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
-            <Grid Margin="0,0,0,6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <!-- ★ ItemsSource: RelativeSource → DeviceTreeView DataContext
-                       DeviceTreeViewModel.ScaleLibrary.Entries -->
-                <ComboBox Grid.Column="0"
-                          SelectedValuePath="Id"
-                          SelectedValue="{Binding ScaleEntryId}"
-                          Style="{DynamicResource PropCombo}"
-                          ItemsSource="{Binding DataContext.ScaleLibrary.Entries,
-                              RelativeSource={RelativeSource AncestorType=UserControl}}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type model:ScaleEntry}">
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}" FontSize="12"
-                                           Foreground="{DynamicResource TextBrush}" />
-                                <TextBlock Text="{Binding PreviewFormula}" FontSize="10"
-                                           Foreground="{DynamicResource Text2Brush}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                <Button Grid.Column="2" Content="✕"
-                        Style="{DynamicResource GhostBtn}"
-                        Padding="8,6" FontSize="12"
-                        ToolTip="스케일 연결 해제"
-                        Command="{Binding DataContext.ClearScaleCommand,
-                            RelativeSource={RelativeSource AncestorType=UserControl}}" />
-            </Grid>
+            <ComboBox SelectedValue="{Binding ScaleEntryId}"
+                      DisplayMemberPath="Name"
+                      SelectedValuePath="Id"
+                      ItemsSource="{Binding DataContext.ScaleLibrary.Entries,
+                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      Style="{DynamicResource PropCombo}" Margin="0,0,0,8" />
+            <Button Content="스케일 연결 해제"
+                    Command="{Binding DataContext.ClearScaleCommand,
+                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Style="{DynamicResource GhostBtn}"
+                    HorizontalAlignment="Left"
+                    Padding="8,4" FontSize="11" Margin="0,0,0,24" />
 
-            <!-- 스케일 연결 상태 -->
-            <Border Background="{DynamicResource CardBrush}"
-                    BorderBrush="{DynamicResource AccBrush}"
-                    BorderThickness="1" CornerRadius="3"
-                    Padding="8,4" Margin="0,0,0,20"
-                    Visibility="{Binding HasScale, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="✔ 스케일 연결됨" FontSize="11"
-                           Foreground="{DynamicResource AccBrush}" />
-            </Border>
-            <TextBlock Text="스케일 미연결 — Raw 값이 그대로 수집됩니다."
-                       FontSize="11" Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,20">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasScale}" Value="False">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+            <!-- ━━━ 알람 설정 ━━━ -->
+            <Border Height="1" Background="{DynamicResource BorderBrush}"
+                    Margin="0,0,0,20" />
+            <TextBlock Text="알람 설정" FontSize="12" FontWeight="Bold"
+                       Foreground="{DynamicResource TextBrush}" Margin="0,0,0,14" />
 
-            <!-- 알람 연결 -->
             <TextBlock Text="알람 라이브러리" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
-            <Grid Margin="0,0,0,6">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <ComboBox Grid.Column="0"
-                          SelectedValuePath="Id"
-                          SelectedValue="{Binding AlarmEntryId}"
-                          Style="{DynamicResource PropCombo}"
-                          ItemsSource="{Binding DataContext.AlarmLibrary.Entries,
-                              RelativeSource={RelativeSource AncestorType=UserControl}}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type model:AlarmEntry}">
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}" FontSize="12"
-                                           Foreground="{DynamicResource TextBrush}" />
-                                <TextBlock Text="{Binding ActiveLevelsPreview}" FontSize="10"
-                                           Foreground="{DynamicResource Text2Brush}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                <Button Grid.Column="2" Content="✕"
-                        Style="{DynamicResource GhostBtn}"
-                        Padding="8,6" FontSize="12"
-                        ToolTip="알람 연결 해제"
-                        Command="{Binding DataContext.ClearAlarmCommand,
-                            RelativeSource={RelativeSource AncestorType=UserControl}}" />
-            </Grid>
-
-            <!-- 알람 연결 상태 -->
-            <Border Background="{DynamicResource CardBrush}"
-                    BorderBrush="#FF4444" BorderThickness="1"
-                    CornerRadius="3" Padding="8,4" Margin="0,0,0,20"
-                    Visibility="{Binding HasAlarm, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="✔ 알람 연결됨" FontSize="11" Foreground="#FF4444" />
-            </Border>
-            <TextBlock Text="알람 미연결 — 이상 감지가 비활성화됩니다."
-                       FontSize="11" Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,24">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasAlarm}" Value="False">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-
-            <!-- 안내 -->
-            <Border Background="{DynamicResource CardBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1" CornerRadius="4" Padding="12,10">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="ℹ " Foreground="{DynamicResource AccBrush}" FontSize="12" />
-                    <TextBlock Text="저장 기능은 S-10 단계에서 추가됩니다. 스케일·알람 탭에서 항목을 먼저 추가하세요."
-                               FontSize="11" Foreground="{DynamicResource Text2Brush}"
-                               TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
+            <ComboBox SelectedValue="{Binding AlarmEntryId}"
+                      DisplayMemberPath="Name"
+                      SelectedValuePath="Id"
+                      ItemsSource="{Binding DataContext.AlarmLibrary.Entries,
+                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      Style="{DynamicResource PropCombo}" Margin="0,0,0,8" />
+            <Button Content="알람 연결 해제"
+                    Command="{Binding DataContext.ClearAlarmCommand,
+                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Style="{DynamicResource GhostBtn}"
+                    HorizontalAlignment="Left"
+                    Padding="8,4" FontSize="11" />
 
         </StackPanel>
     </ScrollViewer>
