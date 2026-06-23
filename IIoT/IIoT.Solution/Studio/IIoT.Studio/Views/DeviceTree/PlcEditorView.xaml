@@ -53,13 +53,26 @@
                 Background="{DynamicResource SurfaceBrush}"
                 Padding="28,16,20,16">
             <DockPanel>
-                <!-- 우측: 📋 템플릿 적용 버튼 -->
-                <Button DockPanel.Dock="Right"
-                        Content="📋 템플릿 적용"
-                        Style="{DynamicResource ToolbarBtn}"
-                        Padding="12,7"
-                        Click="OnApplyTemplate"
-                        ToolTip="저장된 태그 템플릿을 이 PLC에 일괄 적용합니다." />
+                <!-- 우측: 버튼 그룹 -->
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+
+                    <!-- ★ S-21B: 일괄 주소 부여 버튼 -->
+                    <Button Content="🔢 일괄 주소"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="10,7"
+                            Margin="0,0,6,0"
+                            Click="OnBulkAddress"
+                            ToolTip="하위 Tag에 시작주소부터 순서대로 주소를 부여합니다." />
+
+                    <!-- 📋 템플릿 적용 버튼 -->
+                    <Button Content="📋 템플릿 적용"
+                            Style="{DynamicResource ToolbarBtn}"
+                            Padding="12,7"
+                            Click="OnApplyTemplate"
+                            ToolTip="저장된 태그 템플릿을 이 PLC에 일괄 적용합니다." />
+                </StackPanel>
 
                 <!-- 좌측: 아이콘 + 타이틀 -->
                 <StackPanel Orientation="Horizontal"
