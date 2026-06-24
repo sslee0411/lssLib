@@ -2,13 +2,15 @@
 //  IIoT.Studio · MainWindow.xaml.cs
 //  역할: 메인 창 코드비하인드
 //  Base-0: DI 생성자 + DataContext 주입
-//  S-15B: HasUnsavedChanges 연동 (MainViewModel에서 처리)
-//  S-22: OnClosing — 미저장 변경사항 있을 때 저장 여부 확인 팝업
+//  S-15B: HasUnsavedChanges 연동
+//  S-22: OnClosing — 미저장 확인 팝업
+//  S-18: SaveMenuBtn_Click / SavePopupItem_Click 핸들러 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 
 namespace IIoT.Studio;
 
@@ -76,8 +78,15 @@ public partial class MainWindow : Window
 
             case MessageBoxResult.Cancel:
             default:
-                // 종료 취소 — e.Cancel=true 상태 유지 (아무것도 안 함)
                 break;
         }
     }
+
+    // §4 ─ ★ S-18: 저장 드롭다운 팝업 핸들러 ────────────────
+
+    private void SaveMenuBtn_Click(object sender, RoutedEventArgs e)
+        => SavePopup.IsOpen = true;
+
+    private void SavePopupItem_Click(object sender, RoutedEventArgs e)
+        => SavePopup.IsOpen = false;
 }

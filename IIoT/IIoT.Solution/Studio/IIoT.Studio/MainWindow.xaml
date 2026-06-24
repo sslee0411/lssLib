@@ -49,13 +49,64 @@
                 BorderThickness="0,0,0,1">
             <DockPanel Margin="16,0">
 
-                <!-- 우측: CSV + 저장 버튼 + 테마 버튼 -->
+                <!-- 우측: 파일 버튼 + CSV + 저장 버튼 + 테마 버튼 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Margin="8,0,0,0">
 
-                    <!-- ★ S-20B: CSV 가져오기 버튼 -->
+                    <!-- ★ S-18: 📂 열기 -->
+                    <Button Content="📂 열기"
+                            Command="{Binding OpenConfigCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Foreground="{DynamicResource Text2Brush}"
+                            Padding="10,6" Margin="0,0,4,0"
+                            ToolTip="device.json 설정 파일 열기" />
+
+                    <!-- ★ S-18: 💾 저장 드롭다운 -->
+                    <Grid Margin="0,0,8,0">
+                        <Button x:Name="SaveMenuBtn"
+                                Content="💾 저장▾"
+                                Style="{DynamicResource GhostBtn}"
+                                Foreground="{DynamicResource Text2Brush}"
+                                Padding="10,6"
+                                Click="SaveMenuBtn_Click"
+                                ToolTip="저장 옵션" />
+                        <Popup x:Name="SavePopup"
+                               PlacementTarget="{Binding ElementName=SaveMenuBtn}"
+                               Placement="Bottom"
+                               StaysOpen="False">
+                            <Border Background="{DynamicResource CardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="4" Padding="4">
+                                <StackPanel MinWidth="160">
+                                    <Button Content="💾 저장 (Ctrl+S)"
+                                            Command="{Binding SaveCommand}"
+                                            Style="{DynamicResource GhostBtn}"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="10,7" FontSize="12"
+                                            Click="SavePopupItem_Click" />
+                                    <Button Content="📁 다른 이름으로 저장"
+                                            Command="{Binding SaveAsCommand}"
+                                            Style="{DynamicResource GhostBtn}"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="10,7" FontSize="12"
+                                            Click="SavePopupItem_Click" />
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderBrush}"
+                                            Margin="4,2" />
+                                    <Button Content="📤 Tag CSV 내보내기"
+                                            Command="{Binding ExportTagsCsvCommand}"
+                                            Style="{DynamicResource GhostBtn}"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="10,7" FontSize="12"
+                                            Click="SavePopupItem_Click" />
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
+                    <!-- S-20B: 📥 CSV 가져오기 -->
                     <Button Content="📥 CSV"
                             Command="{Binding ImportTagsCsvCommand}"
                             Style="{DynamicResource GhostBtn}"

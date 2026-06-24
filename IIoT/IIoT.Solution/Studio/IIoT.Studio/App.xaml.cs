@@ -112,7 +112,7 @@ public partial class App : Application
             new CollectConfigLoader(
                 sp.GetRequiredService<CanvasViewModel>()));
 
-        // ── MainViewModel (파라미터 순서: DeviceTree, Scale, Alarm, Comm, Canvas, deviceSvc, collectSvc)
+        // ── MainViewModel (파라미터 순서: DeviceTree, Scale, Alarm, Comm, Canvas, deviceSvc, collectSvc, deviceLoader)
         services.AddSingleton<MainViewModel>(sp =>
             new MainViewModel(
                 sp.GetRequiredService<DeviceTreeViewModel>(),
@@ -121,7 +121,8 @@ public partial class App : Application
                 sp.GetRequiredService<CommLibraryViewModel>(),
                 sp.GetRequiredService<CanvasViewModel>(),
                 sp.GetRequiredService<DeviceConfigService>(),
-                sp.GetRequiredService<CollectConfigService>()));
+                sp.GetRequiredService<CollectConfigService>(),
+                sp.GetRequiredService<DeviceConfigLoader>()));
 
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<MainViewModel>()));

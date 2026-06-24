@@ -10,6 +10,7 @@
 //  S-19B: StatusBarPath, TotalTagCount, TotalPlcCount, LastSavedAt 추가
 //  S-16: 저장 전 ValidationService 호출 추가
 //  S-20B: ImportTagsCsvCommand 추가
+//  S-18: OpenCommand / SaveAsCommand / ExportTagsCsvCommand 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -21,6 +22,7 @@ using IIoT.Studio.ViewModels;
 using IIoT.Studio.Views;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 
 namespace IIoT.Studio;
@@ -46,6 +48,9 @@ public partial class MainViewModel : ObservableObject
     // ★ S-20B: CSV 가져오기 서비스
     private readonly TagCsvImporter _csvImporter = new();
 
+    // ★ S-18: 열기·저장As·CSV내보내기 서비스
+    private readonly ConfigImportExportService _importExportSvc;
+
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public MainViewModel(
@@ -55,7 +60,8 @@ public partial class MainViewModel : ObservableObject
         CommLibraryViewModel  commLibrary,
         CanvasViewModel       canvas,
         DeviceConfigService   deviceSvc,
-        CollectConfigService  collectSvc)
+        CollectConfigService  collectSvc,
+        DeviceConfigLoader    deviceLoader)
     {
         DeviceTree   = deviceTree;
         ScaleLibrary = scaleLibrary;
@@ -65,8 +71,13 @@ public partial class MainViewModel : ObservableObject
         _deviceSvc   = deviceSvc;
         _collectSvc  = collectSvc;
 
-        // ★ S-16: ValidationService 초기화
+        // ★ S-16
         _validationSvc = new ValidationService(DeviceTree, ScaleLibrary);
+
+        // ★ S-18
+        _importExportSvc = new ConfigImportExportService(
+            deviceLoader, deviceSvc,
+            deviceTree, scaleLibrary, alarmLibrary, commLibrary);
 
         // ★ S-15B: 변경 감지 구독
         DeviceTree.RootNodes.CollectionChanged += (_, _) =>
@@ -294,5 +305,89 @@ public partial class MainViewModel : ObservableObject
             count += _CountAll<T>(node.Children);
         }
         return count;
+    }
+
+    // §11 ─ ★ S-18: 열기·저장As·CSV 내보내기 ─────────────────
+
+    /// <summary>📂 열기 — device.json 파일 선택 후 전체 설정 교체 로드</summary>
+    [RelayCommand]
+    private async Task OpenConfigAsync()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title  = "설정 파일 열기",
+            Filter = "IIoT 설정 파일 (device.json)|device.json|JSON 파일 (*.json)|*.json",
+            Multiselect = false
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        if (HasUnsavedChanges)
+        {
+            var r = MessageBox.Show(
+                "저장하지 않은 변경사항이 있습니다.\n계속하면 현재 설정이 사라집니다. 계속하시겠습니까?",
+                "설정 열기 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (r != MessageBoxResult.Yes) return;
+        }
+
+        SaveStatus = "설정 로드 중…";
+        var result = await _importExportSvc.OpenAsync(dlg.FileName);
+
+        if (result.IsSuccess)
+        {
+            HasUnsavedChanges = false;
+            SaveStatus = $"✔ 열기 완료: {Path.GetFileName(dlg.FileName)}";
+        }
+        else
+        {
+            SaveStatus = $"✖ {result.Message}";
+            MessageBox.Show(result.Message, "열기 실패", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        await Task.Delay(3000);
+        if (!_isSaving) SaveStatus = "준비됨";
+    }
+
+    /// <summary>💾 다른 이름으로 저장</summary>
+    [RelayCommand]
+    private async Task SaveAsAsync()
+    {
+        var dlg = new SaveFileDialog
+        {
+            Title      = "다른 이름으로 저장",
+            Filter     = "IIoT 설정 파일 (*.json)|*.json",
+            FileName   = "device.json",
+            DefaultExt = ".json"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        SaveStatus = "저장 중…";
+        var result = await _importExportSvc.SaveAsAsync(dlg.FileName);
+        SaveStatus = result.IsSuccess
+            ? $"✔ 저장 완료: {Path.GetFileName(dlg.FileName)}"
+            : $"✖ {result.Message}";
+
+        await Task.Delay(3000);
+        if (!_isSaving) SaveStatus = "준비됨";
+    }
+
+    /// <summary>📤 Tag CSV 내보내기</summary>
+    [RelayCommand]
+    private async Task ExportTagsCsvAsync()
+    {
+        var dlg = new SaveFileDialog
+        {
+            Title      = "Tag 목록 CSV 내보내기",
+            Filter     = "CSV 파일 (*.csv)|*.csv",
+            FileName   = $"Tags_{DateTime.Now:yyyyMMdd}.csv",
+            DefaultExt = ".csv"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        SaveStatus = "CSV 내보내는 중…";
+        var result = await _importExportSvc.ExportTagsCsvAsync(dlg.FileName);
+        SaveStatus = result.IsSuccess ? $"✔ {result.Message}" : $"✖ {result.Message}";
+
+        await Task.Delay(3000);
+        if (!_isSaving) SaveStatus = "준비됨";
     }
 }
