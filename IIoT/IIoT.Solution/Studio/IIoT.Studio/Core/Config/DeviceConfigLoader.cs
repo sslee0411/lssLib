@@ -226,7 +226,8 @@ public sealed class DeviceConfigLoader
                 Address      = dto.Address  ?? string.Empty,
                 DataType     = dto.DataType ?? "UInt16",
                 Unit         = dto.Unit     ?? string.Empty,
-                Memo         = dto.Memo ?? string.Empty
+                Memo         = dto.Memo ?? string.Empty,
+                IsEnabled    = dto.IsEnabled ?? true,  // ★ S-25 추가
                 // ScaleEntryId / AlarmEntryId: ID 재생성으로 라이브러리 재연결 미지원
                 // → S-16 이후 Id 보존 방식으로 개선 예정
             },

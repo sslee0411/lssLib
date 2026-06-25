@@ -4,6 +4,7 @@
      S-09: 라이브러리 연결
      S-21A B-1: 레지스터 종류(RegisterType) ComboBox 추가
      S-23: 메모 TextBox 추가 (단위 아래)
+     S-25: 수집 활성 CheckBox 추가 (헤더 우측)
                 → 부모 PLC의 PlcVendor 기반 목록 필터링 (코드비하인드에서 처리)
                 → 주소 형식 힌트 표시
      규칙:
@@ -25,13 +26,49 @@
         <StackPanel Margin="28,24,28,24">
 
             <!-- 헤더 -->
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                <TextBlock Text="🏷" FontSize="22"
-                           VerticalAlignment="Center" Margin="0,0,8,0" />
-                <TextBlock Text="Tag 편집" FontSize="16" FontWeight="SemiBold"
-                           Foreground="{DynamicResource AccBrush}"
-                           VerticalAlignment="Center" />
-            </StackPanel>
+            <DockPanel Margin="0,0,0,20">
+                <!-- ★ S-25: 우측 수집 활성 토글 -->
+                <Border DockPanel.Dock="Right"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="4"
+                        Padding="10,5"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox IsChecked="{Binding IsEnabled}"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,6,0" />
+                        <TextBlock VerticalAlignment="Center"
+                                   FontSize="11">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="수집 비활성"/>
+                                    <Setter Property="Foreground"
+                                            Value="{DynamicResource Text2Brush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEnabled}"
+                                                     Value="True">
+                                            <Setter Property="Text" Value="수집 활성"/>
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource AccBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- 좌측: 아이콘 + 타이틀 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="🏷" FontSize="22"
+                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Text="Tag 편집" FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AccBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </DockPanel>
 
             <Border Height="1" Background="{DynamicResource BorderBrush}"
                     Margin="0,0,0,24" />

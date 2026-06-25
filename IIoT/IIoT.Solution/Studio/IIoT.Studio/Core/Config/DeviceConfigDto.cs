@@ -2,7 +2,8 @@
 //  IIoT.Studio · Core/Config/DeviceConfigDto.cs
 //  역할: device.json 직렬화 전용 DTO
 //  S-10: 초기 구현
-//  S-23: DeviceNodeDto에 Memo 필드 추가 (Tag 메모 저장)
+//  S-23: DeviceNodeDto에 Memo 필드 추가
+//  S-25: DeviceNodeDto에 IsEnabled 필드 추가 (Tag 수집 활성 여부)
 //  생성: 2026-06-17 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -51,6 +52,9 @@ public sealed class DeviceNodeDto
 
     // ★ S-23: Tag 메모 필드
     public string? Memo         { get; set; }
+
+    // ★ S-25: Tag 수집 활성 여부 (null = true 기본값)
+    public bool?   IsEnabled    { get; set; }
 
     public List<DeviceNodeDto> Children { get; set; } = new();
 }

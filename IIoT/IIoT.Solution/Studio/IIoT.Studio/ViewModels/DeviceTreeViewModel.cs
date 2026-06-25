@@ -7,6 +7,7 @@
 //  S-17A: MoveUpCommand / MoveDownCommand 추가 (노드 순서 이동)
 //  S-17C: SearchText + FilteredRootNodes + ClearSearchCommand 추가
 //  S-20A: CopyNodeCommand / PasteNodeCommand / _DeepCopy 추가
+//  S-24: ExpandAllCommand / CollapseAllCommand 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -454,5 +455,25 @@ public partial class DeviceTreeViewModel : ObservableObject
             copy.Children.Add(_DeepCopy(child, isCopy: false));
 
         return copy;
+    }
+
+    // §13 ─ ★ S-24: 전체 펼침·접힘 커맨드 ──────────────────
+
+    /// <summary>전체 트리 펼치기 — 모든 노드 IsExpanded = true</summary>
+    [RelayCommand]
+    private void ExpandAll() => _SetExpanded(RootNodes, true);
+
+    /// <summary>전체 트리 접기 — 모든 노드 IsExpanded = false</summary>
+    [RelayCommand]
+    private void CollapseAll() => _SetExpanded(RootNodes, false);
+
+    private static void _SetExpanded(
+        IEnumerable<AbstractTreeNode> nodes, bool expanded)
+    {
+        foreach (var node in nodes)
+        {
+            node.IsExpanded = expanded;
+            _SetExpanded(node.Children, expanded);
+        }
     }
 }

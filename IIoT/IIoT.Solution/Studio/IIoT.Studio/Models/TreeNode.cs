@@ -5,6 +5,8 @@
 //  S-21A B-1: PlcTreeNode → PlcVendor 추가
 //             TagTreeNode → RegisterType + AddressHint 추가
 //  S-23: TagTreeNode → Memo 프로퍼티 추가
+//  S-24: AbstractTreeNode → IsExpanded 프로퍼티 추가
+//  S-25: TagTreeNode → IsEnabled 프로퍼티 추가 (수집 활성·비활성)
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -30,6 +32,10 @@ public abstract partial class AbstractTreeNode : ObservableObject
     public void BeginEdit()  { EditBuffer = Name; IsEditing = true; }
     public void CommitEdit() { if (!string.IsNullOrWhiteSpace(EditBuffer)) Name = EditBuffer.Trim(); IsEditing = false; }
     public void CancelEdit() { EditBuffer = Name; IsEditing = false; }
+
+    // ★ S-24: 트리 펼침/접힘 상태 (ExpandAll/CollapseAll 커맨드에서 제어)
+    [ObservableProperty]
+    private bool _isExpanded = true;
 
     public ObservableCollection<AbstractTreeNode> Children { get; } = new();
     public Guid Id { get; } = Guid.NewGuid();
@@ -156,6 +162,14 @@ public partial class TagTreeNode : AbstractTreeNode
 
     // ★ S-23: 메모 (설치 위치·담당자·측정 범위 등 자유 기록)
     [ObservableProperty] private string _memo = string.Empty;
+
+    // ★ S-25: 수집 활성 여부 (false = 수집 제외, 트리에서 회색 표시)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDisabled))]
+    private bool _isEnabled = true;
+
+    /// <summary>비활성 여부 (XAML DataTrigger용 역방향 프로퍼티)</summary>
+    public bool IsDisabled => !IsEnabled;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasScale))]

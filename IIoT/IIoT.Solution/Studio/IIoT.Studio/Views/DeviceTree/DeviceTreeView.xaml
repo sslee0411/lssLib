@@ -218,6 +218,28 @@
                                 Background="{DynamicResource BorderBrush}"
                                 Margin="3,4" />
 
+                        <!-- ★ S-24: ⊟ 전체 접기 -->
+                        <Button DockPanel.Dock="Right"
+                                Content="⊟"
+                                Command="{Binding CollapseAllCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="7,3" FontSize="12"
+                                ToolTip="전체 접기" />
+
+                        <!-- ★ S-24: ⊞ 전체 펼치기 -->
+                        <Button DockPanel.Dock="Right"
+                                Content="⊞"
+                                Command="{Binding ExpandAllCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="7,3" FontSize="12"
+                                ToolTip="전체 펼치기" />
+
+                        <!-- 구분선 -->
+                        <Border DockPanel.Dock="Right"
+                                Width="1"
+                                Background="{DynamicResource BorderBrush}"
+                                Margin="3,4" />
+
                         <!-- 🗑 삭제 (좌측) -->
                         <Button DockPanel.Dock="Left"
                                 Content="🗑 삭제"
@@ -301,31 +323,55 @@
                             <!-- 아이콘 -->
                             <TextBlock Text="{Binding IconGlyph}"
                                        FontSize="13" Margin="0,0,5,0"
-                                       VerticalAlignment="Center" />
-
-                            <!-- ★ S-17B: 이름 표시 (일반 모드) — IsEditing=false 시 표시 -->
-                            <TextBlock Text="{Binding Name}"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextBrush}"
-                                       VerticalAlignment="Center"
-                                       MouseLeftButtonDown="OnNodeLabelMouseDown">
+                                       VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Visible"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            <!-- ★ S-25: 비활성 Tag → 아이콘 회색 -->
+                                            <DataTrigger Binding="{Binding IsDisabled}"
+                                                         Value="True">
+                                                <Setter Property="Opacity" Value="0.4"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
 
-                            <!-- ★ S-17B: 이름 편집 (편집 모드) — IsEditing=true 시 표시 -->
+                            <!-- 이름 (일반 모드) -->
+                            <TextBlock Text="{Binding Name}"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       MouseLeftButtonDown="OnNodeLabelMouseDown">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground"
+                                                Value="{DynamicResource TextBrush}"/>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <!-- 편집 중 숨김 -->
+                                            <DataTrigger Binding="{Binding IsEditing}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <!-- ★ S-25: 비활성 Tag → 이름 회색 + 취소선 -->
+                                            <DataTrigger Binding="{Binding IsDisabled}"
+                                                         Value="True">
+                                                <Setter Property="Foreground"
+                                                        Value="{DynamicResource Text2Brush}"/>
+                                                <Setter Property="TextDecorations"
+                                                        Value="Strikethrough"/>
+                                                <Setter Property="Opacity" Value="0.6"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!-- 이름 (편집 모드) -->
                             <TextBox Text="{Binding EditBuffer,
                                             UpdateSourceTrigger=PropertyChanged}"
-                                     FontSize="12"
-                                     MinWidth="80"
+                                     FontSize="12" MinWidth="80"
                                      VerticalAlignment="Center"
                                      KeyDown="OnRenameKeyDown"
                                      LostFocus="OnRenameLostFocus">
@@ -335,8 +381,10 @@
                                         <Setter Property="BorderThickness" Value="1"/>
                                         <Setter Property="Padding" Value="2,1"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible"/>
+                                            <DataTrigger Binding="{Binding IsEditing}"
+                                                         Value="True">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -349,7 +397,9 @@
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem">
                         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-                        <Setter Property="IsExpanded" Value="True" />
+                        <!-- ★ S-24: IsExpanded를 모델 IsExpanded에 바인딩 -->
+                        <Setter Property="IsExpanded"
+                                Value="{Binding IsExpanded, Mode=TwoWay}" />
                         <Setter Property="Padding"    Value="2,1" />
                     </Style>
                 </TreeView.ItemContainerStyle>
