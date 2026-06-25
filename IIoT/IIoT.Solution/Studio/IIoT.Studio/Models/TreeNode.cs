@@ -4,6 +4,7 @@
 //  S-17B: AbstractTreeNode IsEditing, EditBuffer 추가
 //  S-21A B-1: PlcTreeNode → PlcVendor 추가
 //             TagTreeNode → RegisterType + AddressHint 추가
+//  S-23: TagTreeNode → Memo 프로퍼티 추가
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -152,6 +153,9 @@ public partial class TagTreeNode : AbstractTreeNode
 
     [ObservableProperty] private string _dataType = "Float";
     [ObservableProperty] private string _unit     = string.Empty;
+
+    // ★ S-23: 메모 (설치 위치·담당자·측정 범위 등 자유 기록)
+    [ObservableProperty] private string _memo = string.Empty;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasScale))]

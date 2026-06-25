@@ -234,6 +234,7 @@ public sealed class DeviceConfigService
                 dto.Unit         = t.Unit;
                 dto.ScaleEntryId = t.ScaleEntryId?.ToString();
                 dto.AlarmEntryId = t.AlarmEntryId?.ToString();
+                dto.Memo         = t.Memo;
                 break;
         }
 
