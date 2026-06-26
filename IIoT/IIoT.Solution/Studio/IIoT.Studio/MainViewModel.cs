@@ -11,6 +11,7 @@
 //  S-16: 저장 전 ValidationService 호출 추가
 //  S-20B: ImportTagsCsvCommand 추가
 //  S-18: OpenCommand / SaveAsCommand / ExportTagsCsvCommand 추가
+//  S-27: SaveWithMemoCommand 추가 + 저장 이력 관리
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -219,6 +220,9 @@ public partial class MainViewModel : ObservableObject
         if (!_isSaving) SaveStatus = "준비됨";
     }
 
+    // ★ S-27: 저장 이력 (최근 10개, 다이얼로그에 표시용)
+    private readonly List<SaveHistoryItem> _saveHistory = new();
+
     // §10 ─ 저장 커맨드 ───────────────────────────────────────
 
     [ObservableProperty]
@@ -257,6 +261,10 @@ public partial class MainViewModel : ObservableObject
             HasUnsavedChanges = false;
             LastSavedAt = DateTime.Now.ToString("HH:mm:ss");
             SaveStatus  = $"✔ 저장 완료  ({LastSavedAt})";
+
+            // ★ S-27: 저장 이력 추가
+            _AddHistory(_pendingMemo ?? string.Empty);
+            _pendingMemo = null;
         }
         else
         {
@@ -272,7 +280,31 @@ public partial class MainViewModel : ObservableObject
         if (!_isSaving) SaveStatus = "준비됨";
     }
 
-    // §9 ─ 내부 헬퍼 ──────────────────────────────────────────
+    // §10-1 ─ ★ S-27: 메모 입력 후 저장 ─────────────────────
+
+    [RelayCommand]
+    private async Task SaveWithMemoAsync()
+    {
+        var history = _saveHistory
+            .Take(5)
+            .Select(h => new SaveHistoryItem(h.SavedAt, h.Memo));
+
+        var dlg = new SaveMemoDialog(history, Application.Current.MainWindow);
+        if (dlg.ShowDialog() != true) return;
+
+        _pendingMemo = dlg.ResultMemo;
+        await SaveAsync();
+    }
+
+    private string? _pendingMemo;
+
+    private void _AddHistory(string memo)
+    {
+        _saveHistory.Insert(0, new SaveHistoryItem(
+            DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), memo));
+        if (_saveHistory.Count > 10)
+            _saveHistory.RemoveAt(_saveHistory.Count - 1);
+    }
 
     /// <summary>노드 계층 경로 재귀 빌드</summary>
     private static string _BuildPath(

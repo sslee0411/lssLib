@@ -4,7 +4,8 @@
 //  S-10: 초기 구현
 //  S-23: DeviceNodeDto에 Memo 필드 추가
 //  S-25: DeviceNodeDto에 IsEnabled 필드 추가
-//  S-28: DeviceNodeDto에 CommEntryId 필드 추가 (PLC 통신 라이브러리 참조)
+//  S-28: DeviceNodeDto에 CommEntryId 필드 추가
+//  S-27: DeviceConfigRoot에 ChangeMemo + SaveHistory 추가
 //  생성: 2026-06-17 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -18,10 +19,22 @@ public sealed class DeviceConfigRoot
     public DateTime SavedAt   { get; set; } = DateTime.Now;
     public string   Sha256    { get; set; } = string.Empty;
 
+    // ★ S-27: 저장 메모 + 이력 (최근 10개)
+    public string              ChangeMemo  { get; set; } = string.Empty;
+    public List<SaveHistoryDto> SaveHistory { get; set; } = new();
+
     public List<DeviceNodeDto> Tree         { get; set; } = new();
     public List<ScaleEntryDto> ScaleLibrary { get; set; } = new();
     public List<AlarmEntryDto> AlarmLibrary { get; set; } = new();
     public List<CommEntryDto>  CommLibrary  { get; set; } = new();
+}
+
+// §1-1 ─ 저장 이력 DTO ────────────────────────────────────
+
+public sealed class SaveHistoryDto
+{
+    public string SavedAt { get; set; } = string.Empty;
+    public string Memo    { get; set; } = string.Empty;
 }
 
 // §2 ─ 트리 노드 DTO ──────────────────────────────────────
