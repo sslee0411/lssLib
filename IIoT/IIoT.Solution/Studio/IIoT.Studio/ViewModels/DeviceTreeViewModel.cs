@@ -8,11 +8,14 @@
 //  S-17C: SearchText + FilteredRootNodes + ClearSearchCommand 추가
 //  S-20A: CopyNodeCommand / PasteNodeCommand / _DeepCopy 추가
 //  S-24: ExpandAllCommand / CollapseAllCommand 추가
+//  S-29: CommandHistory (Undo/Redo 50단계) 통합
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using IIoT.Studio.Core.UndoRedo;
+using IIoT.Studio.Core.UndoRedo.Actions;
 using IIoT.Studio.Models;
 using System.Collections.ObjectModel;
 
@@ -25,6 +28,9 @@ public partial class DeviceTreeViewModel : ObservableObject
     public ScaleLibraryViewModel ScaleLibrary  { get; }
     public TagTemplateViewModel  TagTemplateVm { get; }
     public AlarmLibraryViewModel AlarmLibrary  { get; }
+
+    // ★ S-29: 실행취소/다시실행 히스토리
+    private readonly CommandHistory _history = new(maxSize: 50);
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
@@ -40,6 +46,13 @@ public partial class DeviceTreeViewModel : ObservableObject
         // S-17C: RootNodes 변경 시 FilteredRootNodes 재계산
         RootNodes.CollectionChanged +=
             (_, _) => OnPropertyChanged(nameof(FilteredRootNodes));
+
+        // ★ S-29: 히스토리 변경 시 Undo/Redo CanExecute 갱신
+        _history.HistoryChanged += () =>
+        {
+            UndoCommand.NotifyCanExecuteChanged();
+            RedoCommand.NotifyCanExecuteChanged();
+        };
     }
 
     // §3 ─ 루트 + 상태 메시지 ────────────────────────────────
@@ -201,7 +214,9 @@ public partial class DeviceTreeViewModel : ObservableObject
 
         if (SelectedNode is PlcTreeNode or DeviceTreeNode)
         {
+            var idx = SelectedNode.Children.Count;
             SelectedNode.Children.Add(newTag);
+            _history.Push(new AddNodeAction(SelectedNode.Children, newTag, idx));
             SelectedNode = newTag;
             return;
         }
@@ -211,9 +226,10 @@ public partial class DeviceTreeViewModel : ObservableObject
             var (parentCol, parentNode) = _FindParentCollection(RootNodes, SelectedNode);
             if (parentCol is not null && parentNode is PlcTreeNode or DeviceTreeNode)
             {
-                var idx = parentCol.IndexOf(SelectedNode);
-                if (idx >= 0) parentCol.Insert(idx + 1, newTag);
-                else          parentCol.Add(newTag);
+                var idx = parentCol.IndexOf(SelectedNode) + 1;
+                if (idx > 0) parentCol.Insert(idx, newTag);
+                else         parentCol.Add(newTag);
+                _history.Push(new AddNodeAction(parentCol, newTag, idx));
                 SelectedNode = newTag;
                 return;
             }
@@ -229,8 +245,12 @@ public partial class DeviceTreeViewModel : ObservableObject
     private void DeleteSelected()
     {
         if (SelectedNode is null) return;
-        if (RootNodes.Remove(SelectedNode)) { SelectedNode = null; return; }
-        _RemoveFromChildren(RootNodes, SelectedNode);
+        var list = _GetParentList(SelectedNode) ?? RootNodes;
+        var idx  = list.IndexOf(SelectedNode);
+        if (idx < 0) return;
+
+        _history.Push(new DeleteNodeAction(list, SelectedNode, idx));
+        list.Remove(SelectedNode);
         SelectedNode = null;
     }
 
@@ -244,6 +264,7 @@ public partial class DeviceTreeViewModel : ObservableObject
         if (list is null) return;
         var idx = list.IndexOf(SelectedNode);
         if (idx <= 0) return;
+        _history.Push(new MoveNodeAction(list, SelectedNode, idx, idx - 1));
         list.Move(idx, idx - 1);
     }
 
@@ -263,6 +284,7 @@ public partial class DeviceTreeViewModel : ObservableObject
         if (list is null) return;
         var idx = list.IndexOf(SelectedNode);
         if (idx < 0 || idx >= list.Count - 1) return;
+        _history.Push(new MoveNodeAction(list, SelectedNode, idx, idx + 1));
         list.Move(idx, idx + 1);
     }
 
@@ -303,12 +325,14 @@ public partial class DeviceTreeViewModel : ObservableObject
         if (SelectedNode is null) { _AppendToRoot(newNode); return; }
         SelectedNode.Children.Add(newNode);
         SelectedNode = newNode;
+        _history.Push(new AddNodeAction(SelectedNode.Children, newNode, SelectedNode.Children.Count - 1)); // ★ 추가
     }
 
     private void _AppendToRoot(AbstractTreeNode node)
     {
         RootNodes.Add(node);
         SelectedNode = node;
+        _history.Push(new AddNodeAction(RootNodes, node, RootNodes.Count - 1));
     }
 
     private void _ShowWarning(string message)
@@ -476,4 +500,17 @@ public partial class DeviceTreeViewModel : ObservableObject
             _SetExpanded(node.Children, expanded);
         }
     }
+
+    // §14 ─ ★ S-29: Undo / Redo 커맨드 ──────────────────────
+
+    [RelayCommand(CanExecute = nameof(_CanUndo))]
+    private void Undo() => _history.Undo();
+    private bool _CanUndo() => _history.CanUndo;
+
+    [RelayCommand(CanExecute = nameof(_CanRedo))]
+    private void Redo() => _history.Redo();
+    private bool _CanRedo() => _history.CanRedo;
+
+    /// <summary>히스토리 전체 초기화 (설정 로드 시 호출)</summary>
+    public void ClearHistory() => _history.Clear();
 }
