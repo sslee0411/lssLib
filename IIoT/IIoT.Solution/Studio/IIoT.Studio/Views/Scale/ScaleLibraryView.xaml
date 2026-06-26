@@ -71,7 +71,7 @@
                      Background="{DynamicResource SurfaceBrush}"
                      BorderThickness="0">
                 <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type model:ScaleEntry}">
+                    <DataTemplate>
                         <StackPanel Margin="4,6">
                             <TextBlock Text="{Binding Name}"
                                        FontSize="13" FontWeight="SemiBold"

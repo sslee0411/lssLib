@@ -158,11 +158,10 @@
 
             <TextBlock Text="스케일 라이브러리" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
-            <ComboBox SelectedValue="{Binding ScaleEntryId}"
+            <ComboBox x:Name="ScaleCombo"
+                      SelectedValue="{Binding ScaleEntryId}"
                       DisplayMemberPath="Name"
                       SelectedValuePath="Id"
-                      ItemsSource="{Binding DataContext.ScaleLibrary.Entries,
-                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                       Style="{DynamicResource PropCombo}" Margin="0,0,0,8" />
             <Button Content="스케일 연결 해제"
                     Command="{Binding DataContext.ClearScaleCommand,
@@ -179,11 +178,10 @@
 
             <TextBlock Text="알람 라이브러리" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
-            <ComboBox SelectedValue="{Binding AlarmEntryId}"
+            <ComboBox x:Name="AlarmCombo"
+                      SelectedValue="{Binding AlarmEntryId}"
                       DisplayMemberPath="Name"
                       SelectedValuePath="Id"
-                      ItemsSource="{Binding DataContext.AlarmLibrary.Entries,
-                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                       Style="{DynamicResource PropCombo}" Margin="0,0,0,8" />
             <Button Content="알람 연결 해제"
                     Command="{Binding DataContext.ClearAlarmCommand,

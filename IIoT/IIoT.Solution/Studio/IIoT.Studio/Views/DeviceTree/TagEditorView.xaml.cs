@@ -1,8 +1,13 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · Views/DeviceTree/TagEditorView.xaml.cs
 //  역할: Tag 편집기 코드비하인드
-//  S-21A B-1: 부모 PLC의 PlcVendor 기반으로
-//             RegisterTypeCombo ItemsSource 동적 필터링
+//  S-21A B-1: RegisterTypeCombo 부모 PLC 기반 필터링
+//  S-26 fix: ScaleCombo / AlarmCombo ItemsSource 코드비하인드 직접 주입
+//    문제: TagEditorView.DataContext = TagTreeNode (모델)
+//          RelativeSource AncestorType=UserControl 이 TagTreeNode를 반환
+//          → ScaleLibrary.Entries 탐색 불가
+//    해결: DataContextChanged 시 비주얼 트리 탐색 →
+//          DeviceTreeViewModel 찾아서 ScaleCombo/AlarmCombo.ItemsSource 직접 설정
 //  생성: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -22,47 +27,46 @@ public partial class TagEditorView : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
-    // §1 ─ DataContext 변경 → 부모 PLC 탐색 → 레지스터 목록 갱신 ──
+    // §1 ─ DataContext 변경 처리 ──────────────────────────────
 
     private void OnDataContextChanged(object sender,
         DependencyPropertyChangedEventArgs e)
     {
-        if (e.NewValue is TagTreeNode tag)
-            _RefreshRegisterTypes(tag);
+        if (e.NewValue is not TagTreeNode tag) return;
+
+        // 비주얼 트리에서 DeviceTreeViewModel 탐색
+        var treeVm = _FindAncestorVm<DeviceTreeViewModel>(this);
+        if (treeVm is null) return;
+
+        // ★ S-26 fix: ScaleCombo / AlarmCombo ItemsSource 직접 주입
+        ScaleCombo.ItemsSource = treeVm.ScaleLibrary.Entries;
+        AlarmCombo.ItemsSource = treeVm.AlarmLibrary.Entries;
+
+        // ★ S-21A B-1: RegisterTypeCombo 부모 PLC 기반 필터링
+        _RefreshRegisterTypes(tag, treeVm);
     }
 
-    private void _RefreshRegisterTypes(TagTreeNode tag)
+    // §2 ─ RegisterType 필터링 ────────────────────────────────
+
+    private void _RefreshRegisterTypes(TagTreeNode tag, DeviceTreeViewModel treeVm)
     {
-        // 비주얼 트리를 거슬러 올라가 부모 PLC의 PlcVendor 찾기
-        var vendor = _FindParentPlcVendor();
+        var vendor = _FindParentPlcVendor(treeVm);
+        var supported = RegisterTypeExtensions.ForVendor(vendor);
 
-        // 해당 제조사에서 지원하는 레지스터 종류만 표시
-        var supportedTypes = RegisterTypeExtensions.ForVendor(vendor);
-
-        RegisterTypeCombo.ItemsSource   = supportedTypes;
+        RegisterTypeCombo.ItemsSource   = supported;
         RegisterTypeCombo.SelectedValue = tag.RegisterType;
 
-        // 현재 RegisterType이 지원 목록에 없으면 첫 번째 항목으로 교체
-        if (!supportedTypes.Contains(tag.RegisterType)
-            && supportedTypes.Count > 0)
+        if (!supported.Contains(tag.RegisterType) && supported.Count > 0)
         {
-            tag.RegisterType = supportedTypes[0];
+            tag.RegisterType = supported[0];
             RegisterTypeCombo.SelectedValue = tag.RegisterType;
         }
     }
 
-    // §2 ─ 비주얼 트리에서 부모 PLC 탐색 ──────────────────────
-
-    private PlcVendor _FindParentPlcVendor()
+    private static PlcVendor _FindParentPlcVendor(DeviceTreeViewModel treeVm)
     {
-        // DeviceTreeViewModel.SelectedNode의 부모가 PlcTreeNode인지 확인
-        var treeVm = _FindAncestor<DeviceTreeViewModel>(this);
-        if (treeVm?.SelectedNode is null) return PlcVendor.Modbus;
-
-        // 부모 컬렉션 탐색으로 PlcTreeNode 찾기
-        var plc = _FindParentPlc(
-            treeVm.RootNodes, treeVm.SelectedNode);
-
+        if (treeVm.SelectedNode is null) return PlcVendor.Modbus;
+        var plc = _FindParentPlc(treeVm.RootNodes, treeVm.SelectedNode);
         return plc?.PlcVendor ?? PlcVendor.Modbus;
     }
 
@@ -74,7 +78,6 @@ public partial class TagEditorView : UserControl
         {
             if (node.Children.Contains(target))
                 return node as PlcTreeNode;
-
             var found = _FindParentPlc(node.Children as
                 System.Collections.ObjectModel.ObservableCollection<AbstractTreeNode>
                 ?? new(), target);
@@ -83,7 +86,9 @@ public partial class TagEditorView : UserControl
         return null;
     }
 
-    private static T? _FindAncestor<T>(DependencyObject child) where T : class
+    // §3 ─ 비주얼 트리 ViewModel 탐색 ────────────────────────
+
+    private static T? _FindAncestorVm<T>(DependencyObject child) where T : class
     {
         var parent = VisualTreeHelper.GetParent(child);
         while (parent is not null)

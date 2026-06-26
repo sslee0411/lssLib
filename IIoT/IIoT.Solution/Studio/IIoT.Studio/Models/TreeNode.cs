@@ -6,7 +6,8 @@
 //             TagTreeNode → RegisterType + AddressHint 추가
 //  S-23: TagTreeNode → Memo 프로퍼티 추가
 //  S-24: AbstractTreeNode → IsExpanded 프로퍼티 추가
-//  S-25: TagTreeNode → IsEnabled 프로퍼티 추가 (수집 활성·비활성)
+//  S-25: TagTreeNode → IsEnabled 프로퍼티 추가
+//  S-28: PlcTreeNode → CommEntryId 추가 (통신 라이브러리 공유 참조)
 //  생성: 2026-06-15 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -95,6 +96,19 @@ public partial class PlcTreeNode : AbstractTreeNode
     private PlcVendor _plcVendor = PlcVendor.Modbus;
 
     public string VendorLabel => PlcVendor.ToLabel();
+
+    // ★ S-28: 통신 라이브러리 참조 ID
+    //   null = 직접 입력 / 값 있음 = 라이브러리 항목 사용
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCommReferenced))]
+    [NotifyPropertyChangedFor(nameof(IsDirectInput))]
+    private Guid? _commEntryId;
+
+    /// <summary>통신 라이브러리 참조 중 여부</summary>
+    public bool IsCommReferenced => CommEntryId.HasValue;
+
+    /// <summary>직접 입력 활성 여부 (역방향)</summary>
+    public bool IsDirectInput => !CommEntryId.HasValue;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsModbusTcp))]

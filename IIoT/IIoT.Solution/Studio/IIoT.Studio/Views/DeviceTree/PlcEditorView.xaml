@@ -132,13 +132,61 @@
                            Foreground="{DynamicResource Text2Brush}"
                            Margin="2,0,0,20" />
 
-                <!-- 통신 방식 -->
+                <!-- ★ S-28: 통신 라이브러리 참조 -->
+                <TextBlock Text="통신 라이브러리 참조"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,6" />
+                <ComboBox x:Name="CommEntryCombo"
+                          Style="{DynamicResource PropCombo}"
+                          SelectedValuePath="Id"
+                          SelectedValue="{Binding CommEntryId}"
+                          SelectionChanged="OnCommEntryChanged"
+                          Margin="0,0,0,4">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock FontSize="12"
+                                       Foreground="{DynamicResource TextBrush}">
+                                <Run Text="{Binding Name}" />
+                                <Run Text=" — " Foreground="{DynamicResource Text2Brush}" />
+                                <Run Text="{Binding Host}" Foreground="{DynamicResource Text2Brush}" />
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                    <Button Content="참조 해제"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,3" FontSize="11"
+                            Click="OnCommEntryDetach" />
+                    <TextBlock FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center"
+                               Margin="8,0,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text"
+                                        Value="직접 입력 모드 — 아래 설정을 직접 입력하세요" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCommReferenced}"
+                                                 Value="True">
+                                        <Setter Property="Text"
+                                                Value="라이브러리 참조 중 — 직접 입력 비활성" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- 통신 방식 (직접 입력 비활성 여부: IsDirectInput) -->
                 <TextBlock Text="통신 방식"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
                            Margin="0,0,0,6" />
                 <ComboBox SelectedValue="{Binding CommType}"
                           ItemsSource="{Binding Source={StaticResource PlcCommTypeValues}}"
+                          IsEnabled="{Binding IsDirectInput}"
                           Style="{DynamicResource PropCombo}"
                           Margin="0,0,0,20" />
 

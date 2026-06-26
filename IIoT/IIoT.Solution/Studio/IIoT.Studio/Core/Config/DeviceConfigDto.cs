@@ -3,7 +3,8 @@
 //  역할: device.json 직렬화 전용 DTO
 //  S-10: 초기 구현
 //  S-23: DeviceNodeDto에 Memo 필드 추가
-//  S-25: DeviceNodeDto에 IsEnabled 필드 추가 (Tag 수집 활성 여부)
+//  S-25: DeviceNodeDto에 IsEnabled 필드 추가
+//  S-28: DeviceNodeDto에 CommEntryId 필드 추가 (PLC 통신 라이브러리 참조)
 //  생성: 2026-06-17 / 수정: 2026-06-20
 // ══════════════════════════════════════════════════════════
 
@@ -38,10 +39,13 @@ public sealed class DeviceNodeDto
     public string? Location     { get; set; }
 
     // ── 통신 (Device / PLC 공통) ─────────────────────────
-    public string? CommType { get; set; }
-    public string? Host     { get; set; }
-    public int?    Port     { get; set; }
-    public int?    PollMs   { get; set; }
+    public string? CommType    { get; set; }
+    public string? Host        { get; set; }
+    public int?    Port        { get; set; }
+    public int?    PollMs      { get; set; }
+
+    // ★ S-28: PLC 통신 라이브러리 참조 ID (null = 직접 입력)
+    public string? CommEntryId { get; set; }
 
     // ── Tag 전용 ─────────────────────────────────────────
     public string? Address      { get; set; }
