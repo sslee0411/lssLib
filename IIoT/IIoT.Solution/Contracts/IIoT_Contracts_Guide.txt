@@ -1,0 +1,504 @@
+================================================================================
+  IIoT.Contracts — 장비·프로토콜 추가 가이드
+  대상: 새로운 PLC 제조사 또는 통신 프로토콜을 시스템에 추가하려는 개발자
+  기준 버전: v1.0 (2026-06-27)
+================================================================================
+
+--------------------------------------------------------------------------------
+  1. IIoT.Contracts 구조 한눈 요약
+--------------------------------------------------------------------------------
+
+  IIoT.Contracts/                   ← 외부 참조 0개 (순수 계약 레이어)
+  ├── Enums/
+  │   ├── PlcVendor.cs              ← PLC 제조사 구분 (Modbus/Mitsubishi/LsSanXgt...)
+  │   └── DriverEnums.cs            ← ParameterType (UI 타입) + DriverCapability (기능)
+  ├── Models/
+  │   ├── ParameterDefinition.cs    ← 드라이버 파라미터 스키마 (Studio UI 자동 렌더링)
+  │   ├── DriverConfig.cs           ← 드라이버 연결 설정 (런타임 전달용)
+  │   └── TagRequest.cs             ← TagReadRequest / TagWriteRequest / TagValue / 결과
+  ├── Interfaces/
+  │   ├── IProtocolPlugin.cs        ← 플러그인 진입점 (PluginLoader가 탐색)
+  │   └── IProtocolDriver.cs        ← 실제 통신 구현 (ConnectAsync / ReadTagsAsync)
+  ├── Attributes/
+  │   └── DriverMetadataAttribute.cs ← 클래스에 부착하는 선언적 메타데이터
+  ├── Migration/
+  │   └── CommTypeMigrator.cs       ← 기존 commType → 신규 driverId 자동 변환
+  └── Core/Plugin/
+      ├── PluginLoadContext.cs      ← AssemblyLoadContext 격리 로드
+      ├── PluginLoader.cs           ← Plugins/ 폴더 스캔 + dll 로드
+      └── DriverRegistry.cs        ← driverId → IProtocolPlugin 매핑
+
+  핵심 원칙:
+  · IIoT.Contracts 자체는 외부 참조 0개 (lssLib 포함 어떤 것도 참조 금지)
+  · 드라이버 플러그인 dll은 IIoT.Contracts 만 참조
+  · Collector / Studio 는 IIoT.Contracts + lssLib 둘 다 참조
+
+================================================================================
+  2. 새 장비(PLC 제조사) 추가 절차
+================================================================================
+
+  예시: 화낙(FANUC) CNC 컨트롤러를 새로 지원하고 싶은 경우
+
+  ────────────────────────────────────────────────────────────────────────────
+  Step A. PlcVendor 열거형에 새 제조사 추가  [IIoT.Contracts 수정]
+  ────────────────────────────────────────────────────────────────────────────
+
+  파일: Enums/PlcVendor.cs
+
+  기존:
+    public enum PlcVendor
+    {
+        Modbus     = 0,
+        Mitsubishi = 1,
+        LsSanXgt   = 2,
+        Siemens    = 3,
+        Omron      = 4,
+        Free       = 99
+    }
+
+  추가 후:
+    public enum PlcVendor
+    {
+        Modbus     = 0,
+        Mitsubishi = 1,
+        LsSanXgt   = 2,
+        Siemens    = 3,
+        Omron      = 4,
+        Fanuc      = 5,    ← ★ 추가 (연속 번호 사용, Free=99 유지)
+        Free       = 99
+    }
+
+  주의:
+  · 기존 번호 변경 절대 금지 (device.json 하위 호환 깨짐)
+  · Free = 99 는 항상 마지막에 유지
+  · Studio의 Models/Enums.cs PlcVendor 와 동일하게 맞춰야 함
+
+  ────────────────────────────────────────────────────────────────────────────
+  Step B. CommTypeMigrator에 레거시 매핑 추가  [IIoT.Contracts 수정]
+  ────────────────────────────────────────────────────────────────────────────
+
+  파일: Migration/CommTypeMigrator.cs
+
+  기존 device.json에 commType: "Fanuc" 으로 저장된 데이터가 있다면:
+
+    private static readonly Dictionary<string, string> _legacyMap = new(...)
+    {
+        ["ModbusTcp"] = "modbus-tcp",
+        ["Serial"]    = "modbus-rtu",
+        ["Mqtt"]      = "mqtt-v311",
+        ["OpcUa"]     = "opcua-v1",
+        ["None"]      = "",
+        ["Free"]      = "",
+        ["Fanuc"]     = "fanuc-focas",   ← ★ 추가
+    };
+
+  기존 device.json에 commType: "Fanuc" 이 없다면 생략 가능.
+  (신규 플러그인만 사용 시 driverId: "fanuc-focas" 직접 사용)
+
+  ────────────────────────────────────────────────────────────────────────────
+  Step C. 드라이버 플러그인 프로젝트 생성  [신규 프로젝트]
+  ────────────────────────────────────────────────────────────────────────────
+
+  솔루션 구조:
+    IIoT.Solution/
+    └── Plugins/
+        └── IIoT.Driver.Fanuc/       ← 신규 프로젝트
+            ├── IIoT.Driver.Fanuc.csproj
+            ├── FanucPlugin.cs        ← IProtocolPlugin 구현
+            └── FanucDriver.cs        ← IProtocolDriver 구현
+
+  csproj (외부 참조는 IIoT.Contracts 하나만):
+    <Project Sdk="Microsoft.NET.Sdk">
+      <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+      </PropertyGroup>
+      <ItemGroup>
+        <ProjectReference Include="..\..\Contracts\IIoT.Contracts\IIoT.Contracts.csproj" />
+        <!-- 제조사 SDK가 있다면 여기에 추가 -->
+        <!-- <PackageReference Include="Fanuc.Focas" Version="x.x.x" /> -->
+      </ItemGroup>
+    </Project>
+
+  ────────────────────────────────────────────────────────────────────────────
+  Step D. IProtocolPlugin 구현 (FanucPlugin.cs)
+  ────────────────────────────────────────────────────────────────────────────
+
+  // FanucPlugin.cs
+  using IIoT.Contracts;
+
+  [DriverMetadata(
+      displayName:  "FANUC FOCAS",
+      description:  "FANUC CNC 시리즈 (FOCAS2 라이브러리)",
+      vendor:       PlcVendor.Fanuc,
+      supportWrite: true
+  )]
+  public sealed class FanucPlugin : IProtocolPlugin
+  {
+      // 1. 메타데이터 —————————————————————————————————————
+      public string    PluginName      => "fanuc-focas";   // ★ driverId 와 일치
+      public string    PluginVersion   => "1.0.0";
+      public PlcVendor SupportedVendor => PlcVendor.Fanuc;
+
+      // 2. 파라미터 스키마 (Studio UI 자동 렌더링용) ————————
+      public IReadOnlyList<ParameterDefinition> GetParameterSchema() => new[]
+      {
+          new ParameterDefinition(
+              Key:          "Host",
+              DisplayName:  "CNC IP 주소",
+              Type:         ParameterType.String,
+              DefaultValue: "192.168.0.1",
+              Description:  "FANUC CNC 컨트롤러 IP",
+              IsRequired:   true,
+              ValidationRegex: @"^\d+\.\d+\.\d+\.\d+$"
+          ),
+          new ParameterDefinition(
+              Key:          "Port",
+              DisplayName:  "포트",
+              Type:         ParameterType.Int,
+              DefaultValue: "8193",
+              IsRequired:   true
+          ),
+          new ParameterDefinition(
+              Key:          "LibPath",
+              DisplayName:  "FOCAS2 DLL 경로",
+              Type:         ParameterType.String,
+              DefaultValue: "Fwlib32.dll",
+              Description:  "FOCAS2 라이브러리 경로 (절대 또는 상대)"
+          ),
+          new ParameterDefinition(
+              Key:          "Timeout",
+              DisplayName:  "타임아웃(초)",
+              Type:         ParameterType.Int,
+              DefaultValue: "10"
+          ),
+      };
+
+      // 3. 지원 기능 —————————————————————————————————————
+      public IReadOnlyList<DriverCapability> GetCapabilities()
+          => [DriverCapability.Read, DriverCapability.Write];
+
+      // 4. 드라이버 인스턴스 생성 ————————————————————————
+      public IProtocolDriver CreateDriver() => new FanucDriver();
+  }
+
+  ────────────────────────────────────────────────────────────────────────────
+  Step E. IProtocolDriver 구현 (FanucDriver.cs)
+  ────────────────────────────────────────────────────────────────────────────
+
+  // FanucDriver.cs
+  using IIoT.Contracts;
+
+  public sealed class FanucDriver : IProtocolDriver
+  {
+      // §1 — 상태 ——————————————————————————————————————————
+      public string DriverName  => "fanuc-focas";
+      public bool   IsConnected { get; private set; }
+
+      public event Action<string>?         OnConnected;
+      public event Action<string, string>? OnError;
+
+      private DriverConfig? _config;
+      // private short _handle; // FOCAS2 라이브러리 핸들 (실제 구현 시 사용)
+
+      // §2 — 연결 ——————————————————————————————————————————
+      public async Task<bool> ConnectAsync(DriverConfig config, CancellationToken ct = default)
+      {
+          _config = config;
+          var host    = config.Params?["Host"]    ?? "192.168.0.1";
+          var port    = int.Parse(config.Params?["Port"] ?? "8193");
+          var timeout = int.Parse(config.Params?["Timeout"] ?? "10");
+
+          try
+          {
+              // 실제 구현: Fwlib32.cnc_allclibhndl3(host, port, timeout, out _handle)
+              await Task.Delay(10, ct); // 연결 시뮬레이션
+              IsConnected = true;
+              OnConnected?.Invoke(DriverName);
+              return true;
+          }
+          catch (Exception ex)
+          {
+              OnError?.Invoke(DriverName, ex.Message);
+              return false;
+          }
+      }
+
+      public Task DisconnectAsync()
+      {
+          // 실제 구현: Fwlib32.cnc_freelibhndl(_handle)
+          IsConnected = false;
+          return Task.CompletedTask;
+      }
+
+      // §3 — 읽기 ——————————————————————————————————————————
+      public async Task<DriverReadResult> ReadTagsAsync(
+          IReadOnlyList<TagReadRequest> tags,
+          CancellationToken ct = default)
+      {
+          if (!IsConnected)
+              return DriverReadResult.Fail("미연결", TagQuality.Disconnected);
+
+          var values = new List<TagValue>();
+          foreach (var tag in tags)
+          {
+              try
+              {
+                  // 실제 구현: Fwlib32.cnc_rdparam() 등으로 tag.Address 읽기
+                  var raw = (object)0.0;  // 읽은 값
+                  values.Add(new TagValue(
+                      TagId:     tag.TagId,
+                      RawValue:  raw,
+                      Quality:   TagQuality.Good,
+                      Timestamp: DateTimeOffset.UtcNow
+                  ));
+              }
+              catch (Exception ex)
+              {
+                  values.Add(new TagValue(tag.TagId, null, TagQuality.Bad,
+                      DateTimeOffset.UtcNow));
+                  OnError?.Invoke(DriverName, $"{tag.Address}: {ex.Message}");
+              }
+          }
+          return DriverReadResult.Ok(values);
+      }
+
+      // §4 — 쓰기 ——————————————————————————————————————————
+      public async Task<DriverWriteResult> WriteTagAsync(
+          TagWriteRequest tag,
+          CancellationToken ct = default)
+      {
+          if (!IsConnected)
+              return DriverWriteResult.Fail("미연결");
+
+          try
+          {
+              // 실제 구현: Fwlib32.cnc_wrparam() 등으로 tag.Address 에 tag.Value 쓰기
+              return DriverWriteResult.Ok();
+          }
+          catch (Exception ex)
+          {
+              return DriverWriteResult.Fail(ex.Message);
+          }
+      }
+
+      // §5 — 리소스 해제 ————————————————————————————————————
+      public ValueTask DisposeAsync()
+      {
+          DisconnectAsync().GetAwaiter().GetResult();
+          return ValueTask.CompletedTask;
+      }
+  }
+
+================================================================================
+  3. 새 통신 프로토콜 추가 절차
+================================================================================
+
+  예시: EtherNet/IP (Allen-Bradley PLC) 를 새로 지원하고 싶은 경우
+
+  기존 제조사(Modbus 등)와 다른 통신 프로토콜을 사용하지만
+  추가 절차는 위와 동일합니다. 차이점만 정리합니다.
+
+  ────────────────────────────────────────────────────────────────────────────
+  프로토콜 vs 제조사 판단 기준
+  ────────────────────────────────────────────────────────────────────────────
+
+  · PlcVendor    = 제조사 구분 (Allen-Bradley → AllenBradley 추가)
+  · PluginName   = driverId  (프로토콜 식별자 — "ethernet-ip" 등)
+  · 두 개념이 1:1 대응하지 않아도 됨
+    예: Modbus TCP / Modbus RTU 는 제조사는 동일하지만 플러그인은 2개
+
+  ────────────────────────────────────────────────────────────────────────────
+  EtherNet/IP 추가 예시
+  ────────────────────────────────────────────────────────────────────────────
+
+  PlcVendor.cs 에 추가:
+    AllenBradley = 5,   ← 번호 결정
+
+  플러그인 프로젝트: IIoT.Driver.EtherNetIP
+
+  EtherNetIpPlugin.cs:
+    public string    PluginName      => "ethernet-ip";
+    public PlcVendor SupportedVendor => PlcVendor.AllenBradley;
+
+    GetParameterSchema() => new[]
+    {
+        new ParameterDefinition("Host", "PLC IP", String, "192.168.1.1", IsRequired: true),
+        new ParameterDefinition("Slot", "슬롯 번호", Int, "0"),
+        new ParameterDefinition("TimeoutMs", "타임아웃(ms)", Int, "3000"),
+    };
+
+  주소 형식 (EtherNet/IP 예시):
+    · 비트:  "B3:0/0"
+    · 정수:  "N7:0"
+    · 실수:  "F8:0"
+    · 태그:  "MotorSpeed" (ControlLogix 기호 태그)
+
+  ────────────────────────────────────────────────────────────────────────────
+  동일 제조사 다중 프로토콜 예시 (미쓰비시)
+  ────────────────────────────────────────────────────────────────────────────
+
+  미쓰비시 MELSEC 시리즈는 여러 프로토콜 지원:
+    · Q/L/FX 시리즈  → MC 프로토콜 (TCP 3E/4E 프레임)  → "mitsubishi-mc"
+    · iQ-R 시리즈   → SLMP (Seamless Message Protocol) → "mitsubishi-slmp"
+    · FX3 시리즈    → 전용 시리얼 프로토콜              → "mitsubishi-fx"
+
+  플러그인 3개 (모두 PlcVendor.Mitsubishi):
+    MitsubishiMcPlugin    → PluginName = "mitsubishi-mc"
+    MitsubishiSlmpPlugin  → PluginName = "mitsubishi-slmp"
+    MitsubishiFxPlugin    → PluginName = "mitsubishi-fx"
+
+  → Studio에서 PLC 노드 선택 시 제조사=미쓰비시 선택 후
+    세부 드라이버 드롭다운에서 3가지 중 선택
+
+================================================================================
+  4. ParameterDefinition 스키마 작성 요령
+================================================================================
+
+  모든 드라이버 파라미터는 ParameterDefinition 배열로 선언합니다.
+  Studio가 이를 읽어 PLC 편집기 UI를 자동으로 생성합니다.
+
+  ParameterType 별 생성되는 UI:
+  ┌────────────────┬─────────────────┬───────────────────────────────────┐
+  │ ParameterType  │ UI 컨트롤       │ 사용 예                           │
+  ├────────────────┼─────────────────┼───────────────────────────────────┤
+  │ String         │ TextBox         │ IP 주소, 경로, 문자열 설정        │
+  │ Int            │ NumericBox      │ 포트, 타임아웃, 슬롯 번호         │
+  │ Bool           │ CheckBox        │ TLS 사용 여부, 자동 재연결        │
+  │ Enum           │ ComboBox        │ 통신 모드, 데이터 타입 선택       │
+  │ Password       │ PasswordBox     │ 비밀번호, 시크릿 키               │
+  └────────────────┴─────────────────┴───────────────────────────────────┘
+
+  Enum 타입 사용 예:
+    new ParameterDefinition(
+        Key:        "FrameType",
+        DisplayName:"프레임 타입",
+        Type:       ParameterType.Enum,
+        DefaultValue: "3E",
+        EnumValues: ["3E", "4E", "QnA"]   ← 선택 목록 지정
+    )
+
+  ValidationRegex 활용:
+    IP 주소 검증:  @"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
+    포트 범위:     @"^\d{1,5}$"
+    영숫자:        @"^[a-zA-Z0-9_]+$"
+
+================================================================================
+  5. 배포 및 로드 흐름
+================================================================================
+
+  [개발자 작업]
+    1. IIoT.Driver.Xxx 프로젝트 생성
+    2. IProtocolPlugin + IProtocolDriver 구현
+    3. 빌드 → IIoT.Driver.Xxx.dll 생성
+
+  [배포]
+    4. IIoT.Driver.Xxx.dll → Plugins/ 폴더에 복사
+       (의존 dll 도 함께 복사)
+
+       IIoT.Solution/
+       └── Plugins/
+           ├── IIoT.Driver.ModbusTcp.dll
+           ├── IIoT.Driver.Mitsubishi.dll
+           └── IIoT.Driver.Xxx.dll         ← 신규 배포
+
+  [런타임 로드 흐름]
+    5. Studio 또는 Collector 시작
+    6. PluginLoader.LoadAll("Plugins/") 호출
+    7. 각 dll 에서 IProtocolPlugin 구현 타입 탐색
+    8. PluginLoadContext (격리 컨텍스트) 로 로드
+    9. DriverRegistry 에 driverId → Plugin 매핑 등록
+   10. Studio: PLC 편집기 드라이버 드롭다운에 자동 표시
+       Collector: 수집 시작 시 해당 드라이버 인스턴스 생성
+
+  [로드 격리의 의미]
+    · 각 dll은 독립된 AssemblyLoadContext 에 로드
+    · 서로 다른 드라이버 간 DLL 버전 충돌 없음
+    · IIoT.Contracts 는 기본 컨텍스트 공유 (인터페이스 타입 동일성 보장)
+    · 로드 실패한 dll 은 건너뜀 (나머지 드라이버 영향 없음)
+
+================================================================================
+  6. device.json 저장 형식 (플러그인 드라이버 사용 시)
+================================================================================
+
+  // 기존 방식 (레거시 commType — 자동 변환됨)
+  {
+    "nodeType": "PLC",
+    "name": "PLC-01",
+    "commType": "ModbusTcp",     ← CommTypeMigrator → "modbus-tcp" 변환
+    "host": "192.168.0.1",
+    "port": 502
+  }
+
+  // 신규 방식 (플러그인 driverId 직접 지정)
+  {
+    "nodeType": "PLC",
+    "name": "Fanuc-CNC-01",
+    "driverId": "fanuc-focas",   ← 플러그인 PluginName 과 일치
+    "driverParams": {
+      "Host":    "192.168.1.100",
+      "Port":    "8193",
+      "Timeout": "10"
+    }
+  }
+
+  // 미쓰비시 MC 프로토콜 예시
+  {
+    "nodeType": "PLC",
+    "name": "Mitsubishi-Q01",
+    "driverId": "mitsubishi-mc",
+    "driverParams": {
+      "Host":      "192.168.0.10",
+      "Port":      "5007",
+      "NetworkNo": "0",
+      "PCNo":      "255",
+      "UnitNo":    "0",
+      "StationNo": "0"
+    }
+  }
+
+================================================================================
+  7. 요약 — 새 장비/프로토콜 추가 체크리스트
+================================================================================
+
+  IIoT.Contracts 수정 (필요 시):
+    [ ] PlcVendor.cs — 신규 제조사 enum 값 추가 (기존 번호 유지)
+    [ ] CommTypeMigrator.cs — 레거시 commType 매핑 추가 (기존 데이터 있을 때만)
+
+  신규 드라이버 플러그인 프로젝트:
+    [ ] IIoT.Driver.Xxx.csproj — IIoT.Contracts 만 참조
+    [ ] XxxPlugin.cs — IProtocolPlugin 구현
+        · PluginName = "xxx-protocol" (driverId 로 사용)
+        · SupportedVendor = PlcVendor.Xxx
+        · GetParameterSchema() — 연결에 필요한 파라미터 목록
+        · GetCapabilities() — Read / Write / Subscribe 지원 여부
+        · CreateDriver() → new XxxDriver()
+    [ ] XxxDriver.cs — IProtocolDriver 구현
+        · ConnectAsync() — DriverConfig.Params 에서 파라미터 읽어 연결
+        · ReadTagsAsync() — 배치 폴링 구현
+        · WriteTagAsync() — 단일 쓰기 구현 (선택)
+        · DisposeAsync() — 연결 해제
+
+  배포:
+    [ ] 빌드 → IIoT.Driver.Xxx.dll 생성
+    [ ] Plugins/ 폴더에 dll 복사
+    [ ] Studio / Collector 재시작 → 자동 등록
+
+  검증:
+    [ ] Studio: PLC 편집기 드라이버 드롭다운에 새 드라이버 표시 확인
+    [ ] Studio: 파라미터 입력 폼이 GetParameterSchema() 기반으로 렌더링 확인
+    [ ] Collector: 연결 성공 로그 확인
+    [ ] Collector: ReadTagsAsync 수집값 정상 수신 확인
+
+================================================================================
+  Ver History
+================================================================================
+
+  v1.0  초기 작성 (2026-06-27)
+        IIoT.Contracts Contracts-01~03 완료 기준 가이드 작성
+        장비 추가 (PlcVendor + Plugin 구현) 절차 정의
+        프로토콜 추가 및 다중 프로토콜 예시 추가
+        ParameterDefinition 스키마 작성 요령
+        device.json 저장 형식 (레거시 vs 신규) 비교
+
+================================================================================
