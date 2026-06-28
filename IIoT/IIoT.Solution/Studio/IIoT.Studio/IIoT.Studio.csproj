@@ -23,6 +23,7 @@
 		<!-- lssLib — 솔루션 기준 상대 경로 (실제 환경에 맞게 조정) -->
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
 		<!-- IIoT.UI.Themes — 테마 라이브러리 -->
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
 	</ItemGroup>
@@ -30,6 +31,7 @@
 	<ItemGroup>
 	  <Folder Include="Core\Config\" />
 	  <Folder Include="Core\Canvas\" />
+	  <Folder Include="Core\Plugin\" />
 	  <Folder Include="Models\" />
 	  <Folder Include="ViewModels\" />
 	  <Folder Include="Views\DeviceTree\" />
