@@ -1,0 +1,202 @@
+================================================================================
+  IIoT 드라이버 플러그인 개발자 참조 가이드
+  예제 드라이버: ModbusTcp (범용) · Mitsubishi (제조사 전용)
+  기준 버전: v1.0 (2026-06-27)
+================================================================================
+
+--------------------------------------------------------------------------------
+  1. 예제 드라이버 목적 및 비교
+--------------------------------------------------------------------------------
+
+  이 두 예제는 새 드라이버를 만들 때 복사해서 수정하는 템플릿입니다.
+
+  ┌──────────────────────┬──────────────────────────┬────────────────────────┐
+  │ 항목                 │ IIoT.Driver.ModbusTcp    │ IIoT.Driver.Mitsubishi │
+  ├──────────────────────┼──────────────────────────┼────────────────────────┤
+  │ 용도                 │ 범용 Modbus TCP           │ 미쓰비시 전용 MC 프로토콜│
+  │ PlcVendor            │ Modbus                   │ Mitsubishi             │
+  │ driverId (PluginName)│ "modbus-tcp"             │ "mitsubishi-mc"        │
+  │ 외부 라이브러리       │ 없음 (Socket 직접 구현)  │ 없음 (프레임 직접 구현) │
+  │ 프레임 구조          │ Modbus ADU (표준)         │ MC 3E 프레임 (제조사)  │
+  │ 주소 형식            │ 40001, 30001 (숫자)      │ D100, X0.1, M200       │
+  │ 배치 읽기 전략       │ 주소 범위 묶음            │ 소자 종류별 분리 후 묶음│
+  │ 특유 파라미터        │ SlaveId, MaxBatchSize    │ NetworkNo, PCNo, UnitIo│
+  └──────────────────────┴──────────────────────────┴────────────────────────┘
+
+  새 드라이버 추가 시 참조 기준:
+  · 표준 프로토콜 (Modbus, EtherNet/IP, DNP3 등) → ModbusTcp 구조 참조
+  · 제조사 전용 프로토콜 (LS산전 XGT, 지멘스 S7, 오므론 FINS 등) → Mitsubishi 구조 참조
+
+--------------------------------------------------------------------------------
+  2. 파일 구조
+--------------------------------------------------------------------------------
+
+  Plugins/
+  ├── IIoT.Driver.ModbusTcp/
+  │   ├── IIoT.Driver.ModbusTcp.csproj  ← IIoT.Contracts 만 참조
+  │   ├── ModbusTcpPlugin.cs            ← IProtocolPlugin 구현 (메타데이터+스키마)
+  │   └── ModbusTcpDriver.cs            ← IProtocolDriver 구현 (실제 통신)
+  │
+  └── IIoT.Driver.Mitsubishi/
+      ├── IIoT.Driver.Mitsubishi.csproj ← IIoT.Contracts 만 참조
+      ├── MitsubishiPlugin.cs           ← IProtocolPlugin 구현
+      └── MitsubishiDriver.cs           ← IProtocolDriver 구현 (MC 3E 프레임)
+
+  ★ 규칙: 드라이버 1개 = 파일 2개 (Plugin + Driver)
+  ★ 복잡한 드라이버는 Helper 파일 추가 가능 (예: MitsubishiFrame.cs)
+
+--------------------------------------------------------------------------------
+  3. 새 드라이버 추가 순서 (체크리스트)
+--------------------------------------------------------------------------------
+
+  [ ] 1. IIoT.Contracts/Enums/PlcVendor.cs 에 제조사 추가 (없으면)
+         예: Fanuc = 5,  AllenBradley = 6
+
+  [ ] 2. Plugins/ 에 새 폴더 생성
+         예: IIoT.Driver.Fanuc/
+
+  [ ] 3. .csproj 복사 후 수정 (AssemblyName, RootNamespace 변경)
+
+  [ ] 4. XxxPlugin.cs 복사 후 수정:
+         · PluginName      → 새 driverId ("fanuc-focas")
+         · SupportedVendor → 새 제조사 (PlcVendor.Fanuc)
+         · GetParameterSchema() → 제조사별 파라미터 정의
+         · CreateDriver()  → 새 XxxDriver() 반환
+
+  [ ] 5. XxxDriver.cs 복사 후 수정:
+         · DriverName      → driverId 와 동일 문자열
+         · _ReadParams()   → Plugin 스키마의 Key 와 동일한 이름으로 읽기
+         · ConnectAsync()  → 제조사 연결 방식 구현
+         · ReadTagsAsync() → 제조사 읽기 프레임 구현
+         · WriteTagAsync() → 제조사 쓰기 프레임 구현 (선택)
+
+  [ ] 6. 빌드 → IIoT.Driver.Xxx.dll → Plugins/ 폴더 복사
+
+  [ ] 7. Studio / Collector 재시작 → 자동 등록 확인
+
+--------------------------------------------------------------------------------
+  4. Plugin 파일 핵심 포인트
+--------------------------------------------------------------------------------
+
+  PluginName (= driverId):
+  · device.json 의 driverId 필드 값과 반드시 일치
+  · 소문자 + 하이픈 형식 권장
+  · DriverRegistry._NormalizeId() 로 자동 정규화되므로
+    "Modbus TCP" 로 써도 "modbus-tcp" 로 변환됨
+    → 명확성을 위해 처음부터 "modbus-tcp" 형식 권장
+
+  GetParameterSchema():
+  · 각 ParameterDefinition 의 Key 는 Driver 의 _ReadParams() 에서
+    config.Params[Key] 로 읽음 → 대소문자 정확히 일치해야 함
+  · IsRequired: true → Studio UI 에 * 표시 + 저장 시 유효성 검사
+  · ValidationRegex → Studio 에서 입력 즉시 검사 (선택)
+  · EnumValues → ParameterType.Enum 일 때 드롭다운 항목
+
+  GetCapabilities():
+  · Read 는 필수 (폴링 수집)
+  · Write 는 제어 시 추가
+  · BatchRead → Collector 가 배치 최적화 활성화 힌트
+
+--------------------------------------------------------------------------------
+  5. Driver 파일 핵심 포인트
+--------------------------------------------------------------------------------
+
+  ConnectAsync(DriverConfig config):
+  · config.Params 에서 파라미터 읽기
+    var host = config.Params?["Host"] ?? "기본값";
+  · 실패 시 OnError 이벤트 발생 + false 반환 (예외 던지지 말 것)
+  · 재시도 로직 포함 권장 (네트워크 불안정 대응)
+
+  ReadTagsAsync(IReadOnlyList<TagReadRequest> tags):
+  · tags 를 그룹화 → 배치 → 최소 요청으로 읽기
+    모든 태그를 1개씩 읽으면 성능 매우 저하
+  · 실패한 태그 → TagQuality.Bad 로 반환 (전체 실패 아님)
+  · 타임스탬프: DateTimeOffset.UtcNow (Collector 가 로컬 변환)
+
+  WriteTagAsync(TagWriteRequest tag):
+  · tag.Value 는 항상 문자열 → 드라이버가 DataType 에 맞게 변환
+    예: "3.14" + "Float32" → float.Parse("3.14") → 바이트 변환
+  · 실패 시 DriverWriteResult.Fail(message) 반환
+
+  DisposeAsync():
+  · TCP 연결 해제 + 리소스 정리
+  · Collector 가 드라이버 교체 또는 종료 시 호출
+
+  _ReadParams() 패턴 (권장):
+    private void _ReadParams(DriverConfig config)
+    {
+        var p = config.Params ?? new();
+        _host = p.GetValueOrDefault("Host", "192.168.0.1");
+        _port = int.TryParse(p.GetValueOrDefault("Port", "502"),
+                    out var port) ? port : 502;
+        // ★ TryParse 실패 시 기본값 사용 (설정 오류에도 동작)
+    }
+
+--------------------------------------------------------------------------------
+  6. 주소 형식 설계 지침
+--------------------------------------------------------------------------------
+
+  드라이버마다 지원하는 주소 형식을 문서화해야 합니다.
+  Studio 의 Tag 편집기에서 사용자가 이 형식으로 입력합니다.
+
+  Modbus 주소 형식:
+  ┌────────────────┬──────────┬─────────────────────────┐
+  │ 형식           │ 예       │ 설명                    │
+  ├────────────────┼──────────┼─────────────────────────┤
+  │ 40001~49999    │ 40001    │ Holding Register (0번)  │
+  │ 30001~39999    │ 30001    │ Input Register (0번)    │
+  │ 00001~09999    │ 00001    │ Coil (0번)              │
+  │ 10001~19999    │ 10001    │ Discrete Input (0번)    │
+  └────────────────┴──────────┴─────────────────────────┘
+
+  미쓰비시 MC 주소 형식:
+  ┌────────────────┬──────────┬─────────────────────────┐
+  │ 소자           │ 예       │ 설명                    │
+  ├────────────────┼──────────┼─────────────────────────┤
+  │ D(데이터레지스터)│ D100    │ 워드 D100번             │
+  │ X(입력)        │ X0.1     │ 입력 X001 (16진수)      │
+  │ Y(출력)        │ Y0.A     │ 출력 Y00A               │
+  │ M(내부릴레이)  │ M200     │ 내부 릴레이 M200        │
+  │ B(링크릴레이)  │ B0.1     │ 링크 릴레이             │
+  │ W(링크레지스터)│ W100     │ 링크 레지스터           │
+  │ R(파일레지스터)│ R0       │ 파일 레지스터           │
+  └────────────────┴──────────┴─────────────────────────┘
+
+  새 드라이버 작성 시 _ParseAddress() 메서드에 주소 형식 파싱 구현.
+
+--------------------------------------------------------------------------------
+  7. 배포 위치
+--------------------------------------------------------------------------------
+
+  실행파일 옆 Plugins/ 폴더에 dll 복사:
+
+  IIoT.Collector.exe 위치:
+    bin/Release/net8.0/
+    ├── IIoT.Collector.exe
+    ├── IIoT.Contracts.dll       ← 공유 계약 레이어
+    └── Plugins/
+        ├── IIoT.Driver.ModbusTcp.dll    ← 배포
+        ├── IIoT.Driver.Mitsubishi.dll   ← 배포
+        └── IIoT.Driver.Xxx.dll          ← 신규 배포
+
+  의존 dll 처리:
+  · 드라이버가 NuGet 패키지를 사용한다면 해당 dll 도 함께 복사
+    예: IIoT.Driver.Fanuc/ + Fwlib32.dll
+  · PluginLoadContext 가 동일 폴더에서 의존 dll 자동 탐색
+
+  빌드 후 자동 복사 설정 (csproj):
+    <Target Name="CopyToPlugins" AfterTargets="Build">
+      <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll"
+            DestinationFolder="..\..\..\IIoT.Collector\bin\$(Configuration)\net8.0\Plugins\" />
+    </Target>
+
+================================================================================
+  Ver History
+================================================================================
+
+  v1.0  초기 작성 (2026-06-27)
+        ModbusTcp 드라이버 예제 (범용 Modbus TCP, 순수 Socket 구현)
+        Mitsubishi 드라이버 예제 (MC 프로토콜 3E 프레임, 소자코드 맵)
+        드라이버 비교표, 추가 순서 체크리스트, 주소 형식 가이드 작성
+
+================================================================================

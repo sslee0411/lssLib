@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37328.6
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Driver.ModbusTcp", "IIoT.Driver.ModbusTcp\IIoT.Driver.ModbusTcp.csproj", "{0C34C501-EE69-4846-B569-CEEE972B734B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Contracts", "..\Contracts\IIoT.Contracts.csproj", "{84125A40-0848-EBED-CCF7-1CB630303B46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Driver.Mitsubishi", "IIoT.Driver.Mitsubishi\IIoT.Driver.Mitsubishi.csproj", "{929DD012-1C23-480A-A1DD-324946ED4391}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C34C501-EE69-4846-B569-CEEE972B734B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C34C501-EE69-4846-B569-CEEE972B734B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C34C501-EE69-4846-B569-CEEE972B734B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C34C501-EE69-4846-B569-CEEE972B734B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{929DD012-1C23-480A-A1DD-324946ED4391}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{929DD012-1C23-480A-A1DD-324946ED4391}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{929DD012-1C23-480A-A1DD-324946ED4391}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{929DD012-1C23-480A-A1DD-324946ED4391}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6B96C96A-ABF9-460F-A7AD-2963D3C897C3}
+	EndGlobalSection
+EndGlobal
