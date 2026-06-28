@@ -206,24 +206,43 @@ public sealed class DeviceConfigService
                 break;
 
             case DeviceTreeNode d:
-                dto.NodeType     = "Device";
-                dto.Id           = d.Id.ToString();
-                dto.Model        = d.Model;
+                dto.NodeType = "Device";
+                dto.Id = d.Id.ToString();
+                dto.Model = d.Model;
                 dto.Manufacturer = d.Manufacturer;
-                dto.Location     = d.Location;
-                dto.CommType     = d.CommType.ToString();
-                dto.Host         = d.Host;
-                dto.Port         = d.Port;
-                dto.PollMs       = d.PollMs;
+                dto.Location = d.Location;
+                dto.CommType = d.CommType.ToString();
+                dto.Host = d.Host;
+                dto.Port = d.Port;
+                dto.PollMs = d.PollMs;
+                // ★ Studio-P03b: 통신 라이브러리 참조
+                dto.CommEntryId = d.CommEntryId?.ToString();
+                // ★ Studio-P03b: 플러그인 드라이버
+                dto.DriverId = string.IsNullOrEmpty(d.DriverId) ? null : d.DriverId;
+                dto.DriverParams = d.DriverParams.Count > 0
+                                   ? new Dictionary<string, string>(d.DriverParams)
+                                   : null;
                 break;
 
             case PlcTreeNode p:
                 dto.NodeType = "PLC";
-                dto.Id       = p.Id.ToString();
+                dto.Id = p.Id.ToString();
                 dto.CommType = p.CommType.ToString();
-                dto.Host     = p.Host;
-                dto.Port     = p.Port;
-                dto.PollMs   = p.PollMs;
+                dto.Host = p.Host;
+                dto.Port = p.Port;
+                dto.PollMs = p.PollMs;
+                // ★ S-28: 통신 라이브러리 참조
+                dto.CommEntryId = p.CommEntryId?.ToString();
+                // ★ Studio-P02: 플러그인 드라이버 ID 직렬화
+                //   빈 문자열이면 null → JSON에서 생략됨
+                dto.DriverId = string.IsNullOrEmpty(p.DriverId)
+                                  ? null
+                                  : p.DriverId;
+                // ★ Studio-P02: 드라이버 파라미터 직렬화
+                //   비어있으면 null → JSON에서 생략됨
+                dto.DriverParams = p.DriverParams.Count > 0
+                                   ? new Dictionary<string, string>(p.DriverParams)
+                                   : null;
                 break;
 
             case TagTreeNode t:

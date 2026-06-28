@@ -18,6 +18,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IIoT.Studio.Core.Config;
+using IIoT.Studio.Core.Plugin;
 using IIoT.Studio.Models;
 using IIoT.Studio.ViewModels;
 using IIoT.Studio.Views;
@@ -37,6 +38,8 @@ public partial class MainViewModel : ObservableObject
     public AlarmLibraryViewModel AlarmLibrary { get; }
     public CommLibraryViewModel  CommLibrary  { get; }
     public CanvasViewModel       Canvas       { get; }
+    // ★ Studio-P03: 플러그인 레지스트리 (PlcEditorView에서 참조)
+    public PluginRegistryService? PluginRegistry { get; private set; }
 
     // §1-1 ─ 서비스 ───────────────────────────────────────────
 
@@ -62,7 +65,8 @@ public partial class MainViewModel : ObservableObject
         CanvasViewModel       canvas,
         DeviceConfigService   deviceSvc,
         CollectConfigService  collectSvc,
-        DeviceConfigLoader    deviceLoader)
+        DeviceConfigLoader    deviceLoader,
+        PluginRegistryService pluginRegistry)   // ← 추가
     {
         DeviceTree   = deviceTree;
         ScaleLibrary = scaleLibrary;
@@ -70,7 +74,8 @@ public partial class MainViewModel : ObservableObject
         CommLibrary  = commLibrary;
         Canvas       = canvas;
         _deviceSvc   = deviceSvc;
-        _collectSvc  = collectSvc;
+        _collectSvc  = collectSvc;  
+        PluginRegistry = pluginRegistry;// ★ Studio-P03
 
         // ★ S-16
         _validationSvc = new ValidationService(DeviceTree, ScaleLibrary);

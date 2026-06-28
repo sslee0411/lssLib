@@ -1,9 +1,10 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · Views/DeviceTree/DeviceEditorView.xaml
      역할: 장비 노드 편집기
-           기본 정보 + 통신 설정 (A안 — 장비도 통신 가능)
-     S-03 rev2: 통신 설정 섹션 추가
-     생성: 2026-06-15
+     S-03 rev2: 통신 설정 섹션
+     Studio-P03b: 드라이버 선택 + 파라미터 폼 + CommEntryId 추가
+                  (PLC 노드와 동일 수준 — 단독 통신 장비 지원)
+     생성: 2026-06-15 / 수정: 2026-06-27
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.DeviceTree.DeviceEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -13,7 +14,6 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-        <!-- ★ NodeCommType Enum 값 목록 → ItemsSource -->
         <ObjectDataProvider x:Key="CommTypeValues"
                             MethodName="GetValues"
                             ObjectType="{x:Type sys:Enum}">
@@ -23,232 +23,224 @@
         </ObjectDataProvider>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="28,24,28,24">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="1" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <!-- 헤더 -->
-            <StackPanel Orientation="Horizontal"
-                        Margin="0,0,0,20">
-                <TextBlock Text="🏭"
-                           FontSize="22"
-                           VerticalAlignment="Center"
-                           Margin="0,0,8,0" />
-                <TextBlock Text="장비 편집"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource AccBrush}"
-                           VerticalAlignment="Center" />
-            </StackPanel>
+        <!-- ── 헤더 ──────────────────────────────────────────── -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                Padding="28,16,20,16">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Button Content="📋 템플릿 적용"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="10,7"
+                            Click="OnApplyTemplate"
+                            ToolTip="선택한 태그 템플릿을 이 장비에 적용합니다." />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="장비 편집기"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}" />
+                    <TextBlock Text="{Binding Name}"
+                               FontSize="10"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
 
-            <!-- 구분선 -->
-            <Border Height="1"
-                    Background="{DynamicResource BorderBrush}"
-                    Margin="0,0,0,24" />
+        <Border Grid.Row="1" Background="{DynamicResource BorderBrush}" />
 
-            <!-- ━━━ 기본 정보 ━━━ -->
-            <TextBlock Text="기본 정보"
-                       FontSize="12"
-                       FontWeight="Bold"
-                       Foreground="{DynamicResource TextBrush}"
-                       Margin="0,0,0,14" />
+        <!-- ── 폼 영역 ──────────────────────────────────────── -->
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="28,20,28,24">
 
-            <!-- 장비 이름 -->
-            <TextBlock Text="장비 이름"
-                       FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,6" />
-            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}"
-                     Margin="0,0,0,16" />
-
-            <!-- 모델명 -->
-            <TextBlock Text="모델명"
-                       FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,6" />
-            <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}"
-                     Margin="0,0,0,16" />
-
-            <!-- 제조사 -->
-            <TextBlock Text="제조사"
-                       FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,6" />
-            <TextBox Text="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}"
-                     Margin="0,0,0,16" />
-
-            <!-- 설치 위치 -->
-            <TextBlock Text="설치 위치"
-                       FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,6" />
-            <TextBox Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}"
-                     Margin="0,0,0,16" />
-
-            <!-- 설명 -->
-            <TextBlock Text="설명"
-                       FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,6" />
-            <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                     Style="{DynamicResource PropInput}"
-                     Height="72"
-                     TextWrapping="Wrap"
-                     AcceptsReturn="True"
-                     VerticalScrollBarVisibility="Auto"
-                     VerticalContentAlignment="Top"
-                     Margin="0,0,0,28" />
-
-            <!-- ━━━ 통신 설정 ━━━ -->
-            <Border Height="1"
-                    Background="{DynamicResource BorderBrush}"
-                    Margin="0,0,0,20" />
-
-            <TextBlock Text="통신 설정"
-                       FontSize="12"
-                       FontWeight="Bold"
-                       Foreground="{DynamicResource TextBrush}"
-                       Margin="0,0,0,14" />
-
-            <!-- 통신 방식 -->
-            <TextBlock Text="통신 방식"
-                       FontSize="11" FontWeight="SemiBold"
-                       Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,6" />
-            <ComboBox SelectedValue="{Binding CommType}"
-                      ItemsSource="{Binding Source={StaticResource CommTypeValues}}"
-                      Style="{DynamicResource PropCombo}"
-                      Margin="0,0,0,16" />
-
-            <!-- ── 통신 방식별 동적 폼 ── -->
-
-            <!-- Modbus TCP -->
-            <StackPanel Visibility="{Binding IsModbusTcp,
-                                     Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="IP 주소"
+                <!-- 기본 정보 섹션 -->
+                <TextBlock Text="장비 이름"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
                            Margin="0,0,0,6" />
-                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,16" />
-                <TextBlock Text="포트"
-                           FontSize="11" FontWeight="SemiBold"
-                           Foreground="{DynamicResource Text2Brush}"
-                           Margin="0,0,0,6" />
-                <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{DynamicResource PropInput}"
-                         Margin="0,0,0,16" />
-            </StackPanel>
 
-            <!-- Serial -->
-            <StackPanel Visibility="{Binding IsSerial,
-                                     Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="COM 포트"
+                <TextBlock Text="제조사"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
                            Margin="0,0,0,6" />
-                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                <TextBox Text="{Binding Manufacturer, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
                          Margin="0,0,0,16" />
-                <TextBlock Text="보드레이트"
+
+                <TextBlock Text="모델"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
                            Margin="0,0,0,6" />
-                <ComboBox SelectedValue="{Binding Port}"
+                <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource PropInput}"
+                         Margin="0,0,0,16" />
+
+                <TextBlock Text="위치"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,6" />
+                <TextBox Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource PropInput}"
+                         Margin="0,0,0,16" />
+
+                <!-- 구분선: 통신 설정 -->
+                <Border Height="1" Background="{DynamicResource BorderBrush}"
+                        Margin="0,8,0,16" />
+                <TextBlock Text="통신 설정"
+                           FontSize="12" FontWeight="Bold"
+                           Foreground="{DynamicResource TextBrush}"
+                           Margin="0,0,0,16" />
+
+                <!-- ★ Studio-P03b: 드라이버 선택 -->
+                <TextBlock Text="드라이버"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,6" />
+                <ComboBox x:Name="DriverCombo"
                           Style="{DynamicResource PropCombo}"
-                          Margin="0,0,0,16">
-                    <ComboBoxItem Content="9600" />
-                    <ComboBoxItem Content="19200" />
-                    <ComboBoxItem Content="38400" />
-                    <ComboBoxItem Content="57600" />
-                    <ComboBoxItem Content="115200" />
+                          SelectionChanged="OnDriverSelectionChanged"
+                          Margin="0,0,0,4">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" FontSize="12"
+                                       Foreground="{DynamicResource TextBrush}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
                 </ComboBox>
-            </StackPanel>
-
-            <!-- MQTT -->
-            <StackPanel Visibility="{Binding IsMqtt,
-                                     Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="브로커 주소"
-                           FontSize="11" FontWeight="SemiBold"
+                <TextBlock Text="단독 통신 장비(IoT 게이트웨이 등)에 드라이버를 연결합니다."
+                           FontSize="10"
                            Foreground="{DynamicResource Text2Brush}"
-                           Margin="0,0,0,6" />
-                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{DynamicResource PropInput}"
-                         Margin="0,0,0,16" />
-                <TextBlock Text="포트"
-                           FontSize="11" FontWeight="SemiBold"
-                           Foreground="{DynamicResource Text2Brush}"
-                           Margin="0,0,0,6" />
-                <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{DynamicResource PropInput}"
-                         Margin="0,0,0,16" />
-            </StackPanel>
+                           Margin="0,2,0,16" />
 
-            <!-- OPC-UA -->
-            <StackPanel Visibility="{Binding IsOpcUa,
-                                     Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="엔드포인트 URL"
-                           FontSize="11" FontWeight="SemiBold"
-                           Foreground="{DynamicResource Text2Brush}"
-                           Margin="0,0,0,6" />
-                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{DynamicResource PropInput}"
-                         Margin="0,0,0,16" />
-            </StackPanel>
+                <!-- ★ Studio-P03b: 동적 파라미터 폼 -->
+                <Border x:Name="ParamBorder"
+                        Visibility="Collapsed"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="6"
+                        Padding="16,12" Margin="0,0,0,20">
+                    <StackPanel x:Name="ParamPanel" />
+                </Border>
 
-            <!-- 폴링 주기 (통신 설정된 경우만 표시) -->
-            <StackPanel Visibility="{Binding IsCommEnabled,
-                                     Converter={StaticResource BoolToVisibility}}">
+                <!-- 폴링 주기 -->
                 <TextBlock Text="폴링 주기 (ms)"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{DynamicResource Text2Brush}"
                            Margin="0,0,0,6" />
                 <TextBox Text="{Binding PollMs, UpdateSourceTrigger=PropertyChanged}"
                          Style="{DynamicResource PropInput}"
-                         Margin="0,0,0,24" />
-            </StackPanel>
+                         Margin="0,0,0,16" />
 
-            <!-- 통신 없음 안내 -->
-            <TextBlock Text="통신 방식을 선택하면 연결 설정 항목이 표시됩니다."
-                       FontSize="11"
-                       Foreground="{DynamicResource Text2Brush}"
-                       Margin="0,0,0,24"
-                       Visibility="{Binding IsCommEnabled,
-                                    Converter={StaticResource BoolToVisibility}}">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Visible" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsCommEnabled}" Value="True">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+                <!-- 통신 방식 (레거시) -->
+                <TextBlock Text="통신 방식 (레거시)"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,6" />
+                <ComboBox SelectedValue="{Binding CommType}"
+                          ItemsSource="{Binding Source={StaticResource CommTypeValues}}"
+                          Style="{DynamicResource PropCombo}"
+                          Margin="0,0,0,4">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" FontSize="12"
+                                       Foreground="{DynamicResource TextBrush}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock Text="드라이버 플러그인 선택 시 이 항목은 무시됩니다."
+                           FontSize="10"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,2,0,16" />
 
-            <!-- 안내 -->
-            <Border Background="{DynamicResource CardBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4"
-                    Padding="12,10">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="ℹ "
-                               Foreground="{DynamicResource AccBrush}"
-                               FontSize="12" />
-                    <TextBlock Text="저장 기능은 S-10 단계에서 추가됩니다. 현재 입력값은 메모리에 바로 반영됩니다."
-                               FontSize="11"
-                               Foreground="{DynamicResource Text2Brush}"
-                               TextWrapping="Wrap" />
+                <!-- Modbus TCP -->
+                <StackPanel Visibility="{Binding IsModbusTcp,
+                                         Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="IP 주소" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
+                    <TextBlock Text="포트" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
                 </StackPanel>
-            </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+                <!-- Serial -->
+                <StackPanel Visibility="{Binding IsSerial,
+                                         Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="COM 포트" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
+                </StackPanel>
+
+                <!-- MQTT -->
+                <StackPanel Visibility="{Binding IsMqtt,
+                                         Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="브로커 주소" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
+                    <TextBlock Text="포트" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
+                </StackPanel>
+
+                <!-- ★ Studio-P03b: 통신 라이브러리 참조 -->
+                <TextBlock Text="통신 라이브러리 참조"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,6" />
+                <ComboBox x:Name="CommEntryCombo"
+                          Style="{DynamicResource PropCombo}"
+                          SelectedValuePath="Id"
+                          SelectedValue="{Binding CommEntryId}"
+                          SelectionChanged="OnCommEntryChanged"
+                          Margin="0,0,0,4">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock FontSize="12"
+                                       Foreground="{DynamicResource TextBrush}">
+                                <Run Text="{Binding Name}" />
+                                <Run Text=" — " Foreground="{DynamicResource Text2Brush}" />
+                                <Run Text="{Binding Host}" Foreground="{DynamicResource Text2Brush}" />
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,20">
+                    <Button Content="참조 해제"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,3" FontSize="11"
+                            Click="OnCommEntryDetach" />
+                </StackPanel>
+
+                <!-- 설명 -->
+                <TextBlock Text="설명"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,6" />
+                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource PropInput}"
+                         TextWrapping="Wrap" MinHeight="60"
+                         AcceptsReturn="True"
+                         Margin="0,0,0,20" />
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

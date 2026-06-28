@@ -4,9 +4,10 @@
 //  S-10: 초기 구현
 //  S-23: DeviceNodeDto에 Memo 필드 추가
 //  S-25: DeviceNodeDto에 IsEnabled 필드 추가
-//  S-28: DeviceNodeDto에 CommEntryId 필드 추가
 //  S-27: DeviceConfigRoot에 ChangeMemo + SaveHistory 추가
-//  생성: 2026-06-17 / 수정: 2026-06-20
+//  S-28: DeviceNodeDto에 CommEntryId 필드 추가
+//  Studio-P02: DeviceNodeDto에 DriverId / DriverParams 추가
+//  생성: 2026-06-17 / 수정: 2026-06-27
 // ══════════════════════════════════════════════════════════
 
 namespace IIoT.Studio.Core.Config;
@@ -19,8 +20,8 @@ public sealed class DeviceConfigRoot
     public DateTime SavedAt   { get; set; } = DateTime.Now;
     public string   Sha256    { get; set; } = string.Empty;
 
-    // ★ S-27: 저장 메모 + 이력 (최근 10개)
-    public string              ChangeMemo  { get; set; } = string.Empty;
+    // ★ S-27: 저장 메모 + 이력
+    public string               ChangeMemo  { get; set; } = string.Empty;
     public List<SaveHistoryDto> SaveHistory { get; set; } = new();
 
     public List<DeviceNodeDto> Tree         { get; set; } = new();
@@ -52,13 +53,23 @@ public sealed class DeviceNodeDto
     public string? Location     { get; set; }
 
     // ── 통신 (Device / PLC 공통) ─────────────────────────
-    public string? CommType    { get; set; }
-    public string? Host        { get; set; }
-    public int?    Port        { get; set; }
-    public int?    PollMs      { get; set; }
+    public string? CommType { get; set; }
+    public string? Host     { get; set; }
+    public int?    Port     { get; set; }
+    public int?    PollMs   { get; set; }
 
     // ★ S-28: PLC 통신 라이브러리 참조 ID (null = 직접 입력)
     public string? CommEntryId { get; set; }
+
+    // ★ Studio-P02: 플러그인 드라이버 ID
+    //   null / "" = 레거시 CommType 방식 (CommTypeMigrator 변환 대상)
+    //   값 있음   = 플러그인 driverId 직접 지정 (신규 방식)
+    public string? DriverId { get; set; }
+
+    // ★ Studio-P02: 드라이버 파라미터
+    //   null = 파라미터 없음 (JSON에서 생략됨)
+    //   로드 시: null → PlcTreeNode.DriverParams = new()
+    public Dictionary<string, string>? DriverParams { get; set; }
 
     // ── Tag 전용 ─────────────────────────────────────────
     public string? Address      { get; set; }
@@ -68,10 +79,10 @@ public sealed class DeviceNodeDto
     public string? AlarmEntryId { get; set; }
 
     // ★ S-23: Tag 메모 필드
-    public string? Memo         { get; set; }
+    public string? Memo { get; set; }
 
-    // ★ S-25: Tag 수집 활성 여부 (null = true 기본값)
-    public bool?   IsEnabled    { get; set; }
+    // ★ S-25: Tag 수집 활성 여부 (null = true 기본값, JSON 생략)
+    public bool? IsEnabled { get; set; }
 
     public List<DeviceNodeDto> Children { get; set; } = new();
 }
@@ -103,15 +114,12 @@ public sealed class AlarmEntryDto
     public bool   HhEnabled { get; set; }
     public double HhValue   { get; set; }
     public string HhMessage { get; set; } = string.Empty;
-
     public bool   HEnabled  { get; set; }
     public double HValue    { get; set; }
     public string HMessage  { get; set; } = string.Empty;
-
     public bool   LEnabled  { get; set; }
     public double LValue    { get; set; }
     public string LMessage  { get; set; } = string.Empty;
-
     public bool   LlEnabled { get; set; }
     public double LlValue   { get; set; }
     public string LlMessage { get; set; } = string.Empty;
@@ -129,28 +137,33 @@ public sealed class CommEntryDto
     public string Description { get; set; } = string.Empty;
     public string Type        { get; set; } = "ModbusTcp";
 
+    // Modbus TCP
     public string Host    { get; set; } = string.Empty;
-    public int    Port    { get; set; }
-    public int    SlaveId { get; set; }
+    public int    Port    { get; set; } = 502;
+    public int    SlaveId { get; set; } = 1;
 
+    // Serial
     public string ComPort  { get; set; } = string.Empty;
-    public int    BaudRate { get; set; }
-    public string Parity   { get; set; } = string.Empty;
-    public int    DataBits { get; set; }
-    public string StopBits { get; set; } = string.Empty;
+    public int    BaudRate { get; set; } = 9600;
+    public string Parity   { get; set; } = "None";
+    public int    DataBits { get; set; } = 8;
+    public string StopBits { get; set; } = "One";
 
-    public string BrokerHost     { get; set; } = string.Empty;
-    public int    BrokerPort     { get; set; }
-    public string ClientId       { get; set; } = string.Empty;
-    public string Topic          { get; set; } = string.Empty;
-    public bool   UseTls         { get; set; }
-    public string MqttUser       { get; set; } = string.Empty;
-    public string MqttPassword   { get; set; } = string.Empty;
+    // MQTT
+    public string BrokerHost   { get; set; } = string.Empty;
+    public int    BrokerPort   { get; set; } = 1883;
+    public string ClientId     { get; set; } = string.Empty;
+    public string Topic        { get; set; } = string.Empty;
+    public bool   UseTls       { get; set; }
+    public string MqttUser     { get; set; } = string.Empty;
+    public string MqttPassword { get; set; } = string.Empty;
 
-    public string EndpointUrl    { get; set; } = string.Empty;
-    public string OpcUser        { get; set; } = string.Empty;
-    public string OpcPassword    { get; set; } = string.Empty;
+    // OPC-UA
+    public string EndpointUrl { get; set; } = string.Empty;
+    public string OpcUser     { get; set; } = string.Empty;
+    public string OpcPassword { get; set; } = string.Empty;
 
+    // 공통
     public int PollMs          { get; set; } = 1000;
     public int TimeoutMs       { get; set; } = 3000;
     public int RetryIntervalMs { get; set; } = 5000;

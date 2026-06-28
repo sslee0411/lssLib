@@ -157,8 +157,10 @@ public partial class App : Application
                 sp.GetRequiredService<CanvasViewModel>(),
                 sp.GetRequiredService<DeviceConfigService>(),
                 sp.GetRequiredService<CollectConfigService>(),
-                sp.GetRequiredService<DeviceConfigLoader>()));
-
+                sp.GetRequiredService<DeviceConfigLoader>(),
+                sp.GetRequiredService<PluginRegistryService>()
+                ));  // ← 추가
+ 
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<MainViewModel>()));
 
