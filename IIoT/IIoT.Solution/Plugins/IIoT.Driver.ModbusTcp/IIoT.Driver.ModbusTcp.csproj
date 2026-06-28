@@ -11,4 +11,55 @@
     <ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
   </ItemGroup>
 
+	<!--
+  ══════════════════════════════════════════════════════════
+    빌드 후 자동 복사 — Plugins/ 폴더로 이동
+    솔루션 구조 (Git 기준):
+      IIoT.Solution\
+        Studio\IIoT.Studio\bin\$(Configuration)\net8.0-windows\Plugins\  ← Studio 대상
+        Plugins\IIoT.Driver.ModbusTcp\                                    ← 현재 위치
+    드라이버 → Studio 상대경로: ..\..\Studio\IIoT.Studio\bin\...
+    IIoT.Collector 는 생성 후 경로 추가
+  ══════════════════════════════════════════════════════════
+  -->
+	<PropertyGroup>
+		<!-- ★ 솔루션 루트: 현재 폴더에서 두 단계 위 -->
+		<SolutionRoot>$(MSBuildProjectDirectory)\..\..</SolutionRoot>
+
+		<!-- Studio Plugins/ 경로 -->
+		<StudioPluginDir>$(SolutionRoot)\Studio\IIoT.Studio\bin\$(Configuration)\net8.0-windows\Plugins</StudioPluginDir>
+
+		<!--
+      Collector Plugins/ 경로 (Collector 프로젝트 생성 후 주석 해제)
+      <CollectorPluginDir>$(SolutionRoot)\Collector\IIoT.Collector\bin\$(Configuration)\net8.0-windows\Plugins</CollectorPluginDir>
+    -->
+	</PropertyGroup>
+
+	<!-- Studio Plugins/ 자동 복사 -->
+	<Target Name="CopyToStudioPlugins" AfterTargets="Build">
+		<MakeDir Directories="$(StudioPluginDir)" Condition="!Exists('$(StudioPluginDir)')"/>
+		<Copy
+		  SourceFiles="$(OutputPath)$(AssemblyName).dll"
+		  DestinationFolder="$(StudioPluginDir)"
+		  SkipUnchangedFiles="true"
+		  OverwriteReadOnlyFiles="true"/>
+		<Message
+		  Text="[ModbusTcp] → Studio Plugins/ 복사: $(StudioPluginDir)"
+		  Importance="High"/>
+	</Target>
+
+	<!--
+  Collector Plugins/ 자동 복사 (Collector 프로젝트 생성 후 주석 해제)
+  <Target Name="CopyToCollectorPlugins" AfterTargets="Build">
+    <MakeDir Directories="$(CollectorPluginDir)" Condition="!Exists('$(CollectorPluginDir)')"/>
+    <Copy
+      SourceFiles="$(OutputPath)$(AssemblyName).dll"
+      DestinationFolder="$(CollectorPluginDir)"
+      SkipUnchangedFiles="true"
+      OverwriteReadOnlyFiles="true"/>
+    <Message
+      Text="[ModbusTcp] → Collector Plugins/ 복사: $(CollectorPluginDir)"
+      Importance="High"/>
+  </Target>
+  -->
 </Project>
