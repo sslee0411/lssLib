@@ -1,12 +1,14 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Studio · MainWindow.xaml
      역할: 메인 창
-     S-11: 탭1 임시 색상 블록 → CanvasView 교체
+     S-11:  탭1 임시 색상 블록 → CanvasView 교체
      S-15B: 헤더 "● 미저장" 황색 배지 추가
      S-19A: Window.InputBindings Ctrl+S → SaveCommand 추가
      S-19B: DockPanel.Dock="Bottom" 하단 상태바 추가
             선택 노드 경로 / PLC수 / Tag수 / 마지막 저장 시각
-     생성: 2026-06-15 / 수정: 2026-06-20
+     Studio-P04: 탭바 "📋 로그" 버튼 추가
+                 DockPanel.Dock="Bottom" 로그 패널 (GridSplitter + LogViewerControl)
+     생성: 2026-06-15 / 수정: 2026-06-27
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Studio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -17,6 +19,7 @@
         xmlns:vAlarm="clr-namespace:IIoT.Studio.Views.Alarm"
         xmlns:vComm="clr-namespace:IIoT.Studio.Views.Comm"
         xmlns:vCanvas="clr-namespace:IIoT.Studio.Views.Canvas"
+        xmlns:local="clr-namespace:IIoT.Studio.Views.Log"
         Title="IIoT Studio — 설정"
         Width="1440" Height="900"
         MinWidth="1100" MinHeight="680"
@@ -176,32 +179,18 @@
             </DockPanel>
         </Border>
 
-        <!-- ★ S-19B: 하단 상태바 (DockPanel.Dock="Bottom" → 반드시 본문 Grid 앞에 선언) -->
+        <!-- ══════════════════════════════════════════════════
+             § 상태바 (26px)   DockPanel.Dock="Bottom"
+             ══════════════════════════════════════════════════ -->
         <Border DockPanel.Dock="Bottom"
                 Height="26"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,1,0,0">
-            <DockPanel Margin="12,0">
+                BorderThickness="0,1,0,0"
+                Padding="12,0">
+            <DockPanel>
 
-                <!-- 우측: 마지막 저장 시각 -->
-                <StackPanel DockPanel.Dock="Right"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="저장: "
-                               FontSize="10"
-                               Foreground="{DynamicResource Text2Brush}" />
-                    <TextBlock Text="{Binding LastSavedAt}"
-                               FontSize="10"
-                               Foreground="{DynamicResource Text2Brush}" />
-                </StackPanel>
-
-                <!-- 구분선 우측 -->
-                <Border DockPanel.Dock="Right"
-                        Width="1" Margin="12,4"
-                        Background="{DynamicResource BorderBrush}" />
-
-                <!-- Tag수 -->
+                <!-- Tag 수 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
@@ -221,7 +210,7 @@
                         Width="1" Margin="12,4"
                         Background="{DynamicResource BorderBrush}" />
 
-                <!-- PLC수 -->
+                <!-- PLC 수 -->
                 <StackPanel DockPanel.Dock="Right"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
@@ -286,7 +275,47 @@
                         CommandParameter="4"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
+
+                <!-- ★ Studio-P04: 로그 패널 토글 버튼 -->
+                <Button Content="📋  로그"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="5"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40" Padding="16,0" />
             </StackPanel>
+        </Border>
+
+        <!-- ★ Studio-P04: 하단 로그 패널
+             DockPanel.Dock="Bottom" → 상태바 위, 본문 Grid 아래에 위치
+             LogPanelVisible=false → Collapsed (기본 숨김)
+             LogPanelVisible=true  → Visible   (로그 버튼 클릭 시 토글)
+             GridSplitter: 위쪽 드래그로 높이 조절 가능 -->
+        <Border DockPanel.Dock="Bottom"
+                Height="200"
+                Visibility="{Binding LogPanelVisible,
+                             Converter={StaticResource BoolToVisibility}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="4" />   <!-- GridSplitter 핸들 -->
+                    <RowDefinition Height="*" />   <!-- LogViewerControl -->
+                </Grid.RowDefinitions>
+
+                <!-- 크기 조절 핸들 (위아래 드래그) -->
+                <GridSplitter Grid.Row="0"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Background="{DynamicResource BorderBrush}"
+                              ResizeDirection="Rows"
+                              ResizeBehavior="PreviousAndNext"
+                              Cursor="SizeNS" />
+
+                <!-- ★ Studio-P04: 로그 뷰어 인라인 구현
+                     LogManager.Instance.LogAdded 이벤트 → LogPanelView.xaml.cs 에서 구독
+                     (log 프로젝트의 LogViewerControl 은 데모 전용 — Studio에서 직접 참조 불가)
+                     대신 Views/Log/LogPanelView.xaml UserControl 을 사용 -->
+                <local:LogPanelView Grid.Row="1"
+                                    x:Name="LogPanel" />
+            </Grid>
         </Border>
 
         <!-- ══════════════════════════════════════════════════

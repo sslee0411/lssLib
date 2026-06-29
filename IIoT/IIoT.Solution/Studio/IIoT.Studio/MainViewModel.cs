@@ -1,18 +1,20 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Studio · MainViewModel.cs
 //  역할: Studio 메인 ViewModel
-//  S-08: CommLibraryViewModel 주입 추가
-//  S-10: DeviceConfigService 주입 + SaveCommand 추가
-//  S-11: CanvasViewModel + CollectConfigService 주입
+//  S-08:  CommLibraryViewModel 주입 추가
+//  S-10:  DeviceConfigService 주입 + SaveCommand 추가
+//  S-11:  CanvasViewModel + CollectConfigService 주입
 //  S-12B: SwitchTab → 탭1 진입 시 Canvas.RefreshDevicePalette() 호출
 //  S-15B: HasUnsavedChanges + CollectionChanged 구독 + 저장 시 리셋
 //  S-19A: Ctrl+S → SaveCommand (XAML InputBinding)
 //  S-19B: StatusBarPath, TotalTagCount, TotalPlcCount, LastSavedAt 추가
-//  S-16: 저장 전 ValidationService 호출 추가
+//  S-16:  저장 전 ValidationService 호출 추가
 //  S-20B: ImportTagsCsvCommand 추가
-//  S-18: OpenCommand / SaveAsCommand / ExportTagsCsvCommand 추가
-//  S-27: SaveWithMemoCommand 추가 + 저장 이력 관리
-//  생성: 2026-06-15 / 수정: 2026-06-20
+//  S-18:  OpenCommand / SaveAsCommand / ExportTagsCsvCommand 추가
+//  S-27:  SaveWithMemoCommand 추가 + 저장 이력 관리
+//  Studio-P03: PluginRegistry 프로퍼티 + 생성자 파라미터 추가
+//  Studio-P04: IsLogTab / LogPanelVisible / SwitchTab case 5 추가
+//  생성: 2026-06-15 / 수정: 2026-06-27
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -38,7 +40,8 @@ public partial class MainViewModel : ObservableObject
     public AlarmLibraryViewModel AlarmLibrary { get; }
     public CommLibraryViewModel  CommLibrary  { get; }
     public CanvasViewModel       Canvas       { get; }
-    // ★ Studio-P03: 플러그인 레지스트리 (PlcEditorView에서 참조)
+
+    // ★ Studio-P03: 플러그인 레지스트리 (PlcEditorView / DeviceEditorView 에서 참조)
     public PluginRegistryService? PluginRegistry { get; private set; }
 
     // §1-1 ─ 서비스 ───────────────────────────────────────────
@@ -66,16 +69,16 @@ public partial class MainViewModel : ObservableObject
         DeviceConfigService   deviceSvc,
         CollectConfigService  collectSvc,
         DeviceConfigLoader    deviceLoader,
-        PluginRegistryService pluginRegistry)   // ← 추가
+        PluginRegistryService pluginRegistry)   // ★ Studio-P03
     {
-        DeviceTree   = deviceTree;
-        ScaleLibrary = scaleLibrary;
-        AlarmLibrary = alarmLibrary;
-        CommLibrary  = commLibrary;
-        Canvas       = canvas;
-        _deviceSvc   = deviceSvc;
-        _collectSvc  = collectSvc;  
-        PluginRegistry = pluginRegistry;// ★ Studio-P03
+        DeviceTree     = deviceTree;
+        ScaleLibrary   = scaleLibrary;
+        AlarmLibrary   = alarmLibrary;
+        CommLibrary    = commLibrary;
+        Canvas         = canvas;
+        _deviceSvc     = deviceSvc;
+        _collectSvc    = collectSvc;
+        PluginRegistry = pluginRegistry;         // ★ Studio-P03
 
         // ★ S-16
         _validationSvc = new ValidationService(DeviceTree, ScaleLibrary);
@@ -131,6 +134,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsScaleTab))]
     [NotifyPropertyChangedFor(nameof(IsAlarmTab))]
     [NotifyPropertyChangedFor(nameof(IsCommTab))]
+    [NotifyPropertyChangedFor(nameof(IsLogTab))]   // ★ Studio-P04
     private int _activeTabIndex;
 
     // §5 ─ 탭 가시성 ─────────────────────────────────────────
@@ -141,12 +145,16 @@ public partial class MainViewModel : ObservableObject
     public bool IsAlarmTab  => ActiveTabIndex == 3;
     public bool IsCommTab   => ActiveTabIndex == 4;
 
+    // ★ Studio-P04: 로그 탭 (ActiveTabIndex 변경 없이 패널 토글)
+    public bool IsLogTab    => ActiveTabIndex == 5;
+
+    // ★ Studio-P04: 하단 로그 패널 표시 여부
+    [ObservableProperty]
+    private bool _logPanelVisible = false;
+
     // §6 ─ S-19B 상태바 프로퍼티 ────────────────────────────
 
-    /// <summary>
-    /// 선택된 노드의 계층 경로.
-    /// 예: "공장1 > PLC-01 > 온도Tag"
-    /// </summary>
+    /// <summary>선택된 노드의 계층 경로 (예: "공장1 > PLC-01 > 온도Tag")</summary>
     public string StatusBarPath
     {
         get
@@ -169,11 +177,30 @@ public partial class MainViewModel : ObservableObject
     private void SwitchTab(string tabParam)
     {
         if (!int.TryParse(tabParam, out var idx)) return;
+
+        // ★ Studio-P04: 로그 버튼(5) → 패널 토글 (탭 전환 없음)
+        if (idx == 5)
+        {
+            LogPanelVisible = !LogPanelVisible;
+            return;
+        }
+
         ActiveTabIndex = idx;
 
         // ★ S-12B: 수집 흐름 탭 진입 시 장비 팔레트 강제 갱신
         if (idx == 1)
             Canvas.RefreshDevicePalette();
+    }
+
+    // §8 ─ ★ S-16: 유효성 검사 커맨드 ───────────────────────
+
+    [RelayCommand]
+    private void ValidateConfig()
+    {
+        var issues = _validationSvc.Validate();
+        var dlg    = new ValidationErrorDialog(
+            issues, DeviceTree, Application.Current.MainWindow);
+        dlg.ShowDialog();
     }
 
     // §9 ─ ★ S-20B: CSV 가져오기 커맨드 ─────────────────────
@@ -187,11 +214,9 @@ public partial class MainViewModel : ObservableObject
             Filter      = "CSV 파일 (*.csv)|*.csv|모든 파일 (*.*)|*.*",
             Multiselect = false
         };
-
         if (dlg.ShowDialog() != true) return;
 
         SaveStatus = "CSV 가져오는 중…";
-
         var result = await Task.Run(() =>
             _csvImporter.Import(dlg.FileName, DeviceTree.RootNodes));
 
@@ -225,7 +250,7 @@ public partial class MainViewModel : ObservableObject
         if (!_isSaving) SaveStatus = "준비됨";
     }
 
-    // ★ S-27: 저장 이력 (최근 10개, 다이얼로그에 표시용)
+    // ★ S-27: 저장 이력 (최근 10개)
     private readonly List<SaveHistoryItem> _saveHistory = new();
 
     // §10 ─ 저장 커맨드 ───────────────────────────────────────
@@ -245,14 +270,10 @@ public partial class MainViewModel : ObservableObject
         var issues = _validationSvc.Validate();
         if (issues.Count > 0)
         {
-            // 오류 또는 경고가 있으면 다이얼로그 표시
             var dlg = new ValidationErrorDialog(
-                issues,
-                DeviceTree,
-                Application.Current.MainWindow);
-
+                issues, DeviceTree, Application.Current.MainWindow);
             if (dlg.ShowDialog() != true || !dlg.ShouldSave)
-                return; // 취소 → 저장 중단
+                return;
         }
 
         IsSaving   = true;
@@ -267,7 +288,6 @@ public partial class MainViewModel : ObservableObject
             LastSavedAt = DateTime.Now.ToString("HH:mm:ss");
             SaveStatus  = $"✔ 저장 완료  ({LastSavedAt})";
 
-            // ★ S-27: 저장 이력 추가
             _AddHistory(_pendingMemo ?? string.Empty);
             _pendingMemo = null;
         }
@@ -311,49 +331,16 @@ public partial class MainViewModel : ObservableObject
             _saveHistory.RemoveAt(_saveHistory.Count - 1);
     }
 
-    /// <summary>노드 계층 경로 재귀 빌드</summary>
-    private static string _BuildPath(
-        AbstractTreeNode target,
-        IEnumerable<AbstractTreeNode> nodes,
-        string prefix = "")
-    {
-        foreach (var node in nodes)
-        {
-            var current = string.IsNullOrEmpty(prefix)
-                ? node.Name
-                : $"{prefix} > {node.Name}";
-
-            if (ReferenceEquals(node, target)) return current;
-
-            var found = _BuildPath(target, node.Children, current);
-            if (!string.IsNullOrEmpty(found)) return found;
-        }
-        return string.Empty;
-    }
-
-    /// <summary>타입 T 노드 재귀 카운트</summary>
-    private static int _CountAll<T>(IEnumerable<AbstractTreeNode> nodes)
-        where T : AbstractTreeNode
-    {
-        int count = 0;
-        foreach (var node in nodes)
-        {
-            if (node is T) count++;
-            count += _CountAll<T>(node.Children);
-        }
-        return count;
-    }
-
     // §11 ─ ★ S-18: 열기·저장As·CSV 내보내기 ─────────────────
 
-    /// <summary>📂 열기 — device.json 파일 선택 후 전체 설정 교체 로드</summary>
+    /// <summary>📂 열기</summary>
     [RelayCommand]
     private async Task OpenConfigAsync()
     {
         var dlg = new OpenFileDialog
         {
-            Title  = "설정 파일 열기",
-            Filter = "IIoT 설정 파일 (device.json)|device.json|JSON 파일 (*.json)|*.json",
+            Title       = "설정 파일 열기",
+            Filter      = "IIoT 설정 파일 (*.json)|*.json",
             Multiselect = false
         };
         if (dlg.ShowDialog() != true) return;
@@ -377,7 +364,8 @@ public partial class MainViewModel : ObservableObject
         else
         {
             SaveStatus = $"✖ {result.Message}";
-            MessageBox.Show(result.Message, "열기 실패", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(result.Message, "열기 실패",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         await Task.Delay(3000);
@@ -422,9 +410,44 @@ public partial class MainViewModel : ObservableObject
 
         SaveStatus = "CSV 내보내는 중…";
         var result = await _importExportSvc.ExportTagsCsvAsync(dlg.FileName);
-        SaveStatus = result.IsSuccess ? $"✔ {result.Message}" : $"✖ {result.Message}";
+        SaveStatus = result.IsSuccess
+            ? $"✔ {result.Message}"
+            : $"✖ {result.Message}";
 
         await Task.Delay(3000);
         if (!_isSaving) SaveStatus = "준비됨";
+    }
+
+    // §12 ─ 헬퍼 ─────────────────────────────────────────────
+
+    private static string _BuildPath(
+        AbstractTreeNode target,
+        IEnumerable<AbstractTreeNode> nodes,
+        string prefix = "")
+    {
+        foreach (var node in nodes)
+        {
+            var current = string.IsNullOrEmpty(prefix)
+                ? node.Name
+                : $"{prefix} > {node.Name}";
+
+            if (ReferenceEquals(node, target)) return current;
+
+            var found = _BuildPath(target, node.Children, current);
+            if (!string.IsNullOrEmpty(found)) return found;
+        }
+        return string.Empty;
+    }
+
+    private static int _CountAll<T>(IEnumerable<AbstractTreeNode> nodes)
+        where T : AbstractTreeNode
+    {
+        int count = 0;
+        foreach (var node in nodes)
+        {
+            if (node is T) count++;
+            count += _CountAll<T>(node.Children);
+        }
+        return count;
     }
 }

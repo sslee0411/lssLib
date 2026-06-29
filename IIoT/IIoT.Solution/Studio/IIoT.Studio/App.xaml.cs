@@ -4,7 +4,9 @@
 //  S-15: OnStartup에서 설정 로드 (DeviceConfigLoader + CollectConfigLoader)
 //  Studio-P01: PluginRegistryService DI 등록 + LoadPlugins() 호출
 //  Studio-P01 fix: LogManager.Instance.Start() 추가
-//                  (미호출 시 IsRunning=false → 모든 로그 무시됨)
+//  Studio-P04 fix: LoadPlugins()를 win.Loaded 안으로 이동
+//                  → LogPanelView.LogAdded 구독 완료 후 실행되어야
+//                    플러그인 로드 로그가 패널에 표시됨
 //  생성: 2026-06-15 / 수정: 2026-06-27
 // ══════════════════════════════════════════════════════════
 
@@ -22,7 +24,7 @@ namespace IIoT.Studio;
 public partial class App : Application
 {
     private ThemeSettingsService? _themeSettings;
-    private IServiceProvider? _services;
+    private IServiceProvider?     _services;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -32,16 +34,15 @@ public partial class App : Application
         _themeSettings = new ThemeSettingsService();
         _themeSettings.LoadAndApply(this);
 
-        // ② LogManager 시작 (★ 반드시 DI 빌드 전에 호출)
-        //    미호출 시 IsRunning = false → AddLog() 즉시 반환 → 로그 전체 무시
+        // ② LogManager 시작 (반드시 DI 빌드 전에 호출)
         LogManager.Instance.Start(new LogConfig
         {
-            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log"),
-            ValidDays = 30,
-            FileFormat = LogFileFormat.Both,
-            MinimumLevel = LogLevel.Debug,
+            LogRootPath         = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log"),
+            ValidDays           = 30,
+            FileFormat          = LogFileFormat.Both,
+            MinimumLevel        = LogLevel.Debug,
             MinimumConsoleLevel = LogLevel.Info,
-            MaxDisplayCount = 2000
+            MaxDisplayCount     = 2000
         });
 
         LogManager.Instance.Info("App", "IIoT.Studio 시작");
@@ -49,11 +50,7 @@ public partial class App : Application
         // ③ DI 빌드
         _services = _ConfigureServices();
 
-        // ④ 플러그인 로드 (DI 빌드 직후, 창 표시 전)
-        _services.GetRequiredService<PluginRegistryService>()
-                 .LoadPlugins();
-
-        // ⑤ 창 생성 + 표시
+        // ④ 창 생성
         var win = _services.GetRequiredService<MainWindow>();
 
         win.Loaded += async (_, _) =>
@@ -62,15 +59,22 @@ public partial class App : Application
             var canvasView = _FindCanvasView(win);
             if (canvasView is not null)
             {
-                var deviceTreeVm = _services.GetRequiredService<DeviceTreeViewModel>();
+                var deviceTreeVm  = _services.GetRequiredService<DeviceTreeViewModel>();
                 var tagTemplateVm = _services.GetRequiredService<TagTemplateViewModel>();
 
                 canvasView.DeviceTreeVm = deviceTreeVm;
                 canvasView.GetTemplates = () => tagTemplateVm.Templates;
             }
 
+            // ★ Studio-P04 fix: LoadPlugins()를 Loaded 안으로 이동
+            //   이유: LoadPlugins() 로그가 LogPanelView.LogAdded 구독보다
+            //         먼저 발생하면 패널에 표시되지 않음.
+            //   Loaded 시점에는 LogPanelView가 이미 LogAdded를 구독 완료.
+            _services.GetRequiredService<PluginRegistryService>()
+                     .LoadPlugins();
+
             // ★ S-15: 설정 로드 — CanvasView 주입 이후에 실행
-            var loader = _services.GetRequiredService<DeviceConfigLoader>();
+            var loader        = _services.GetRequiredService<DeviceConfigLoader>();
             var collectLoader = _services.GetRequiredService<CollectConfigLoader>();
 
             await loader.LoadAsync();
@@ -85,10 +89,7 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         LogManager.Instance.Info("App", "IIoT.Studio 종료");
-
-        // LogManager 큐 잔여 로그 파일에 모두 기록 후 종료
         await LogManager.Instance.StopAsync();
-
         _themeSettings?.Dispose();
         base.OnExit(e);
     }
@@ -158,16 +159,14 @@ public partial class App : Application
                 sp.GetRequiredService<DeviceConfigService>(),
                 sp.GetRequiredService<CollectConfigService>(),
                 sp.GetRequiredService<DeviceConfigLoader>(),
-                sp.GetRequiredService<PluginRegistryService>()
-                ));  // ← 추가
- 
+                sp.GetRequiredService<PluginRegistryService>()));
+
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<MainViewModel>()));
 
         return services.BuildServiceProvider();
     }
 
-    // ── CanvasView 탐색 (비주얼 트리)
     private static Views.Canvas.CanvasView? _FindCanvasView(DependencyObject parent)
     {
         for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
