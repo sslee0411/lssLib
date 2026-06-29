@@ -29,10 +29,9 @@
 		<!-- Studio Plugins/ 경로 -->
 		<StudioPluginDir>$(SolutionRoot)\Studio\IIoT.Studio\bin\$(Configuration)\net8.0-windows\Plugins</StudioPluginDir>
 
-		<!--
-      Collector Plugins/ 경로 (Collector 프로젝트 생성 후 주석 해제)
-      <CollectorPluginDir>$(SolutionRoot)\Collector\IIoT.Collector\bin\$(Configuration)\net8.0-windows\Plugins</CollectorPluginDir>
-    -->
+		<!-- Collector Plugins/ 경로 (Collector 프로젝트 생성 후 주석 해제)-->
+		<CollectorPluginDir>$(SolutionRoot)\Collector\IIoT.Collector\bin\$(Configuration)\net8.0-windows\Plugins</CollectorPluginDir>
+    
 	</PropertyGroup>
 
 	<!-- Studio Plugins/ 자동 복사 -->
@@ -48,18 +47,16 @@
 		  Importance="High"/>
 	</Target>
 
-	<!--
-  Collector Plugins/ 자동 복사 (Collector 프로젝트 생성 후 주석 해제)
-  <Target Name="CopyToCollectorPlugins" AfterTargets="Build">
-    <MakeDir Directories="$(CollectorPluginDir)" Condition="!Exists('$(CollectorPluginDir)')"/>
-    <Copy
-      SourceFiles="$(OutputPath)$(AssemblyName).dll"
-      DestinationFolder="$(CollectorPluginDir)"
-      SkipUnchangedFiles="true"
-      OverwriteReadOnlyFiles="true"/>
-    <Message
-      Text="[ModbusTcp] → Collector Plugins/ 복사: $(CollectorPluginDir)"
-      Importance="High"/>
-  </Target>
-  -->
+	<!--Collector Plugins/ 자동 복사 (Collector 프로젝트 생성 후 주석 해제) -->
+	<Target Name="CopyToCollectorPlugins" AfterTargets="Build">
+		<MakeDir Directories="$(CollectorPluginDir)" Condition="!Exists('$(CollectorPluginDir)')"/>
+        <Copy
+          SourceFiles="$(OutputPath)$(AssemblyName).dll"
+          DestinationFolder="$(CollectorPluginDir)"
+          SkipUnchangedFiles="true"
+          OverwriteReadOnlyFiles="true"/>
+        <Message
+          Text="[ModbusTcp] → Collector Plugins/ 복사: $(CollectorPluginDir)"
+          Importance="High"/>
+      </Target>
 </Project>

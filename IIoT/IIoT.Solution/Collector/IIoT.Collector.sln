@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37328.6
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Collector", "IIoT.Collector\IIoT.Collector.csproj", "{9A26F8E1-F215-4665-814B-8A65E96A4B5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Log", "..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj", "{119DFCED-0650-E203-EE8A-1CEB9DB84C09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.Messaging", "..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj", "{BE75E032-419E-4B6D-D8F1-E59CC3503452}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Contracts", "..\Contracts\IIoT.Contracts.csproj", "{84125A40-0848-EBED-CCF7-1CB630303B46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj", "{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9A26F8E1-F215-4665-814B-8A65E96A4B5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A26F8E1-F215-4665-814B-8A65E96A4B5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A26F8E1-F215-4665-814B-8A65E96A4B5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A26F8E1-F215-4665-814B-8A65E96A4B5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{119DFCED-0650-E203-EE8A-1CEB9DB84C09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{119DFCED-0650-E203-EE8A-1CEB9DB84C09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{119DFCED-0650-E203-EE8A-1CEB9DB84C09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{119DFCED-0650-E203-EE8A-1CEB9DB84C09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE75E032-419E-4B6D-D8F1-E59CC3503452}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE75E032-419E-4B6D-D8F1-E59CC3503452}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE75E032-419E-4B6D-D8F1-E59CC3503452}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE75E032-419E-4B6D-D8F1-E59CC3503452}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84125A40-0848-EBED-CCF7-1CB630303B46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ABC9E1C4-83AA-4982-99C6-2E35A0E90A32}
+	EndGlobalSection
+EndGlobal

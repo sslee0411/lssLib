@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!--
+      ★ RootNamespace 명시: 파일명(IIoT.Collector)의 . 이 네임스페이스 분리자로
+        인식되는 것을 방지. App.xaml x:Class="IIoT.Collector.App" 와 일치.
+    -->
+		<RootNamespace>IIoT.Collector</RootNamespace>
+		<AssemblyName>IIoT.Collector</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- lssLib BCL (Studio.sln 기준 상대경로 — Collector 폴더는 Studio와 같은 depth) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+
+		<!-- IIoT 공통 계약 레이어 (외부 참조 0개) -->
+		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
+
+		<!-- WPF 테마 (7가지 다크/라이트 테마 v1.5) -->
+		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+</Project>

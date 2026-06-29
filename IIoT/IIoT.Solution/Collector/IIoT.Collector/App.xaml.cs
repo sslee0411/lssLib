@@ -1,0 +1,105 @@
+// ══════════════════════════════════════════════════════════
+//  IIoT.Collector · App.xaml.cs
+//  역할: 애플리케이션 진입점
+//        ① 테마 복원 (창 표시 전 — 색상 준비)
+//        ② LogManager.Instance.Start() (DI 빌드 전 필수)
+//        ③ DI 서비스 구성 (_ConfigureServices)
+//        ④ 창 생성 후 Loaded 이벤트에서 LoadPlugins() 호출
+//           (LoadPlugins 로그가 LogPanelView.LogAdded 구독 완료 후 발생하도록)
+//        ⑤ OnExit: LogManager.StopAsync() + ThemeSettingsService.Dispose()
+//
+//  Studio-P04 fix 적용:
+//    LoadPlugins() 를 win.Loaded 안으로 이동
+//    → LogPanelView 가 LogAdded 구독 완료 후 플러그인 로그가 패널에 표시됨
+//
+//  생성: 2026-06-29
+// ══════════════════════════════════════════════════════════
+
+using IIoT.Collector.Core.Plugin;
+using IIoT.UI.Themes;
+using lssLib.Log;
+using Microsoft.Extensions.DependencyInjection;
+using System.IO;
+using System.Windows;
+
+namespace IIoT.Collector;
+
+public partial class App : Application
+{
+    // §1 ─ 필드 ──────────────────────────────────────────────
+
+    private ThemeSettingsService? _themeSettings;
+    private IServiceProvider?     _services;
+
+    // §2 ─ 시작 ───────────────────────────────────────────────
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        // ① 테마 (가장 먼저 — 창 표시 전 색상 준비)
+        _themeSettings = new ThemeSettingsService();
+        _themeSettings.LoadAndApply(this);
+
+        // ② LogManager 시작 (반드시 DI 빌드 전에 호출)
+        LogManager.Instance.Start(new LogConfig
+        {
+            LogRootPath         = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log"),
+            ValidDays           = 30,
+            FileFormat          = LogFileFormat.Both,
+            MinimumLevel        = LogLevel.Debug,
+            MinimumConsoleLevel = LogLevel.Info,
+            MaxDisplayCount     = 2000
+        });
+
+        LogManager.Instance.Info("App", "IIoT.Collector 시작");
+
+        // ③ DI 빌드
+        _services = _ConfigureServices();
+
+        // ④ 창 생성
+        var win = _services.GetRequiredService<MainWindow>();
+
+        win.Loaded += (_, _) =>
+        {
+            // ★ Studio-P04 fix 동일 패턴:
+            //   LoadPlugins() 를 Loaded 안으로 이동
+            //   이유: LoadPlugins 로그가 LogPanelView.LogAdded 구독보다
+            //         먼저 발생하면 패널에 표시되지 않음.
+            //   Loaded 시점: LogPanelView 가 LogAdded 구독 완료.
+            _services.GetRequiredService<CollectorPluginService>()
+                     .LoadPlugins();
+        };
+
+        win.Show();
+    }
+
+    // §3 ─ 종료 ───────────────────────────────────────────────
+
+    protected override async void OnExit(ExitEventArgs e)
+    {
+        LogManager.Instance.Info("App", "IIoT.Collector 종료");
+        await LogManager.Instance.StopAsync();
+        _themeSettings?.Dispose();
+        base.OnExit(e);
+    }
+
+    // §4 ─ DI 구성 ────────────────────────────────────────────
+
+    private static IServiceProvider _ConfigureServices()
+    {
+        var services = new ServiceCollection();
+
+        // ── 플러그인 레지스트리 (Col-Base-0 핵심)
+        services.AddSingleton<CollectorPluginService>();
+
+        // ── 메인 ViewModel
+        services.AddSingleton<MainViewModel>();
+
+        // ★ AddSingleton 필수 (Transient → 이중 창 버그)
+        services.AddSingleton<MainWindow>(sp =>
+            new MainWindow(sp.GetRequiredService<MainViewModel>()));
+
+        return services.BuildServiceProvider();
+    }
+}
