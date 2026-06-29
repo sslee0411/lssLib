@@ -2,8 +2,9 @@
      IIoT.Collector · MainWindow.xaml
      역할: 메인 창
      Col-Base-0: 헤더(56px) + 탭바(40px) + 하단 로그 패널 + 본문 임시 블록
-                 ThemePickerButton + LogPanelVisible 토글
-     Col-Base-1: 본문 탭별 View 연결 예정
+     Col-Base-1: 본문 임시 블록 → 실제 View 교체
+                 xmlns:vStatus / xmlns:vAlarm 추가
+                 StatusView / AlarmView / 수집흐름 임시 패널 연결
      생성: 2026-06-29
      규칙:
        ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
@@ -15,6 +16,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
         xmlns:local="clr-namespace:IIoT.Collector.Views.Log"
+        xmlns:vStatus="clr-namespace:IIoT.Collector.Views.Status"
+        xmlns:vAlarm="clr-namespace:IIoT.Collector.Views.Alarm"
         Title="IIoT Collector — 수집"
         Width="1280" Height="800"
         MinWidth="1000" MinHeight="600"
@@ -42,7 +45,7 @@
                 BorderThickness="0,0,0,1">
             <DockPanel Margin="16,0">
 
-                <!-- 좌: 타이틀 + 상태 -->
+                <!-- 좌: 타이틀 + 부제 -->
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <TextBlock Text="⚙"
@@ -67,10 +70,6 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
-                    <!--
-                      ★ ThemePickerButton: IIoT.UI.Themes 제공 컨트롤
-                         xmlns:uc assembly="IIoT.UI.Themes" 필수
-                    -->
                     <uc:ThemePickerButton />
                 </StackPanel>
 
@@ -89,28 +88,25 @@
                         VerticalAlignment="Stretch"
                         Margin="8,0,0,0">
 
-                <!-- 수집 현황 탭 (0) -->
                 <Button Content="📊  수집 현황"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="0"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
 
-                <!-- 알람 탭 (1) -->
                 <Button Content="🔔  알람"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="1"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
 
-                <!-- 수집 흐름 탭 (2) -->
                 <Button Content="🔀  수집 흐름"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="2"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
 
-                <!-- 로그 패널 토글 버튼 (3) — Studio-P04 패턴 동일 -->
+                <!-- 로그 패널 토글 버튼 (탭 전환이 아닌 하단 패널 토글) -->
                 <Button Content="📋  로그"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="3"
@@ -143,11 +139,11 @@
         </Border>
 
         <!-- ══════════════════════════════════════════════════
-             § 하단 로그 패널 (토글 — Studio-P04 패턴 동일)
+             § 하단 로그 패널 (토글)
+             DockPanel.Dock="Bottom" 순서:
+               상태바보다 먼저 선언 → 상태바 위에 위치
              LogPanelVisible=false → Collapsed (기본 숨김)
-             LogPanelVisible=true  → Visible  (로그 버튼 클릭 시 토글)
-             ★ DockPanel.Dock="Bottom" 순서 주의:
-               상태바 위 / 탭바 아래 → 상태바보다 먼저 선언
+             LogPanelVisible=true  → Visible   (로그 버튼 클릭 시)
              ══════════════════════════════════════════════════ -->
         <Border DockPanel.Dock="Bottom"
                 Height="180"
@@ -155,11 +151,10 @@
                              Converter={StaticResource BoolToVisibility}}">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="4" />  <!-- GridSplitter 핸들 -->
-                    <RowDefinition Height="*" />  <!-- 로그 패널 뷰 -->
+                    <RowDefinition Height="4" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- 크기 조절 핸들 (위아래 드래그) -->
                 <GridSplitter Grid.Row="0"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"
@@ -168,90 +163,54 @@
                               ResizeBehavior="PreviousAndNext"
                               Cursor="SizeNS" />
 
-                <!--
-                  ★ Col-Base-0: LogPanelView 자리 확보
-                     Col-Base-1 에서 LogPanelView UserControl 로 교체 예정.
-                     (Studio 의 LogPanelView.xaml 패턴 그대로 복사)
-                -->
                 <Border Grid.Row="1"
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0">
                     <local:LogPanelView />
                 </Border>
-
             </Grid>
         </Border>
 
         <!-- ══════════════════════════════════════════════════
-             § 본문 — 탭별 콘텐츠 (Col-Base-0: 임시 블록)
-             Col-Base-1 에서 실제 View 로 교체 예정
+             § 본문 — 탭별 View
+             Col-Base-1: 실제 View 연결 완료
              ══════════════════════════════════════════════════ -->
         <Grid Background="{DynamicResource BgBrush}">
 
-            <!-- 수집 현황 탭 (0) — 임시 -->
-            <Border Background="#0D1F2D"
-                    Visibility="{Binding IsStatusTab,
-                                 Converter={StaticResource BoolToVisibility}}">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="📊"
-                               FontSize="48"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="수집 현황"
-                               FontSize="20"
-                               Foreground="{DynamicResource TextBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,0" />
-                    <TextBlock Text="Col-Base-1 에서 구현 예정"
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,8,0,0" />
-                </StackPanel>
-            </Border>
+            <!-- 수집 현황 탭 (0) — StatusView -->
+            <Grid Visibility="{Binding IsStatusTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <vStatus:StatusView />
+            </Grid>
 
-            <!-- 알람 탭 (1) — 임시 -->
-            <Border Background="#1A0D0D"
-                    Visibility="{Binding IsAlarmTab,
-                                 Converter={StaticResource BoolToVisibility}}">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="🔔"
-                               FontSize="48"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="알람 현황"
-                               FontSize="20"
-                               Foreground="{DynamicResource TextBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,0" />
-                    <TextBlock Text="C-06 에서 구현 예정"
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,8,0,0" />
-                </StackPanel>
-            </Border>
+            <!-- 알람 탭 (1) — AlarmView -->
+            <Grid Visibility="{Binding IsAlarmTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <vAlarm:AlarmView />
+            </Grid>
 
-            <!-- 수집 흐름 탭 (2) — 임시 -->
-            <Border Background="#0D1A0D"
+            <!-- 수집 흐름 탭 (2) — C-09 구현 예정 -->
+            <Border Background="{DynamicResource BgBrush}"
                     Visibility="{Binding IsFlowTab,
                                  Converter={StaticResource BoolToVisibility}}">
                 <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center">
                     <TextBlock Text="🔀"
                                FontSize="48"
-                               HorizontalAlignment="Center" />
+                               HorizontalAlignment="Center"
+                               Opacity="0.3" />
                     <TextBlock Text="수집 흐름 시각화"
                                FontSize="20"
                                Foreground="{DynamicResource TextBrush}"
                                HorizontalAlignment="Center"
                                Margin="0,12,0,0" />
-                    <TextBlock Text="C-09 에서 구현 예정"
+                    <TextBlock Text="C-09 단계에서 구현됩니다"
                                FontSize="13"
                                Foreground="{DynamicResource Text2Brush}"
                                HorizontalAlignment="Center"
-                               Margin="0,8,0,0" />
+                               Margin="0,8,0,0"
+                               Opacity="0.6" />
                 </StackPanel>
             </Border>
 

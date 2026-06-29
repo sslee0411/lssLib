@@ -1,0 +1,135 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Collector · Views/Alarm/AlarmView.xaml
+     역할: 알람 탭 — 활성 알람 목록 + 이력 표시 영역
+     Col-Base-1: 레이아웃 뼈대
+     C-06~     : ThresholdDetector + AlarmStateManager 연결 예정
+     생성: 2026-06-29
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Collector.Views.Alarm.AlarmView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BgBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"      />  <!-- 활성 알람 -->
+            <RowDefinition Height="4"      />  <!-- GridSplitter -->
+            <RowDefinition Height="200"    />  <!-- 알람 이력 -->
+        </Grid.RowDefinitions>
+
+        <!-- ══════════════════════════════════════════════════
+             § 상단 — 활성 알람 목록
+             ══════════════════════════════════════════════════ -->
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />  <!-- 헤더 -->
+                <RowDefinition Height="*"  />  <!-- 목록 -->
+            </Grid.RowDefinitions>
+
+            <!-- 헤더 -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="16,0">
+                <DockPanel>
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="🔔"
+                                   FontSize="14"
+                                   Margin="0,0,8,0" />
+                        <TextBlock Text="활성 알람"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}" />
+                        <!-- 알람 건수 배지 (C-06 연결 예정) -->
+                        <Border Background="#C0392B"
+                                CornerRadius="10"
+                                Padding="8,2"
+                                Margin="8,0,0,0"
+                                Visibility="Collapsed">
+                            <TextBlock Text="0"
+                                       FontSize="10" FontWeight="Bold"
+                                       Foreground="White" />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 우측: ACK 버튼 (C-06 활성화 예정) -->
+                    <Button DockPanel.Dock="Right"
+                            Content="✔ 전체 ACK"
+                            Style="{DynamicResource GhostBtn}"
+                            FontSize="11"
+                            Padding="10,4"
+                            IsEnabled="False"
+                            ToolTip="C-06 AlarmStateManager 연결 후 활성화됩니다"
+                            VerticalAlignment="Center" />
+                </DockPanel>
+            </Border>
+
+            <!-- 활성 알람 목록 자리 — C-06 AlarmListView 로 교체 예정 -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="🔕"
+                               FontSize="40"
+                               HorizontalAlignment="Center"
+                               Opacity="0.3" />
+                    <TextBlock Text="활성 알람 없음"
+                               FontSize="13"
+                               Foreground="{DynamicResource Text2Brush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,0" />
+                    <TextBlock Text="C-06 ThresholdDetector 연결 후 표시됩니다"
+                               FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,6,0,0"
+                               Opacity="0.6" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- GridSplitter (상하 분할) -->
+        <GridSplitter Grid.Row="1"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      Background="{DynamicResource BorderBrush}"
+                      ResizeDirection="Rows"
+                      ResizeBehavior="PreviousAndNext"
+                      Cursor="SizeNS" />
+
+        <!-- ══════════════════════════════════════════════════
+             § 하단 — 알람 이력 (200px)
+             ══════════════════════════════════════════════════ -->
+        <Grid Grid.Row="2"
+              Background="{DynamicResource SurfaceBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36" />  <!-- 헤더 -->
+                <RowDefinition Height="*"  />  <!-- 이력 목록 -->
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,1"
+                    Padding="16,0">
+                <TextBlock Text="알람 이력"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center" />
+            </Border>
+
+            <!-- 알람 이력 목록 자리 — C-06 연결 예정 -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}">
+                <TextBlock Text="알람 이력이 여기에 표시됩니다 (C-06 구현 예정)"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0.5" />
+            </Border>
+        </Grid>
+
+    </Grid>
+</UserControl>
