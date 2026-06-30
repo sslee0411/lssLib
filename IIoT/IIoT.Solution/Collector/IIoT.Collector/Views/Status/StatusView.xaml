@@ -186,46 +186,74 @@
                 </DockPanel>
             </Border>
 
-            <!-- Tag DataGrid -->
+            <!-- Tag DataGrid — IIoTGrid 테마 스타일 적용 -->
             <DataGrid Grid.Row="1"
                       x:Name="TagGrid"
-                      ItemsSource="{Binding LiveTags}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      GridLinesVisibility="Horizontal"
-                      HeadersVisibility="Column"
-                      RowHeight="28"
-                      Background="{DynamicResource SurfaceBrush}"
-                      Foreground="{DynamicResource TextBrush}"
-                      BorderThickness="0"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      CanUserReorderColumns="False">
+                      Style="{DynamicResource IIoTGrid}"
+                      ItemsSource="{Binding LiveTags}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="PLC"     Width="130" Binding="{Binding PlcName}" />
-                    <DataGridTextColumn Header="Tag"     Width="150" Binding="{Binding Name}" />
-                    <DataGridTextColumn Header="Raw 값"   Width="90"  Binding="{Binding RawDisplayValue}" />
-                    <DataGridTextColumn Header="스케일값" Width="90"  Binding="{Binding ScaledDisplayValue}">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell">
+                    <DataGridTextColumn Header="PLC"
+                                         Width="130"
+                                         Binding="{Binding PlcName}" />
+                    <DataGridTextColumn Header="Tag"
+                                         Width="150"
+                                         Binding="{Binding Name}" />
+                    <DataGridTextColumn Header="Raw 값"
+                                         Width="90"
+                                         Binding="{Binding RawDisplayValue}"
+                                         ElementStyle="{DynamicResource IIoTGridCellMono}" />
+                    <DataGridTextColumn Header="스케일값"
+                                         Width="90"
+                                         Binding="{Binding ScaledDisplayValue}">
+                        <DataGridTextColumn.ElementStyle>
+                            <!-- ★ 테마 Mono 스타일(IIoTGridCellMono) 기반으로 확장
+                                 → 스케일 미설정 Tag 는 흐리게 표시 (Raw 와 동일값이라는 신호) -->
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource IIoTGridCellMono}">
                                 <Style.Triggers>
-                                    <!-- 스케일 미설정 Tag → 흐리게 표시 (Raw 와 동일값이라는 신호) -->
                                     <DataTrigger Binding="{Binding WasScaled}" Value="False">
                                         <Setter Property="Opacity" Value="0.45" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="단위"     Width="60"  Binding="{Binding DisplayUnit}" />
-                    <DataGridTextColumn Header="품질"     Width="80"  Binding="{Binding Quality}" />
-                    <DataGridTextColumn Header="갱신시각" Width="100" Binding="{Binding UpdatedAtText}" />
+                    <DataGridTextColumn Header="단위"
+                                         Width="60"
+                                         Binding="{Binding DisplayUnit}" />
+                    <DataGridTextColumn Header="품질"
+                                         Width="80"
+                                         Binding="{Binding Quality}">
+                        <DataGridTextColumn.ElementStyle>
+                            <!-- 품질별 색상: GridStatusGood 기반 + Foreground 만 트리거로 교체
+                                 (Setter Property="Style" 로 자기 자신을 갈아끼우면
+                                  ArgumentException: "Style 개체는 자신이 적용되는 개체의
+                                  Style 속성에 영향을 줄 수 없습니다." 발생 → Foreground 직접 지정으로 회피) -->
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource GridStatusGood}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Quality}" Value="Bad">
+                                        <Setter Property="Foreground" Value="{DynamicResource RedBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Quality}" Value="Timeout">
+                                        <Setter Property="Foreground" Value="{DynamicResource YellowBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Quality}" Value="Disconnected">
+                                        <Setter Property="Foreground" Value="{DynamicResource RedBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="갱신시각"
+                                         Width="100"
+                                         Binding="{Binding UpdatedAtText}" />
                 </DataGrid.Columns>
 
-                <!-- 행 스타일: 품질별 색상 -->
+                <!-- 행 스타일: 테마 IIoTGridRow 확장 + 품질별 배경색 -->
                 <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Setter Property="Background" Value="Transparent" />
+                    <Style TargetType="DataGridRow"
+                           BasedOn="{StaticResource IIoTGridRow}">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Quality}" Value="Bad">
                                 <Setter Property="Background" Value="#2A1414" />

@@ -5,7 +5,10 @@
            (lssLib.Log 의 LogViewerControl 은 demo 프로젝트 전용이므로
             Collector 에서 직접 참조 불가 → Studio LogPanelView 패턴 동일)
      Col-Base-0: Studio-P04 LogPanelView.xaml 패턴 그대로 복사
-     생성: 2026-06-29
+     테마 적용: ComboBox→PropCombo / TextBox→PropInput 정식 스타일 적용
+                GridViewColumnHeader → IIoTGridHeader 색상 체계와 동일한
+                인라인 스타일 적용 (DataGrid 전용 스타일이라 직접 재사용 불가)
+     생성: 2026-06-29 / 수정: 2026-06-29
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Collector.Views.Log.LogPanelView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -18,6 +21,34 @@
         <SolidColorBrush x:Key="WarnFg"   Color="#EF9F27" />
         <SolidColorBrush x:Key="ErrorFg"  Color="#E05050" />
         <SolidColorBrush x:Key="FatalFg"  Color="#FF4444" />
+
+        <!-- ★ GridViewColumnHeader 테마 스타일
+             DataGrid 전용 IIoTGridHeader 와 동일한 색상 체계 적용
+             (GridView 는 DataGrid 와 타겟 타입이 달라 그대로 재사용 불가) -->
+        <Style x:Key="LogGridHeader" TargetType="GridViewColumnHeader">
+            <Setter Property="Background"      Value="{DynamicResource CardBrush}" />
+            <Setter Property="Foreground"      Value="{DynamicResource Text3Brush}" />
+            <Setter Property="FontWeight"      Value="Bold" />
+            <Setter Property="FontSize"        Value="11" />
+            <Setter Property="Padding"         Value="8,4" />
+            <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor"          Value="Arrow" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GridViewColumnHeader">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left"
+                                               VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="{DynamicResource SurfaceBrush}">
@@ -41,15 +72,17 @@
                         FontSize="11" Padding="8,2"
                         Click="OnClear" />
 
-                <!-- 레벨 필터 -->
+                <!-- 레벨 필터 — 테마 PropCombo 적용 -->
                 <TextBlock Text="레벨:"
                            FontSize="11"
                            Foreground="{DynamicResource Text2Brush}"
                            VerticalAlignment="Center"
                            Margin="0,0,6,0" />
                 <ComboBox x:Name="LevelFilter"
+                          Style="{DynamicResource PropCombo}"
                           FontSize="11"
                           Width="80"
+                          Padding="6,2"
                           VerticalAlignment="Center"
                           SelectionChanged="OnFilterChanged"
                           Margin="0,0,12,0">
@@ -61,20 +94,19 @@
                     <ComboBoxItem Content="FATAL" />
                 </ComboBox>
 
-                <!-- Source 필터 -->
+                <!-- Source 필터 — 테마 PropInput 적용 -->
                 <TextBlock Text="Source:"
                            FontSize="11"
                            Foreground="{DynamicResource Text2Brush}"
                            VerticalAlignment="Center"
                            Margin="0,0,6,0" />
                 <TextBox x:Name="SourceFilter"
+                         Style="{DynamicResource PropInput}"
                          FontSize="11"
                          Width="120"
+                         Padding="6,2"
                          VerticalAlignment="Center"
-                         TextChanged="OnFilterChanged"
-                         Background="{DynamicResource CardBrush}"
-                         Foreground="{DynamicResource TextBrush}"
-                         BorderBrush="{DynamicResource BorderBrush}" />
+                         TextChanged="OnFilterChanged" />
 
                 <!-- 제목 -->
                 <TextBlock Text="📋 Collector 로그"
@@ -90,11 +122,12 @@
         <ListView x:Name="LogList"
                   Grid.Row="1"
                   Background="{DynamicResource SurfaceBrush}"
+                  Foreground="{DynamicResource TextBrush}"
                   BorderThickness="0"
                   FontSize="11"
                   FontFamily="Consolas, Courier New">
             <ListView.View>
-                <GridView>
+                <GridView ColumnHeaderContainerStyle="{StaticResource LogGridHeader}">
                     <GridViewColumn Header="시각"   Width="80"
                                     DisplayMemberBinding="{Binding TimeText}" />
                     <GridViewColumn Header="레벨"   Width="56"
@@ -114,21 +147,18 @@
                             Value="{DynamicResource Text2Brush}" />
                     <Setter Property="Padding" Value="2,1" />
                     <Style.Triggers>
+                        <!-- 레벨별 전경색 -->
                         <DataTrigger Binding="{Binding LevelText}" Value="WARN">
-                            <Setter Property="Foreground"
-                                    Value="{StaticResource WarnFg}" />
+                            <Setter Property="Foreground" Value="{StaticResource WarnFg}" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding LevelText}" Value="ERROR">
-                            <Setter Property="Foreground"
-                                    Value="{StaticResource ErrorFg}" />
+                            <Setter Property="Foreground" Value="{StaticResource ErrorFg}" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding LevelText}" Value="FATAL">
-                            <Setter Property="Foreground"
-                                    Value="{StaticResource FatalFg}" />
+                            <Setter Property="Foreground" Value="{StaticResource FatalFg}" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding LevelText}" Value="DEBUG">
-                            <Setter Property="Foreground"
-                                    Value="{StaticResource DebugFg}" />
+                            <Setter Property="Foreground" Value="{StaticResource DebugFg}" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
