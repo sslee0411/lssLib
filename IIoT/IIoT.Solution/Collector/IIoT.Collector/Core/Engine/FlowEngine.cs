@@ -33,8 +33,9 @@ public sealed class FlowEngine : IAsyncDisposable
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly CollectorConfigLoader  _configLoader;
+    private readonly CollectorConfigLoader _configLoader;
     private readonly CollectorPluginService _pluginService;
+    private readonly ScaleEngine _scaleEngine;
 
     /// <summary>PlcId → 생성된 드라이버 인스턴스 (정리 시 DisposeAsync 호출용)</summary>
     private readonly Dictionary<string, IProtocolDriver> _drivers = new();
@@ -55,11 +56,13 @@ public sealed class FlowEngine : IAsyncDisposable
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     public FlowEngine(
-        CollectorConfigLoader  configLoader,
-        CollectorPluginService pluginService)
+        CollectorConfigLoader configLoader,
+        CollectorPluginService pluginService,
+        ScaleEngine scaleEngine)
     {
-        _configLoader  = configLoader;
+        _configLoader = configLoader;
         _pluginService = pluginService;
+        _scaleEngine = scaleEngine;
     }
 
     // §4 ─ 시작 ────────────────────────────────────────────
@@ -174,12 +177,12 @@ public sealed class FlowEngine : IAsyncDisposable
     private async Task _PollOnceAsync(
         PlcRuntimeConfig plc, IProtocolDriver driver, CancellationToken ct)
     {
-        var requests = plc.Tags
-            .Where(t => t.IsEnabled)
+        var enabledTags = plc.Tags.Where(t => t.IsEnabled).ToList();
+        if (enabledTags.Count == 0) return;
+
+        var requests = enabledTags
             .Select(t => new TagReadRequest(t.Id, t.Address, t.DataType))
             .ToList();
-
-        if (requests.Count == 0) return;
 
         var result = await driver.ReadTagsAsync(requests, ct);
 
@@ -190,8 +193,24 @@ public sealed class FlowEngine : IAsyncDisposable
             return;
         }
 
+        // ★ C-05: TagId → TagRuntimeConfig O(1) 조회용 (ScaleEngine.Apply 에 전달)
+        var tagsById = enabledTags.ToDictionary(t => t.Id);
+
         foreach (var value in result.Values)
-            EventBus.Instance.Publish(new TagValueUpdatedEvent(value, plc.PlcId));
+        {
+            if (!tagsById.TryGetValue(value.TagId, out var tagConfig))
+                continue; // 드라이버가 요청하지 않은 TagId 를 반환하는 비정상 케이스 방어
+
+            var scaled = _scaleEngine.Apply(tagConfig, value.RawValue);
+
+            EventBus.Instance.Publish(new TagValueUpdatedEvent(
+                Value: value,
+                PlcId: plc.PlcId,
+                EngValue: scaled.EngValue,
+                Unit: scaled.Unit,
+                DecimalPlaces: scaled.DecimalPlaces,
+                WasScaled: scaled.WasScaled));
+        }
     }
 
     // §7 ─ 정지 ────────────────────────────────────────────

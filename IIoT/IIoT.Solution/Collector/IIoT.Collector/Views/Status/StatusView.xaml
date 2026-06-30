@@ -202,12 +202,24 @@
                       CanUserDeleteRows="False"
                       CanUserReorderColumns="False">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="PLC"   Width="140" Binding="{Binding PlcName}" />
-                    <DataGridTextColumn Header="Tag"   Width="160" Binding="{Binding Name}" />
-                    <DataGridTextColumn Header="값"     Width="100" Binding="{Binding DisplayValue}" />
-                    <DataGridTextColumn Header="단위"   Width="70"  Binding="{Binding Unit}" />
-                    <DataGridTextColumn Header="품질"   Width="90"  Binding="{Binding Quality}" />
-                    <DataGridTextColumn Header="갱신시각" Width="110" Binding="{Binding UpdatedAtText}" />
+                    <DataGridTextColumn Header="PLC"     Width="130" Binding="{Binding PlcName}" />
+                    <DataGridTextColumn Header="Tag"     Width="150" Binding="{Binding Name}" />
+                    <DataGridTextColumn Header="Raw 값"   Width="90"  Binding="{Binding RawDisplayValue}" />
+                    <DataGridTextColumn Header="스케일값" Width="90"  Binding="{Binding ScaledDisplayValue}">
+                        <DataGridTextColumn.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Style.Triggers>
+                                    <!-- 스케일 미설정 Tag → 흐리게 표시 (Raw 와 동일값이라는 신호) -->
+                                    <DataTrigger Binding="{Binding WasScaled}" Value="False">
+                                        <Setter Property="Opacity" Value="0.45" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="단위"     Width="60"  Binding="{Binding DisplayUnit}" />
+                    <DataGridTextColumn Header="품질"     Width="80"  Binding="{Binding Quality}" />
+                    <DataGridTextColumn Header="갱신시각" Width="100" Binding="{Binding UpdatedAtText}" />
                 </DataGrid.Columns>
 
                 <!-- 행 스타일: 품질별 색상 -->

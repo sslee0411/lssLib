@@ -119,6 +119,9 @@ public partial class App : Application
         // ── 설정 로더 (C-01)
         services.AddSingleton<CollectorConfigLoader>();
 
+        // ── 스케일 변환 엔진 (C-05)
+        services.AddSingleton<ScaleEngine>();
+
         // ── 수집 흐름 엔진 (C-03)
         services.AddSingleton<FlowEngine>();
 

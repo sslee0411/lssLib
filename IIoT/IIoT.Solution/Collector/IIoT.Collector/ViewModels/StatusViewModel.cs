@@ -117,7 +117,7 @@ public partial class StatusViewModel : ObservableObject, IDisposable
         {
             if (_tagIndex.TryGetValue(e.Value.TagId, out var vm))
             {
-                vm.Update(e.Value);
+                vm.Update(e);
                 _RecountQuality();
             }
         });
@@ -147,7 +147,7 @@ public partial class StatusViewModel : ObservableObject, IDisposable
     private void _RecountQuality()
     {
         GoodCount = LiveTags.Count(t => t.Quality == TagQuality.Good);
-        BadCount  = LiveTags.Count(t =>
+        BadCount = LiveTags.Count(t =>
             t.Quality is TagQuality.Bad or TagQuality.Timeout or TagQuality.Disconnected);
     }
 

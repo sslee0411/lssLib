@@ -20,9 +20,20 @@ namespace IIoT.Collector.Core.Events;
 /// </summary>
 /// <param name="Value">드라이버가 반환한 원시 Tag 값 (TagId/RawValue/Quality/Timestamp)</param>
 /// <param name="PlcId">이 Tag 가 속한 PLC/Device ID (역참조 — UI 그룹핑용)</param>
+/// <param name="EngValue">
+/// C-05 ScaleEngine 적용 후 공학값.
+/// ScaleEntryId 미설정 Tag 는 Raw 값을 double 로 캐스팅한 값과 동일.
+/// </param>
+/// <param name="Unit">공학 단위 (ScaleEntry.Unit 또는 Tag.Unit)</param>
+/// <param name="DecimalPlaces">표시 소수 자릿수</param>
+/// <param name="WasScaled">실제 스케일 변환 적용 여부</param>
 public sealed record TagValueUpdatedEvent(
     TagValue Value,
-    string   PlcId
+    string   PlcId,
+    double   EngValue,
+    string   Unit,
+    int      DecimalPlaces,
+    bool     WasScaled
 ) : EventMessage;
 
 /// <summary>

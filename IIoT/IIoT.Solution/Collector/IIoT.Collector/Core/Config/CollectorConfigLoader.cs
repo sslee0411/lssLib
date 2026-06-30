@@ -4,7 +4,8 @@
 //        CommTypeMigrator.Resolve() 로 DriverId 확정 (Studio DeviceConfigLoader 동일 패턴)
 //        CollectorPluginService.IsKnownDriver() 로 미등록 드라이버 경고
 //  C-01: 신규
-//  생성: 2026-06-29
+//  C-05: ScaleLibrary 인덱스 보관 추가 (ScaleEngine.Initialize() 연결용)
+//  생성: 2026-06-29 / 수정: 2026-06-29
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Models;
@@ -24,6 +25,7 @@ namespace IIoT.Collector.Core.Config;
 /// <para>
 /// Studio 가 저장한 트리 구조(Group/Device/Plc/Tag)를 읽어
 /// FlowEngine 이 바로 사용할 수 있는 평탄화된 <see cref="PlcRuntimeConfig"/> 목록으로 변환한다.
+/// 동시에 ScaleLibrary 를 인덱싱하여 C-05 ScaleEngine 이 조회할 수 있도록 보관한다.
 /// </para>
 /// </summary>
 public sealed class CollectorConfigLoader
@@ -55,6 +57,13 @@ public sealed class CollectorConfigLoader
     /// <summary>전체 Tag 수 (Plcs.Sum(p => p.Tags.Count) 캐시)</summary>
     public int TotalTagCount => Plcs.Sum(p => p.Tags.Count);
 
+    /// <summary>
+    /// 스케일 라이브러리 — ScaleEntryDto.Id(GUID 문자열) → ScaleEntryDto 인덱스.
+    /// C-05 ScaleEngine.Initialize() 가 이 값을 받아 Raw→공학단위 변환에 사용한다.
+    /// </summary>
+    public IReadOnlyDictionary<string, ScaleEntryDto> ScaleLibrary { get; private set; }
+        = new Dictionary<string, ScaleEntryDto>();
+
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     public CollectorConfigLoader(CollectorPluginService pluginService)
@@ -65,7 +74,7 @@ public sealed class CollectorConfigLoader
     // §4 ─ 로드 진입점 ─────────────────────────────────────
 
     /// <summary>
-    /// device.json 을 로드하여 PLC/Tag 런타임 모델로 변환합니다.
+    /// device.json 을 로드하여 PLC/Tag 런타임 모델 + ScaleLibrary 인덱스로 변환합니다.
     /// 파일이 없으면 빈 목록으로 초기화하고 경고 로그만 남깁니다 (예외 없음).
     /// </summary>
     /// <param name="path">device.json 경로 (null = 기본 경로)</param>
@@ -78,6 +87,7 @@ public sealed class CollectorConfigLoader
             LogManager.Instance.Warn("ConfigLoader",
                 $"device.json 없음: {filePath} — Studio 에서 먼저 저장해 주세요.");
             Plcs = Array.Empty<PlcRuntimeConfig>();
+            ScaleLibrary = new Dictionary<string, ScaleEntryDto>();
             return;
         }
 
@@ -92,6 +102,7 @@ public sealed class CollectorConfigLoader
             LogManager.Instance.Error("ConfigLoader",
                 $"device.json 파싱 실패: {ex.Message}");
             Plcs = Array.Empty<PlcRuntimeConfig>();
+            ScaleLibrary = new Dictionary<string, ScaleEntryDto>();
             return;
         }
 
@@ -99,6 +110,7 @@ public sealed class CollectorConfigLoader
         {
             LogManager.Instance.Warn("ConfigLoader", "device.json 내용이 비어 있음");
             Plcs = Array.Empty<PlcRuntimeConfig>();
+            ScaleLibrary = new Dictionary<string, ScaleEntryDto>();
             return;
         }
 
@@ -108,8 +120,14 @@ public sealed class CollectorConfigLoader
 
         Plcs = plcs;
 
+        // ★ C-05: ScaleLibrary 인덱스 구성 (Id 가 비어있는 항목은 제외)
+        ScaleLibrary = root.ScaleLibrary
+            .Where(s => !string.IsNullOrWhiteSpace(s.Id))
+            .ToDictionary(s => s.Id, s => s);
+
         LogManager.Instance.Info("ConfigLoader",
-            $"device.json 로드 완료 — {plcs.Count}개 PLC/Device, {TotalTagCount}개 Tag");
+            $"device.json 로드 완료 — {plcs.Count}개 PLC/Device, {TotalTagCount}개 Tag, " +
+            $"{ScaleLibrary.Count}개 스케일");
 
         _WarnUnknownDrivers(plcs);
     }

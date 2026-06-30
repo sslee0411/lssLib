@@ -17,6 +17,8 @@
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+		<!-- C-05: ScaleEngine Expression 모드 — Studio 주석 "Collector에서 NCalc 사용" 반영 -->
+		<PackageReference Include="NCalc"                                      Version="3.*" />
 	</ItemGroup>
 
 	<ItemGroup>
