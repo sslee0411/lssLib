@@ -16,7 +16,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
         xmlns:local="clr-namespace:IIoT.Collector.Views.Log"
-        xmlns:vStatus="clr-namespace:IIoT.Collector.Views.Status"
         xmlns:vAlarm="clr-namespace:IIoT.Collector.Views.Alarm"
         Title="IIoT Collector — 수집"
         Width="1280" Height="800"
@@ -178,10 +177,10 @@
              ══════════════════════════════════════════════════ -->
         <Grid Background="{DynamicResource BgBrush}">
 
-            <!-- 수집 현황 탭 (0) — StatusView -->
+            <!-- 수집 현황 탭 (0) — StatusView (코드비하인드에서 DI 주입) -->
             <Grid Visibility="{Binding IsStatusTab,
                                Converter={StaticResource BoolToVisibility}}">
-                <vStatus:StatusView />
+                <ContentControl x:Name="StatusViewHost" />
             </Grid>
 
             <!-- 알람 탭 (1) — AlarmView -->

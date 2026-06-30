@@ -16,7 +16,10 @@
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
+using IIoT.Collector.Core.Engine;
 using IIoT.Collector.Core.Plugin;
+using IIoT.Collector.ViewModels;
+using IIoT.Collector.Views.Status;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -75,6 +78,15 @@ public partial class App : Application
             //   (미등록 드라이버 경고가 정확히 동작하려면 플러그인 목록이 먼저 채워져야 함)
             await _services.GetRequiredService<CollectorConfigLoader>()
                             .LoadAsync();
+
+            // ★ C-04: 설정 로드 완료 직후 LiveTags 초기 행 구성 + EventBus 구독 시작
+            //   (FlowEngine.StartAsync() 보다 반드시 먼저 호출 — 폴링 결과를 놓치지 않도록)
+            _services.GetRequiredService<StatusViewModel>()
+                     .Initialize();
+
+            // ★ C-03: 설정 로드 완료 후 수집 시작
+            await _services.GetRequiredService<FlowEngine>()
+                            .StartAsync();
         };
 
         win.Show();
@@ -85,6 +97,11 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         LogManager.Instance.Info("App", "IIoT.Collector 종료");
+
+        // ★ C-03: 수집 정지 (드라이버 연결 해제) — LogManager 정지보다 먼저
+        if (_services is not null)
+            await _services.GetRequiredService<FlowEngine>().StopAsync();
+
         await LogManager.Instance.StopAsync();
         _themeSettings?.Dispose();
         base.OnExit(e);
@@ -102,12 +119,22 @@ public partial class App : Application
         // ── 설정 로더 (C-01)
         services.AddSingleton<CollectorConfigLoader>();
 
+        // ── 수집 흐름 엔진 (C-03)
+        services.AddSingleton<FlowEngine>();
+
         // ── 메인 ViewModel
         services.AddSingleton<MainViewModel>();
 
+        // ── 수집 현황 ViewModel/View (C-04)
+        services.AddSingleton<StatusViewModel>();
+        services.AddSingleton<StatusView>(sp =>
+            new StatusView(sp.GetRequiredService<StatusViewModel>()));
+
         // ★ AddSingleton 필수 (Transient → 이중 창 버그)
         services.AddSingleton<MainWindow>(sp =>
-            new MainWindow(sp.GetRequiredService<MainViewModel>()));
+            new MainWindow(
+                sp.GetRequiredService<MainViewModel>(),
+                sp.GetRequiredService<StatusView>()));
 
         return services.BuildServiceProvider();
     }

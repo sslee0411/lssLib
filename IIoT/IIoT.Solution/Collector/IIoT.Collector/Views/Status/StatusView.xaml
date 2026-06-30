@@ -1,10 +1,9 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Collector · Views/Status/StatusView.xaml
      역할: 수집 현황 탭 — 실시간 Tag 값 표시 영역
-     Col-Base-1: 레이아웃 뼈대 (좌: 수집 통계 패널 / 우: Tag 목록)
-     C-01~   : device.json 로드 후 Tag 목록 표시 예정
-     C-04~   : LiveTag DataGrid 실시간 갱신 예정
-     생성: 2026-06-29
+     Col-Base-1: 레이아웃 뼈대
+     C-04: StatusViewModel 바인딩 — 통계 카드 + Tag DataGrid 실데이터 연결
+     생성: 2026-06-29 / 수정: 2026-06-29
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Collector.Views.Status.StatusView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -14,7 +13,7 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="240" MinWidth="180" MaxWidth="360" />
-            <ColumnDefinition Width="4" />   <!-- GridSplitter -->
+            <ColumnDefinition Width="4" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -27,11 +26,10 @@
                 BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />  <!-- 헤더 -->
-                    <RowDefinition Height="*"    />  <!-- 통계 카드 목록 -->
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- 헤더 -->
                 <Border Grid.Row="0"
                         Height="40"
                         Background="{DynamicResource CardBrush}"
@@ -44,12 +42,11 @@
                                VerticalAlignment="Center" />
                 </Border>
 
-                <!-- 통계 카드 영역 (C-03 FlowEngine 연결 후 채워짐) -->
                 <ScrollViewer Grid.Row="1"
                               VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="12">
 
-                        <!-- 전체 현황 카드 -->
+                        <!-- 전체 현황 카드 — C-04: 실데이터 바인딩 -->
                         <Border Background="{DynamicResource CardBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
@@ -78,30 +75,30 @@
                                                FontSize="10"
                                                Foreground="{DynamicResource Text2Brush}" />
                                     <TextBlock Grid.Row="0" Grid.Column="1"
-                                               Text="—"
+                                               Text="{Binding TotalTagCount}"
                                                FontSize="14" FontWeight="Bold"
                                                Foreground="{DynamicResource TextBrush}"
                                                HorizontalAlignment="Right" />
 
                                     <TextBlock Grid.Row="1" Grid.Column="0"
-                                               Text="수집 중"
+                                               Text="정상 (Good)"
                                                FontSize="10"
                                                Foreground="{DynamicResource Text2Brush}"
                                                Margin="0,6,0,0" />
                                     <TextBlock Grid.Row="1" Grid.Column="1"
-                                               Text="—"
+                                               Text="{Binding GoodCount}"
                                                FontSize="14" FontWeight="Bold"
                                                Foreground="#3FB950"
                                                HorizontalAlignment="Right"
                                                Margin="0,6,0,0" />
 
                                     <TextBlock Grid.Row="2" Grid.Column="0"
-                                               Text="오류"
+                                               Text="오류/미수신"
                                                FontSize="10"
                                                Foreground="{DynamicResource Text2Brush}"
                                                Margin="0,6,0,0" />
                                     <TextBlock Grid.Row="2" Grid.Column="1"
-                                               Text="—"
+                                               Text="{Binding BadCount}"
                                                FontSize="14" FontWeight="Bold"
                                                Foreground="#E05050"
                                                HorizontalAlignment="Right"
@@ -110,7 +107,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- 드라이버 상태 카드 -->
+                        <!-- 드라이버 상태 카드 — C-04: 연결 PLC 수 바인딩 -->
                         <Border Background="{DynamicResource CardBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
@@ -122,24 +119,6 @@
                                            FontSize="11" FontWeight="SemiBold"
                                            Foreground="{DynamicResource Text2Brush}"
                                            Margin="0,0,0,10" />
-                                <TextBlock Text="C-01 이후 표시됩니다"
-                                           FontSize="11"
-                                           Foreground="{DynamicResource Text2Brush}"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- 수집 속도 카드 -->
-                        <Border Background="{DynamicResource CardBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="6"
-                                Padding="14,12">
-                            <StackPanel>
-                                <TextBlock Text="수집 속도"
-                                           FontSize="11" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource Text2Brush}"
-                                           Margin="0,0,0,10" />
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -148,14 +127,21 @@
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Grid.Column="0"
-                                               Text="폴링 주기"
+                                               Text="연결됨"
                                                FontSize="10"
                                                Foreground="{DynamicResource Text2Brush}" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="— ms"
-                                               FontSize="12" FontWeight="Bold"
-                                               Foreground="{DynamicResource TextBrush}"
-                                               HorizontalAlignment="Right" />
+                                    <StackPanel Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding ConnectedPlcCount}"
+                                                   FontSize="12" FontWeight="Bold"
+                                                   Foreground="#3FB950" />
+                                        <TextBlock Text=" / " FontSize="12"
+                                                   Foreground="{DynamicResource Text2Brush}" />
+                                        <TextBlock Text="{Binding TotalPlcCount}"
+                                                   FontSize="12" FontWeight="Bold"
+                                                   Foreground="{DynamicResource TextBrush}" />
+                                    </StackPanel>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -165,7 +151,6 @@
             </Grid>
         </Border>
 
-        <!-- GridSplitter -->
         <GridSplitter Grid.Column="1"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
@@ -174,16 +159,15 @@
                       ShowsPreview="False" />
 
         <!-- ══════════════════════════════════════════════════
-             § 우측 — Tag 목록 영역
+             § 우측 — Tag 목록 (C-04: 실시간 DataGrid)
              ══════════════════════════════════════════════════ -->
         <Grid Grid.Column="2"
               Background="{DynamicResource BgBrush}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="40" />  <!-- 툴바 -->
-                <RowDefinition Height="*"  />  <!-- Tag DataGrid -->
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- 툴바 -->
             <Border Grid.Row="0"
                     Background="{DynamicResource CardBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -194,50 +178,56 @@
                                FontSize="12" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextBrush}"
                                VerticalAlignment="Center" />
-
-                    <!-- 우측: 검색 (C-04 연결 예정) -->
-                    <StackPanel DockPanel.Dock="Right"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="🔍"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource Text2Brush}"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,6,0" />
-                        <TextBox Width="180"
-                                 FontSize="11"
-                                 IsEnabled="False"
-                                 Background="{DynamicResource CardBrush}"
-                                 Foreground="{DynamicResource Text2Brush}"
-                                 BorderBrush="{DynamicResource BorderBrush}"
-                                 ToolTip="C-04 에서 활성화됩니다"
-                                 Text="C-04에서 활성화" />
-                    </StackPanel>
+                    <TextBlock DockPanel.Dock="Right"
+                               Text="{Binding TotalTagCount, StringFormat='총 {0}개'}"
+                               FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
 
-            <!-- Tag DataGrid 자리 — C-04 LiveTagView 로 교체 예정 -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="📋"
-                               FontSize="40"
-                               HorizontalAlignment="Center"
-                               Opacity="0.3" />
-                    <TextBlock Text="device.json 로드 후 Tag 목록이 표시됩니다"
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,0" />
-                    <TextBlock Text="C-01 단계에서 구현됩니다"
-                               FontSize="11"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,6,0,0"
-                               Opacity="0.6" />
-                </StackPanel>
-            </Border>
+            <!-- Tag DataGrid -->
+            <DataGrid Grid.Row="1"
+                      x:Name="TagGrid"
+                      ItemsSource="{Binding LiveTags}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column"
+                      RowHeight="28"
+                      Background="{DynamicResource SurfaceBrush}"
+                      Foreground="{DynamicResource TextBrush}"
+                      BorderThickness="0"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="PLC"   Width="140" Binding="{Binding PlcName}" />
+                    <DataGridTextColumn Header="Tag"   Width="160" Binding="{Binding Name}" />
+                    <DataGridTextColumn Header="값"     Width="100" Binding="{Binding DisplayValue}" />
+                    <DataGridTextColumn Header="단위"   Width="70"  Binding="{Binding Unit}" />
+                    <DataGridTextColumn Header="품질"   Width="90"  Binding="{Binding Quality}" />
+                    <DataGridTextColumn Header="갱신시각" Width="110" Binding="{Binding UpdatedAtText}" />
+                </DataGrid.Columns>
+
+                <!-- 행 스타일: 품질별 색상 -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Quality}" Value="Bad">
+                                <Setter Property="Background" Value="#2A1414" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Quality}" Value="Timeout">
+                                <Setter Property="Background" Value="#2A2014" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Quality}" Value="Disconnected">
+                                <Setter Property="Background" Value="#1A1A1A" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
 
         </Grid>
     </Grid>
