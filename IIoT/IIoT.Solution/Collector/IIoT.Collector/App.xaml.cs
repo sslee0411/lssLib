@@ -15,6 +15,7 @@
 //  생성: 2026-06-29
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Plugin;
 using IIoT.UI.Themes;
 using lssLib.Log;
@@ -60,7 +61,7 @@ public partial class App : Application
         // ④ 창 생성
         var win = _services.GetRequiredService<MainWindow>();
 
-        win.Loaded += (_, _) =>
+        win.Loaded += async (_, _) =>
         {
             // ★ Studio-P04 fix 동일 패턴:
             //   LoadPlugins() 를 Loaded 안으로 이동
@@ -69,6 +70,11 @@ public partial class App : Application
             //   Loaded 시점: LogPanelView 가 LogAdded 구독 완료.
             _services.GetRequiredService<CollectorPluginService>()
                      .LoadPlugins();
+
+            // ★ C-01: device.json 로드는 플러그인 로드 이후에 수행
+            //   (미등록 드라이버 경고가 정확히 동작하려면 플러그인 목록이 먼저 채워져야 함)
+            await _services.GetRequiredService<CollectorConfigLoader>()
+                            .LoadAsync();
         };
 
         win.Show();
@@ -92,6 +98,9 @@ public partial class App : Application
 
         // ── 플러그인 레지스트리 (Col-Base-0 핵심)
         services.AddSingleton<CollectorPluginService>();
+
+        // ── 설정 로더 (C-01)
+        services.AddSingleton<CollectorConfigLoader>();
 
         // ── 메인 ViewModel
         services.AddSingleton<MainViewModel>();

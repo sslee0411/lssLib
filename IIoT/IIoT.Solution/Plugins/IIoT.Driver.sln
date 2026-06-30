@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Contracts", "..\Contra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Driver.Mitsubishi", "IIoT.Driver.Mitsubishi\IIoT.Driver.Mitsubishi.csproj", "{929DD012-1C23-480A-A1DD-324946ED4391}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Driver.Virtual", "IIoT.Driver.Virtual\IIoT.Driver.Virtual.csproj", "{703D0B52-3318-4184-8823-439A70DD1F09}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{929DD012-1C23-480A-A1DD-324946ED4391}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{929DD012-1C23-480A-A1DD-324946ED4391}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{929DD012-1C23-480A-A1DD-324946ED4391}.Release|Any CPU.Build.0 = Release|Any CPU
+		{703D0B52-3318-4184-8823-439A70DD1F09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{703D0B52-3318-4184-8823-439A70DD1F09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{703D0B52-3318-4184-8823-439A70DD1F09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{703D0B52-3318-4184-8823-439A70DD1F09}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
