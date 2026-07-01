@@ -33,9 +33,10 @@ public sealed class FlowEngine : IAsyncDisposable
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly CollectorConfigLoader _configLoader;
+    private readonly CollectorConfigLoader  _configLoader;
     private readonly CollectorPluginService _pluginService;
-    private readonly ScaleEngine _scaleEngine;
+    private readonly ScaleEngine            _scaleEngine;
+    private readonly AlarmStateManager      _alarmManager;
 
     /// <summary>PlcId → 생성된 드라이버 인스턴스 (정리 시 DisposeAsync 호출용)</summary>
     private readonly Dictionary<string, IProtocolDriver> _drivers = new();
@@ -56,13 +57,15 @@ public sealed class FlowEngine : IAsyncDisposable
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     public FlowEngine(
-        CollectorConfigLoader configLoader,
+        CollectorConfigLoader  configLoader,
         CollectorPluginService pluginService,
-        ScaleEngine scaleEngine)
+        ScaleEngine            scaleEngine,
+        AlarmStateManager      alarmManager)
     {
-        _configLoader = configLoader;
+        _configLoader  = configLoader;
         _pluginService = pluginService;
-        _scaleEngine = scaleEngine;
+        _scaleEngine   = scaleEngine;
+        _alarmManager  = alarmManager;
     }
 
     // §4 ─ 시작 ────────────────────────────────────────────
@@ -204,12 +207,15 @@ public sealed class FlowEngine : IAsyncDisposable
             var scaled = _scaleEngine.Apply(tagConfig, value.RawValue);
 
             EventBus.Instance.Publish(new TagValueUpdatedEvent(
-                Value: value,
-                PlcId: plc.PlcId,
-                EngValue: scaled.EngValue,
-                Unit: scaled.Unit,
+                Value:         value,
+                PlcId:         plc.PlcId,
+                EngValue:      scaled.EngValue,
+                Unit:          scaled.Unit,
                 DecimalPlaces: scaled.DecimalPlaces,
-                WasScaled: scaled.WasScaled));
+                WasScaled:     scaled.WasScaled));
+
+            // ★ C-06: 공학값으로 임계값 검사 (ScaleEngine 이미 계산된 EngValue 재사용)
+            _alarmManager.ProcessValue(value.TagId, scaled.EngValue, value.Timestamp);
         }
     }
 

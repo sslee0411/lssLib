@@ -11,6 +11,7 @@
 //      — App.xaml.cs 의 AddSingleton 팩토리와 충돌
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Collector.Views.Alarm;
 using IIoT.Collector.Views.Status;
 using System.Windows;
 
@@ -27,6 +28,7 @@ public partial class MainWindow : Window
     /// StatusViewModel.Initialize() 를 호출할 수 있도록 외부에 노출).
     /// </summary>
     public StatusView StatusView { get; }
+    public AlarmView  AlarmView  { get; }
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
@@ -34,16 +36,18 @@ public partial class MainWindow : Window
     /// DI 컨테이너에서 ViewModel 주입받아 DataContext 설정.
     /// ★ 기본 생성자 절대 금지 — App.xaml.cs AddSingleton 팩토리 충돌
     /// </summary>
-    public MainWindow(MainViewModel vm, StatusView statusView)
+    public MainWindow(MainViewModel vm, StatusView statusView, AlarmView alarmView)
     {
         _vm = vm;
         StatusView = statusView;
+        AlarmView  = alarmView;
 
         InitializeComponent();
         DataContext = vm;
 
-        // ★ C-04: StatusView 를 코드에서 호스트 슬롯에 주입
-        //   (DI 생성자가 필요한 View 는 XAML 에서 직접 선언 불가하므로 코드 주입 패턴 사용)
+        // ★ C-04: StatusView 코드 주입
         StatusViewHost.Content = StatusView;
+        // ★ C-06: AlarmView 코드 주입
+        AlarmViewHost.Content  = AlarmView;
     }
 }

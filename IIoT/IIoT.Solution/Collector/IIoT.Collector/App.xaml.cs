@@ -17,6 +17,7 @@
 
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
+using IIoT.Collector.Views.Alarm;
 using IIoT.Collector.Core.Plugin;
 using IIoT.Collector.ViewModels;
 using IIoT.Collector.Views.Status;
@@ -84,6 +85,12 @@ public partial class App : Application
             _services.GetRequiredService<StatusViewModel>()
                      .Initialize();
 
+            // ★ C-06: 알람 감지기 초기화 + AlarmView 구독 시작 (FlowEngine 보다 먼저)
+            _services.GetRequiredService<AlarmStateManager>()
+                     .Initialize();
+            _services.GetRequiredService<AlarmViewModel>()
+                     .Initialize();
+
             // ★ C-03: 설정 로드 완료 후 수집 시작
             await _services.GetRequiredService<FlowEngine>()
                             .StartAsync();
@@ -122,6 +129,12 @@ public partial class App : Application
         // ── 스케일 변환 엔진 (C-05)
         services.AddSingleton<ScaleEngine>();
 
+        // ── 알람 감지·관리 (C-06)
+        services.AddSingleton<AlarmStateManager>();
+        services.AddSingleton<AlarmViewModel>();
+        services.AddSingleton<AlarmView>(sp =>
+            new AlarmView(sp.GetRequiredService<AlarmViewModel>()));
+
         // ── 수집 흐름 엔진 (C-03)
         services.AddSingleton<FlowEngine>();
 
@@ -137,7 +150,8 @@ public partial class App : Application
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
                 sp.GetRequiredService<MainViewModel>(),
-                sp.GetRequiredService<StatusView>()));
+                sp.GetRequiredService<StatusView>(),
+                sp.GetRequiredService<AlarmView>()));
 
         return services.BuildServiceProvider();
     }

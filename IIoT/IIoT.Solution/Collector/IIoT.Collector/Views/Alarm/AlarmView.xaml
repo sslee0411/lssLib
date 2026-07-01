@@ -1,9 +1,9 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Collector · Views/Alarm/AlarmView.xaml
-     역할: 알람 탭 — 활성 알람 목록 + 이력 표시 영역
+     역할: 알람 탭 — 활성 알람 목록 + 이력 표시
      Col-Base-1: 레이아웃 뼈대
-     C-06~     : ThresholdDetector + AlarmStateManager 연결 예정
-     생성: 2026-06-29
+     C-06: AlarmViewModel 실데이터 바인딩, ACK 기능 연결
+     생성: 2026-06-29 / 수정: 2026-06-29
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Collector.Views.Alarm.AlarmView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,9 +12,9 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"      />  <!-- 활성 알람 -->
-            <RowDefinition Height="4"      />  <!-- GridSplitter -->
-            <RowDefinition Height="200"    />  <!-- 알람 이력 -->
+            <RowDefinition Height="*"   />  <!-- 활성 알람 -->
+            <RowDefinition Height="4"   />  <!-- GridSplitter -->
+            <RowDefinition Height="200" />  <!-- 알람 이력 -->
         </Grid.RowDefinitions>
 
         <!-- ══════════════════════════════════════════════════
@@ -22,8 +22,8 @@
              ══════════════════════════════════════════════════ -->
         <Grid Grid.Row="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="40" />  <!-- 헤더 -->
-                <RowDefinition Height="*"  />  <!-- 목록 -->
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*"  />
             </Grid.RowDefinitions>
 
             <!-- 헤더 -->
@@ -41,52 +41,111 @@
                         <TextBlock Text="활성 알람"
                                    FontSize="12" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextBrush}" />
-                        <!-- 알람 건수 배지 (C-06 연결 예정) -->
+
+                        <!-- 활성 알람 수 배지 -->
                         <Border Background="#C0392B"
                                 CornerRadius="10"
                                 Padding="8,2"
-                                Margin="8,0,0,0"
-                                Visibility="Collapsed">
-                            <TextBlock Text="0"
+                                Margin="8,0,0,0">
+                            <TextBlock Text="{Binding ActiveCount}"
+                                       FontSize="10" FontWeight="Bold"
+                                       Foreground="White" />
+                        </Border>
+
+                        <!-- ACK 된 알람 수 배지 -->
+                        <Border Background="#6C757D"
+                                CornerRadius="10"
+                                Padding="8,2"
+                                Margin="4,0,0,0">
+                            <TextBlock Text="{Binding AckedCount, StringFormat='ACK {0}'}"
                                        FontSize="10" FontWeight="Bold"
                                        Foreground="White" />
                         </Border>
                     </StackPanel>
 
-                    <!-- 우측: ACK 버튼 (C-06 활성화 예정) -->
+                    <!-- 전체 ACK 버튼 -->
                     <Button DockPanel.Dock="Right"
                             Content="✔ 전체 ACK"
+                            Command="{Binding AckAllCommand}"
                             Style="{DynamicResource GhostBtn}"
                             FontSize="11"
                             Padding="10,4"
-                            IsEnabled="False"
-                            ToolTip="C-06 AlarmStateManager 연결 후 활성화됩니다"
+                            VerticalAlignment="Center" />
+
+                    <!-- 선택 ACK 버튼 -->
+                    <Button DockPanel.Dock="Right"
+                            Content="✔ ACK"
+                            Command="{Binding AckAlarmCommand}"
+                            CommandParameter="{Binding SelectedAlarm}"
+                            Style="{DynamicResource GhostBtn}"
+                            FontSize="11"
+                            Padding="10,4"
+                            Margin="0,0,4,0"
                             VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
 
-            <!-- 활성 알람 목록 자리 — C-06 AlarmListView 로 교체 예정 -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="🔕"
-                               FontSize="40"
-                               HorizontalAlignment="Center"
-                               Opacity="0.3" />
-                    <TextBlock Text="활성 알람 없음"
-                               FontSize="13"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,0" />
-                    <TextBlock Text="C-06 ThresholdDetector 연결 후 표시됩니다"
-                               FontSize="11"
-                               Foreground="{DynamicResource Text2Brush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,6,0,0"
-                               Opacity="0.6" />
-                </StackPanel>
-            </Border>
+            <!-- 활성 알람 DataGrid -->
+            <DataGrid Grid.Row="1"
+                      Style="{DynamicResource IIoTGrid}"
+                      ItemsSource="{Binding ActiveAlarms}"
+                      SelectedItem="{Binding SelectedAlarm}"
+                      SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="레벨"   Width="60"
+                                        Binding="{Binding LevelText}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock"
+                                   BasedOn="{StaticResource GridStatusGood}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding LevelText}" Value="HH">
+                                        <Setter Property="Foreground" Value="#E05050" />
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LevelText}" Value="H">
+                                        <Setter Property="Foreground" Value="#EF9F27" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LevelText}" Value="L">
+                                        <Setter Property="Foreground" Value="#4C9FD4" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding LevelText}" Value="LL">
+                                        <Setter Property="Foreground" Value="#AA66FF" />
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="상태"   Width="70"
+                                        Binding="{Binding StatusText}" />
+                    <DataGridTextColumn Header="Tag"   Width="150"
+                                        Binding="{Binding TagName}" />
+                    <DataGridTextColumn Header="메시지" Width="*"
+                                        Binding="{Binding Message}" />
+                    <DataGridTextColumn Header="현재값"   Width="90"
+                                        Binding="{Binding CurrentEngValue, StringFormat='F2'}"
+                                        ElementStyle="{DynamicResource IIoTGridCellMono}" />
+                    <DataGridTextColumn Header="발생시각" Width="80"
+                                        Binding="{Binding OccurredAtText}" />
+                    <DataGridTextColumn Header="갱신시각" Width="80"
+                                        Binding="{Binding UpdatedAtText}" />
+                </DataGrid.Columns>
+
+                <!-- 행 스타일: 발생=빨강 배경, ACK=회색 -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow"
+                           BasedOn="{StaticResource IIoTGridRow}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Status}" Value="Active">
+                                <Setter Property="Background" Value="#2A1414" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="Acked">
+                                <Setter Property="Opacity" Value="0.6" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
         </Grid>
 
         <!-- GridSplitter (상하 분할) -->
@@ -99,13 +158,12 @@
                       Cursor="SizeNS" />
 
         <!-- ══════════════════════════════════════════════════
-             § 하단 — 알람 이력 (200px)
+             § 하단 — 알람 이력
              ══════════════════════════════════════════════════ -->
-        <Grid Grid.Row="2"
-              Background="{DynamicResource SurfaceBrush}">
+        <Grid Grid.Row="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="36" />  <!-- 헤더 -->
-                <RowDefinition Height="*"  />  <!-- 이력 목록 -->
+                <RowDefinition Height="36" />
+                <RowDefinition Height="*"  />
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
@@ -119,16 +177,23 @@
                            VerticalAlignment="Center" />
             </Border>
 
-            <!-- 알람 이력 목록 자리 — C-06 연결 예정 -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}">
-                <TextBlock Text="알람 이력이 여기에 표시됩니다 (C-06 구현 예정)"
-                           FontSize="11"
-                           Foreground="{DynamicResource Text2Brush}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Opacity="0.5" />
-            </Border>
+            <!-- 이력 DataGrid -->
+            <DataGrid Grid.Row="1"
+                      Style="{DynamicResource IIoTGrid}"
+                      ItemsSource="{Binding AlarmHistory}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="레벨"   Width="60"
+                                        Binding="{Binding LevelText}" />
+                    <DataGridTextColumn Header="상태"   Width="70"
+                                        Binding="{Binding StatusText}" />
+                    <DataGridTextColumn Header="Tag"   Width="150"
+                                        Binding="{Binding TagName}" />
+                    <DataGridTextColumn Header="메시지" Width="*"
+                                        Binding="{Binding Message}" />
+                    <DataGridTextColumn Header="발생시각" Width="80"
+                                        Binding="{Binding OccurredAtText}" />
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
 
     </Grid>

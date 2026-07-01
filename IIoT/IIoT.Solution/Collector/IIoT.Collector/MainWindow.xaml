@@ -16,7 +16,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
         xmlns:local="clr-namespace:IIoT.Collector.Views.Log"
-        xmlns:vAlarm="clr-namespace:IIoT.Collector.Views.Alarm"
         Title="IIoT Collector — 수집"
         Width="1280" Height="800"
         MinWidth="1000" MinHeight="600"
@@ -183,10 +182,10 @@
                 <ContentControl x:Name="StatusViewHost" />
             </Grid>
 
-            <!-- 알람 탭 (1) — AlarmView -->
+            <!-- 알람 탭 (1) — AlarmView (코드비하인드에서 DI 주입) -->
             <Grid Visibility="{Binding IsAlarmTab,
                                Converter={StaticResource BoolToVisibility}}">
-                <vAlarm:AlarmView />
+                <ContentControl x:Name="AlarmViewHost" />
             </Grid>
 
             <!-- 수집 흐름 탭 (2) — C-09 구현 예정 -->

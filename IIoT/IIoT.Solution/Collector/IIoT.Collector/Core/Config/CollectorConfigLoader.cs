@@ -64,6 +64,13 @@ public sealed class CollectorConfigLoader
     public IReadOnlyDictionary<string, ScaleEntryDto> ScaleLibrary { get; private set; }
         = new Dictionary<string, ScaleEntryDto>();
 
+    /// <summary>
+    /// 알람 라이브러리 — AlarmEntryDto.Id(GUID 문자열) → AlarmEntryDto 인덱스.
+    /// C-06 ThresholdDetector 가 Tag.AlarmEntryId 로 조회하는 데 사용.
+    /// </summary>
+    public IReadOnlyDictionary<string, AlarmEntryDto> AlarmLibrary { get; private set; }
+        = new Dictionary<string, AlarmEntryDto>();
+
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     public CollectorConfigLoader(CollectorPluginService pluginService)
@@ -125,9 +132,14 @@ public sealed class CollectorConfigLoader
             .Where(s => !string.IsNullOrWhiteSpace(s.Id))
             .ToDictionary(s => s.Id, s => s);
 
+        // ★ C-06: AlarmLibrary 인덱스 구성
+        AlarmLibrary = root.AlarmLibrary
+            .Where(a => !string.IsNullOrWhiteSpace(a.Id))
+            .ToDictionary(a => a.Id, a => a);
+
         LogManager.Instance.Info("ConfigLoader",
             $"device.json 로드 완료 — {plcs.Count}개 PLC/Device, {TotalTagCount}개 Tag, " +
-            $"{ScaleLibrary.Count}개 스케일");
+            $"{ScaleLibrary.Count}개 스케일, {AlarmLibrary.Count}개 알람");
 
         _WarnUnknownDrivers(plcs);
     }
