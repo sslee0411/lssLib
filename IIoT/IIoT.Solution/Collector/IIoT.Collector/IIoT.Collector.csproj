@@ -18,11 +18,14 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
 		<!-- C-05: ScaleEngine Expression 모드 — Studio 주석 "Collector에서 NCalc 사용" 반영 -->
-		<PackageReference Include="NCalc"                                      Version="3.*" />
+		<PackageReference Include="NCalc" Version="3.*" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<!-- lssLib BCL (Studio.sln 기준 상대경로 — Collector 폴더는 Studio와 같은 depth) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.InfluxDB\lssLib.DB.InfluxDB.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
 

@@ -17,6 +17,7 @@
 
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
+using IIoT.Collector.Storage;
 using IIoT.Collector.Views.Alarm;
 using IIoT.Collector.Core.Plugin;
 using IIoT.Collector.ViewModels;
@@ -91,9 +92,21 @@ public partial class App : Application
             _services.GetRequiredService<AlarmViewModel>()
                      .Initialize();
 
+            // ★ C-07: settings.json 로드 (SQLite/InfluxDB Provider 결정)
+            await _services.GetRequiredService<CollectorSettingsLoader>()
+                            .LoadAsync();
+
+            // ★ C-07: 저장소 초기화 (DB 연결 / 테이블 생성)
+            await _services.GetRequiredService<ITimeSeriesStore>()
+                            .InitializeAsync();
+
             // ★ C-03: 설정 로드 완료 후 수집 시작
             await _services.GetRequiredService<FlowEngine>()
                             .StartAsync();
+
+            // ★ C-07: SDT 필터 + 저장 서비스 초기화 (FlowEngine 이후)
+            _services.GetRequiredService<DataCollectionService>()
+                     .Initialize();
         };
 
         win.Show();
@@ -107,7 +120,11 @@ public partial class App : Application
 
         // ★ C-03: 수집 정지 (드라이버 연결 해제) — LogManager 정지보다 먼저
         if (_services is not null)
+        {
+            // C-07: 저장 서비스 먼저 종료 (남은 배치 Flush)
+            await _services.GetRequiredService<DataCollectionService>().DisposeAsync();
             await _services.GetRequiredService<FlowEngine>().StopAsync();
+        }
 
         await LogManager.Instance.StopAsync();
         _themeSettings?.Dispose();
@@ -137,6 +154,20 @@ public partial class App : Application
 
         // ── 수집 흐름 엔진 (C-03)
         services.AddSingleton<FlowEngine>();
+
+        // ── 설정 로더 (C-07)
+        services.AddSingleton<CollectorSettingsLoader>();
+
+        // ★ C-07: Provider 에 따라 SQLite 또는 InfluxDB 등록
+        services.AddSingleton<ITimeSeriesStore>(sp =>
+        {
+            var sl = sp.GetRequiredService<CollectorSettingsLoader>();
+            return sl.Settings.Storage.Provider.Equals("InfluxDB",
+                StringComparison.OrdinalIgnoreCase)
+                ? new InfluxDbTimeSeriesStore(sl)
+                : new SqliteTimeSeriesStore(sl);
+        });
+        services.AddSingleton<DataCollectionService>();
 
         // ── 메인 ViewModel
         services.AddSingleton<MainViewModel>();

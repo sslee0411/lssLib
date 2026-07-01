@@ -13,6 +13,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Contracts", "..\Contra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj", "{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB", "..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj", "{140D240A-A990-3DBC-EBD9-3CAAD7A3FF34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.InfluxDB", "..\..\..\Base\BCL\DB\lssLib.DB.InfluxDB\lssLib.DB.InfluxDB.csproj", "{8D4FF320-153F-2D88-8298-3CF670601FB9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.Sqlite", "..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj", "{BBA9F4B7-4279-6DEE-3E07-75EB04CF9920}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +45,18 @@ Global
 		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F19FDB3C-BEDA-0802-5FC1-D31E5CA61487}.Release|Any CPU.Build.0 = Release|Any CPU
+		{140D240A-A990-3DBC-EBD9-3CAAD7A3FF34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{140D240A-A990-3DBC-EBD9-3CAAD7A3FF34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{140D240A-A990-3DBC-EBD9-3CAAD7A3FF34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{140D240A-A990-3DBC-EBD9-3CAAD7A3FF34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D4FF320-153F-2D88-8298-3CF670601FB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D4FF320-153F-2D88-8298-3CF670601FB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D4FF320-153F-2D88-8298-3CF670601FB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D4FF320-153F-2D88-8298-3CF670601FB9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBA9F4B7-4279-6DEE-3E07-75EB04CF9920}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBA9F4B7-4279-6DEE-3E07-75EB04CF9920}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBA9F4B7-4279-6DEE-3E07-75EB04CF9920}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBA9F4B7-4279-6DEE-3E07-75EB04CF9920}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
