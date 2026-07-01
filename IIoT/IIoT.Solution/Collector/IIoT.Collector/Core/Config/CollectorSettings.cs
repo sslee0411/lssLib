@@ -42,6 +42,14 @@ public sealed class StorageSettings
     /// <summary>수집 통계 저장 주기 (초, 기본 60초)</summary>
     public int StatIntervalSec { get; set; } = 60;
 
+    /// <summary>
+    /// .signal 파일 감시 폴더 경로.
+    /// null 또는 빈 문자열이면 Collector 자신의 Config 폴더를 감시한다.
+    /// Studio 와 Config 폴더를 공유하려면 Studio 실행파일의 Config 폴더 경로를 지정.
+    /// 예: "D:\lssLib\IIoT\IIoT.Solution\Studio\IIoT.Studio\bin\Debug\net8.0-windows\Config"
+    /// </summary>
+    public string? WatchPath { get; set; } = null;
+
     public SqliteSettings   SQLite   { get; set; } = new();
     public InfluxDbSettings InfluxDB { get; set; } = new();
 }

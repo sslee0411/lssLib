@@ -46,6 +46,28 @@ public sealed class FlowEngine : IAsyncDisposable
 
     private bool _isRunning;
 
+    /// <summary>PLC별 실시간 폴링 통계 (C-09 FlowView 표시용)</summary>
+    private readonly Dictionary<string, PlcPollStat> _stats = new();
+
+    /// <summary>PLC별 폴링 통계 조회 (읽기 전용 스냅샷)</summary>
+    public IReadOnlyDictionary<string, PlcPollStat> Stats => _stats;
+
+    /// <summary>PLC 폴링 통계 컨테이너</summary>
+    public sealed class PlcPollStat
+    {
+        public string PlcId      { get; init; } = string.Empty;
+        public string PlcName    { get; init; } = string.Empty;
+        public string DriverId   { get; init; } = string.Empty;
+        public int    TagCount   { get; init; }
+        public int    PollMs     { get; init; }
+        public bool   IsConnected { get; set; }
+        public long   PollCount  { get; set; }
+        public long   ErrorCount { get; set; }
+        public double LastPollMs { get; set; }
+        public DateTimeOffset LastPollAt { get; set; }
+        public string? LastError { get; set; }
+    }
+
     // §2 ─ 상태 조회 ───────────────────────────────────────
 
     /// <summary>현재 폴링 중인 PLC 수</summary>
@@ -165,6 +187,17 @@ public sealed class FlowEngine : IAsyncDisposable
 
         _scheduledTasks[plc.PlcId] = task;
 
+        // C-09: 통계 초기화
+        _stats[plc.PlcId] = new PlcPollStat
+        {
+            PlcId     = plc.PlcId,
+            PlcName   = plc.Name,
+            DriverId  = plc.DriverId,
+            TagCount  = plc.Tags.Count,
+            PollMs    = plc.PollMs,
+            IsConnected = true,
+        };
+
         LogManager.Instance.Info("FlowEngine",
             $"[{plc.Name}] 폴링 등록 완료 — {plc.Tags.Count}개 Tag, {plc.PollMs}ms 주기");
 
@@ -191,6 +224,14 @@ public sealed class FlowEngine : IAsyncDisposable
 
         if (!result.IsSuccess || result.Values is null)
         {
+            // C-09: 오류 통계 갱신
+            if (_stats.TryGetValue(plc.PlcId, out var errStat))
+            {
+                errStat.ErrorCount++;
+                errStat.LastError   = result.Error ?? "알 수 없는 오류";
+                errStat.IsConnected = false;
+                errStat.LastPollAt  = DateTimeOffset.UtcNow;
+            }
             LogManager.Instance.Warn("FlowEngine",
                 $"[{plc.Name}] 읽기 실패: {result.Error ?? "알 수 없는 오류"}");
             return;
@@ -216,6 +257,15 @@ public sealed class FlowEngine : IAsyncDisposable
 
             // ★ C-06: 공학값으로 임계값 검사 (ScaleEngine 이미 계산된 EngValue 재사용)
             _alarmManager.ProcessValue(value.TagId, scaled.EngValue, value.Timestamp);
+        }
+
+        // C-09: 폴링 성공 통계
+        if (_stats.TryGetValue(plc.PlcId, out var okStat))
+        {
+            okStat.PollCount++;
+            okStat.IsConnected = true;
+            okStat.LastError   = null;
+            okStat.LastPollAt  = DateTimeOffset.UtcNow;
         }
     }
 
@@ -248,6 +298,7 @@ public sealed class FlowEngine : IAsyncDisposable
         _drivers.Clear();
 
         _isRunning = false;
+        _stats.Clear();
         LogManager.Instance.Info("FlowEngine", "수집 정지 완료");
     }
 

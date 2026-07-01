@@ -19,6 +19,7 @@ using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
 using IIoT.Collector.Storage;
 using IIoT.Collector.Views.Alarm;
+using IIoT.Collector.Views.Flow;
 using IIoT.Collector.Core.Plugin;
 using IIoT.Collector.ViewModels;
 using IIoT.Collector.Views.Status;
@@ -107,6 +108,16 @@ public partial class App : Application
             // ★ C-07: SDT 필터 + 저장 서비스 초기화 (FlowEngine 이후)
             _services.GetRequiredService<DataCollectionService>()
                      .Initialize();
+
+            // ★ C-09: 수집 흐름 뷰 초기화 (FlowEngine 시작 후)
+            _services.GetRequiredService<FlowViewModel>()
+                     .Initialize();
+
+            // ★ C-08: .signal 파일 감시 시작 (모든 서비스 준비 완료 후)
+            var watchPath = _services.GetRequiredService<CollectorSettingsLoader>()
+                                     .Settings.Storage.WatchPath;
+            _services.GetRequiredService<ConfigReloadWatcher>()
+                     .Start(string.IsNullOrWhiteSpace(watchPath) ? null : watchPath);
         };
 
         win.Show();
@@ -121,6 +132,8 @@ public partial class App : Application
         // ★ C-03: 수집 정지 (드라이버 연결 해제) — LogManager 정지보다 먼저
         if (_services is not null)
         {
+            // C-08: FSW 감지 종료
+            await _services.GetRequiredService<ConfigReloadWatcher>().DisposeAsync();
             // C-07: 저장 서비스 먼저 종료 (남은 배치 Flush)
             await _services.GetRequiredService<DataCollectionService>().DisposeAsync();
             await _services.GetRequiredService<FlowEngine>().StopAsync();
@@ -169,6 +182,14 @@ public partial class App : Application
         });
         services.AddSingleton<DataCollectionService>();
 
+        // ── 설정 변경 감지 (C-08)
+        services.AddSingleton<ConfigReloadWatcher>();
+
+        // ── 수집 흐름 시각화 (C-09)
+        services.AddSingleton<FlowViewModel>();
+        services.AddSingleton<FlowView>(sp =>
+            new FlowView(sp.GetRequiredService<FlowViewModel>()));
+
         // ── 메인 ViewModel
         services.AddSingleton<MainViewModel>();
 
@@ -182,7 +203,8 @@ public partial class App : Application
             new MainWindow(
                 sp.GetRequiredService<MainViewModel>(),
                 sp.GetRequiredService<StatusView>(),
-                sp.GetRequiredService<AlarmView>()));
+                sp.GetRequiredService<AlarmView>(),
+                sp.GetRequiredService<FlowView>()));
 
         return services.BuildServiceProvider();
     }

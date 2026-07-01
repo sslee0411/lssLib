@@ -1,0 +1,259 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Collector · Views/Flow/FlowView.xaml
+     역할: 수집 흐름 탭 — PLC별 실시간 수집 상태 카드 표시
+     C-09: FlowViewModel 실데이터 바인딩
+     생성: 2026-06-29
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Collector.Views.Flow.FlowView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BgBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56" />  <!-- 요약 헤더 -->
+            <RowDefinition Height="*"  />  <!-- PLC 카드 목록 -->
+        </Grid.RowDefinitions>
+
+        <!-- ══════════════════════════════════════════════════
+             § 요약 헤더
+             ══════════════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="20,0">
+            <DockPanel>
+
+                <!-- 엔진 상태 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,32,0">
+                    <TextBlock FontSize="13" Margin="0,0,8,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEngineRunning}" Value="True">
+                                        <Setter Property="Text" Value="● 수집 중" />
+                                        <Setter Property="Foreground" Value="#3FB950" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsEngineRunning}" Value="False">
+                                        <Setter Property="Text" Value="○ 정지" />
+                                        <Setter Property="Foreground" Value="#888888" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- 통계 요약 카드 4개 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+
+                    <Border Style="{DynamicResource StatCard}" Margin="0,0,12,0" Padding="16,8">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="연결된 PLC"
+                                       Style="{DynamicResource StatLabel}" />
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding ConnectedPlcCount}"
+                                           Style="{DynamicResource StatValue}"
+                                           Foreground="{DynamicResource AccBrush}" />
+                                <TextBlock Text=" / "
+                                           Style="{DynamicResource StatValue}"
+                                           Foreground="{DynamicResource Text2Brush}" />
+                                <TextBlock Text="{Binding TotalPlcCount}"
+                                           Style="{DynamicResource StatValue}"
+                                           Foreground="{DynamicResource TextBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource StatCard}" Margin="0,0,12,0" Padding="16,8">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="총 폴링"
+                                       Style="{DynamicResource StatLabel}" />
+                            <TextBlock Text="{Binding TotalPollCount, StringFormat='#,0'}"
+                                       Style="{DynamicResource StatValue}"
+                                       Foreground="{DynamicResource GreenBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{DynamicResource StatCard}" Margin="0,0,12,0" Padding="16,8">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="총 오류"
+                                       Style="{DynamicResource StatLabel}" />
+                            <TextBlock Text="{Binding TotalErrorCount, StringFormat='#,0'}"
+                                       Style="{DynamicResource StatValue}"
+                                       Foreground="{DynamicResource RedBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+
+                <!-- 우측: 마지막 갱신 시각 -->
+                <TextBlock DockPanel.Dock="Right"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Text2Brush}"
+                           FontSize="11">
+                    <Run Text="갱신: " />
+                    <Run Text="{Binding LastRefreshedAt, Mode=OneWay}" />
+                </TextBlock>
+
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § PLC 카드 목록 (WrapPanel — 창 너비에 따라 자동 줄 바꿈)
+             ══════════════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto">
+
+            <!-- 카드 없을 때 안내 -->
+            <Grid>
+                <TextBlock Text="device.json 을 로드하면 PLC 카드가 표시됩니다"
+                           FontSize="13"
+                           Foreground="{DynamicResource Text2Brush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0.5"
+                           Visibility="Collapsed" />
+
+                <ItemsControl ItemsSource="{Binding PlcCards}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"
+                                       Margin="16,16,0,16" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- PLC 상태 카드 -->
+                            <Border Style="{DynamicResource Card}"
+                                    Width="280"
+                                    Margin="0,0,16,16"
+                                    Padding="16,14">
+                                <StackPanel>
+
+                                    <!-- 카드 헤더: PLC 이름 + 상태 LED -->
+                                    <DockPanel Margin="0,0,0,10">
+                                        <TextBlock Text="{Binding StatusText}"
+                                                   DockPanel.Dock="Right"
+                                                   FontSize="11"
+                                                   Foreground="{Binding StatusColor}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding PlcName}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+
+                                    <!-- 드라이버 ID -->
+                                    <TextBlock Foreground="{DynamicResource Text2Brush}"
+                                               FontSize="11"
+                                               Margin="0,0,0,10">
+                                        <Run Text="드라이버: " />
+                                        <Run Text="{Binding DriverId, Mode=OneWay}"
+                                             Foreground="{DynamicResource AccBrush}" />
+                                    </TextBlock>
+
+                                    <!-- 구분선 -->
+                                    <Border Background="{DynamicResource BorderBrush}"
+                                            Height="1"
+                                            Margin="0,0,0,10" />
+
+                                    <!-- 통계 그리드 -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                   Text="Tag 수"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource Text2Brush}" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                                   Text="{Binding TagCount}"
+                                                   FontSize="11" FontWeight="Bold"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   HorizontalAlignment="Right" />
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                                   Text="폴링 주기"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource Text2Brush}"
+                                                   Margin="0,4,0,0" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                                   Text="{Binding PollMs, StringFormat='{}{0} ms'}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,4,0,0" />
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0"
+                                                   Text="누적 폴링"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource Text2Brush}"
+                                                   Margin="0,4,0,0" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1"
+                                                   Text="{Binding PollCount, StringFormat='#,0'}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource GreenBrush}"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,4,0,0" />
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0"
+                                                   Text="오류율"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource Text2Brush}"
+                                                   Margin="0,4,0,0" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1"
+                                                   Text="{Binding ErrorRateText}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource RedBrush}"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,4,0,0" />
+                                    </Grid>
+
+                                    <!-- 마지막 오류 메시지 (있을 때만 표시) -->
+                                    <Border Background="#1A1010"
+                                            CornerRadius="4"
+                                            Padding="8,6"
+                                            Margin="0,10,0,0"
+                                            Visibility="{Binding HasError,
+                                                         Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding LastError}"
+                                                   FontSize="10"
+                                                   Foreground="#E05050"
+                                                   TextWrapping="Wrap"
+                                                   MaxHeight="36" />
+                                    </Border>
+
+                                    <!-- 마지막 폴링 시각 -->
+                                    <TextBlock Foreground="{DynamicResource Text2Brush}"
+                                               FontSize="10"
+                                               Margin="0,8,0,0"
+                                               HorizontalAlignment="Right">
+                                        <Run Text="마지막 폴링: " />
+                                        <Run Text="{Binding LastPollAtText, Mode=OneWay}" />
+                                    </TextBlock>
+
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>
