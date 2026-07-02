@@ -22,6 +22,7 @@ public sealed class CollectorSettings
 {
     public StorageSettings  Storage  { get; set; } = new();
     public SignalRSettings  SignalR  { get; set; } = new();
+    public RetrySettings    Retry    { get; set; } = new();
 }
 
 // ── Storage 섹션 ──────────────────────────────────────────
@@ -93,6 +94,28 @@ public sealed class InfluxDbSettings
 
     /// <summary>배치 쓰기 최대 대기 시간 (ms, 기본 5000)</summary>
     public int FlushIntervalMs { get; set; } = 5000;
+}
+
+// ── 재연결 설정 ───────────────────────────────────────────
+
+/// <summary>
+/// 드라이버 자동 재연결 설정 (C-12).
+/// settings.json 의 Retry 섹션.
+/// </summary>
+public sealed class RetrySettings
+{
+    /// <summary>자동 재연결 활성화 (기본 true)</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// 재연결 시도 간격(초) 목록 — 지수 백오프.
+    /// 마지막 값에 도달하면 이후는 마지막 값으로 고정.
+    /// 기본: 5 → 15 → 30 → 60초
+    /// </summary>
+    public int[] IntervalsSec { get; set; } = [5, 15, 30, 60];
+
+    /// <summary>최대 재시도 횟수 (0 = 무제한)</summary>
+    public int MaxRetries { get; set; } = 0;
 }
 
 // ── SignalR Hub 설정 ──────────────────────────────────────

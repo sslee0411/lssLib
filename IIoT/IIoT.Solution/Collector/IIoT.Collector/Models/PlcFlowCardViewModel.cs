@@ -52,6 +52,20 @@ public partial class PlcFlowCardViewModel : ObservableObject
     /// <summary>오류 존재 여부 (XAML Visibility 바인딩용)</summary>
     public bool HasError => LastError is not null;
 
+    /// <summary>재연결 시도 중 여부 (C-12)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRetryStatus))]
+    private bool _isRetrying;
+
+    /// <summary>재연결 시도 횟수 (C-12)</summary>
+    [ObservableProperty] private int    _retryCount;
+
+    /// <summary>재연결 상태 텍스트 (C-12) — XAML Visibility 바인딩용</summary>
+    [ObservableProperty] private string _retryStatusText = string.Empty;
+
+    /// <summary>재연결 상태 표시 여부 (C-12)</summary>
+    public bool HasRetryStatus => IsRetrying;
+
     /// <summary>연결 상태 표시 텍스트</summary>
     [ObservableProperty] private string _statusText = "대기 중";
 
@@ -114,5 +128,17 @@ public partial class PlcFlowCardViewModel : ObservableObject
         // TPS (이론값: TagCount / (PollMs / 1000))
         var tps = TagCount / Math.Max(PollMs / 1000.0, 0.1);
         TpsText = $"{tps:F1} tag/s";
+
+        // ★ C-12: 재연결 상태
+        IsRetrying      = stat.IsRetrying;
+        RetryCount      = stat.RetryCount;
+        RetryStatusText = stat.RetryStatusText;
+
+        // 재연결 중이면 상태 텍스트 덮어쓰기
+        if (stat.IsRetrying)
+        {
+            StatusText  = $"↻ 재연결 중 ({stat.RetryCount}회)";
+            StatusColor = "#EF9F27";
+        }
     }
 }

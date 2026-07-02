@@ -238,6 +238,24 @@
                                                    MaxHeight="36" />
                                     </Border>
 
+                                    <!-- ★ C-12: 재연결 상태 표시 (재연결 중일 때만) -->
+                                    <Border Background="#1A1400"
+                                            CornerRadius="4"
+                                            Padding="8,6"
+                                            Margin="0,6,0,0"
+                                            Visibility="{Binding HasRetryStatus,
+                                                         Converter={StaticResource BoolToVisibility}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="↻ "
+                                                       FontSize="11"
+                                                       Foreground="#EF9F27" />
+                                            <TextBlock Text="{Binding RetryStatusText, Mode=OneWay}"
+                                                       FontSize="10"
+                                                       Foreground="#EF9F27"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+
                                     <!-- 마지막 폴링 시각 -->
                                     <TextBlock Foreground="{DynamicResource Text2Brush}"
                                                FontSize="10"
