@@ -28,6 +28,8 @@
 		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+		<!-- lssLib Net (C-10 MQTT 발행) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj" />
 
 		<!-- IIoT 공통 계약 레이어 (외부 참조 0개) -->
 		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />

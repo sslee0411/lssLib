@@ -50,6 +50,8 @@ public sealed class StorageSettings
     /// </summary>
     public string? WatchPath { get; set; } = null;
 
+    public MqttPublishSettings Mqtt { get; set; } = new();
+
     public SqliteSettings   SQLite   { get; set; } = new();
     public InfluxDbSettings InfluxDB { get; set; } = new();
 }
@@ -90,6 +92,44 @@ public sealed class InfluxDbSettings
 
     /// <summary>배치 쓰기 최대 대기 시간 (ms, 기본 5000)</summary>
     public int FlushIntervalMs { get; set; } = 5000;
+}
+
+// ── MQTT 발행 설정 ───────────────────────────────────────
+
+/// <summary>
+/// MQTT 발행 설정.
+/// settings.json 의 Storage.Mqtt 섹션.
+/// 브로커가 없으면 Enabled=false 로 발행 비활성화.
+/// </summary>
+public sealed class MqttPublishSettings
+{
+    /// <summary>MQTT 발행 활성화 여부 (기본 false — 브로커 없어도 동작)</summary>
+    public bool   Enabled    { get; set; } = false;
+
+    /// <summary>브로커 호스트 (기본 localhost)</summary>
+    public string BrokerHost { get; set; } = "localhost";
+
+    /// <summary>브로커 포트 (기본 1883)</summary>
+    public int    BrokerPort { get; set; } = 1883;
+
+    /// <summary>클라이언트 ID (null = 자동 생성)</summary>
+    public string? ClientId  { get; set; } = null;
+
+    /// <summary>
+    /// Tag 값 발행 토픽 접두사.
+    /// 실제 토픽: {TopicPrefix}/{PlcId}/{TagId}
+    /// 기본: "iiot"
+    /// </summary>
+    public string TopicPrefix { get; set; } = "iiot";
+
+    /// <summary>QoS 레벨 (0=최대1회, 1=최소1회, 기본 1)</summary>
+    public byte   QoS        { get; set; } = 1;
+
+    /// <summary>브로커 인증 사용자명 (없으면 null)</summary>
+    public string? Username  { get; set; } = null;
+
+    /// <summary>브로커 인증 비밀번호 (없으면 null)</summary>
+    public string? Password  { get; set; } = null;
 }
 
 // ── 로더 ──────────────────────────────────────────────────

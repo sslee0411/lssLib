@@ -18,6 +18,7 @@
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
 using IIoT.Collector.Storage;
+using lssLib.Net;
 using IIoT.Collector.Views.Alarm;
 using IIoT.Collector.Views.Flow;
 using IIoT.Collector.Core.Plugin;
@@ -113,6 +114,10 @@ public partial class App : Application
             _services.GetRequiredService<FlowViewModel>()
                      .Initialize();
 
+            // ★ C-10: MQTT 발행 서비스 초기화 (활성화 여부는 settings.json 에서 결정)
+            await _services.GetRequiredService<MqttPublishService>()
+                           .InitializeAsync();
+
             // ★ C-08: .signal 파일 감시 시작 (모든 서비스 준비 완료 후)
             var watchPath = _services.GetRequiredService<CollectorSettingsLoader>()
                                      .Settings.Storage.WatchPath;
@@ -132,6 +137,8 @@ public partial class App : Application
         // ★ C-03: 수집 정지 (드라이버 연결 해제) — LogManager 정지보다 먼저
         if (_services is not null)
         {
+            // C-10: MQTT 서비스 종료
+            await _services.GetRequiredService<MqttPublishService>().DisposeAsync();
             // C-08: FSW 감지 종료
             await _services.GetRequiredService<ConfigReloadWatcher>().DisposeAsync();
             // C-07: 저장 서비스 먼저 종료 (남은 배치 Flush)
@@ -181,6 +188,9 @@ public partial class App : Application
                 : new SqliteTimeSeriesStore(sl);
         });
         services.AddSingleton<DataCollectionService>();
+
+        // ── MQTT 발행 서비스 (C-10)
+        services.AddSingleton<MqttPublishService>();
 
         // ── 설정 변경 감지 (C-08)
         services.AddSingleton<ConfigReloadWatcher>();
