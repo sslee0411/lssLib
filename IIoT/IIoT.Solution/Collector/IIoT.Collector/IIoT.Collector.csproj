@@ -14,6 +14,21 @@
 		<AssemblyName>IIoT.Collector</AssemblyName>
 	</PropertyGroup>
 
+
+	<!-- C-11: wwwroot 빌드 출력 폴더 복사 (index.html 포함) -->
+	<ItemGroup>
+		<Content Include="wwwroot\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<!-- C-11: ASP.NET Core + SignalR Hub 내장 호스팅
+       WPF(WinExe) 와 ASP.NET Core 공존 패턴:
+       UseWPF=true 유지 + Microsoft.AspNetCore.App FrameworkReference 추가
+       → 별도 스레드에서 WebApplication 실행 (WPF UI 스레드와 분리) -->
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
@@ -36,6 +51,11 @@
 
 		<!-- WPF 테마 (7가지 다크/라이트 테마 v1.5) -->
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="wwwroot\" />
+	  <Folder Include="SignalR\" />
 	</ItemGroup>
 
 </Project>

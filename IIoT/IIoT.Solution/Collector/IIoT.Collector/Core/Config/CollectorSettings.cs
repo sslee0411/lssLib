@@ -20,7 +20,8 @@ namespace IIoT.Collector.Core.Config;
 
 public sealed class CollectorSettings
 {
-    public StorageSettings Storage { get; set; } = new();
+    public StorageSettings  Storage  { get; set; } = new();
+    public SignalRSettings  SignalR  { get; set; } = new();
 }
 
 // ── Storage 섹션 ──────────────────────────────────────────
@@ -92,6 +93,25 @@ public sealed class InfluxDbSettings
 
     /// <summary>배치 쓰기 최대 대기 시간 (ms, 기본 5000)</summary>
     public int FlushIntervalMs { get; set; } = 5000;
+}
+
+// ── SignalR Hub 설정 ──────────────────────────────────────
+
+/// <summary>SignalR Hub 설정. settings.json 의 SignalR 섹션.</summary>
+public sealed class SignalRSettings
+{
+    /// <summary>SignalR Hub 활성화 여부 (기본 true)</summary>
+    public bool     Enabled        { get; set; } = true;
+
+    /// <summary>수신 포트 (기본 7878). 방화벽 허용 필요.</summary>
+    public int      Port           { get; set; } = 7878;
+
+    /// <summary>
+    /// 허용할 CORS Origin 목록.
+    /// 빈 배열(기본) = 개발 중 전체 허용.
+    /// 운영 환경: ["http://myserver.com", "http://192.168.0.100:3000"]
+    /// </summary>
+    public string[] AllowedOrigins { get; set; } = [];
 }
 
 // ── MQTT 발행 설정 ───────────────────────────────────────

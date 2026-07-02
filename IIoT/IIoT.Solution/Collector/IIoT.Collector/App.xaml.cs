@@ -17,6 +17,7 @@
 
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
+using IIoT.Collector.SignalR;
 using IIoT.Collector.Storage;
 using lssLib.Net;
 using IIoT.Collector.Views.Alarm;
@@ -118,6 +119,12 @@ public partial class App : Application
             await _services.GetRequiredService<MqttPublishService>()
                            .InitializeAsync();
 
+            // ★ C-11: SignalR Hub 서버 시작 + Push 구독
+            await _services.GetRequiredService<SignalRHostService>()
+                           .StartAsync();
+            _services.GetRequiredService<SignalRPushService>()
+                     .Initialize();
+
             // ★ C-08: .signal 파일 감시 시작 (모든 서비스 준비 완료 후)
             var watchPath = _services.GetRequiredService<CollectorSettingsLoader>()
                                      .Settings.Storage.WatchPath;
@@ -137,6 +144,9 @@ public partial class App : Application
         // ★ C-03: 수집 정지 (드라이버 연결 해제) — LogManager 정지보다 먼저
         if (_services is not null)
         {
+            // C-11: SignalR Hub 종료
+            await _services.GetRequiredService<SignalRHostService>().DisposeAsync();
+            _services.GetRequiredService<SignalRPushService>().Dispose();
             // C-10: MQTT 서비스 종료
             await _services.GetRequiredService<MqttPublishService>().DisposeAsync();
             // C-08: FSW 감지 종료
@@ -191,6 +201,10 @@ public partial class App : Application
 
         // ── MQTT 발행 서비스 (C-10)
         services.AddSingleton<MqttPublishService>();
+
+        // ── SignalR Hub 서비스 (C-11)
+        services.AddSingleton<SignalRHostService>();
+        services.AddSingleton<SignalRPushService>();
 
         // ── 설정 변경 감지 (C-08)
         services.AddSingleton<ConfigReloadWatcher>();

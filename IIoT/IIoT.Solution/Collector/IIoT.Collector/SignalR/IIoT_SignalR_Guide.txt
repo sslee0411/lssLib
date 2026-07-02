@@ -1,0 +1,520 @@
+══════════════════════════════════════════════════════════════════════════════
+  IIoT.Collector — SignalR Hub 완전 가이드
+  작성일: 2026-07-01  |  C-11 구현 기준
+══════════════════════════════════════════════════════════════════════════════
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. SignalR 란?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ASP.NET Core 에 내장된 실시간 양방향 통신 라이브러리.
+  HTTP 폴링이 아닌 WebSocket 을 기반으로 서버 → 클라이언트 Push 를 지원.
+
+  [MQTT vs SignalR 차이]
+  ┌────────────────┬────────────────────────┬────────────────────────────┐
+  │ 항목           │ MQTT (C-10)            │ SignalR (C-11)             │
+  ├────────────────┼────────────────────────┼────────────────────────────┤
+  │ 중간 서버      │ 브로커 필요             │ 없음 (Collector 자체가 서버) │
+  │ 주 수신자      │ WPF Monitor, 외부시스템 │ 웹 브라우저, 모바일 앱      │
+  │ 프로토콜       │ MQTT 3.1.1 (TCP)        │ WebSocket / HTTP           │
+  │ 클라이언트언어 │ 모든 언어               │ JS/TS, C#, Java, Python    │
+  │ 인터넷 연결    │ 브로커만 공개           │ Collector 포트 공개 필요   │
+  └────────────────┴────────────────────────┴────────────────────────────┘
+
+  [IIoT 에서의 역할]
+  - 웹 브라우저에서 실시간 수집값·알람을 조회
+  - 별도 Monitor 앱이 없어도 즉시 현장 확인 가능
+  - IIoT.Monitor WPF 에서도 동일한 Hub 에 C# 클라이언트로 연결 가능
+  - 향후 모바일 앱(MAUI) 연결 지원
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2. 전체 구조
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  IIoT.Collector (WPF + ASP.NET Core 내장)                           │
+  │                                                                      │
+  │  [WPF UI 스레드]               [SignalR 서버 스레드 (별도)]          │
+  │  ┌──────────────────┐          ┌───────────────────────────────┐    │
+  │  │ FlowEngine       │          │ WebApplication (ASP.NET Core)  │    │
+  │  │ PollMs 주기 폴링  │          │ ├── /iiot  → IIoTHub (WS)    │    │
+  │  │        ↓         │          │ ├── /health → JSON 상태        │    │
+  │  │ EventBus.Publish │          │ └── /       → index.html       │    │
+  │  └────────┬─────────┘          └───────────────┬───────────────┘    │
+  │           │                                    │                    │
+  │  SignalRPushService                            │ WebSocket           │
+  │  EventBus.Subscribe()                          │                    │
+  │           ↓                                    │                    │
+  │  IIoTHubPusher                                 │                    │
+  │  .PushTagValueAsync() ─────────────────────────┘                    │
+  └──────────────────────────────────────────────────────────────────────┘
+                    │ WebSocket Push
+          ┌─────────┴─────────────────┐
+          │   웹 브라우저 / C# 클라이언트 (여러 개 동시) │
+          └───────────────────────────┘
+
+
+  [파일 구조]
+  SignalR/
+  ├── IIoTHub.cs              Hub 클래스 (클라이언트 연결 진입점)
+  ├── SignalRHostService.cs   ASP.NET Core 서버 시작·종료 (별도 스레드)
+  └── SignalRPushService.cs   EventBus 구독 → Hub Push 연결
+  wwwroot/
+  └── index.html              브라우저 내장 실시간 대시보드
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  3. 엔드포인트
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌─────────────────────────────────────┬──────────────┬──────────────────┐
+  │ URL                                 │ 프로토콜     │ 용도             │
+  ├─────────────────────────────────────┼──────────────┼──────────────────┤
+  │ ws://localhost:7878/iiot            │ WebSocket    │ SignalR Hub 연결  │
+  │ http://localhost:7878/              │ HTTP         │ 대시보드(index)   │
+  │ http://localhost:7878/health        │ HTTP GET     │ 헬스체크         │
+  └─────────────────────────────────────┴──────────────┴──────────────────┘
+
+  [헬스체크 응답 예시]
+  GET http://localhost:7878/health
+  → { "status": "ok", "timestamp": "2026-07-01T12:00:00.000Z" }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  4. 메시지 구조 (Push 페이로드)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [TagValue — 수집값 갱신 이벤트]
+  이벤트명: "TagValue"
+  발생 시점: FlowEngine 폴링마다 (PollMs 주기)
+
+  {
+    "tagId":    "T001",               // Tag 고유 ID
+    "plcId":    "PLC-01",             // PLC/Device ID
+    "rawValue": 1234.5,               // 드라이버 원시값
+    "engValue": 12.3,                 // ScaleEngine 변환값 (공학단위)
+    "unit":     "bar",                // 공학 단위
+    "quality":  "Good",               // 품질: Good / Bad / Timeout / Disconnected
+    "ts":       "2026-07-01T12:00:00.000Z"  // 수집 타임스탬프 (UTC ISO8601)
+  }
+
+  [AlarmChanged — 알람 상태 변경 이벤트]
+  이벤트명: "AlarmChanged"
+  발생 시점: 알람 발생(Active) / ACK / 복귀(Recovered) 시
+
+  {
+    "alarmKey": "T001:HH",            // 알람 고유 키 (TagId:Level)
+    "tagId":    "T001",               // Tag ID
+    "tagName":  "압력 센서 1",         // Tag 표시 이름
+    "plcId":    "PLC-01",             // PLC ID
+    "level":    "HH",                 // 레벨: HH / H / L / LL
+    "status":   "Active",             // 상태: Active / Acked / Recovered
+    "message":  "압력 위험",           // 알람 메시지
+    "engValue": 95.2,                 // 발생 시 공학값
+    "ts":       "2026-07-01T12:00:01.000Z"  // 발생 시각 (UTC ISO8601)
+  }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  5. settings.json 설정
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  경로: {Collector 실행파일}\Config\settings.json
+  (최초 실행 시 기본값으로 자동 생성)
+
+  {
+    "SignalR": {
+      "Enabled": true,               // false = 서버 미시작 (수집에 영향 없음)
+      "Port": 7878,                  // 수신 포트 (기본: 7878)
+      "AllowedOrigins": []           // CORS 허용 Origin 목록
+                                     // 빈 배열 = 전체 허용 (개발용)
+                                     // 운영: ["http://192.168.0.100:3000"]
+    }
+  }
+
+  [항목별 설명]
+  ┌────────────────┬──────────┬────────────────────────────────────────────┐
+  │ 항목           │ 기본값   │ 설명                                       │
+  ├────────────────┼──────────┼────────────────────────────────────────────┤
+  │ Enabled        │ true     │ false 시 서버 비활성화. 수집은 계속 동작.   │
+  │ Port           │ 7878     │ TCP 수신 포트. 방화벽 인바운드 허용 필요.   │
+  │ AllowedOrigins │ []       │ CORS 제어. 빈 배열=전체허용(개발 중 권장). │
+  └────────────────┴──────────┴────────────────────────────────────────────┘
+
+  [운영 환경 설정 예시]
+  {
+    "SignalR": {
+      "Enabled": true,
+      "Port": 7878,
+      "AllowedOrigins": [
+        "http://192.168.0.100:3000",
+        "http://dashboard.company.com"
+      ]
+    }
+  }
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  6. 브라우저 클라이언트 사용법 (JavaScript)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [내장 대시보드 — 추가 작업 없이 바로 사용]
+  1. Collector 실행
+  2. 브라우저에서 http://localhost:7878 접속
+  3. 실시간 Tag 값 및 알람 자동 표시
+
+
+  [직접 구현 — HTML + JavaScript]
+
+  <!-- 1. SignalR JS 라이브러리 포함 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+  <script>
+  // 2. 연결 객체 생성
+  const conn = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:7878/iiot")   // Hub URL
+      .withAutomaticReconnect([1000, 3000, 5000, 10000])  // 재연결 간격(ms)
+      .build();
+
+  // 3. Tag 값 수신 핸들러 등록
+  //    이벤트명 "TagValue" = 서버 SendAsync("TagValue", ...) 와 반드시 일치
+  conn.on("TagValue", (data) => {
+      console.log(`${data.tagId}: ${data.engValue} ${data.unit}`);
+      // data.tagId / data.plcId / data.rawValue / data.engValue
+      // data.unit / data.quality / data.ts
+  });
+
+  // 4. 알람 이벤트 수신 핸들러 등록
+  conn.on("AlarmChanged", (data) => {
+      console.log(`[${data.level}] ${data.tagName}: ${data.message}`);
+      // data.alarmKey / data.level / data.status / data.message
+      // data.engValue / data.ts
+  });
+
+  // 5. 연결 상태 이벤트
+  conn.onreconnecting(() => console.log("재연결 중..."));
+  conn.onreconnected(() => console.log("재연결 완료"));
+  conn.onclose(() => console.log("연결 종료"));
+
+  // 6. 연결 시작
+  async function start() {
+      try {
+          await conn.start();
+          console.log("SignalR 연결 완료");
+      } catch (e) {
+          console.error("연결 실패:", e);
+          setTimeout(start, 3000);  // 3초 후 재시도
+      }
+  }
+  start();
+  </script>
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  7. C# 클라이언트 사용법 (IIoT.Monitor / WPF)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [패키지 설치]
+  IIoT.Monitor.csproj 에 추가:
+  <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.*" />
+
+  [C# 연결 코드]
+
+  using Microsoft.AspNetCore.SignalR.Client;
+  using System.Text.Json;
+
+  // 1. 연결 객체 생성
+  var conn = new HubConnectionBuilder()
+      .WithUrl("http://localhost:7878/iiot")
+      .WithAutomaticReconnect(new[] {
+          TimeSpan.FromSeconds(1),
+          TimeSpan.FromSeconds(3),
+          TimeSpan.FromSeconds(5)
+      })
+      .Build();
+
+  // 2. Tag 값 수신
+  conn.On<JsonElement>("TagValue", (data) =>
+  {
+      var tagId    = data.GetProperty("tagId").GetString();
+      var engValue = data.GetProperty("engValue").GetDouble();
+      var unit     = data.GetProperty("unit").GetString();
+      var quality  = data.GetProperty("quality").GetString();
+      var ts       = data.GetProperty("ts").GetString();
+
+      // UI 갱신은 반드시 Dispatcher 사용
+      Application.Current.Dispatcher.InvokeAsync(() =>
+      {
+          // LiveTagViewModel 갱신 등
+      });
+  });
+
+  // 3. 알람 이벤트 수신
+  conn.On<JsonElement>("AlarmChanged", (data) =>
+  {
+      var level   = data.GetProperty("level").GetString();   // HH/H/L/LL
+      var status  = data.GetProperty("status").GetString();  // Active/Acked/Recovered
+      var message = data.GetProperty("message").GetString();
+      var tagName = data.GetProperty("tagName").GetString();
+  });
+
+  // 4. 연결 상태 이벤트
+  conn.Reconnecting += (ex) => { /* 재연결 중 UI 갱신 */ return Task.CompletedTask; };
+  conn.Reconnected  += (id) => { /* 재연결 완료 UI 갱신 */ return Task.CompletedTask; };
+  conn.Closed       += (ex) => { /* 연결 종료 UI 갱신 */ return Task.CompletedTask; };
+
+  // 5. 연결 시작
+  await conn.StartAsync();
+
+  // 6. 종료 시 정리
+  await conn.StopAsync();
+  await conn.DisposeAsync();
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  8. 방화벽 설정 (원격 접속 시)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  같은 PC 내에서만 접속하면 방화벽 설정 불필요.
+  다른 PC / 모바일에서 접속 시 아래 설정 필요.
+
+  [방법 1 — PowerShell (관리자 권한)]
+  netsh advfirewall firewall add rule ^
+      name="IIoT Collector SignalR 7878" ^
+      protocol=TCP ^
+      dir=in ^
+      localport=7878 ^
+      action=allow
+
+  [방법 2 — Windows 방화벽 GUI]
+  제어판 → Windows Defender 방화벽
+  → 고급 설정 → 인바운드 규칙 → 새 규칙
+  → 포트 선택 → TCP → 특정 포트 7878
+  → 연결 허용 → 이름: "IIoT Collector SignalR"
+
+  [방법 3 — 방화벽 비활성화 (개발 환경 전용, 운영 비권장)]
+  Windows Defender 방화벽 → Windows Defender 방화벽 끄기
+
+  [원격 접속 주소]
+  Collector 가 실행 중인 PC 의 IP 확인:
+  cmd > ipconfig → IPv4 주소 확인 (예: 192.168.0.10)
+
+  브라우저:       http://192.168.0.10:7878
+  SignalR Hub:    ws://192.168.0.10:7878/iiot
+  헬스체크:       http://192.168.0.10:7878/health
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  9. 연결 시나리오별 가이드
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [시나리오 1 — 같은 PC 브라우저]
+  ① Collector 실행
+  ② Chrome/Edge 에서 http://localhost:7878 접속
+  → 추가 설정 없이 실시간 대시보드 표시
+
+  [시나리오 2 — 같은 네트워크의 다른 PC]
+  ① Collector PC 에서 방화벽 7878 포트 허용
+  ② Collector PC IP 확인 (예: 192.168.0.10)
+  ③ 클라이언트 PC 브라우저에서 http://192.168.0.10:7878 접속
+  ④ settings.json AllowedOrigins 에 클라이언트 주소 추가 (선택)
+
+  [시나리오 3 — IIoT.Monitor WPF 연결]
+  ① Monitor 프로젝트에 Microsoft.AspNetCore.SignalR.Client 패키지 추가
+  ② 위 C# 클라이언트 코드로 연결 (MN-01 단계에서 구현 예정)
+  ③ URL: http://[Collector IP]:7878/iiot
+
+  [시나리오 4 — 모바일 앱 (MAUI)]
+  ① MAUI 프로젝트에 Microsoft.AspNetCore.SignalR.Client 패키지 추가
+  ② C# 클라이언트 코드 동일 적용 (Mobile.MAUI Phase 14 예정)
+
+  [시나리오 5 — 인터넷 공개 (외부 접속)]
+  ① 공유기 포트 포워딩: 외부 7878 → Collector PC 192.168.0.10:7878
+  ② settings.json AllowedOrigins 에 외부 도메인 명시
+  ③ (권장) HTTPS 인증서 적용:
+     builder.WebHost.UseUrls("https://0.0.0.0:7878");
+     builder.WebHost.UseKestrel(opt => {
+         opt.ConfigureHttpsDefaults(h => h.ServerCertificate = cert);
+     });
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  10. 주요 오류 및 해결
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [오류 1] FrameworkReference 미추가 오류 (빌드 시)
+  현상: CS0246 'WebApplication' 형식을 찾을 수 없음
+  원인: Microsoft.AspNetCore.App FrameworkReference 누락
+  해결: IIoT.Collector.csproj 에 추가:
+        <ItemGroup>
+          <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        </ItemGroup>
+
+  [오류 2] RunAsync / StopAsync 인수 오류
+  현상: CancellationToken→string 변환 불가 / TimeSpan→CancellationToken 변환 불가
+  원인: API 시그니처 혼동
+  해결:
+        // 잘못된 코드
+        await _app.RunAsync(_cts.Token);              // RunAsync 는 string? url 인수
+        await _app.StopAsync(TimeSpan.FromSeconds(3)); // StopAsync 는 CancellationToken
+
+        // 올바른 코드
+        _app.Run();                                    // 블로킹 실행 (별도 스레드에서)
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        await _app.StopAsync(cts.Token);
+
+  [오류 3] CORS 오류 (브라우저 콘솔)
+  현상: Access to ... has been blocked by CORS policy
+  원인: AllowedOrigins 설정 불일치
+  해결: settings.json AllowedOrigins 에 클라이언트 Origin 추가
+        또는 빈 배열 유지 (개발 중 전체 허용)
+
+  [오류 4] 포트 이미 사용 중
+  현상: Address already in use. 7878
+  원인: 다른 프로세스가 이미 7878 포트 점유
+  해결:
+        // 사용 중인 프로세스 확인
+        netstat -ano | findstr :7878
+        // PID 확인 후 종료 또는 settings.json Port 변경
+
+  [오류 5] 연결 후 메시지 수신 안 됨
+  현상: conn.start() 성공하지만 "TagValue" 이벤트 미수신
+  원인: SignalRPushService.Initialize() 미호출 또는
+        EventBus 구독이 FlowEngine 시작 전에 이루어짐
+  해결: App.xaml.cs 호출 순서 확인:
+        FlowEngine.StartAsync() → SignalRPushService.Initialize()
+
+  [오류 6] index.html 404
+  현상: http://localhost:7878 접속 시 404 Not Found
+  원인: wwwroot 폴더가 빌드 출력에 복사되지 않음
+  해결: IIoT.Collector.csproj 에 추가:
+        <ItemGroup>
+          <Content Include="wwwroot\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+          </Content>
+        </ItemGroup>
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  11. 확장 가이드 (추후 기능)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [PLC별 그룹 구독]
+  클라이언트가 특정 PLC 의 데이터만 수신하고 싶을 때:
+
+  // Hub 에 메서드 추가
+  public async Task SubscribePlc(string plcId)
+      => await Groups.AddToGroupAsync(Context.ConnectionId, plcId);
+
+  public async Task UnsubscribePlc(string plcId)
+      => await Groups.RemoveFromGroupAsync(Context.ConnectionId, plcId);
+
+  // Push 시 그룹 지정
+  await _hub.Clients.Group("PLC-01").SendAsync("TagValue", payload);
+
+  // JS 클라이언트
+  await conn.invoke("SubscribePlc", "PLC-01");
+
+  ---
+
+  [클라이언트 → 서버 명령 (알람 ACK)]
+  // Hub 에 메서드 추가
+  public async Task AcknowledgeAlarm(string alarmKey)
+  {
+      _alarmManager.Acknowledge(alarmKey);
+      await Clients.All.SendAsync("AlarmChanged", /* ACK 이벤트 */);
+  }
+
+  // JS 클라이언트
+  await conn.invoke("AcknowledgeAlarm", "T001:HH");
+
+  ---
+
+  [인증 (JWT Bearer 토큰)]
+  // Hub 에 [Authorize] 어트리뷰트 추가
+  [Authorize]
+  public sealed class IIoTHub : Hub { ... }
+
+  // JS 클라이언트 토큰 전달
+  const conn = new signalR.HubConnectionBuilder()
+      .withUrl("http://localhost:7878/iiot", {
+          accessTokenFactory: () => "your-jwt-token"
+      })
+      .build();
+
+  ---
+
+  [HTTPS 적용]
+  builder.WebHost.UseUrls("https://0.0.0.0:7878");
+  builder.WebHost.UseKestrel(opt =>
+  {
+      opt.ConfigureHttpsDefaults(h =>
+      {
+          h.ServerCertificate =
+              new X509Certificate2("cert.pfx", "password");
+      });
+  });
+
+  // JS 클라이언트 URL 변경
+  .withUrl("https://hostname:7878/iiot")
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  12. App.xaml.cs 호출 순서 (C-11 기준 전체)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  win.Loaded 이벤트 내부 실행 순서:
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1. CollectorPluginService.LoadPlugins()    플러그인 DLL 로드        │
+  │  2. CollectorSettingsLoader.LoadAsync()     settings.json 로드      │
+  │  3. CollectorConfigLoader.LoadAsync()       device.json 로드        │
+  │  4. ITimeSeriesStore.InitializeAsync()      DB 초기화 (SQLite/InfluxDB) │
+  │  5. AlarmStateManager.Initialize()          알람 감지기 초기화       │
+  │  6. StatusViewModel.Initialize()            수집현황 UI 초기화       │
+  │  7. AlarmViewModel.Initialize()             알람 UI 초기화           │
+  │  8. FlowEngine.StartAsync()                 폴링 시작 ★             │
+  │  9. DataCollectionService.Initialize()      SDT+저장 서비스 시작     │
+  │ 10. FlowViewModel.Initialize()              수집흐름 뷰 초기화       │
+  │ 11. MqttPublishService.InitializeAsync()    MQTT 브로커 연결         │
+  │ 12. SignalRHostService.StartAsync()         ASP.NET Core 서버 시작   │
+  │ 13. SignalRPushService.Initialize()         SignalR Push 구독 시작   │
+  │ 14. ConfigReloadWatcher.Start()             FSW .signal 감시 시작    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  OnExit 실행 순서:
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1. SignalRHostService.DisposeAsync()       SignalR 서버 종료        │
+  │  2. SignalRPushService.Dispose()            Push 구독 해제           │
+  │  3. MqttPublishService.DisposeAsync()       MQTT 연결 종료           │
+  │  4. ConfigReloadWatcher.DisposeAsync()      FSW 감시 종료            │
+  │  5. DataCollectionService.DisposeAsync()    저장 서비스 종료(Flush)  │
+  │  6. FlowEngine.StopAsync()                  폴링 종료                │
+  │  7. LogManager.Instance.StopAsync()         로그 종료                │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  13. 관련 파일 목록
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  IIoT.Collector\
+  ├── IIoT.Collector.csproj
+  │     ├── <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  │     └── <Content Include="wwwroot\**\*"> PreserveNewest
+  ├── Core\Config\
+  │     └── CollectorSettings.cs       SignalRSettings 클래스 포함
+  ├── SignalR\
+  │     ├── IIoTHub.cs                 Hub 정의 + IIoTHubPusher
+  │     ├── SignalRHostService.cs      서버 시작·종료 (DI 싱글턴)
+  │     └── SignalRPushService.cs      EventBus → Push 연결 (DI 싱글턴)
+  └── wwwroot\
+        └── index.html                 브라우저 실시간 대시보드
+
+  Config\settings.json (자동 생성)
+  └── SignalR 섹션: Enabled / Port / AllowedOrigins
+
+
+══════════════════════════════════════════════════════════════════════════════
+  END — IIoT.Collector SignalR Hub 가이드
+══════════════════════════════════════════════════════════════════════════════
