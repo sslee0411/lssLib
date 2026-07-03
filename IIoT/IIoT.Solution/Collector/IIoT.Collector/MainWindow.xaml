@@ -104,10 +104,17 @@
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
 
+                <!-- C-13: 트렌드 탭 -->
+                <Button Content="📈  트렌드"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="3"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40" Padding="16,0" />
+
                 <!-- 로그 패널 토글 버튼 (탭 전환이 아닌 하단 패널 토글) -->
                 <Button Content="📋  로그"
                         Command="{Binding SwitchTabCommand}"
-                        CommandParameter="3"
+                        CommandParameter="L"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
 
@@ -192,6 +199,12 @@
             <Grid Visibility="{Binding IsFlowTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <ContentControl x:Name="FlowViewHost" />
+            </Grid>
+
+            <!-- 수집 이력 조회 탭 (3) — TrendView (코드비하인드에서 DI 주입) C-13 -->
+            <Grid Visibility="{Binding IsTrendTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <ContentControl x:Name="TrendViewHost" />
             </Grid>
 
         </Grid>

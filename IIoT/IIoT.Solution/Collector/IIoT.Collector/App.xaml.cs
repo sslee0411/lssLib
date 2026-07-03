@@ -18,6 +18,8 @@
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
 using IIoT.Collector.SignalR;
+using IIoT.Collector.Storage.Query;
+using IIoT.Collector.Views.Trend;
 using IIoT.Collector.Storage;
 using lssLib.Net;
 using IIoT.Collector.Views.Alarm;
@@ -115,6 +117,10 @@ public partial class App : Application
             _services.GetRequiredService<FlowViewModel>()
                      .Initialize();
 
+            // ★ C-13: 트렌드 뷰 초기화 (Tag 목록 구성)
+            _services.GetRequiredService<TrendViewModel>()
+                     .Initialize();
+
             // ★ C-10: MQTT 발행 서비스 초기화 (활성화 여부는 settings.json 에서 결정)
             await _services.GetRequiredService<MqttPublishService>()
                            .InitializeAsync();
@@ -202,6 +208,12 @@ public partial class App : Application
         // ── MQTT 발행 서비스 (C-10)
         services.AddSingleton<MqttPublishService>();
 
+        // ── 수집 이력 조회 (C-13)
+        services.AddSingleton<TrendQueryService>();
+        services.AddSingleton<TrendViewModel>();
+        services.AddSingleton<TrendView>(sp =>
+            new TrendView(sp.GetRequiredService<TrendViewModel>()));
+
         // ── SignalR Hub 서비스 (C-11)
         services.AddSingleton<SignalRHostService>();
         services.AddSingleton<SignalRPushService>();
@@ -228,7 +240,8 @@ public partial class App : Application
                 sp.GetRequiredService<MainViewModel>(),
                 sp.GetRequiredService<StatusView>(),
                 sp.GetRequiredService<AlarmView>(),
-                sp.GetRequiredService<FlowView>()));
+                sp.GetRequiredService<FlowView>(),
+                sp.GetRequiredService<TrendView>()));
 
         return services.BuildServiceProvider();
     }
