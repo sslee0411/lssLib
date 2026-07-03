@@ -1,8 +1,8 @@
 // ══════════════════════════════════════════════════════════
 //  IIoT.Collector · ViewModels/TrendViewModel.cs
 //  역할: 수집 이력 조회 탭([📈 트렌드]) ViewModel
-//        Tag 선택 + 기간 설정 → TrendQueryService 조회 → LiveCharts2 데이터 바인딩
-//  C-13: 신규
+//        Tag 선택 + 기간 설정 → TrendQueryService 조회 → OxyPlot LineChart 바인딩
+//  C-13: 신규 (OxyPlot.Wpf — 순수 .NET, net8.0-windows 완전 지원)
 //  생성: 2026-07-01
 // ══════════════════════════════════════════════════════════
 
@@ -10,11 +10,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Storage.Query;
-using LiveChartsCore;
-using LiveChartsCore.Defaults;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Legends;
+using OxyPlot.Series;
 using System.Collections.ObjectModel;
 
 namespace IIoT.Collector.ViewModels;
@@ -22,7 +21,14 @@ namespace IIoT.Collector.ViewModels;
 /// <summary>
 /// 수집 이력 조회 ViewModel (DI 싱글턴).
 /// <para>
-/// Tag 선택 → 기간 선택 → [조회] 버튼 → SQLite 조회 → LiveCharts2 LineChart 표시.
+/// Tag 선택 → 기간 선택 → [조회] 버튼 → SQLite 조회 → OxyPlot PlotModel 바인딩.
+/// </para>
+/// <para>
+/// <b>OxyPlot 채택 이유:</b><br/>
+/// LiveChartsCore.SkiaSharpView.WPF 는 SkiaSharp 3.x 의존으로
+/// net8.0-windows 런타임 XamlParseException 위험이 있음.
+/// OxyPlot.Wpf 는 순수 .NET 구현으로 SkiaSharp 의존성이 없어
+/// net8.0-windows 완전 지원 및 10년+ 산업 현장 검증됨.
 /// </para>
 /// </summary>
 public partial class TrendViewModel : ObservableObject
@@ -61,36 +67,12 @@ public partial class TrendViewModel : ObservableObject
 
     [ObservableProperty] private bool   _isLoading;
     [ObservableProperty] private string _statusText = "Tag 와 기간을 선택 후 [조회] 버튼을 클릭하세요.";
-    [ObservableProperty] private string _unitText   = string.Empty;
 
-    // §5 ─ 차트 설정 ───────────────────────────────────────
+    // §5 ─ OxyPlot 모델 ───────────────────────────────────
 
-    /// <summary>LiveCharts2 LineChart Series 바인딩</summary>
-    public ObservableCollection<ISeries> Series { get; } = new();
-
-    /// <summary>X축 (시간)</summary>
-    public Axis[] XAxes { get; } =
-    [
-        new DateTimeAxis(TimeSpan.FromMinutes(1), d => d.ToString("HH:mm"))
-        {
-            Name     = "시각",
-            TextSize = 10,
-            LabelsPaint = new SolidColorPaint(SKColors.Gray),
-            SeparatorsPaint = new SolidColorPaint(SKColors.DimGray.WithAlpha(60)),
-        }
-    ];
-
-    /// <summary>Y축 (공학값)</summary>
-    public Axis[] YAxes { get; } =
-    [
-        new Axis
-        {
-            Name     = "값",
-            TextSize = 10,
-            LabelsPaint = new SolidColorPaint(SKColors.Gray),
-            SeparatorsPaint = new SolidColorPaint(SKColors.DimGray.WithAlpha(60)),
-        }
-    ];
+    /// <summary>OxyPlot PlotModel — XAML에 바인딩</summary>
+    [ObservableProperty]
+    private PlotModel _plotModel = _CreateEmptyModel();
 
     // §6 ─ 생성자 ──────────────────────────────────────────
 
@@ -98,8 +80,8 @@ public partial class TrendViewModel : ObservableObject
         TrendQueryService     queryService,
         CollectorConfigLoader configLoader)
     {
-        _queryService  = queryService;
-        _configLoader  = configLoader;
+        _queryService = queryService;
+        _configLoader = configLoader;
     }
 
     // §7 ─ 초기화 ──────────────────────────────────────────
@@ -127,14 +109,12 @@ public partial class TrendViewModel : ObservableObject
             "최근 6시간"  => to.AddHours(-6),
             "최근 24시간" => to.AddHours(-24),
             "최근 7일"    => to.AddDays(-7),
-            _             => new DateTimeOffset(
-                                 FromDate.Add(FromTime),
+            _             => new DateTimeOffset(FromDate.Add(FromTime),
                                  TimeZoneInfo.Local.GetUtcOffset(FromDate)),
         };
 
         if (SelectedRange == "사용자 지정")
-            to = new DateTimeOffset(
-                     ToDate.Add(ToTime),
+            to = new DateTimeOffset(ToDate.Add(ToTime),
                      TimeZoneInfo.Local.GetUtcOffset(ToDate));
 
         return (from, to);
@@ -153,7 +133,6 @@ public partial class TrendViewModel : ObservableObject
 
         IsLoading  = true;
         StatusText = $"[{SelectedTag.TagName}] 조회 중...";
-        Series.Clear();
 
         try
         {
@@ -165,51 +144,12 @@ public partial class TrendViewModel : ObservableObject
             if (points.Count == 0)
             {
                 StatusText = $"[{SelectedTag.TagName}] 해당 기간에 이력 데이터가 없습니다.";
+                PlotModel  = _CreateEmptyModel("데이터 없음");
                 return;
             }
 
-            // LiveCharts2 DateTimePoint 변환
-            var engPoints = points
-                .Select(p => new DateTimePoint(p.Timestamp.LocalDateTime, p.EngValue))
-                .ToArray();
+            PlotModel = _BuildPlotModel(SelectedTag, points);
 
-            var rawPoints = points
-                .Select(p => new DateTimePoint(p.Timestamp.LocalDateTime, p.RawValue))
-                .ToArray();
-
-            // 공학값 라인 (주 표시)
-            Series.Add(new LineSeries<DateTimePoint>
-            {
-                Name            = $"{SelectedTag.TagName} (공학값)",
-                Values          = engPoints,
-                Stroke          = new SolidColorPaint(SKColors.DodgerBlue, 2),
-                Fill            = null,
-                GeometrySize    = 0,
-                LineSmoothness  = 0,
-            });
-
-            // Raw 값 라인 (스케일 적용된 Tag 만 표시 — Raw≠Eng 일 때만)
-            var hasScale = points.Any(p => Math.Abs(p.EngValue - p.RawValue) > 0.001);
-            if (hasScale)
-            {
-                Series.Add(new LineSeries<DateTimePoint>
-                {
-                    Name            = $"{SelectedTag.TagName} (Raw)",
-                    Values          = rawPoints,
-                    Stroke          = new SolidColorPaint(SKColors.DimGray, 1),
-                    Fill            = null,
-                    GeometrySize    = 0,
-                    LineSmoothness  = 0,
-                });
-            }
-
-            // Y축 이름 갱신
-            UnitText = string.IsNullOrWhiteSpace(SelectedTag.Unit)
-                ? "값"
-                : $"값 ({SelectedTag.Unit})";
-            YAxes[0].Name = UnitText;
-
-            var duration = to - from;
             StatusText =
                 $"[{SelectedTag.TagName}] {from:MM/dd HH:mm} ~ {to:MM/dd HH:mm} " +
                 $"({points.Count:#,0}건 표시)";
@@ -217,10 +157,114 @@ public partial class TrendViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusText = $"조회 오류: {ex.Message}";
+            PlotModel  = _CreateEmptyModel("조회 오류");
         }
         finally
         {
             IsLoading = false;
         }
+    }
+
+    // §10 ─ PlotModel 생성 ─────────────────────────────────
+
+    private static PlotModel _CreateEmptyModel(string subtitle = "")
+    {
+        var model = new PlotModel
+        {
+            Background   = OxyColor.FromRgb(0x0D, 0x11, 0x17), // BgBrush(DarkNavy)
+            TextColor    = OxyColor.FromRgb(0xC9, 0xD1, 0xD9),
+            PlotAreaBorderColor = OxyColor.FromRgb(0x30, 0x36, 0x3D),
+        };
+
+        if (!string.IsNullOrWhiteSpace(subtitle))
+        {
+            model.Subtitle     = subtitle;
+            model.SubtitleColor = OxyColor.FromRgb(0x8B, 0x94, 0x9E);
+        }
+
+        return model;
+    }
+
+    private static PlotModel _BuildPlotModel(
+        TrendTagItem tag, IReadOnlyList<TrendPoint> points)
+    {
+        var model = new PlotModel
+        {
+            Title        = tag.TagName,
+            Background   = OxyColor.FromRgb(0x0D, 0x11, 0x17),
+            TextColor    = OxyColor.FromRgb(0xC9, 0xD1, 0xD9),
+            PlotAreaBorderColor = OxyColor.FromRgb(0x30, 0x36, 0x3D),
+        };
+
+        // ★ OxyPlot 2.2.0: Legend 설정은 DefaultLegend 통해서 적용
+        var legend = new OxyPlot.Legends.Legend
+        {
+            LegendBackground = OxyColor.FromArgb(0xCC, 0x16, 0x1B, 0x22),
+            LegendBorder     = OxyColor.FromRgb(0x30, 0x36, 0x3D),
+            LegendTextColor  = OxyColor.FromRgb(0xC9, 0xD1, 0xD9),
+            LegendPosition   = OxyPlot.Legends.LegendPosition.TopRight,
+        };
+        model.Legends.Add(legend);
+
+        // X축 — 시간
+        model.Axes.Add(new DateTimeAxis
+        {
+            Position          = AxisPosition.Bottom,
+            Title             = "시각",
+            StringFormat      = "HH:mm",
+            MajorGridlineStyle = LineStyle.Dot,
+            MajorGridlineColor = OxyColor.FromRgb(0x30, 0x36, 0x3D),
+            TicklineColor     = OxyColor.FromRgb(0x58, 0x6E, 0x7E),
+            TitleColor        = OxyColor.FromRgb(0x8B, 0x94, 0x9E),
+            TextColor         = OxyColor.FromRgb(0x8B, 0x94, 0x9E),
+        });
+
+        // Y축 — 공학값
+        var unit = string.IsNullOrWhiteSpace(tag.Unit) ? "값" : $"값 ({tag.Unit})";
+        model.Axes.Add(new LinearAxis
+        {
+            Position          = AxisPosition.Left,
+            Title             = unit,
+            MajorGridlineStyle = LineStyle.Dot,
+            MajorGridlineColor = OxyColor.FromRgb(0x30, 0x36, 0x3D),
+            TicklineColor     = OxyColor.FromRgb(0x58, 0x6E, 0x7E),
+            TitleColor        = OxyColor.FromRgb(0x8B, 0x94, 0x9E),
+            TextColor         = OxyColor.FromRgb(0x8B, 0x94, 0x9E),
+        });
+
+        // 공학값 라인 (파란색)
+        var engSeries = new LineSeries
+        {
+            Title            = $"{tag.TagName} (공학값)",
+            Color            = OxyColor.FromRgb(0x1F, 0x6F, 0xEB),
+            StrokeThickness  = 1.5,
+            MarkerType       = MarkerType.None,
+        };
+
+        // Raw 값 라인 (회색 — 스케일이 있는 경우만)
+        var rawSeries = new LineSeries
+        {
+            Title            = $"{tag.TagName} (Raw)",
+            Color            = OxyColor.FromRgb(0x58, 0x6E, 0x7E),
+            StrokeThickness  = 1.0,
+            MarkerType       = MarkerType.None,
+        };
+
+        var hasScale = false;
+        foreach (var p in points)
+        {
+            var x = DateTimeAxis.ToDouble(p.Timestamp.LocalDateTime);
+            engSeries.Points.Add(new DataPoint(x, p.EngValue));
+            rawSeries.Points.Add(new DataPoint(x, p.RawValue));
+
+            if (!hasScale && Math.Abs(p.EngValue - p.RawValue) > 0.001)
+                hasScale = true;
+        }
+
+        model.Series.Add(engSeries);
+        if (hasScale)
+            model.Series.Add(rawSeries);
+
+        return model;
     }
 }

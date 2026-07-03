@@ -14,7 +14,6 @@
 		<AssemblyName>IIoT.Collector</AssemblyName>
 	</PropertyGroup>
 
-
 	<!-- C-11: wwwroot 빌드 출력 폴더 복사 (index.html 포함) -->
 	<ItemGroup>
 		<Content Include="wwwroot\**\*">
@@ -31,21 +30,23 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-		<PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-		<!-- C-05: ScaleEngine Expression 모드 — Studio 주석 "Collector에서 NCalc 사용" 반영 -->
-		<PackageReference Include="NCalc" Version="3.*" />
-		<!-- C-13: Trend View 차트 (LiveCharts2 WPF) -->
-
+		<PackageReference Include="CommunityToolkit.Mvvm"                     Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection"   Version="8.0.0" />
+		<!-- C-05: ScaleEngine Expression 모드 -->
+		<PackageReference Include="NCalc"                                      Version="3.*" />
+		<!-- C-13: Trend View 차트
+		     ★ OxyPlot.Wpf 사용 — 순수 .NET 구현, net8.0-windows 완전 지원
+		       LiveChartsCore.SkiaSharpView.WPF 는 SkiaSharp 3.x 의존으로
+		       net8.0-windows 런타임 XamlParseException 위험이 있어 제외 -->
+		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- lssLib BCL (Studio.sln 기준 상대경로 — Collector 폴더는 Studio와 같은 depth) -->
+		<!-- lssLib BCL -->
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
 
-		<!-- lssLib DB (C-07 SQLite 저장소) -->
+		<!-- lssLib DB (C-07 SQLite/InfluxDB 저장소) -->
 		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.InfluxDB\lssLib.DB.InfluxDB.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj" />
@@ -53,10 +54,10 @@
 		<!-- lssLib Net (C-10 MQTT 발행) -->
 		<ProjectReference Include="..\..\..\..\Base\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj" />
 
-		<!-- IIoT 공통 계약 레이어 (외부 참조 0개) -->
+		<!-- IIoT 공통 계약 레이어 -->
 		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
 
-		<!-- WPF 테마 (7가지 다크/라이트 테마 v1.5) -->
+		<!-- WPF 테마 (v1.5) -->
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
 	</ItemGroup>
 
