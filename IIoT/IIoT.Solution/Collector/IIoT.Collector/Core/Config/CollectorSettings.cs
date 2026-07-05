@@ -4,7 +4,11 @@
 //        Storage.Provider: "SQLite" | "InfluxDB"
 //        SDT ExcDevPercent: 스케일 범위 대비 허용 오차 비율
 //  C-07: 신규
-//  생성: 2026-06-29
+//  C-14: Notification 섹션 추가 (알람 에스컬레이션 이메일/Webhook 알림)
+//  C-14 버그 수정: NotificationSettings.Enabled 필드 → 프로퍼티
+//                  (System.Text.Json 은 기본적으로 필드를 직렬화하지 않으므로
+//                   필드 상태로는 settings.json 에 저장/로드가 반영되지 않는 버그였음)
+//  생성: 2026-06-29 / 수정: 2026-07-05
 // ══════════════════════════════════════════════════════════
 
 using lssLib.Log;
@@ -20,9 +24,9 @@ namespace IIoT.Collector.Core.Config;
 
 public sealed class CollectorSettings
 {
-    public StorageSettings  Storage  { get; set; } = new();
-    public SignalRSettings  SignalR  { get; set; } = new();
-    public RetrySettings    Retry    { get; set; } = new();
+    public StorageSettings Storage { get; set; } = new();
+    public SignalRSettings SignalR { get; set; } = new();
+    public RetrySettings Retry { get; set; } = new();
     // ★ C-14 신규
     public NotificationSettings Notification { get; set; } = new();
 }
@@ -56,7 +60,7 @@ public sealed class StorageSettings
 
     public MqttPublishSettings Mqtt { get; set; } = new();
 
-    public SqliteSettings   SQLite   { get; set; } = new();
+    public SqliteSettings SQLite { get; set; } = new();
     public InfluxDbSettings InfluxDB { get; set; } = new();
 }
 
@@ -77,13 +81,13 @@ public sealed class SqliteSettings
 public sealed class InfluxDbSettings
 {
     /// <summary>InfluxDB v2 URL (예: http://localhost:8086)</summary>
-    public string Url    { get; set; } = "http://localhost:8086";
+    public string Url { get; set; } = "http://localhost:8086";
 
     /// <summary>API 토큰 (InfluxDB UI → Data → Tokens 에서 생성)</summary>
-    public string Token  { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
 
     /// <summary>조직 이름 (InfluxDB 가입 시 설정한 org)</summary>
-    public string Org    { get; set; } = "my-org";
+    public string Org { get; set; } = "my-org";
 
     /// <summary>버킷 이름 (데이터를 저장할 버킷)</summary>
     public string Bucket { get; set; } = "iiot";
@@ -92,7 +96,7 @@ public sealed class InfluxDbSettings
     /// 배치 쓰기 최대 건수 (기본 500).
     /// 이 수치에 도달하거나 FlushIntervalMs 가 경과하면 HTTP POST 전송.
     /// </summary>
-    public int BatchSize     { get; set; } = 500;
+    public int BatchSize { get; set; } = 500;
 
     /// <summary>배치 쓰기 최대 대기 시간 (ms, 기본 5000)</summary>
     public int FlushIntervalMs { get; set; } = 5000;
@@ -126,10 +130,10 @@ public sealed class RetrySettings
 public sealed class SignalRSettings
 {
     /// <summary>SignalR Hub 활성화 여부 (기본 true)</summary>
-    public bool     Enabled        { get; set; } = true;
+    public bool Enabled { get; set; } = true;
 
     /// <summary>수신 포트 (기본 7878). 방화벽 허용 필요.</summary>
-    public int      Port           { get; set; } = 7878;
+    public int Port { get; set; } = 7878;
 
     /// <summary>
     /// 허용할 CORS Origin 목록.
@@ -149,16 +153,16 @@ public sealed class SignalRSettings
 public sealed class MqttPublishSettings
 {
     /// <summary>MQTT 발행 활성화 여부 (기본 false — 브로커 없어도 동작)</summary>
-    public bool   Enabled    { get; set; } = false;
+    public bool Enabled { get; set; } = false;
 
     /// <summary>브로커 호스트 (기본 localhost)</summary>
     public string BrokerHost { get; set; } = "localhost";
 
     /// <summary>브로커 포트 (기본 1883)</summary>
-    public int    BrokerPort { get; set; } = 1883;
+    public int BrokerPort { get; set; } = 1883;
 
     /// <summary>클라이언트 ID (null = 자동 생성)</summary>
-    public string? ClientId  { get; set; } = null;
+    public string? ClientId { get; set; } = null;
 
     /// <summary>
     /// Tag 값 발행 토픽 접두사.
@@ -168,13 +172,13 @@ public sealed class MqttPublishSettings
     public string TopicPrefix { get; set; } = "iiot";
 
     /// <summary>QoS 레벨 (0=최대1회, 1=최소1회, 기본 1)</summary>
-    public byte   QoS        { get; set; } = 1;
+    public byte QoS { get; set; } = 1;
 
     /// <summary>브로커 인증 사용자명 (없으면 null)</summary>
-    public string? Username  { get; set; } = null;
+    public string? Username { get; set; } = null;
 
     /// <summary>브로커 인증 비밀번호 (없으면 null)</summary>
-    public string? Password  { get; set; } = null;
+    public string? Password { get; set; } = null;
 }
 
 // ── 로더 ──────────────────────────────────────────────────
@@ -187,10 +191,10 @@ public sealed class CollectorSettingsLoader
 {
     private static readonly JsonSerializerOptions _opts = new()
     {
-        PropertyNameCaseInsensitive  = true,
-        DefaultIgnoreCondition       = JsonIgnoreCondition.WhenWritingNull,
-        Encoder                      = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented                = true
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        WriteIndented = true
     };
 
     public static string SettingsPath =>
@@ -243,6 +247,9 @@ public sealed class CollectorSettingsLoader
 /// </summary>
 public sealed class NotificationSettings
 {
+    // ★ C-14 버그 수정: 필드(bool Enabled = false;) → 프로퍼티로 변경.
+    //   System.Text.Json 은 IncludeFields=true 옵션이 없으면 필드를 무시하므로
+    //   필드 상태에서는 settings.json 에 저장/로드가 전혀 반영되지 않았음.
     public bool Enabled { get; set; } = false;
     public SmtpSettings Smtp { get; set; } = new();
     public WebhookSettings Webhook { get; set; } = new();
