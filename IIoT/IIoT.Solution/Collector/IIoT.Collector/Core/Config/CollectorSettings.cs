@@ -243,7 +243,7 @@ public sealed class CollectorSettingsLoader
 /// </summary>
 public sealed class NotificationSettings
 {
-    public bool Enabled = false;
+    public bool Enabled { get; set; } = false;
     public SmtpSettings Smtp { get; set; } = new();
     public WebhookSettings Webhook { get; set; } = new();
 }
