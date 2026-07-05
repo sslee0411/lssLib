@@ -126,6 +126,11 @@ public sealed class AlarmEntryDto
 
     public int DelayMs         { get; set; }
     public int RecoveryDelayMs { get; set; }
+
+    // ★ C-14 신규 — 알림/에스컬레이션
+    public string NotifyEmail { get; set; } = string.Empty;
+    public string NotifyPhone { get; set; } = string.Empty;
+    public int EscalateMinutes { get; set; }
 }
 
 // §5 ─ 통신 DTO ───────────────────────────────────────────

@@ -3,7 +3,8 @@
      역할: 알람 라이브러리 화면
            좌(280px) 목록 + 우(*) HH/H/L/LL 편집기
      S-07: 초기 구현
-     생성: 2026-06-15
+     C-14: 알림/에스컬레이션 설정(NotifyEmail/NotifyPhone/EscalateMinutes) 섹션 추가
+     생성: 2026-06-15 / 수정: 2026-07-05
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.Alarm.AlarmLibraryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -416,6 +417,43 @@
                                      Style="{DynamicResource PropInput}" />
                         </StackPanel>
                     </Grid>
+
+                    <!-- ══════════════════════════════════════════
+                         § 알림 / 에스컬레이션 설정 (C-14 신규)
+                         ══════════════════════════════════════════ -->
+                    <TextBlock Text="알림 / 에스컬레이션"
+                               FontSize="12" FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"
+                               Margin="0,0,0,12" />
+
+                    <TextBlock Text="알림 이메일"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,6" />
+                    <TextBox Text="{Binding NotifyEmail, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}"
+                             ToolTip="쉼표(,)로 구분하여 다중 입력 가능 (예: a@x.com,b@x.com)"
+                             Margin="0,0,0,12" />
+
+                    <TextBlock Text="SMS / Webhook 대상"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,6" />
+                    <TextBox Text="{Binding NotifyPhone, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}"
+                             ToolTip="전화번호 또는 Webhook 수신자 식별자"
+                             Margin="0,0,0,12" />
+
+                    <TextBlock Text="에스컬레이션 대기 시간 (분)"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="0,0,0,6" />
+                    <TextBox Text="{Binding EscalateMinutes, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}"
+                             ToolTip="0 = 에스컬레이션 비활성화. 이 시간 안에 ACK 없으면 재발송됩니다."
+                             Width="120"
+                             HorizontalAlignment="Left"
+                             Margin="0,0,0,24" />
 
                     <!-- 설명 -->
                     <TextBlock Text="설명"

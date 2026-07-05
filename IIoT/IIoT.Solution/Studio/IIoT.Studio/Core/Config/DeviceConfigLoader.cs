@@ -103,7 +103,11 @@ public sealed class DeviceConfigLoader
                 LEnabled        = dto.LEnabled,  LValue  = dto.LValue,  LMessage  = dto.LMessage,
                 LlEnabled       = dto.LlEnabled, LlValue = dto.LlValue, LlMessage = dto.LlMessage,
                 DelayMs         = dto.DelayMs,
-                RecoveryDelayMs = dto.RecoveryDelayMs
+                RecoveryDelayMs = dto.RecoveryDelayMs,
+                // ★ C-14 신규
+                NotifyEmail = dto.NotifyEmail,
+                NotifyPhone = dto.NotifyPhone,
+                EscalateMinutes = dto.EscalateMinutes
             });
         }
     }

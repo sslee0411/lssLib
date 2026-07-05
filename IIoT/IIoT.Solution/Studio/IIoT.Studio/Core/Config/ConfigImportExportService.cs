@@ -228,7 +228,11 @@ public sealed class ConfigImportExportService
                 LEnabled        = dto.LEnabled,  LValue  = dto.LValue,  LMessage  = dto.LMessage,
                 LlEnabled       = dto.LlEnabled, LlValue = dto.LlValue, LlMessage = dto.LlMessage,
                 DelayMs         = dto.DelayMs,
-                RecoveryDelayMs = dto.RecoveryDelayMs
+                RecoveryDelayMs = dto.RecoveryDelayMs,
+                // ★ C-14 신규
+                NotifyEmail = dto.NotifyEmail,
+                NotifyPhone = dto.NotifyPhone,
+                EscalateMinutes = dto.EscalateMinutes
             };
             _alarmVm.Entries.Add(entry);
         }

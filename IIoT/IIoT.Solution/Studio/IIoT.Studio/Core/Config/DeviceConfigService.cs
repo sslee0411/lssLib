@@ -145,7 +145,11 @@ public sealed class DeviceConfigService
                 LlValue         = a.LlValue,
                 LlMessage       = a.LlMessage ?? string.Empty,
                 DelayMs         = a.DelayMs,
-                RecoveryDelayMs = a.RecoveryDelayMs
+                RecoveryDelayMs = a.RecoveryDelayMs,
+                // ★ C-14 신규
+                NotifyEmail     = a.NotifyEmail ?? string.Empty,
+                NotifyPhone     = a.NotifyPhone ?? string.Empty,
+                EscalateMinutes = a.EscalateMinutes
             });
         }
 

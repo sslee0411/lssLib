@@ -23,6 +23,8 @@ public sealed class CollectorSettings
     public StorageSettings  Storage  { get; set; } = new();
     public SignalRSettings  SignalR  { get; set; } = new();
     public RetrySettings    Retry    { get; set; } = new();
+    // ★ C-14 신규
+    public NotificationSettings Notification { get; set; } = new();
 }
 
 // ── Storage 섹션 ──────────────────────────────────────────
@@ -231,4 +233,36 @@ public sealed class CollectorSettingsLoader
             Settings = new CollectorSettings();
         }
     }
+}
+
+// ── 알림 섹션 (C-14 신규) ─────────────────────────────────
+
+/// <summary>
+/// 알람 에스컬레이션 알림 설정.
+/// Enabled=false 이면 이메일/Webhook 발송을 전부 생략한다 (개발 중 안전장치).
+/// </summary>
+public sealed class NotificationSettings
+{
+    public bool Enabled = false;
+    public SmtpSettings Smtp { get; set; } = new();
+    public WebhookSettings Webhook { get; set; } = new();
+}
+
+public sealed class SmtpSettings
+{
+    /// <summary>SMTP 서버 호스트 (예: smtp.gmail.com, smtp.office365.com)</summary>
+    public string Host { get; set; } = "smtp.gmail.com";
+    public int Port { get; set; } = 587;
+    public bool UseSsl { get; set; } = true;
+    public string User { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string FromAddress { get; set; } = string.Empty;
+    public string FromName { get; set; } = "IIoT Collector";
+}
+
+public sealed class WebhookSettings
+{
+    /// <summary>true 여야 실제 발송 (SMS 등 외부 REST 알림용, 알리고/솔라피/커스텀 등)</summary>
+    public bool Enabled { get; set; } = false;
+    public string Url { get; set; } = string.Empty;
 }

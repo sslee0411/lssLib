@@ -27,6 +27,7 @@ using IIoT.Collector.Views.Flow;
 using IIoT.Collector.Core.Plugin;
 using IIoT.Collector.ViewModels;
 using IIoT.Collector.Views.Status;
+using IIoT.Collector.Notification;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -95,6 +96,10 @@ public partial class App : Application
             _services.GetRequiredService<AlarmStateManager>()
                      .Initialize();
             _services.GetRequiredService<AlarmViewModel>()
+                     .Initialize();
+
+            // ★ C-14: 에스컬레이션 관리자 초기화 (AlarmStateManager 이후 — 동일 EventBus 이벤트 순서 보장)
+            _services.GetRequiredService<EscalationManager>()
                      .Initialize();
 
             // ★ C-07: settings.json 로드 (SQLite/InfluxDB Provider 결정)
@@ -242,6 +247,9 @@ public partial class App : Application
                 sp.GetRequiredService<AlarmView>(),
                 sp.GetRequiredService<FlowView>(),
                 sp.GetRequiredService<TrendView>()));
+
+        services.AddSingleton<NotificationService>();
+        services.AddSingleton<EscalationManager>();
 
         return services.BuildServiceProvider();
     }

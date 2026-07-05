@@ -86,6 +86,19 @@ public partial class AlarmEntry : ObservableObject
     [ObservableProperty]
     private int _recoveryDelayMs;
 
+    // §7B ─ 알림/에스컬레이션 설정 (C-14 신규) ────────────────
+    /// <summary>알림 이메일 주소 (쉼표로 구분, 다중 수신 가능). 빈 문자열 = 알림 없음</summary>
+    [ObservableProperty]
+    private string _notifyEmail = string.Empty;
+
+    /// <summary>SMS/Webhook 알림 대상 (전화번호 또는 Webhook 식별자). 빈 문자열 = 알림 없음</summary>
+    [ObservableProperty]
+    private string _notifyPhone = string.Empty;
+
+    /// <summary>미확인(ACK) 시 에스컬레이션까지 대기 시간(분). 0 = 에스컬레이션 비활성화</summary>
+    [ObservableProperty]
+    private int _escalateMinutes;
+
     // §8 ─ 미리보기 텍스트 ────────────────────────────────────
 
     /// <summary>목록에 표시할 활성 단계 요약</summary>
