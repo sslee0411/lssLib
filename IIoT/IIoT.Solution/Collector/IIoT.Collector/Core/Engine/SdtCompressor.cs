@@ -43,6 +43,10 @@ internal sealed class SdtCompressor
     /// <summary>
     /// 새 값을 받아 저장 여부를 반환합니다.
     /// true 를 반환한 경우에만 DB 에 쓰고, _lastStored 를 갱신합니다.
+    /// <para>
+    /// excDev=0 이면 delta(any) >= 0 이 항상 성립하므로 전량 저장됩니다.
+    /// (별도 분기 없이 아래 로직으로 자연스럽게 처리됨)
+    /// </para>
     /// </summary>
     public bool ShouldStore(double engValue)
     {

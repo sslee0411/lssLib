@@ -95,13 +95,25 @@ public sealed class DataCollectionService : IAsyncDisposable
 
             foreach (var tag in plc.Tags)
             {
-                // ExcDev = 스케일 범위 × ExcDevPercent
-                // 스케일 없는 경우 Raw 값 기준 100 범위로 가정 → 최소 0.01
-                double excDev = 100.0 * excDevPct;
-                if (_configLoader.ScaleLibrary.TryGetValue(tag.ScaleEntryId ?? "", out var scale))
-                    excDev = (scale.EngMax - scale.EngMin) * excDevPct;
+                double excDev;
 
-                _compressors[tag.Id] = new SdtCompressor(Math.Max(excDev, 0.001));
+                // ★ SdtExcDevPercent=0 → SDT 비활성화 (전량 저장)
+                //   SdtCompressor 에 0 을 전달하면 항상 ShouldStore=true 반환
+                if (excDevPct <= 0.0)
+                {
+                    excDev = 0.0;
+                }
+                else if (_configLoader.ScaleLibrary.TryGetValue(tag.ScaleEntryId ?? "", out var scale))
+                {
+                    excDev = (scale.EngMax - scale.EngMin) * excDevPct;
+                }
+                else
+                {
+                    // 스케일 없는 경우 Raw 값 기준 100 범위로 가정
+                    excDev = 100.0 * excDevPct;
+                }
+
+                _compressors[tag.Id] = new SdtCompressor(excDev);
                 _tagCache[tag.Id]    = new TagInfoCache(tag.Id, tag.Name, plc.PlcId);
             }
         }
