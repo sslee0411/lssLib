@@ -93,6 +93,10 @@ public partial class App : Application
             //   (미등록 드라이버 경고가 정확히 동작하려면 플러그인 목록이 먼저 채워져야 함)
             await _services.GetRequiredService<CollectorConfigLoader>()
                             .LoadAsync();
+            
+            // ★ C-EX-01: DeviceInstance 트리 조립 (ConfigLoader 로드 직후)
+            _services.GetRequiredService<DeviceInstanceService>()
+                     .Initialize();
 
             // ★ C-04: 설정 로드 완료 직후 LiveTags 초기 행 구성 + EventBus 구독 시작
             //   (FlowEngine.StartAsync() 보다 반드시 먼저 호출 — 폴링 결과를 놓치지 않도록)
@@ -102,6 +106,7 @@ public partial class App : Application
             // ★ C-06: 알람 감지기 초기화 + AlarmView 구독 시작 (FlowEngine 보다 먼저)
             _services.GetRequiredService<AlarmStateManager>()
                      .Initialize();
+
             _services.GetRequiredService<AlarmViewModel>()
                      .Initialize();
 
@@ -207,6 +212,9 @@ public partial class App : Application
 
         // ── 설정 로더 (C-01)
         services.AddSingleton<CollectorConfigLoader>();
+
+        // ── DeviceInstance 통합 조회 서비스 (C-EX-01 신규)
+        services.AddSingleton<DeviceInstanceService>();
 
         // ── 스케일 변환 엔진 (C-05)
         services.AddSingleton<ScaleEngine>();
