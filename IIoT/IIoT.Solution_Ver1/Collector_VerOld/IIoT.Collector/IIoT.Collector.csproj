@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!--
+      ★ RootNamespace 명시: 파일명(IIoT.Collector)의 . 이 네임스페이스 분리자로
+        인식되는 것을 방지. App.xaml x:Class="IIoT.Collector.App" 와 일치.
+    -->
+		<RootNamespace>IIoT.Collector</RootNamespace>
+		<AssemblyName>IIoT.Collector</AssemblyName>
+	</PropertyGroup>
+
+	<!-- C-11: wwwroot 빌드 출력 폴더 복사 (index.html 포함) -->
+	<ItemGroup>
+		<Content Include="wwwroot\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<!-- C-11: ASP.NET Core + SignalR Hub 내장 호스팅
+       WPF(WinExe) 와 ASP.NET Core 공존 패턴:
+       UseWPF=true 유지 + Microsoft.AspNetCore.App FrameworkReference 추가
+       → 별도 스레드에서 WebApplication 실행 (WPF UI 스레드와 분리) -->
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+		<!-- C-05: ScaleEngine Expression 모드 -->
+		<PackageReference Include="NCalc" Version="3.*" />
+		<!-- C-13: Trend View 차트
+		     ★ OxyPlot.Wpf 사용 — 순수 .NET 구현, net8.0-windows 완전 지원
+		       LiveChartsCore.SkiaSharpView.WPF 는 SkiaSharp 3.x 의존으로
+		       net8.0-windows 런타임 XamlParseException 위험이 있어 제외 -->
+		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- lssLib BCL -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\Message\lssLib.Messaging\lssLib.Messaging.csproj" />
+
+		<!-- lssLib DB (C-07 SQLite/InfluxDB 저장소) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.InfluxDB\lssLib.DB.InfluxDB.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj" />
+
+		<!-- lssLib Net (C-10 MQTT 발행) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\Net\lssLib.Net_Ver5\lssLib.Net\lssLib.Net.csproj" />
+
+		<!-- IIoT 공통 계약 레이어 -->
+		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
+
+		<!-- WPF 테마 (v1.5) -->
+		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="wwwroot\" />
+		<Folder Include="SignalR\" />
+	</ItemGroup>
+
+</Project>

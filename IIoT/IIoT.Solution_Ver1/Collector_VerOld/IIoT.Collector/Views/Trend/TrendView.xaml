@@ -1,0 +1,154 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Collector · Views/Trend/TrendView.xaml
+     역할: 수집 이력 조회 탭 — Tag 선택 + 기간 설정 + OxyPlot LineChart
+     C-13: OxyPlot.Wpf 적용 (LiveCharts2 → OxyPlot 교체)
+           순수 .NET 구현 / net8.0-windows 완전 지원 / SkiaSharp 의존성 없음
+     생성: 2026-07-01
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Collector.Views.Trend.TrendView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:oxy="http://oxyplot.org/wpf"
+             Background="{DynamicResource BgBrush}">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />  <!-- 툴바 -->
+            <RowDefinition Height="*"  />  <!-- 차트 -->
+            <RowDefinition Height="28" />  <!-- 상태바 -->
+        </Grid.RowDefinitions>
+
+        <!-- ══════════════════════════════════════════════════
+             § 툴바 — Tag 선택 + 기간 + 조회 버튼
+             ══════════════════════════════════════════════════ -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,0">
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+
+                <!-- Tag 선택 -->
+                <TextBlock Text="Tag"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0" />
+                <ComboBox Style="{DynamicResource PropCombo}"
+                          Width="200"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding AvailableTags}"
+                          SelectedItem="{Binding SelectedTag}"
+                          Margin="0,0,16,0">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding PlcId}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource Text2Brush}"
+                                           Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding TagName}"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextBrush}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <!-- 기간 프리셋 -->
+                <TextBlock Text="기간"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0" />
+                <ComboBox Style="{DynamicResource PropCombo}"
+                          Width="130"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding RangePresets}"
+                          SelectedItem="{Binding SelectedRange}"
+                          Margin="0,0,12,0" />
+
+                <!-- 사용자 지정 기간 -->
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,12,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCustomRange}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <DatePicker SelectedDate="{Binding FromDate}"
+                                Width="110" FontSize="11"
+                                Margin="0,0,4,0" VerticalAlignment="Center" />
+                    <TextBox Style="{DynamicResource PropInput}"
+                             Text="{Binding FromTime, StringFormat='hh\\:mm'}"
+                             Width="55" FontSize="11"
+                             Margin="0,0,8,0" VerticalAlignment="Center" />
+                    <TextBlock Text="~" FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <DatePicker SelectedDate="{Binding ToDate}"
+                                Width="110" FontSize="11"
+                                Margin="0,0,4,0" VerticalAlignment="Center" />
+                    <TextBox Style="{DynamicResource PropInput}"
+                             Text="{Binding ToTime, StringFormat='hh\\:mm'}"
+                             Width="55" FontSize="11"
+                             VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- 조회 버튼 -->
+                <Button Content="🔍 조회"
+                        Command="{Binding QueryCommand}"
+                        Style="{DynamicResource PrimaryBtn}"
+                        FontSize="11" Padding="14,5"
+                        VerticalAlignment="Center" />
+
+                <!-- 로딩 표시 -->
+                <TextBlock Text="⏳ 조회 중..."
+                           FontSize="11"
+                           Foreground="{DynamicResource AccBrush}"
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0"
+                           Visibility="{Binding IsLoading,
+                                        Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 차트 영역 — OxyPlot CartesianChart
+             ══════════════════════════════════════════════════ -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SurfaceBrush}">
+            <Grid>
+                <!-- OxyPlot 차트 — PlotModel 바인딩 -->
+                <oxy:PlotView Model="{Binding PlotModel}"
+                              Background="Transparent"
+                              Margin="4" />
+            </Grid>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 상태바
+             ══════════════════════════════════════════════════ -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,0">
+            <TextBlock Text="{Binding StatusText}"
+                       FontSize="11"
+                       Foreground="{DynamicResource Text2Brush}"
+                       VerticalAlignment="Center" />
+        </Border>
+    </Grid>
+</UserControl>

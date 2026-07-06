@@ -1,0 +1,72 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Collector · Views/Status/ForceWriteDialog.xaml
+     역할: Tag 강제값 쓰기(Force Write) 입력 모달 다이얼로그
+           StatusView 의 "강제쓰기" 버튼 클릭 시 표시
+     C-15: 신규
+     생성: 2026-07-06
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.Collector.Views.Status.ForceWriteDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Tag 강제값 쓰기"
+        Width="380" Height="260"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="ToolWindow"
+        Background="{DynamicResource BgBrush}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   x:Name="TxtTagName"
+                   FontSize="15" FontWeight="Bold"
+                   Foreground="{DynamicResource TextBrush}"
+                   Margin="0,0,0,4" />
+
+        <TextBlock Grid.Row="1"
+                   x:Name="TxtTagInfo"
+                   FontSize="11"
+                   Foreground="{DynamicResource Text2Brush}"
+                   Margin="0,0,0,16" />
+
+        <TextBlock Grid.Row="2"
+                   Text="쓸 값 (Raw 값 기준)"
+                   FontSize="11" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Text2Brush}"
+                   Margin="0,0,0,6" />
+
+        <TextBox Grid.Row="3"
+                 x:Name="TxtValue"
+                 Style="{DynamicResource PropInput}"
+                 Margin="0,0,0,8" />
+
+        <TextBlock Grid.Row="4"
+                   x:Name="TxtWarning"
+                   FontSize="11"
+                   Foreground="{DynamicResource RedBrush}"
+                   TextWrapping="Wrap"
+                   VerticalAlignment="Top" />
+
+        <StackPanel Grid.Row="5"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Content="취소"
+                    Width="70"
+                    Margin="0,0,8,0"
+                    Style="{DynamicResource GhostBtn}"
+                    Click="CancelButton_Click" />
+            <Button Content="쓰기"
+                    Width="70"
+                    Style="{DynamicResource SecondaryBtn}"
+                    Click="OkButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>
