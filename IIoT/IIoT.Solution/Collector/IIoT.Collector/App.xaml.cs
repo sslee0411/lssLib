@@ -17,20 +17,22 @@
 
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
-using IIoT.Collector.SignalR;
-using IIoT.Collector.Storage.Query;
-using IIoT.Collector.Views.Trend;
-using IIoT.Collector.Storage;
-using lssLib.Net;
-using IIoT.Collector.Views.Alarm;
-using IIoT.Collector.Views.Flow;
 using IIoT.Collector.Core.Plugin;
-using IIoT.Collector.ViewModels;
-using IIoT.Collector.Views.Status;
 using IIoT.Collector.Notification;
+using IIoT.Collector.SignalR;
+using IIoT.Collector.Storage;
+using IIoT.Collector.Storage.Query;
+using IIoT.Collector.ViewModels;
+using IIoT.Collector.Views.Alarm;
+using IIoT.Collector.Views.Device;
+using IIoT.Collector.Views.Flow;
+using IIoT.Collector.Views.Status;
+using IIoT.Collector.Views.Trend;
+using IIoT.Collector.Views.Device;
 using IIoT.UI.Themes;
-using lssLib.Messaging;
 using lssLib.Log;
+using lssLib.Messaging;
+using lssLib.Net;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System.Windows;
@@ -93,9 +95,12 @@ public partial class App : Application
             //   (미등록 드라이버 경고가 정확히 동작하려면 플러그인 목록이 먼저 채워져야 함)
             await _services.GetRequiredService<CollectorConfigLoader>()
                             .LoadAsync();
-            
             // ★ C-EX-01: DeviceInstance 트리 조립 (ConfigLoader 로드 직후)
             _services.GetRequiredService<DeviceInstanceService>()
+                     .Initialize();
+
+            // ★ C-EX-01-6: 장비 트리 화면 스냅샷 갱신 시작
+            _services.GetRequiredService<DeviceTreeViewModel>()
                      .Initialize();
 
             // ★ C-04: 설정 로드 완료 직후 LiveTags 초기 행 구성 + EventBus 구독 시작
@@ -225,6 +230,15 @@ public partial class App : Application
         services.AddSingleton<AlarmView>(sp =>
             new AlarmView(sp.GetRequiredService<AlarmViewModel>()));
         
+        // ── DeviceInstance 통합 조회 서비스 (C-EX-01 신규)
+        services.AddSingleton<DeviceInstanceService>();
+        services.AddSingleton<DeviceTreeViewModel>(sp =>
+              new DeviceTreeViewModel(
+                  sp.GetRequiredService<DeviceInstanceService>(),
+                  sp.GetRequiredService<CollectorSettingsLoader>()));
+        services.AddSingleton<DeviceTreeView>(sp =>
+            new DeviceTreeView(sp.GetRequiredService<DeviceTreeViewModel>()));
+
         // ── 이상값 필터 (C-16)
         services.AddSingleton<AnomalyFilterService>();
 
@@ -290,7 +304,8 @@ public partial class App : Application
                 sp.GetRequiredService<StatusView>(),
                 sp.GetRequiredService<AlarmView>(),
                 sp.GetRequiredService<FlowView>(),
-                sp.GetRequiredService<TrendView>()));
+                sp.GetRequiredService<TrendView>(),
+                sp.GetRequiredService<DeviceTreeView>()));   // ★ C-EX-01-6 신규
 
         services.AddSingleton<NotificationService>();
         services.AddSingleton<EscalationManager>();

@@ -111,6 +111,13 @@
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
 
+                <!-- C-EX-01-6: 장비 탭 -->
+                <Button Content="🖥  장비"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="4"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40" Padding="16,0" />
+
                 <!-- 로그 패널 토글 버튼 (탭 전환이 아닌 하단 패널 토글) -->
                 <Button Content="📋  로그"
                         Command="{Binding SwitchTabCommand}"
@@ -205,6 +212,12 @@
             <Grid Visibility="{Binding IsTrendTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <ContentControl x:Name="TrendViewHost" />
+            </Grid>
+
+            <!-- 장비 탭 (4) — DeviceTreeView (코드비하인드에서 DI 주입) C-EX-01-6 -->
+            <Grid Visibility="{Binding IsDeviceTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <ContentControl x:Name="DeviceTreeViewHost" />
             </Grid>
 
         </Grid>

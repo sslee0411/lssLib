@@ -55,6 +55,7 @@ public sealed class ConfigReloadWatcher : IAsyncDisposable
     private readonly StatusViewModel         _statusViewModel;
     private readonly AlarmViewModel          _alarmViewModel;
     private readonly DataCollectionService   _dataService;
+    private readonly DeviceInstanceService   _deviceInstanceService;   // ★ C-EX-01 신규
 
     private FileSystemWatcher? _watcher;
 
@@ -69,7 +70,8 @@ public sealed class ConfigReloadWatcher : IAsyncDisposable
         AlarmStateManager      alarmManager,
         StatusViewModel        statusViewModel,
         AlarmViewModel         alarmViewModel,
-        DataCollectionService  dataService)
+        DataCollectionService  dataService,
+        DeviceInstanceService deviceInstanceService)   // ★ C-EX-01 신규
     {
         _configLoader    = configLoader;
         _flowEngine      = flowEngine;
@@ -77,6 +79,7 @@ public sealed class ConfigReloadWatcher : IAsyncDisposable
         _statusViewModel = statusViewModel;
         _alarmViewModel  = alarmViewModel;
         _dataService     = dataService;
+        _deviceInstanceService = deviceInstanceService;   // ★ C-EX-01 신규
     }
 
     // §3 ─ 감시 시작 ───────────────────────────────────────
@@ -158,6 +161,9 @@ public sealed class ConfigReloadWatcher : IAsyncDisposable
             // ⑤ LiveTag 목록 재구성 (UI 스레드 전환 불필요 — BindingOperations 동기화됨)
             _statusViewModel.Initialize();
             _alarmViewModel.Initialize();
+
+            // ⑤B ★ C-EX-01: DeviceInstance 트리 재조립 (새 device.json 기준)
+            _deviceInstanceService.Initialize();
 
             // ⑥ SDT + 저장 서비스 재시작
             _dataService.Initialize();

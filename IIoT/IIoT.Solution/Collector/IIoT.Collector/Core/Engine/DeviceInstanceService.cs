@@ -16,8 +16,10 @@
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Events;
 using IIoT.Collector.Core.Models;
+using IIoT.Contracts;
 using lssLib.Log;
 using lssLib.Messaging;
+using System.Linq;
 
 namespace IIoT.Collector.Core.Engine;
 
@@ -65,6 +67,35 @@ public sealed class DeviceInstanceService : IDisposable
     public TagInstance? GetTag(string tagId)
         => _tagIndex.TryGetValue(tagId, out var t) ? t : null;
 
+    // §3B ─ 필터링/검색 API (C-EX-01-5 신규) ───────────────
+
+    /// <summary>현재 활성 알람이 걸려 있는 Tag 전체 (Device 무관하게 평탄화)</summary>
+    public IReadOnlyList<TagInstance> GetAlarmedTags()
+        => _tagIndex.Values.Where(t => t.ActiveAlarmLevel is not null).ToList();
+
+    /// <summary>지정 품질(Good/Bad/Timeout/Disconnected) 의 Tag 전체</summary>
+    public IReadOnlyList<TagInstance> GetTagsByQuality(TagQuality quality)
+        => _tagIndex.Values.Where(t => t.Quality == quality).ToList();
+
+    /// <summary>지정 종합 상태의 Device 전체</summary>
+    public IReadOnlyList<DeviceInstance> GetByHealthStatus(DeviceHealthStatus status)
+        => _devices.Values.Where(d => d.HealthStatus == status).ToList();
+
+    /// <summary>
+    /// Device 이름 또는 하위 Tag 이름에 keyword 가 포함된 Device 목록 검색.
+    /// keyword 가 비어있으면 전체 목록 반환.
+    /// </summary>
+    public IReadOnlyList<DeviceInstance> Search(string keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword)) return GetAll();
+
+        var kw = keyword.Trim();
+        return _devices.Values
+            .Where(d => d.Name.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                     || d.Tags.Any(t => t.Name.Contains(kw, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+    }
+
     // §4 ─ 초기화 ──────────────────────────────────────────
 
     /// <summary>
@@ -101,6 +132,7 @@ public sealed class DeviceInstanceService : IDisposable
                     Memo       = tag.Memo,
                     IsEnabled  = tag.IsEnabled,
                     IsVirtual  = tag.IsVirtual,
+                    Expression = tag.Expression,
                     Scale      = scale,
                     AlarmRule  = alarmRule,
                     Unit       = tag.Unit

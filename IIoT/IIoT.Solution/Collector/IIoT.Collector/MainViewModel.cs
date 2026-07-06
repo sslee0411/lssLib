@@ -29,6 +29,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsAlarmTab))]
     [NotifyPropertyChangedFor(nameof(IsFlowTab))]
     [NotifyPropertyChangedFor(nameof(IsTrendTab))]
+    [NotifyPropertyChangedFor(nameof(IsDeviceTab))]   // ★ C-EX-01-6 신규
     private int _activeTabIndex;
 
     // §2 ─ 탭 가시성 ──────────────────────────────────────
@@ -45,6 +46,8 @@ public partial class MainViewModel : ObservableObject
     /// <summary>수집 이력 조회 탭 (3) — C-13</summary>
     public bool IsTrendTab  => ActiveTabIndex == 3;
 
+    /// <summary>장비 탭 (4) — C-EX-01-6 신규</summary>
+    public bool IsDeviceTab => ActiveTabIndex == 4;
     // §3 ─ 로그 패널 ──────────────────────────────────────
 
     /// <summary>

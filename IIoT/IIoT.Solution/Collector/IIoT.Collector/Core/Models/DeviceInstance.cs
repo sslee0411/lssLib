@@ -15,8 +15,24 @@
 
 using IIoT.Collector.Core.Config;
 using IIoT.Contracts;
+using System.Linq;
 
 namespace IIoT.Collector.Core.Models;
+
+/// <summary>
+/// DeviceInstance 종합 상태 (계산값 — HealthStatus 프로퍼티에서 사용).
+/// </summary>
+public enum DeviceHealthStatus
+{
+    /// <summary>정상 — 연결됨, 활성 알람 없음</summary>
+    Normal,
+    /// <summary>경고 — 연결됨, L/H 등급 알람 발생 중</summary>
+    Warning,
+    /// <summary>위험 — 연결됨, HH/LL 등급 알람 발생 중</summary>
+    Alarm,
+    /// <summary>연결 끊김 (일시정지 포함)</summary>
+    Disconnected
+}
 
 /// <summary>
 /// PLC/Device 1개의 통합 인스턴스.
@@ -57,6 +73,35 @@ public sealed class DeviceInstance
 
     /// <summary>재연결 시도 중 여부 (C-12)</summary>
     public bool IsRetrying { get; set; }
+
+    // §3 ─ 계산 프로퍼티 (C-EX-01-4 신규) ──────────────────
+
+    /// <summary>하위 Tag 총 개수</summary>
+    public int TagCount => Tags.Count;
+
+    /// <summary>품질=Good 인 Tag 개수</summary>
+    public int GoodCount => Tags.Count(t => t.Quality == TagQuality.Good);
+
+    /// <summary>품질≠Good 인 Tag 개수 (Bad/Timeout/Disconnected 합)</summary>
+    public int BadCount => Tags.Count(t => t.Quality != TagQuality.Good);
+
+    /// <summary>현재 활성 알람이 걸려 있는 Tag 개수</summary>
+    public int ActiveAlarmCount => Tags.Count(t => t.ActiveAlarmLevel is not null);
+
+    /// <summary>
+    /// 종합 상태 요약.
+    /// 우선순위: 연결끊김/일시정지 &gt; HH·LL 알람 &gt; H·L 알람 &gt; 정상
+    /// </summary>
+    public DeviceHealthStatus HealthStatus
+    {
+        get
+        {
+            if (!IsConnected || IsPaused) return DeviceHealthStatus.Disconnected;
+            if (Tags.Any(t => t.ActiveAlarmLevel is "HH" or "LL")) return DeviceHealthStatus.Alarm;
+            if (ActiveAlarmCount > 0) return DeviceHealthStatus.Warning;
+            return DeviceHealthStatus.Normal;
+        }
+    }
 }
 
 /// <summary>
@@ -78,6 +123,9 @@ public sealed class TagInstance
     public string Memo     { get; init; } = string.Empty;
     public bool   IsEnabled  { get; init; } = true;
     public bool   IsVirtual  { get; init; } = false;
+
+    /// <summary>가상(계산) Tag 수식 (예: "[T001] + [T002]"). IsVirtual=false 면 null</summary>
+    public string? Expression { get; init; }
 
     /// <summary>해석된 스케일 규칙 (null = 스케일 미설정, Raw 값 그대로 사용)</summary>
     public ScaleEntryDto? Scale { get; init; }

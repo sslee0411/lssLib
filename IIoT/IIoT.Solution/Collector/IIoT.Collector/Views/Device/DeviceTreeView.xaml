@@ -1,0 +1,206 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Collector · Views/Device/DeviceTreeView.xaml
+     역할: [장비] 탭 — DeviceInstance 트리(PLC → Tag) 조회 화면
+           검색어로 Device/Tag 이름 필터링, 알람/품질 상태 색상 표시
+           통신상태·주소/DataType·가상Tag수식·전역(압축/필터 등)설정 표시
+     C-EX-01-6: 신규
+     업데이트: 2026-07-06 (통신상태/주소·DataType/수식/전역설정 표시 추가)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Collector.Views.Device.DeviceTreeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:IIoT.Collector.ViewModels"
+             Background="{DynamicResource BgBrush}">
+
+    <UserControl.Resources>
+        <!-- ★ SKILL.md 규칙: UserControl.Resources 는 <UserControl> 직계 자식이어야 함 -->
+        <!-- HasAlarm/HasExpression(bool) → Visibility 변환용 -->
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="44" />
+            <RowDefinition Height="26" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 검색 + 요약 -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Right"
+                           Text="{Binding SummaryText}"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0" />
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource PropInput}"
+                         Width="260"
+                         VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <!-- ★ 신규: 전역(공통) 설정 요약 — 압축/필터/강제쓰기/알림/가상Tag 활성 여부 -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,0">
+            <TextBlock Text="{Binding GlobalSettingsText}"
+                       FontSize="10"
+                       Foreground="{DynamicResource Text3Brush}"
+                       VerticalAlignment="Center" />
+        </Border>
+
+        <!-- 트리 -->
+        <TreeView Grid.Row="2"
+                  Background="{DynamicResource BgBrush}"
+                  BorderThickness="0"
+                  ItemsSource="{Binding Devices}"
+                  Padding="8">
+            <TreeView.Resources>
+                <Style TargetType="TreeViewItem">
+                    <Setter Property="IsExpanded" Value="True" />
+                    <!-- ★ 버그 수정: 폭이 안 채워지던 문제 — 기본값은 Stretch 가 아님 -->
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                </Style>
+
+                <!-- ★ 버그 수정 (2026-07-06): 행 선택 후 포커스가 다른 컨트롤(검색창 등)로
+                     이동하면 TreeViewItem 기본 템플릿이 SystemColors.InactiveSelectionHighlight
+                     (OS 기본 밝은 회색/흰색)를 그대로 사용해 다크 테마 위에 흰 박스가 노출되던 문제.
+                     TreeViewItem.Background/Trigger 로는 고쳐지지 않음 — 기본 템플릿이
+                     SystemColors 키를 직접 참조하므로 이 리소스 자체를 재정의해야 함. -->
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}"
+                                 Color="#2D4A6B" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                                 Color="White" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                                 Color="#2D4A6B" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+                                 Color="White" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}"
+                                 Color="#2D4A6B" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}"
+                                 Color="White" />
+            </TreeView.Resources>
+
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type vm:DeviceTreeNodeViewModel}"
+                                           ItemsSource="{Binding Tags}">
+                    <!-- Device(PLC) 헤더 행 -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4"
+                                HorizontalAlignment="Stretch">
+                        <TextBlock Text="{Binding StatusIcon}"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0" />
+                        <TextBlock Text="{Binding Name}"
+                                   FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   VerticalAlignment="Center" />
+
+                        <!-- ★ 신규: 통신 상태 라벨 -->
+                        <Border Background="{DynamicResource CardBrush}"
+                                CornerRadius="3"
+                                Padding="6,1"
+                                Margin="8,0,0,0">
+                            <TextBlock Text="{Binding ConnectionStatusText}"
+                                       FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{Binding StatusColor}" />
+                        </Border>
+
+                        <TextBlock Text="{Binding SubTitle}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   VerticalAlignment="Center"
+                                   Margin="10,0,0,0" />
+                    </StackPanel>
+
+                    <HierarchicalDataTemplate.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:TagTreeNodeViewModel}">
+                            <StackPanel Margin="0,2" HorizontalAlignment="Stretch">
+                                <!-- 1줄: 이름 · 현재값 · 스케일 · 활성알람배지 -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="90" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Name}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextBrush}" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <TextBlock Text="값 " FontSize="11"
+                                                   Foreground="{DynamicResource Text3Brush}" />
+                                        <TextBlock Text="{Binding ValueText}"
+                                                   FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource AccBrush}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <TextBlock Text="스케일 " FontSize="11"
+                                                   Foreground="{DynamicResource Text3Brush}" />
+                                        <TextBlock Text="{Binding ScaleText}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource Text2Brush}" />
+                                    </StackPanel>
+                                    <Border Grid.Column="3"
+                                            Background="#552A1414"
+                                            CornerRadius="3"
+                                            Padding="6,1"
+                                            Visibility="{Binding HasAlarm,
+                                                         Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding AlarmBadge}"
+                                                   FontSize="10" FontWeight="Bold"
+                                                   Foreground="#FF6B6B" />
+                                    </Border>
+                                </Grid>
+
+                                <!-- 2줄: 알람 규칙 · 알림 설정 · 기타(가상/비활성) -->
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock Text="알람 " FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}" />
+                                    <TextBlock Text="{Binding AlarmText}" FontSize="10"
+                                               Foreground="{DynamicResource Text2Brush}"
+                                               Margin="0,0,14,0" />
+
+                                    <TextBlock Text="알림 " FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}" />
+                                    <TextBlock Text="{Binding NotifyText}" FontSize="10"
+                                               Foreground="{DynamicResource Text2Brush}"
+                                               Margin="0,0,14,0" />
+
+                                    <TextBlock Text="{Binding ExtraBadge}" FontSize="10"
+                                               FontWeight="SemiBold"
+                                               Foreground="#D4A72C" />
+                                </StackPanel>
+
+                                <!-- ★ 신규 3줄: 주소/DataType · 가상Tag 수식(해당시만) -->
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock Text="주소 " FontSize="10"
+                                               Foreground="{DynamicResource Text3Brush}" />
+                                    <TextBlock Text="{Binding AddressText}" FontSize="10"
+                                               Foreground="{DynamicResource Text2Brush}"
+                                               Margin="0,0,14,0" />
+
+                                    <TextBlock Text="{Binding ExpressionText}" FontSize="10"
+                                               FontStyle="Italic"
+                                               Foreground="{DynamicResource AccBrush}"
+                                               Visibility="{Binding HasExpression,
+                                                            Converter={StaticResource BoolToVisibility}}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </HierarchicalDataTemplate.ItemTemplate>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </Grid>
+</UserControl>

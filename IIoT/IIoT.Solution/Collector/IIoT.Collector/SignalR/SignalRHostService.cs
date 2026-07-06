@@ -32,8 +32,11 @@
 // ══════════════════════════════════════════════════════════
 
 using System.IO;
+using System.Text.Json;
 using IIoT.Collector.Core.Config;
+using IIoT.Collector.Core.Engine;
 using lssLib.Log;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,6 +55,7 @@ public sealed class SignalRHostService : IAsyncDisposable
     // §1 ─ 필드 ────────────────────────────────────────────
 
     private readonly CollectorSettingsLoader _settingsLoader;
+    private readonly DeviceInstanceService _deviceInstanceService;   // ★ C-EX-01-7 신규
 
     private WebApplication? _app;
     private Thread?         _serverThread;
@@ -62,9 +66,12 @@ public sealed class SignalRHostService : IAsyncDisposable
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
-    public SignalRHostService(CollectorSettingsLoader settingsLoader)
+    public SignalRHostService(
+        CollectorSettingsLoader settingsLoader,
+        DeviceInstanceService deviceInstanceService)   // ★ C-EX-01-7 신규
     {
         _settingsLoader = settingsLoader;
+        _deviceInstanceService = deviceInstanceService;
     }
 
     // §3 ─ 시작 ────────────────────────────────────────────
@@ -133,6 +140,21 @@ public sealed class SignalRHostService : IAsyncDisposable
         {
             status    = "ok",
             timestamp = DateTimeOffset.UtcNow.ToString("O"),
+        });
+
+        // ── ★ C-EX-01-7 신규: DeviceInstance 전체 스냅샷 REST 엔드포인트
+        //    Monitor 가 최초 접속 시 전체 트리를 한 번에 받아오는 용도.
+        //    이후 증분 변경은 기존 SignalR "TagValue"/"AlarmChanged" 이벤트로 수신.
+        //    ※ 클로저로 DeviceInstanceService 를 직접 캡처 (ASP.NET Core 자체 DI 미사용
+        //       — WPF 쪽 DI 컨테이너의 싱글턴 인스턴스를 그대로 재사용하기 위함)
+        _app.MapGet("/api/devices", () =>
+        {
+            var devices = _deviceInstanceService.GetAll();
+            return Results.Json(devices, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
         });
 
         // ── IIoTHubPusher 생성 (DI 컨테이너에서 IHubContext 꺼내기)
