@@ -280,6 +280,7 @@
                                            Foreground="{DynamicResource Text2Brush}"
                                            Margin="0,0,0,6" />
                                 <ComboBox SelectedValue="{Binding BaudRate}"
+                                          SelectedValuePath="Content"
                                           Style="{DynamicResource PropCombo}">
                                     <ComboBoxItem Content="9600" />
                                     <ComboBoxItem Content="19200" />
@@ -304,6 +305,7 @@
                                            Foreground="{DynamicResource Text2Brush}"
                                            Margin="0,0,0,6" />
                                 <ComboBox SelectedValue="{Binding Parity}"
+                                          SelectedValuePath="Content"
                                           Style="{DynamicResource PropCombo}">
                                     <ComboBoxItem Content="None" />
                                     <ComboBoxItem Content="Odd" />
@@ -316,6 +318,7 @@
                                            Foreground="{DynamicResource Text2Brush}"
                                            Margin="0,0,0,6" />
                                 <ComboBox SelectedValue="{Binding DataBits}"
+                                          SelectedValuePath="Content"
                                           Style="{DynamicResource PropCombo}">
                                     <ComboBoxItem Content="7" />
                                     <ComboBoxItem Content="8" />
@@ -327,6 +330,7 @@
                                            Foreground="{DynamicResource Text2Brush}"
                                            Margin="0,0,0,6" />
                                 <ComboBox SelectedValue="{Binding StopBits}"
+                                          SelectedValuePath="Content"
                                           Style="{DynamicResource PropCombo}">
                                     <ComboBoxItem Content="One" />
                                     <ComboBoxItem Content="Two" />

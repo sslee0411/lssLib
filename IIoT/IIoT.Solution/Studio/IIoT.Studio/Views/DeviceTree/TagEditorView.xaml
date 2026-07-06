@@ -114,6 +114,7 @@
             <TextBlock Text="데이터 타입" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <ComboBox SelectedValue="{Binding DataType}"
+                      SelectedValuePath="Content"
                       Style="{DynamicResource PropCombo}" Margin="0,0,0,16">
                 <ComboBoxItem Content="FloatLE" />
                 <ComboBoxItem Content="FloatBE" />

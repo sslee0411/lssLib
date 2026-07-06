@@ -19,6 +19,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Models;
+using IIoT.Contracts;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -104,6 +105,17 @@ public sealed partial class TagTreeNodeViewModel : ObservableObject
 
     [ObservableProperty] private string _valueText = "—";
 
+    /// <summary>비활성/품질이상 상태 배지 텍스트 (이름과 값 사이에 표시, 정상이면 빈 문자열)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStatusIssue))]
+    private string _statusBadgeText = string.Empty;
+
+    /// <summary>상태 배지 색상 (헥스 문자열)</summary>
+    [ObservableProperty] private string _statusBadgeColor = string.Empty;
+
+    /// <summary>상태 배지 표시 여부 (Visibility 바인딩용)</summary>
+    public bool HasStatusIssue => !string.IsNullOrEmpty(StatusBadgeText);
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasAlarm))]
     private string _alarmBadge = string.Empty;
@@ -143,10 +155,20 @@ public sealed partial class TagTreeNodeViewModel : ObservableObject
         AlarmText  = _BuildAlarmSummary(t.AlarmRule);
         NotifyText = _BuildNotifySummary(t.AlarmRule);
 
-        var extras = new List<string>();
-        if (t.IsVirtual)  extras.Add("가상");
-        if (!t.IsEnabled) extras.Add("비활성");
-        ExtraBadge = extras.Count > 0 ? string.Join(" · ", extras) : string.Empty;
+        // ── 요청사항: 비활성/품질이상 상태를 이름-값 사이 배지로 표시 ──
+        //   우선순위: 비활성 > 품질 이상(Bad/Timeout/Disconnected) > 정상(배지 없음)
+        (StatusBadgeText, StatusBadgeColor) = !t.IsEnabled
+            ? ("비활성", "#888888")
+            : t.Quality switch
+            {
+                TagQuality.Bad          => ("품질불량", "#E05050"),
+                TagQuality.Timeout      => ("응답없음", "#D4A72C"),
+                TagQuality.Disconnected => ("연결끊김", "#888888"),
+                _                       => (string.Empty, string.Empty),
+            };
+
+        // ExtraBadge 는 "가상" 여부만 표시 (비활성은 위 StatusBadge 로 이동 — 중복 방지)
+        ExtraBadge = t.IsVirtual ? "가상" : string.Empty;
 
         // ── 주소/DataType (요청사항: Tag 주소/DataType 추가) ──
         AddressText = t.IsVirtual

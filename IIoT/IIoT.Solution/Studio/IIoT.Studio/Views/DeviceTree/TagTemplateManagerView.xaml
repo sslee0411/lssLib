@@ -192,6 +192,7 @@
                                         <!-- BufType -->
                                         <ComboBox Grid.Column="1"
                                                   SelectedValue="{Binding BufType}"
+                                                  SelectedValuePath="Content"
                                                   Style="{DynamicResource PropCombo}"
                                                   FontSize="11"
                                                   Margin="0,0,4,0">
