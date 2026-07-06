@@ -56,4 +56,18 @@ public sealed class TagRuntimeConfig
 
     /// <summary>이 Tag 가 속한 상위 PLC/Device ID (역참조 — 진단·UI 표시용)</summary>
     public string ParentPlcId { get; init; } = string.Empty;
+
+    // ★ C-18 신규 — 가상 Tag / 계산 Tag
+    /// <summary>
+    /// 가상(계산) Tag 여부. true 면 드라이버 폴링 대상에서 제외되고,
+    /// VirtualTagEngine 이 Expression 을 평가하여 값을 계산·발행한다.
+    /// </summary>
+    public bool IsVirtual { get; init; } = false;
+
+    /// <summary>
+    /// 계산식 (NCalc). 다른 Tag 값은 <c>[TagId]</c> 형태로 참조한다.
+    /// 예: "[T001] + [T002] * 0.5"
+    /// IsVirtual=false 인 Tag 에서는 사용하지 않음.
+    /// </summary>
+    public string? Expression { get; init; }
 }

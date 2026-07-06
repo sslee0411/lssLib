@@ -75,6 +75,8 @@ public partial class PlcFlowCardViewModel : ObservableObject
     /// <summary>초당 수집 건수 (최근 1초 기준 — Tag수 × 1회 폴링)</summary>
     [ObservableProperty] private string _tpsText = "—";
 
+    /// <summary>수집 일시정지 여부 (C-19 신규)</summary>
+    [ObservableProperty] private bool _isPaused;
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     public PlcFlowCardViewModel(
@@ -139,6 +141,14 @@ public partial class PlcFlowCardViewModel : ObservableObject
         {
             StatusText  = $"↻ 재연결 중 ({stat.RetryCount}회)";
             StatusColor = "#EF9F27";
+        }
+
+        // ★ C-19: 일시정지 상태 반영
+        IsPaused = stat.IsPaused;
+        if (IsPaused)
+        {
+            StatusText = "⏸ 일시정지";
+            StatusColor = "#888888";
         }
     }
 }

@@ -69,6 +69,7 @@ public sealed class FlowEngine : IAsyncDisposable
         public int    TagCount    { get; init; }
         public int    PollMs      { get; init; }
         public bool   IsConnected { get; set; }
+        public bool IsPaused { get; set; }   // ★ C-19 신규
         public long   PollCount   { get; set; }
         public long   ErrorCount  { get; set; }
         public double LastPollMs  { get; set; }
@@ -319,6 +320,38 @@ public sealed class FlowEngine : IAsyncDisposable
         _drivers.Remove(plc.PlcId);
 
         _ScheduleRetry(plc);
+    }
+
+    // §11 ─ 일시정지 / 재개 (C-19 신규) ────────────────────
+
+    /// <summary>
+    /// 지정 PLC 의 폴링을 일시정지합니다. 드라이버 연결은 유지됩니다.
+    /// </summary>
+    public bool PauseCollection(string plcId)
+    {
+        if (!_scheduledTasks.TryGetValue(plcId, out var task)) return false;
+
+        task.Pause();
+        if (_stats.TryGetValue(plcId, out var stat)) stat.IsPaused = true;
+
+        LogManager.Instance.Info("FlowEngine", $"[{plcId}] 수집 일시정지");
+        EventBus.Instance.Publish(new PlcPauseChangedEvent(plcId, true));
+        return true;
+    }
+
+    /// <summary>
+    /// 지정 PLC 의 폴링을 재개합니다.
+    /// </summary>
+    public bool ResumeCollection(string plcId)
+    {
+        if (!_scheduledTasks.TryGetValue(plcId, out var task)) return false;
+
+        task.Resume();
+        if (_stats.TryGetValue(plcId, out var stat)) stat.IsPaused = false;
+
+        LogManager.Instance.Info("FlowEngine", $"[{plcId}] 수집 재개");
+        EventBus.Instance.Publish(new PlcPauseChangedEvent(plcId, false));
+        return true;
     }
 
     // §9 ─ 재연결 스케줄 등록 (C-12) ──────────────────────

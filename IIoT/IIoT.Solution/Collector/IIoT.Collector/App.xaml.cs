@@ -117,6 +117,10 @@ public partial class App : Application
             await _services.GetRequiredService<ITimeSeriesStore>()
                             .InitializeAsync();
             
+            // ★ C-17: 집계 서비스 초기화 (SQLite Provider 일 때만 활성화됨)
+            await _services.GetRequiredService<TagAggregationService>()
+                            .InitializeAsync();
+
             // ★ C-16: 이상값 필터 초기화 (FlowEngine 시작 전 — 첫 폴링부터 적용되도록)
             _services.GetRequiredService<AnomalyFilterService>()
                      .Initialize();
@@ -124,6 +128,10 @@ public partial class App : Application
             // ★ C-03: 설정 로드 완료 후 수집 시작
             await _services.GetRequiredService<FlowEngine>()
                             .StartAsync();
+
+            // ★ C-18: 가상 Tag 엔진 초기화 (FlowEngine 시작 이후)
+            _services.GetRequiredService<VirtualTagEngine>()
+                     .Initialize();
 
             // ★ C-07: SDT 필터 + 저장 서비스 초기화 (FlowEngine 이후)
             _services.GetRequiredService<DataCollectionService>()
@@ -175,6 +183,11 @@ public partial class App : Application
             await _services.GetRequiredService<ConfigReloadWatcher>().DisposeAsync();
             // C-07: 저장 서비스 먼저 종료 (남은 배치 Flush)
             await _services.GetRequiredService<DataCollectionService>().DisposeAsync();
+            // C-17: 집계 서비스 종료
+            await _services.GetRequiredService<TagAggregationService>().DisposeAsync();
+            // C-18: 가상 Tag 엔진 종료
+            _services.GetRequiredService<VirtualTagEngine>().Dispose();
+
             await _services.GetRequiredService<FlowEngine>().StopAsync();
         }
 
@@ -210,6 +223,9 @@ public partial class App : Application
         // ── 수집 흐름 엔진 (C-03)
         services.AddSingleton<FlowEngine>();
 
+        // ── 가상 Tag 엔진 (C-18 신규)
+        services.AddSingleton<VirtualTagEngine>();
+
         // ── 설정 로더 (C-07)
         services.AddSingleton<CollectorSettingsLoader>();
 
@@ -232,6 +248,9 @@ public partial class App : Application
         services.AddSingleton<TrendViewModel>();
         services.AddSingleton<TrendView>(sp =>
             new TrendView(sp.GetRequiredService<TrendViewModel>()));
+        
+        // ── 이력 집계 (C-17 신규)
+        services.AddSingleton<TagAggregationService>();
 
         // ── SignalR Hub 서비스 (C-11)
         services.AddSingleton<SignalRHostService>();

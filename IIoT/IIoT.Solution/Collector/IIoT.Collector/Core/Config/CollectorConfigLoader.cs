@@ -216,7 +216,10 @@ public sealed class CollectorConfigLoader
             AlarmEntryId = dto.AlarmEntryId,
             Memo         = dto.Memo ?? string.Empty,
             IsEnabled    = dto.IsEnabled ?? true,
-            ParentPlcId  = parentPlcId
+            ParentPlcId  = parentPlcId,
+            // ★ C-18 신규
+            IsVirtual = dto.IsVirtual ?? false,
+            Expression = dto.Expression
         };
 
     // §8 ─ 미등록 드라이버 경고 ───────────────────────────────

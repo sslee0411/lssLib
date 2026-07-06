@@ -77,6 +77,9 @@ public sealed class DeviceNodeDto
 
     /// <summary>Tag 수집 활성 여부 (null = true 기본값)</summary>
     public bool? IsEnabled { get; set; }
+    // ★ C-18 신규 — 가상 Tag / 계산 Tag
+    public bool? IsVirtual { get; set; }
+    public string? Expression { get; set; }
 
     public List<DeviceNodeDto> Children { get; set; } = new();
 }

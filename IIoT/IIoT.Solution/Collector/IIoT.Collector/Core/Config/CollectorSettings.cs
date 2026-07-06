@@ -33,6 +33,8 @@ public sealed class CollectorSettings
     public ForceWriteSettings   ForceWrite   { get; set; } = new();
     // ★ C-16 신규
     public FilterSettings       Filter       { get; set; } = new();
+    // ★ C-18 신규
+    public VirtualTagSettings   VirtualTag   { get; set; } = new();
 }
 
 // ── Storage 섹션 ──────────────────────────────────────────
@@ -327,4 +329,18 @@ public sealed class FilterSettings
     /// 이 범위 이내의 변화는 노이즈로 간주하여 이벤트 발행 자체를 억제한다.
     /// </summary>
     public double DeadbandPercent { get; set; } = 0.1;
+}
+
+// ── 가상 Tag 설정 (C-18 신규) ─────────────────────────────
+
+/// <summary>
+/// 가상(계산) Tag 엔진 설정.
+/// </summary>
+public sealed class VirtualTagSettings
+{
+    /// <summary>가상 Tag 엔진 활성화 여부 (기본 true)</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>계산 주기 (ms, 기본 1000)</summary>
+    public int IntervalMs { get; set; } = 1000;
 }

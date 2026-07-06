@@ -14,6 +14,7 @@ using lssLib.Messaging;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Data;
+using CommunityToolkit.Mvvm.Input;
 
 namespace IIoT.Collector.ViewModels;
 
@@ -130,6 +131,19 @@ public partial class FlowViewModel : ObservableObject, IDisposable
         });
 
         return Task.CompletedTask;
+    }
+    // §9 ─ 일시정지/재개 커맨드 (C-19 신규) ────────────────
+
+    [RelayCommand]
+    private void TogglePause(string plcId)
+    {
+        var card = PlcCards.FirstOrDefault(c => c.PlcId == plcId);
+        if (card is null) return;
+
+        if (card.IsPaused)
+            _flowEngine.ResumeCollection(plcId);
+        else
+            _flowEngine.PauseCollection(plcId);
     }
 
     // §7 ─ 정리 ────────────────────────────────────────────

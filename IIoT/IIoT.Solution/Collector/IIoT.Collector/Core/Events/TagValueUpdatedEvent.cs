@@ -53,3 +53,13 @@ public sealed record PlcConnectionChangedEvent(
     bool    IsConnected,
     string? Message = null
 ) : EventMessage;
+
+/// <summary>
+/// PLC 수집 일시정지/재개 이벤트 (C-19 신규).
+/// </summary>
+/// <param name="PlcId">대상 PLC/Device ID</param>
+/// <param name="IsPaused">true=일시정지됨, false=재개됨</param>
+public sealed record PlcPauseChangedEvent(
+    string PlcId,
+    bool IsPaused
+) : EventMessage;
