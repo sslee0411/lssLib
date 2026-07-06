@@ -31,6 +31,8 @@ public sealed class CollectorSettings
     public NotificationSettings Notification { get; set; } = new();
     // ★ C-15 신규
     public ForceWriteSettings   ForceWrite   { get; set; } = new();
+    // ★ C-16 신규
+    public FilterSettings       Filter       { get; set; } = new();
 }
 
 // ── Storage 섹션 ──────────────────────────────────────────
@@ -295,4 +297,34 @@ public sealed class ForceWriteSettings
     /// 쓰기 요청을 추가로 로그에 경고 표시한다 (쓰기 자체를 막지는 않음).
     /// </summary>
     public bool WarnOnActiveAlarm { get; set; } = true;
+}
+
+// ── 이상값 필터 설정 (C-16 신규) ──────────────────────────
+
+/// <summary>
+/// 이상값 필터(Spike Filter / Deadband) 설정.
+/// <para>
+/// ScaleEngine 변환 직후, EventBus 발행 이전 단계에서 적용되어
+/// Alarm 판정·저장·UI 표시 전체에 영향을 준다 (C-07 SDT 는 저장에만 영향).
+/// </para>
+/// </summary>
+public sealed class FilterSettings
+{
+    /// <summary>스파이크 필터 활성화 여부 (기본 false)</summary>
+    public bool SpikeFilterEnabled { get; set; } = false;
+
+    /// <summary>
+    /// 스파이크 판정 임계값 (스케일 EngMax-EngMin 기준 비율, %).
+    /// 직전 값 대비 이 비율을 초과하는 변화는 1차로 스파이크 의심 처리된다.
+    /// </summary>
+    public double SpikeMaxDeltaPercent { get; set; } = 20.0;
+
+    /// <summary>데드밴드 필터 활성화 여부 (기본 false)</summary>
+    public bool DeadbandEnabled { get; set; } = false;
+
+    /// <summary>
+    /// 데드밴드 임계값 (스케일 EngMax-EngMin 기준 비율, %).
+    /// 이 범위 이내의 변화는 노이즈로 간주하여 이벤트 발행 자체를 억제한다.
+    /// </summary>
+    public double DeadbandPercent { get; set; } = 0.1;
 }

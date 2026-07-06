@@ -39,7 +39,8 @@ public sealed class FlowEngine : IAsyncDisposable
     private readonly CollectorPluginService  _pluginService;
     private readonly ScaleEngine             _scaleEngine;
     private readonly AlarmStateManager       _alarmManager;
-    private readonly CollectorSettingsLoader _settingsLoader;
+    private readonly CollectorSettingsLoader _settingsLoader; 
+    private readonly AnomalyFilterService   _anomalyFilter;   // ★ C-16 신규
 
     /// <summary>PlcId → 드라이버 인스턴스</summary>
     private readonly Dictionary<string, IProtocolDriver> _drivers = new();
@@ -92,13 +93,15 @@ public sealed class FlowEngine : IAsyncDisposable
         CollectorPluginService  pluginService,
         ScaleEngine             scaleEngine,
         AlarmStateManager       alarmManager,
-        CollectorSettingsLoader settingsLoader)
+        CollectorSettingsLoader settingsLoader,
+        AnomalyFilterService anomalyFilter)   // ★ C-16 신규
     {
         _configLoader   = configLoader;
         _pluginService  = pluginService;
         _scaleEngine    = scaleEngine;
         _alarmManager   = alarmManager;
         _settingsLoader = settingsLoader;
+        _anomalyFilter = anomalyFilter;          // ★ C-16 신규
     }
 
     // §5 ─ 시작 ────────────────────────────────────────────
@@ -219,6 +222,15 @@ public sealed class FlowEngine : IAsyncDisposable
         {
             if (!tagsById.TryGetValue(value.TagId, out var tagConfig)) continue;
             var scaled = _scaleEngine.Apply(tagConfig, value.RawValue);
+
+            // ★ C-16: 이상값 필터 (스파이크/데드밴드) — Alarm/저장/UI 모두에 적용되기 전에 필터링
+            if (_anomalyFilter.ShouldReject(value.TagId, scaled.EngValue, out var acceptedEng, out var rejectReason))
+            {
+                LogManager.Instance.Warn("FlowEngine",
+                    $"[{plc.Name}] {tagConfig.Name} 이상값 감지({rejectReason}) — " +
+                    $"{scaled.EngValue:F2} 폐기, 이전값 유지");
+                continue; // 이번 Tag 값은 발행하지 않음
+            }
 
             EventBus.Instance.Publish(new TagValueUpdatedEvent(
                 Value:         value,

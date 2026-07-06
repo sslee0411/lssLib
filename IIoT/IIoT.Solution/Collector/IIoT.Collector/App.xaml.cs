@@ -116,6 +116,10 @@ public partial class App : Application
             // ★ C-07: 저장소 초기화 (DB 연결 / 테이블 생성)
             await _services.GetRequiredService<ITimeSeriesStore>()
                             .InitializeAsync();
+            
+            // ★ C-16: 이상값 필터 초기화 (FlowEngine 시작 전 — 첫 폴링부터 적용되도록)
+            _services.GetRequiredService<AnomalyFilterService>()
+                     .Initialize();
 
             // ★ C-03: 설정 로드 완료 후 수집 시작
             await _services.GetRequiredService<FlowEngine>()
@@ -199,6 +203,9 @@ public partial class App : Application
         services.AddSingleton<AlarmViewModel>();
         services.AddSingleton<AlarmView>(sp =>
             new AlarmView(sp.GetRequiredService<AlarmViewModel>()));
+        
+        // ── 이상값 필터 (C-16)
+        services.AddSingleton<AnomalyFilterService>();
 
         // ── 수집 흐름 엔진 (C-03)
         services.AddSingleton<FlowEngine>();

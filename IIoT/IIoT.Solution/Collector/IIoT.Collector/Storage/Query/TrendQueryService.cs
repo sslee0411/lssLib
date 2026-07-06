@@ -103,13 +103,19 @@ public sealed class TrendQueryService
             await ctx.OpenAsync();
 
             // ① 전체 건수 조회 (다운샘플링 여부 결정)
+            // ★ 버그 수정: DB 저장 시각은 UTC(+00:00) 인데 from/to 는 로컬 시간(+09:00 등)이라
+            //   문자열 비교(SQLite TEXT 비교) 시 offset 불일치로 범위가 어긋나던 문제.
+            //   반드시 UTC 로 변환하여 저장 형식과 동일한 offset(+00:00)으로 맞춘다.
+            var fromUtc = from.ToUniversalTime();
+            var toUtc = to.ToUniversalTime();
+
             var countResult = await ctx.QueryTableAsync(
                 "SELECT COUNT(*) AS cnt FROM tag_history WHERE tag_id = @tagId AND timestamp >= @from AND timestamp <= @to",
                 CommandType.Text,
                 [
                     DbParam.In("@tagId", tagId),
-                    DbParam.In("@from",  from.ToString("O")),
-                    DbParam.In("@to",    to.ToString("O")),
+                    DbParam.In("@from",  fromUtc.ToString("O")),
+                    DbParam.In("@to",    toUtc.ToString("O")),
                 ]);
 
             if (!countResult.IsOk || countResult.Value is null)
@@ -153,8 +159,8 @@ public sealed class TrendQueryService
                 CommandType.Text,
                 [
                     DbParam.In("@tagId", tagId),
-                    DbParam.In("@from",  from.ToString("O")),
-                    DbParam.In("@to",    to.ToString("O")),
+                    DbParam.In("@from",  fromUtc.ToString("O")),
+                    DbParam.In("@to",    toUtc.ToString("O")),
                 ]);
 
             if (!dataResult.IsOk || dataResult.Value is null)
@@ -176,7 +182,6 @@ public sealed class TrendQueryService
             LogManager.Instance.Info("TrendQuery",
                 $"[{tagId}] {from:HH:mm}~{to:HH:mm} → {points.Count:#,0}건 " +
                 $"(전체 {totalCount:#,0}건, stride={stride})");
-
             return points;
         }
         catch (Exception ex)

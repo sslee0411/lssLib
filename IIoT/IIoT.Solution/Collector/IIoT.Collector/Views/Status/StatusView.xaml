@@ -3,7 +3,8 @@
      역할: 수집 현황 탭 — 실시간 Tag 값 표시 영역
      Col-Base-1: 레이아웃 뼈대
      C-04: StatusViewModel 바인딩 — 통계 카드 + Tag DataGrid 실데이터 연결
-     생성: 2026-06-29 / 수정: 2026-06-29
+     C-15: DataGrid "제어" 컬럼(강제쓰기 버튼) 추가
+     생성: 2026-06-29 / 수정: 2026-07-06
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Collector.Views.Status.StatusView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -200,35 +201,19 @@
                                          Binding="{Binding Name}" />
                     <DataGridTextColumn Header="Raw 값"
                                          Width="90"
-                                         Binding="{Binding RawDisplayValue}"
-                                         ElementStyle="{DynamicResource IIoTGridCellMono}" />
-                    <DataGridTextColumn Header="스케일값"
+                                         Binding="{Binding RawDisplayValue}" />
+                    <DataGridTextColumn Header="공학값"
                                          Width="90"
-                                         Binding="{Binding ScaledDisplayValue}">
-                        <DataGridTextColumn.ElementStyle>
-                            <!-- ★ 테마 Mono 스타일(IIoTGridCellMono) 기반으로 확장
-                                 → 스케일 미설정 Tag 는 흐리게 표시 (Raw 와 동일값이라는 신호) -->
-                            <Style TargetType="TextBlock"
-                                   BasedOn="{StaticResource IIoTGridCellMono}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding WasScaled}" Value="False">
-                                        <Setter Property="Opacity" Value="0.45" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                                         Binding="{Binding ScaledDisplayValue}" />
                     <DataGridTextColumn Header="단위"
                                          Width="60"
                                          Binding="{Binding DisplayUnit}" />
                     <DataGridTextColumn Header="품질"
-                                         Width="80"
+                                         Width="90"
                                          Binding="{Binding Quality}">
                         <DataGridTextColumn.ElementStyle>
-                            <!-- 품질별 색상: GridStatusGood 기반 + Foreground 만 트리거로 교체
-                                 (Setter Property="Style" 로 자기 자신을 갈아끼우면
-                                  ArgumentException: "Style 개체는 자신이 적용되는 개체의
-                                  Style 속성에 영향을 줄 수 없습니다." 발생 → Foreground 직접 지정으로 회피) -->
+                            <!-- ★ 품질별 색상 표시 (StaticResource → DynamicResource 혼용 시 문제
+                                 발생 → Foreground 직접 지정으로 회피) -->
                             <Style TargetType="TextBlock"
                                    BasedOn="{StaticResource GridStatusGood}">
                                 <Style.Triggers>
@@ -248,6 +233,19 @@
                     <DataGridTextColumn Header="갱신시각"
                                          Width="100"
                                          Binding="{Binding UpdatedAtText}" />
+
+                    <!-- ★ C-15 신규 — 강제쓰기 버튼 컬럼 -->
+                    <DataGridTemplateColumn Header="제어" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="강제쓰기"
+                                        Click="ForceWriteButton_Click"
+                                        Style="{DynamicResource GhostBtn}"
+                                        FontSize="10"
+                                        Padding="6,2" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
 
                 <!-- 행 스타일: 테마 IIoTGridRow 확장 + 품질별 배경색 -->
