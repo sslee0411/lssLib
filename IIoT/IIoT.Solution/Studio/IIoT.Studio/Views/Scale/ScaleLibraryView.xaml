@@ -236,6 +236,7 @@
                             <TextBlock Text="소수점 자릿수" FontSize="11" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
                             <ComboBox SelectedValue="{Binding DecimalPlaces}"
+                                      SelectedValuePath="Content"
                                       Style="{DynamicResource PropCombo}">
                                 <ComboBoxItem Content="0" />
                                 <ComboBoxItem Content="1" />
