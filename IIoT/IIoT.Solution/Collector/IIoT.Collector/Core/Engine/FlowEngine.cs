@@ -239,6 +239,50 @@ public sealed class FlowEngine : IAsyncDisposable
             okStat.LastPollAt  = DateTimeOffset.UtcNow;
         }
     }
+    // §7B ─ Tag 강제값 쓰기 (C-15 신규) ────────────────────
+
+    /// <summary>
+    /// 지정한 PLC/Tag 에 값을 강제로 씁니다.
+    /// <para>
+    /// ForceWriteService 에서만 호출되어야 하며(설정 활성화 여부는 그쪽에서 검증),
+    /// FlowEngine 자체는 연결된 드라이버 조회 + TagWriteRequest 변환만 담당한다.
+    /// </para>
+    /// </summary>
+    /// <param name="plcId">대상 PLC/Device ID</param>
+    /// <param name="tagId">대상 Tag ID</param>
+    /// <param name="value">쓸 값 (문자열, Raw 값 기준 — 드라이버가 DataType 에 맞게 변환)</param>
+    /// <param name="ct">취소 토큰</param>
+    public async Task<DriverWriteResult> WriteTagAsync(
+        string plcId, string tagId, string value, CancellationToken ct = default)
+    {
+        if (!_drivers.TryGetValue(plcId, out var driver) || !driver.IsConnected)
+            return DriverWriteResult.Fail($"PLC[{plcId}] 드라이버 미연결 상태");
+
+        var plc = _configLoader.Plcs.FirstOrDefault(p => p.PlcId == plcId);
+        var tag = plc?.Tags.FirstOrDefault(t => t.Id == tagId);
+        if (plc is null || tag is null)
+            return DriverWriteResult.Fail($"Tag[{tagId}] 를 PLC[{plcId}] 에서 찾을 수 없음");
+
+        var request = new TagWriteRequest(tag.Id, tag.Address, tag.DataType, value);
+        var result = await driver.WriteTagAsync(request, ct);
+
+        LogManager.Instance.Info("FlowEngine",
+            result.IsSuccess
+                ? $"[강제쓰기] {plc.Name}.{tag.Name}({tag.Address}) = {value} → 성공"
+                : $"[강제쓰기] {plc.Name}.{tag.Name}({tag.Address}) = {value} → 실패: {result.Error}");
+
+        EventBus.Instance.Publish(new TagForceWriteEvent(
+            PlcId: plcId,
+            TagId: tagId,
+            TagName: tag.Name,
+            Address: tag.Address,
+            Value: value,
+            IsSuccess: result.IsSuccess,
+            Error: result.Error,
+            OccurredAt: DateTimeOffset.UtcNow));   // ★ Timestamp 아닌 OccurredAt (CS8866 방지)
+
+        return result;
+    }
 
     // §8 ─ 폴링 실패 처리 (C-12) ──────────────────────────
 

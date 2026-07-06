@@ -29,6 +29,7 @@ using IIoT.Collector.ViewModels;
 using IIoT.Collector.Views.Status;
 using IIoT.Collector.Notification;
 using IIoT.UI.Themes;
+using lssLib.Messaging;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
@@ -65,6 +66,12 @@ public partial class App : Application
         });
 
         LogManager.Instance.Info("App", "IIoT.Collector 시작");
+
+        // ★ C-15 버그 수정: CommandQueue 시작 누락
+        //   EventBus.Publish() 가 내부적으로 CommandQueue 를 통해 디스패치하므로
+        //   반드시 DI 빌드 및 FlowEngine 시작 전에 호출해야 함
+        //   (미호출 시 EventBus.Publish 호출 시점에 InvalidOperationException 발생)
+        CommandQueue.Instance.Start();
 
         // ③ DI 빌드
         _services = _ConfigureServices();
@@ -235,9 +242,12 @@ public partial class App : Application
         services.AddSingleton<MainViewModel>();
 
         // ── 수집 현황 ViewModel/View (C-04)
+        //    ★ C-15: ForceWriteService 추가 주입 (강제쓰기 버튼용)
         services.AddSingleton<StatusViewModel>();
         services.AddSingleton<StatusView>(sp =>
-            new StatusView(sp.GetRequiredService<StatusViewModel>()));
+            new StatusView(
+                sp.GetRequiredService<StatusViewModel>(),
+                sp.GetRequiredService<ForceWriteService>()));
 
         // ★ AddSingleton 필수 (Transient → 이중 창 버그)
         services.AddSingleton<MainWindow>(sp =>

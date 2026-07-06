@@ -24,11 +24,13 @@ namespace IIoT.Collector.Core.Config;
 
 public sealed class CollectorSettings
 {
-    public StorageSettings Storage { get; set; } = new();
-    public SignalRSettings SignalR { get; set; } = new();
-    public RetrySettings Retry { get; set; } = new();
+    public StorageSettings  Storage  { get; set; } = new();
+    public SignalRSettings  SignalR  { get; set; } = new();
+    public RetrySettings    Retry    { get; set; } = new();
     // ★ C-14 신규
     public NotificationSettings Notification { get; set; } = new();
+    // ★ C-15 신규
+    public ForceWriteSettings   ForceWrite   { get; set; } = new();
 }
 
 // ── Storage 섹션 ──────────────────────────────────────────
@@ -60,7 +62,7 @@ public sealed class StorageSettings
 
     public MqttPublishSettings Mqtt { get; set; } = new();
 
-    public SqliteSettings SQLite { get; set; } = new();
+    public SqliteSettings   SQLite   { get; set; } = new();
     public InfluxDbSettings InfluxDB { get; set; } = new();
 }
 
@@ -81,13 +83,13 @@ public sealed class SqliteSettings
 public sealed class InfluxDbSettings
 {
     /// <summary>InfluxDB v2 URL (예: http://localhost:8086)</summary>
-    public string Url { get; set; } = "http://localhost:8086";
+    public string Url    { get; set; } = "http://localhost:8086";
 
     /// <summary>API 토큰 (InfluxDB UI → Data → Tokens 에서 생성)</summary>
-    public string Token { get; set; } = string.Empty;
+    public string Token  { get; set; } = string.Empty;
 
     /// <summary>조직 이름 (InfluxDB 가입 시 설정한 org)</summary>
-    public string Org { get; set; } = "my-org";
+    public string Org    { get; set; } = "my-org";
 
     /// <summary>버킷 이름 (데이터를 저장할 버킷)</summary>
     public string Bucket { get; set; } = "iiot";
@@ -96,7 +98,7 @@ public sealed class InfluxDbSettings
     /// 배치 쓰기 최대 건수 (기본 500).
     /// 이 수치에 도달하거나 FlushIntervalMs 가 경과하면 HTTP POST 전송.
     /// </summary>
-    public int BatchSize { get; set; } = 500;
+    public int BatchSize     { get; set; } = 500;
 
     /// <summary>배치 쓰기 최대 대기 시간 (ms, 기본 5000)</summary>
     public int FlushIntervalMs { get; set; } = 5000;
@@ -130,10 +132,10 @@ public sealed class RetrySettings
 public sealed class SignalRSettings
 {
     /// <summary>SignalR Hub 활성화 여부 (기본 true)</summary>
-    public bool Enabled { get; set; } = true;
+    public bool     Enabled        { get; set; } = true;
 
     /// <summary>수신 포트 (기본 7878). 방화벽 허용 필요.</summary>
-    public int Port { get; set; } = 7878;
+    public int      Port           { get; set; } = 7878;
 
     /// <summary>
     /// 허용할 CORS Origin 목록.
@@ -153,16 +155,16 @@ public sealed class SignalRSettings
 public sealed class MqttPublishSettings
 {
     /// <summary>MQTT 발행 활성화 여부 (기본 false — 브로커 없어도 동작)</summary>
-    public bool Enabled { get; set; } = false;
+    public bool   Enabled    { get; set; } = false;
 
     /// <summary>브로커 호스트 (기본 localhost)</summary>
     public string BrokerHost { get; set; } = "localhost";
 
     /// <summary>브로커 포트 (기본 1883)</summary>
-    public int BrokerPort { get; set; } = 1883;
+    public int    BrokerPort { get; set; } = 1883;
 
     /// <summary>클라이언트 ID (null = 자동 생성)</summary>
-    public string? ClientId { get; set; } = null;
+    public string? ClientId  { get; set; } = null;
 
     /// <summary>
     /// Tag 값 발행 토픽 접두사.
@@ -172,13 +174,13 @@ public sealed class MqttPublishSettings
     public string TopicPrefix { get; set; } = "iiot";
 
     /// <summary>QoS 레벨 (0=최대1회, 1=최소1회, 기본 1)</summary>
-    public byte QoS { get; set; } = 1;
+    public byte   QoS        { get; set; } = 1;
 
     /// <summary>브로커 인증 사용자명 (없으면 null)</summary>
-    public string? Username { get; set; } = null;
+    public string? Username  { get; set; } = null;
 
     /// <summary>브로커 인증 비밀번호 (없으면 null)</summary>
-    public string? Password { get; set; } = null;
+    public string? Password  { get; set; } = null;
 }
 
 // ── 로더 ──────────────────────────────────────────────────
@@ -191,10 +193,10 @@ public sealed class CollectorSettingsLoader
 {
     private static readonly JsonSerializerOptions _opts = new()
     {
-        PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented = true
+        PropertyNameCaseInsensitive  = true,
+        DefaultIgnoreCondition       = JsonIgnoreCondition.WhenWritingNull,
+        Encoder                      = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        WriteIndented                = true
     };
 
     public static string SettingsPath =>
@@ -250,26 +252,47 @@ public sealed class NotificationSettings
     // ★ C-14 버그 수정: 필드(bool Enabled = false;) → 프로퍼티로 변경.
     //   System.Text.Json 은 IncludeFields=true 옵션이 없으면 필드를 무시하므로
     //   필드 상태에서는 settings.json 에 저장/로드가 전혀 반영되지 않았음.
-    public bool Enabled { get; set; } = false;
-    public SmtpSettings Smtp { get; set; } = new();
-    public WebhookSettings Webhook { get; set; } = new();
+    public bool             Enabled { get; set; } = false;
+    public SmtpSettings     Smtp    { get; set; } = new();
+    public WebhookSettings  Webhook { get; set; } = new();
 }
 
 public sealed class SmtpSettings
 {
     /// <summary>SMTP 서버 호스트 (예: smtp.gmail.com, smtp.office365.com)</summary>
-    public string Host { get; set; } = "smtp.gmail.com";
-    public int Port { get; set; } = 587;
-    public bool UseSsl { get; set; } = true;
-    public string User { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    public string Host        { get; set; } = "smtp.gmail.com";
+    public int    Port        { get; set; } = 587;
+    public bool   UseSsl      { get; set; } = true;
+    public string User        { get; set; } = string.Empty;
+    public string Password    { get; set; } = string.Empty;
     public string FromAddress { get; set; } = string.Empty;
-    public string FromName { get; set; } = "IIoT Collector";
+    public string FromName    { get; set; } = "IIoT Collector";
 }
 
 public sealed class WebhookSettings
 {
     /// <summary>true 여야 실제 발송 (SMS 등 외부 REST 알림용, 알리고/솔라피/커스텀 등)</summary>
+    public bool   Enabled { get; set; } = false;
+    public string Url     { get; set; } = string.Empty;
+}
+
+// ── 강제쓰기 안전 설정 (C-15 신규) ────────────────────────
+
+/// <summary>
+/// Tag 강제값 쓰기(Force Write) 안전 설정.
+/// <para>
+/// 실 PLC 에 값을 직접 쓰는 기능이므로 기본값은 Enabled=false (비활성)이다.
+/// 현장 적용 시 의도적으로 true 로 전환해야 한다 (안전장치).
+/// </para>
+/// </summary>
+public sealed class ForceWriteSettings
+{
+    /// <summary>강제쓰기 기능 활성화 여부 (기본 false — 안전을 위해 명시적 활성화 필요)</summary>
     public bool Enabled { get; set; } = false;
-    public string Url { get; set; } = string.Empty;
+
+    /// <summary>
+    /// true 이면 Studio 알람 라이브러리 등에서 이미 알람(HH/LL) 발생 중인 Tag 에 대한
+    /// 쓰기 요청을 추가로 로그에 경고 표시한다 (쓰기 자체를 막지는 않음).
+    /// </summary>
+    public bool WarnOnActiveAlarm { get; set; } = true;
 }
