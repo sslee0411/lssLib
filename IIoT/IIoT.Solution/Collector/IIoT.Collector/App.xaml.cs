@@ -261,6 +261,9 @@ public partial class App : Application
         services.AddSingleton<NotificationService>();
         services.AddSingleton<EscalationManager>();
 
+        // ★ C-15 버그 수정: 등록 누락 — StatusView 팩토리가 요구하는데 등록이 없었음
+        services.AddSingleton<ForceWriteService>();
+
         return services.BuildServiceProvider();
     }
 }
