@@ -3,7 +3,8 @@
      역할: 알람 탭 — 활성 알람 목록 + 이력 표시
      Col-Base-1: 레이아웃 뼈대
      C-06: AlarmViewModel 실데이터 바인딩, ACK 기능 연결
-     생성: 2026-06-29 / 수정: 2026-06-29
+     C-EX-05: 알람 억제(Shelving) 버튼 추가
+     생성: 2026-06-29 / 수정: 2026-07-06
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Collector.Views.Alarm.AlarmView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -70,6 +71,17 @@
                             Style="{DynamicResource GhostBtn}"
                             FontSize="11"
                             Padding="10,4"
+                            VerticalAlignment="Center" />
+
+                    <!-- ★ C-EX-05 신규: 1시간 알람 억제 -->
+                    <Button DockPanel.Dock="Right"
+                            Content="🔕 1시간 억제"
+                            Command="{Binding ShelveAlarmCommand}"
+                            CommandParameter="{Binding SelectedAlarm}"
+                            Style="{DynamicResource GhostBtn}"
+                            FontSize="11"
+                            Padding="10,4"
+                            Margin="0,0,4,0"
                             VerticalAlignment="Center" />
 
                     <!-- 선택 ACK 버튼 -->

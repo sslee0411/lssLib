@@ -35,6 +35,10 @@ public sealed class CollectorSettings
     public FilterSettings       Filter       { get; set; } = new();
     // ★ C-18 신규
     public VirtualTagSettings   VirtualTag   { get; set; } = new();
+    // ★ C-EX-02 신규
+    public SecuritySettings     Security     { get; set; } = new();
+    public RetentionSettings    Retention    { get; set; } = new();
+    public BackupSettings       Backup       { get; set; } = new();
 }
 
 // ── Storage 섹션 ──────────────────────────────────────────
@@ -343,4 +347,49 @@ public sealed class VirtualTagSettings
 
     /// <summary>계산 주기 (ms, 기본 1000)</summary>
     public int IntervalMs { get; set; } = 1000;
+}
+
+// ── 접근 제어 설정 (C-EX-02 신규) ─────────────────────────
+
+/// <summary>
+/// 강제쓰기·REST API 접근 제어. ApiKey 가 비어있으면 검증을 생략한다
+/// (기존 동작 그대로 유지 — 하위 호환).
+/// </summary>
+public sealed class SecuritySettings
+{
+    /// <summary>강제쓰기 실행 시 요구할 API Key (빈 문자열 = 검증 생략)</summary>
+    public string ForceWriteApiKey { get; set; } = string.Empty;
+
+    /// <summary>REST API(/api/devices 등) 접근 시 요구할 API Key (빈 문자열 = 검증 생략)</summary>
+    public string ApiKey { get; set; } = string.Empty;
+}
+
+// ── 데이터 보존 정책 (C-EX-02 신규) ───────────────────────
+
+public sealed class RetentionSettings
+{
+    /// <summary>보존 정책 활성화 여부 (기본 false — 안전을 위해 명시적 활성화 필요)</summary>
+    public bool Enabled { get; set; } = false;
+
+    /// <summary>tag_history 원본 보존 일수 (기본 90일, 이보다 오래된 원본 삭제)</summary>
+    public int RetentionDays { get; set; } = 90;
+
+    /// <summary>정리 실행 시각 (매일, 24시간 형식 "HH:mm")</summary>
+    public string RunAtTime { get; set; } = "03:00";
+}
+
+// ── DB 자동 백업 (C-EX-02 신규) ───────────────────────────
+
+public sealed class BackupSettings
+{
+    public bool Enabled { get; set; } = false;
+
+    /// <summary>백업 실행 시각 (매일, "HH:mm")</summary>
+    public string RunAtTime { get; set; } = "02:00";
+
+    /// <summary>보관할 최대 백업 파일 개수 (오래된 것부터 삭제)</summary>
+    public int MaxBackupCount { get; set; } = 14;
+
+    /// <summary>백업 폴더 경로 (상대경로면 실행파일 기준, 기본 "Backup")</summary>
+    public string BackupDir { get; set; } = "Backup";
 }

@@ -1,10 +1,11 @@
-﻿// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  IIoT.Collector · Notification/EscalationManager.cs
 //  역할: AlarmChangedEvent(Active) 수신 → 즉시 1차 알림 발송
 //        → EscalateMinutes 경과 후 미ACK 상태면 2차 에스컬레이션 알림 발송
 //        AlarmChangedEvent(Acked/Recovered) 수신 → 진행 중인 타이머 취소
 //  C-14: 신규
-//  생성: 2026-07-05
+//  C-EX-05: 알람 억제(Shelving) 중인 Tag 는 알림 발송 생략
+//  생성: 2026-07-05 / 수정: 2026-07-06
 //
 //  ★ 설계 원칙: AlarmStateManager 는 수정하지 않고 EventBus 구독만으로 동작
 //    (기존 알람 감지·ACK 로직에 영향 없음, 독립적으로 추가/제거 가능)
@@ -30,8 +31,9 @@ public sealed class EscalationManager : IDisposable
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly CollectorConfigLoader _configLoader;
-    private readonly NotificationService _notifier;
+    private readonly CollectorConfigLoader  _configLoader;
+    private readonly NotificationService    _notifier;
+    private readonly AlarmShelvingService   _shelving;   // ★ C-EX-05 신규
 
     private IDisposable? _sub;
 
@@ -40,10 +42,14 @@ public sealed class EscalationManager : IDisposable
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
-    public EscalationManager(CollectorConfigLoader configLoader, NotificationService notifier)
+    public EscalationManager(
+        CollectorConfigLoader configLoader,
+        NotificationService   notifier,
+        AlarmShelvingService  shelving)   // ★ C-EX-05 신규
     {
         _configLoader = configLoader;
-        _notifier = notifier;
+        _notifier     = notifier;
+        _shelving     = shelving;
     }
 
     // §3 ─ 초기화 ──────────────────────────────────────────
@@ -78,6 +84,14 @@ public sealed class EscalationManager : IDisposable
         // 이미 진행 중이면 중복 시작 방지
         if (_timers.ContainsKey(e.AlarmKey)) return;
 
+        // ★ C-EX-05: 억제 중인 Tag 는 타이머 자체를 시작하지 않음 (알림 완전 생략)
+        if (_shelving.IsShelved(e.TagId))
+        {
+            LogManager.Instance.Info("Escalation",
+                $"[{e.TagId}] 알람 억제 중 — 알림 발송 생략 (에스컬레이션 타이머 미시작)");
+            return;
+        }
+
         var entry = _FindAlarmEntry(e.TagId);
         if (entry is null) return;
 
@@ -97,6 +111,14 @@ public sealed class EscalationManager : IDisposable
         try
         {
             await Task.Delay(TimeSpan.FromMinutes(minutes), ct);
+
+            // ★ C-EX-05: 대기 도중 억제가 걸렸을 수도 있으므로 재확인
+            if (_shelving.IsShelved(e.TagId))
+            {
+                LogManager.Instance.Info("Escalation",
+                    $"[{e.TagId}] 알람 억제 중 — 에스컬레이션 발송 생략");
+                return;
+            }
 
             // 여기까지 취소되지 않았다면 = 아직 ACK 안 된 상태 → 에스컬레이션 발송
             var entry = _FindAlarmEntry(e.TagId);
@@ -143,7 +165,7 @@ public sealed class EscalationManager : IDisposable
 
     private async Task _SendNotificationAsync(AlarmEntryDto entry, AlarmChangedEvent e, bool escalated)
     {
-        var prefix = escalated ? "[에스컬레이션] " : "[알람] ";
+        var prefix  = escalated ? "[에스컬레이션] " : "[알람] ";
         var subject = $"{prefix}{e.Level} - {e.TagName}";
         var body =
             $"태그: {e.TagName}\n" +

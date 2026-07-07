@@ -15,6 +15,9 @@ public partial class ForceWriteDialog : Window
     /// <summary>[쓰기] 클릭 시 입력된 값. 취소 시 null.</summary>
     public string? ResultValue { get; private set; }
 
+    /// <summary>★ C-EX-02 신규: 입력된 API Key (미입력 시 빈 문자열)</summary>
+    public string ResultApiKey { get; private set; } = string.Empty;
+
     /// <param name="tagName">Tag 표시 이름</param>
     /// <param name="plcName">소속 PLC/Device 표시 이름</param>
     public ForceWriteDialog(string tagName, string plcName)
@@ -35,7 +38,8 @@ public partial class ForceWriteDialog : Window
             return;
         }
 
-        ResultValue = TxtValue.Text.Trim();
+        ResultValue  = TxtValue.Text.Trim();
+        ResultApiKey = PwdApiKey.Password;   // ★ C-EX-02 신규
         DialogResult = true;
         Close();
     }

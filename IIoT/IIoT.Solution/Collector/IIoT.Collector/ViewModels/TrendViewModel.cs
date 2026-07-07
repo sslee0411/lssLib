@@ -3,7 +3,8 @@
 //  역할: 수집 이력 조회 탭([📈 트렌드]) ViewModel
 //        Tag 선택 + 기간 설정 → TrendQueryService 조회 → OxyPlot LineChart 바인딩
 //  C-13: 신규 (OxyPlot.Wpf — 순수 .NET, net8.0-windows 완전 지원)
-//  생성: 2026-07-01
+//  C-EX-07: CSV 내보내기 커맨드 추가
+//  생성: 2026-07-01 / 수정: 2026-07-06
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -37,6 +38,10 @@ public partial class TrendViewModel : ObservableObject
 
     private readonly TrendQueryService      _queryService;
     private readonly CollectorConfigLoader  _configLoader;
+    private readonly CsvExportService       _csvExport;   // ★ C-EX-07 신규
+
+    /// <summary>가장 최근 조회 결과 (CSV 내보내기용 보관)</summary>
+    private IReadOnlyList<TrendPoint>? _lastPoints;
 
     // §2 ─ 드롭다운 목록 ───────────────────────────────────
 
@@ -78,10 +83,12 @@ public partial class TrendViewModel : ObservableObject
 
     public TrendViewModel(
         TrendQueryService     queryService,
-        CollectorConfigLoader configLoader)
+        CollectorConfigLoader configLoader,
+        CsvExportService      csvExport)   // ★ C-EX-07 신규
     {
         _queryService = queryService;
         _configLoader = configLoader;
+        _csvExport    = csvExport;
     }
 
     // §7 ─ 초기화 ──────────────────────────────────────────
@@ -145,10 +152,12 @@ public partial class TrendViewModel : ObservableObject
             {
                 StatusText = $"[{SelectedTag.TagName}] 해당 기간에 이력 데이터가 없습니다.";
                 PlotModel  = _CreateEmptyModel("데이터 없음");
+                _lastPoints = null;
                 return;
             }
 
-            PlotModel = _BuildPlotModel(SelectedTag, points);
+            PlotModel   = _BuildPlotModel(SelectedTag, points);
+            _lastPoints = points;   // ★ C-EX-07 신규 — CSV 내보내기용 보관
 
             StatusText =
                 $"[{SelectedTag.TagName}] {from:MM/dd HH:mm} ~ {to:MM/dd HH:mm} " +
@@ -162,6 +171,36 @@ public partial class TrendViewModel : ObservableObject
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    // §9B ─ CSV 내보내기 (C-EX-07 신규) ────────────────────
+
+    [RelayCommand]
+    private async Task ExportCsvAsync()
+    {
+        if (_lastPoints is null || _lastPoints.Count == 0 || SelectedTag is null)
+        {
+            StatusText = "내보낼 데이터가 없습니다. 먼저 [조회]를 실행하세요.";
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter   = "CSV 파일 (*.csv)|*.csv",
+            FileName = $"{SelectedTag.TagName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            await _csvExport.ExportAsync(_lastPoints, dialog.FileName, SelectedTag.TagName);
+            StatusText = $"CSV 저장 완료 → {dialog.FileName}";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"CSV 저장 실패: {ex.Message}";
         }
     }
 

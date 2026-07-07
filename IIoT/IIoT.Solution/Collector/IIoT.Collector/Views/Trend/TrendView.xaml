@@ -3,7 +3,8 @@
      역할: 수집 이력 조회 탭 — Tag 선택 + 기간 설정 + OxyPlot LineChart
      C-13: OxyPlot.Wpf 적용 (LiveCharts2 → OxyPlot 교체)
            순수 .NET 구현 / net8.0-windows 완전 지원 / SkiaSharp 의존성 없음
-     생성: 2026-07-01
+     C-EX-07: CSV 내보내기 버튼 추가
+     생성: 2026-07-01 / 수정: 2026-07-06
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Collector.Views.Trend.TrendView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -23,7 +24,7 @@
         </Grid.RowDefinitions>
 
         <!-- ══════════════════════════════════════════════════
-             § 툴바 — Tag 선택 + 기간 + 조회 버튼
+             § 툴바 — Tag 선택 + 기간 + 조회 버튼 + CSV 내보내기
              ══════════════════════════════════════════════════ -->
         <Border Grid.Row="0"
                 Background="{DynamicResource CardBrush}"
@@ -111,6 +112,14 @@
                         Command="{Binding QueryCommand}"
                         Style="{DynamicResource PrimaryBtn}"
                         FontSize="11" Padding="14,5"
+                        VerticalAlignment="Center" />
+
+                <!-- ★ C-EX-07 신규: CSV 내보내기 -->
+                <Button Content="📄 CSV"
+                        Command="{Binding ExportCsvCommand}"
+                        Style="{DynamicResource GhostBtn}"
+                        FontSize="11" Padding="10,5"
+                        Margin="8,0,0,0"
                         VerticalAlignment="Center" />
 
                 <!-- 로딩 표시 -->

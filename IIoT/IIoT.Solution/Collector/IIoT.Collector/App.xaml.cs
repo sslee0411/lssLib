@@ -3,36 +3,37 @@
 //  역할: 애플리케이션 진입점
 //        ① 테마 복원 (창 표시 전 — 색상 준비)
 //        ② LogManager.Instance.Start() (DI 빌드 전 필수)
-//        ③ DI 서비스 구성 (_ConfigureServices)
-//        ④ 창 생성 후 Loaded 이벤트에서 LoadPlugins() 호출
-//           (LoadPlugins 로그가 LogPanelView.LogAdded 구독 완료 후 발생하도록)
-//        ⑤ OnExit: LogManager.StopAsync() + ThemeSettingsService.Dispose()
+//        ③ CommandQueue.Instance.Start() (★ C-15 버그 수정 — EventBus.Publish 의존)
+//        ④ DI 서비스 구성 (_ConfigureServices)
+//        ⑤ 창 생성 후 Loaded 이벤트에서 LoadPlugins() 호출
+//        ⑥ OnExit: 역순 종료
 //
-//  Studio-P04 fix 적용:
-//    LoadPlugins() 를 win.Loaded 안으로 이동
-//    → LogPanelView 가 LogAdded 구독 완료 후 플러그인 로그가 패널에 표시됨
+//  누적 반영 이력:
+//    C-14 알람 에스컬레이션 / C-15 강제쓰기 / C-16 이상값 필터 /
+//    C-17 집계 엔진 / C-18 가상 Tag / C-19 일시정지 /
+//    C-EX-01 DeviceInstance 통합 조회 + [장비] 탭 /
+//    C-EX-02~08 보안·보존·억제·백업·CSV·자체진단
 //
-//  생성: 2026-06-29
+//  생성: 2026-06-29 / 수정: 2026-07-06
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
-using IIoT.Collector.Core.Plugin;
-using IIoT.Collector.Notification;
 using IIoT.Collector.SignalR;
-using IIoT.Collector.Storage;
 using IIoT.Collector.Storage.Query;
-using IIoT.Collector.ViewModels;
-using IIoT.Collector.Views.Alarm;
-using IIoT.Collector.Views.Device;
-using IIoT.Collector.Views.Flow;
-using IIoT.Collector.Views.Status;
 using IIoT.Collector.Views.Trend;
 using IIoT.Collector.Views.Device;
-using IIoT.UI.Themes;
-using lssLib.Log;
-using lssLib.Messaging;
+using IIoT.Collector.Storage;
 using lssLib.Net;
+using IIoT.Collector.Views.Alarm;
+using IIoT.Collector.Views.Flow;
+using IIoT.Collector.Core.Plugin;
+using IIoT.Collector.ViewModels;
+using IIoT.Collector.Views.Status;
+using IIoT.Collector.Notification;
+using IIoT.UI.Themes;
+using lssLib.Messaging;
+using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using System.Windows;
@@ -95,6 +96,7 @@ public partial class App : Application
             //   (미등록 드라이버 경고가 정확히 동작하려면 플러그인 목록이 먼저 채워져야 함)
             await _services.GetRequiredService<CollectorConfigLoader>()
                             .LoadAsync();
+
             // ★ C-EX-01: DeviceInstance 트리 조립 (ConfigLoader 로드 직후)
             _services.GetRequiredService<DeviceInstanceService>()
                      .Initialize();
@@ -111,7 +113,6 @@ public partial class App : Application
             // ★ C-06: 알람 감지기 초기화 + AlarmView 구독 시작 (FlowEngine 보다 먼저)
             _services.GetRequiredService<AlarmStateManager>()
                      .Initialize();
-
             _services.GetRequiredService<AlarmViewModel>()
                      .Initialize();
 
@@ -126,7 +127,23 @@ public partial class App : Application
             // ★ C-07: 저장소 초기화 (DB 연결 / 테이블 생성)
             await _services.GetRequiredService<ITimeSeriesStore>()
                             .InitializeAsync();
-            
+
+            // ★ C-EX-03: 감사 로그 초기화 (저장소 초기화 이후 — 같은 DB 파일 사용)
+            await _services.GetRequiredService<AuditLogService>()
+                           .InitializeAsync();
+
+            // ★ C-EX-04: 데이터 보존 정책 초기화
+            await _services.GetRequiredService<DataRetentionService>()
+                           .InitializeAsync();
+
+            // ★ C-EX-06: DB 자동 백업 초기화
+            _services.GetRequiredService<DbBackupService>()
+                     .Initialize();
+
+            // ★ C-EX-08: 자체 진단 시작
+            _services.GetRequiredService<SelfHealthService>()
+                     .Initialize();
+
             // ★ C-17: 집계 서비스 초기화 (SQLite Provider 일 때만 활성화됨)
             await _services.GetRequiredService<TagAggregationService>()
                             .InitializeAsync();
@@ -198,6 +215,12 @@ public partial class App : Application
             // C-18: 가상 Tag 엔진 종료
             _services.GetRequiredService<VirtualTagEngine>().Dispose();
 
+            // ★ C-EX-03/04/06/08: 신규 서비스 종료
+            await _services.GetRequiredService<AuditLogService>().DisposeAsync();
+            await _services.GetRequiredService<DataRetentionService>().DisposeAsync();
+            _services.GetRequiredService<DbBackupService>().Dispose();
+            _services.GetRequiredService<SelfHealthService>().Dispose();
+
             await _services.GetRequiredService<FlowEngine>().StopAsync();
         }
 
@@ -226,16 +249,19 @@ public partial class App : Application
 
         // ── 알람 감지·관리 (C-06)
         services.AddSingleton<AlarmStateManager>();
-        services.AddSingleton<AlarmViewModel>();
+        services.AddSingleton<AlarmShelvingService>();   // ★ C-EX-05 신규 (AlarmViewModel 보다 먼저 등록)
+        services.AddSingleton<AlarmViewModel>(sp =>
+            new AlarmViewModel(
+                sp.GetRequiredService<AlarmStateManager>(),
+                sp.GetRequiredService<AlarmShelvingService>()));
         services.AddSingleton<AlarmView>(sp =>
             new AlarmView(sp.GetRequiredService<AlarmViewModel>()));
-        
-        // ── DeviceInstance 통합 조회 서비스 (C-EX-01 신규)
-        services.AddSingleton<DeviceInstanceService>();
+
+        // ── DeviceInstance 통합 조회 View (C-EX-01-6 신규)
         services.AddSingleton<DeviceTreeViewModel>(sp =>
-              new DeviceTreeViewModel(
-                  sp.GetRequiredService<DeviceInstanceService>(),
-                  sp.GetRequiredService<CollectorSettingsLoader>()));
+            new DeviceTreeViewModel(
+                sp.GetRequiredService<DeviceInstanceService>(),
+                sp.GetRequiredService<CollectorSettingsLoader>()));
         services.AddSingleton<DeviceTreeView>(sp =>
             new DeviceTreeView(sp.GetRequiredService<DeviceTreeViewModel>()));
 
@@ -267,14 +293,21 @@ public partial class App : Application
 
         // ── 수집 이력 조회 (C-13)
         services.AddSingleton<TrendQueryService>();
-        services.AddSingleton<TrendViewModel>();
+        services.AddSingleton<TrendViewModel>(sp =>
+            new TrendViewModel(
+                sp.GetRequiredService<TrendQueryService>(),
+                sp.GetRequiredService<CollectorConfigLoader>(),
+                sp.GetRequiredService<CsvExportService>()));
         services.AddSingleton<TrendView>(sp =>
             new TrendView(sp.GetRequiredService<TrendViewModel>()));
-        
+
         // ── 이력 집계 (C-17 신규)
         services.AddSingleton<TagAggregationService>();
 
-        // ── SignalR Hub 서비스 (C-11)
+        // ── CSV 내보내기 (C-EX-07 신규)
+        services.AddSingleton<CsvExportService>();
+
+        // ── SignalR Hub 서비스 (C-11, C-EX-01-7 신규: DeviceInstanceService 주입)
         services.AddSingleton<SignalRHostService>();
         services.AddSingleton<SignalRPushService>();
 
@@ -298,6 +331,7 @@ public partial class App : Application
                 sp.GetRequiredService<ForceWriteService>()));
 
         // ★ AddSingleton 필수 (Transient → 이중 창 버그)
+        //   ★ C-EX-01-6: DeviceTreeView 인자 추가
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
                 sp.GetRequiredService<MainViewModel>(),
@@ -305,13 +339,21 @@ public partial class App : Application
                 sp.GetRequiredService<AlarmView>(),
                 sp.GetRequiredService<FlowView>(),
                 sp.GetRequiredService<TrendView>(),
-                sp.GetRequiredService<DeviceTreeView>()));   // ★ C-EX-01-6 신규
+                sp.GetRequiredService<DeviceTreeView>()));
 
+        // ── C-14 알림/에스컬레이션
         services.AddSingleton<NotificationService>();
         services.AddSingleton<EscalationManager>();
 
         // ★ C-15 버그 수정: 등록 누락 — StatusView 팩토리가 요구하는데 등록이 없었음
+        //   ★ C-EX-03: AuditLogService 추가 주입
         services.AddSingleton<ForceWriteService>();
+
+        // ── C-EX-02~08: 신규 실무 기능 서비스 일괄 등록
+        services.AddSingleton<AuditLogService>();
+        services.AddSingleton<DataRetentionService>();
+        services.AddSingleton<DbBackupService>();
+        services.AddSingleton<SelfHealthService>();
 
         return services.BuildServiceProvider();
     }

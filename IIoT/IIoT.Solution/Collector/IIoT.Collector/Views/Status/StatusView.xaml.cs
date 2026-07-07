@@ -55,7 +55,8 @@ public partial class StatusView : UserControl
         if (dialog.ShowDialog() != true || dialog.ResultValue is null)
             return;
 
-        var result = await _forceWriteService.WriteAsync(tag.PlcId, tag.TagId, dialog.ResultValue);
+        var result = await _forceWriteService.WriteAsync(
+            tag.PlcId, tag.TagId, dialog.ResultValue, dialog.ResultApiKey);
 
         MessageBox.Show(
             Window.GetWindow(this),

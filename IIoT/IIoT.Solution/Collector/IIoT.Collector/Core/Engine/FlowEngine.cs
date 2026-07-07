@@ -7,13 +7,18 @@
 //  C-03: 신규
 //  C-09: PlcPollStat 통계 추가
 //  C-12: 드라이버 자동 재연결 (지수 백오프) 추가
-//  생성: 2026-06-29 / 수정: 2026-07-01
+//  C-15: Tag 강제값 쓰기(WriteTagAsync) 추가
+//  C-16: 이상값 필터(AnomalyFilterService) 연동
+//  C-19: PLC별 수집 일시정지/재개(PauseCollection/ResumeCollection) 추가
+//  C-EX-03: 일시정지/재개 시 감사 로그 기록 추가
+//  생성: 2026-06-29 / 수정: 2026-07-06
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Events;
 using IIoT.Collector.Core.Models;
 using IIoT.Collector.Core.Plugin;
+using IIoT.Collector.Storage;
 using IIoT.Contracts;
 using lssLib.Log;
 using lssLib.Messaging;
@@ -39,8 +44,9 @@ public sealed class FlowEngine : IAsyncDisposable
     private readonly CollectorPluginService  _pluginService;
     private readonly ScaleEngine             _scaleEngine;
     private readonly AlarmStateManager       _alarmManager;
-    private readonly CollectorSettingsLoader _settingsLoader; 
-    private readonly AnomalyFilterService   _anomalyFilter;   // ★ C-16 신규
+    private readonly CollectorSettingsLoader _settingsLoader;
+    private readonly AnomalyFilterService    _anomalyFilter;   // ★ C-16 신규
+    private readonly AuditLogService         _auditLog;        // ★ C-EX-03 신규
 
     /// <summary>PlcId → 드라이버 인스턴스</summary>
     private readonly Dictionary<string, IProtocolDriver> _drivers = new();
@@ -69,7 +75,7 @@ public sealed class FlowEngine : IAsyncDisposable
         public int    TagCount    { get; init; }
         public int    PollMs      { get; init; }
         public bool   IsConnected { get; set; }
-        public bool IsPaused { get; set; }   // ★ C-19 신규
+        public bool   IsPaused    { get; set; }   // ★ C-19 신규
         public long   PollCount   { get; set; }
         public long   ErrorCount  { get; set; }
         public double LastPollMs  { get; set; }
@@ -95,14 +101,16 @@ public sealed class FlowEngine : IAsyncDisposable
         ScaleEngine             scaleEngine,
         AlarmStateManager       alarmManager,
         CollectorSettingsLoader settingsLoader,
-        AnomalyFilterService anomalyFilter)   // ★ C-16 신규
+        AnomalyFilterService    anomalyFilter,   // ★ C-16 신규
+        AuditLogService         auditLog)        // ★ C-EX-03 신규
     {
         _configLoader   = configLoader;
         _pluginService  = pluginService;
         _scaleEngine    = scaleEngine;
         _alarmManager   = alarmManager;
         _settingsLoader = settingsLoader;
-        _anomalyFilter = anomalyFilter;          // ★ C-16 신규
+        _anomalyFilter  = anomalyFilter;
+        _auditLog       = auditLog;
     }
 
     // §5 ─ 시작 ────────────────────────────────────────────
@@ -236,12 +244,12 @@ public sealed class FlowEngine : IAsyncDisposable
             EventBus.Instance.Publish(new TagValueUpdatedEvent(
                 Value:         value,
                 PlcId:         plc.PlcId,
-                EngValue:      scaled.EngValue,
+                EngValue:      acceptedEng,
                 Unit:          scaled.Unit,
                 DecimalPlaces: scaled.DecimalPlaces,
                 WasScaled:     scaled.WasScaled));
 
-            _alarmManager.ProcessValue(value.TagId, scaled.EngValue, value.Timestamp);
+            _alarmManager.ProcessValue(value.TagId, acceptedEng, value.Timestamp);
         }
 
         if (_stats.TryGetValue(plc.PlcId, out var okStat))
@@ -252,6 +260,7 @@ public sealed class FlowEngine : IAsyncDisposable
             okStat.LastPollAt  = DateTimeOffset.UtcNow;
         }
     }
+
     // §7B ─ Tag 강제값 쓰기 (C-15 신규) ────────────────────
 
     /// <summary>
@@ -277,7 +286,7 @@ public sealed class FlowEngine : IAsyncDisposable
             return DriverWriteResult.Fail($"Tag[{tagId}] 를 PLC[{plcId}] 에서 찾을 수 없음");
 
         var request = new TagWriteRequest(tag.Id, tag.Address, tag.DataType, value);
-        var result = await driver.WriteTagAsync(request, ct);
+        var result  = await driver.WriteTagAsync(request, ct);
 
         LogManager.Instance.Info("FlowEngine",
             result.IsSuccess
@@ -285,44 +294,19 @@ public sealed class FlowEngine : IAsyncDisposable
                 : $"[강제쓰기] {plc.Name}.{tag.Name}({tag.Address}) = {value} → 실패: {result.Error}");
 
         EventBus.Instance.Publish(new TagForceWriteEvent(
-            PlcId: plcId,
-            TagId: tagId,
-            TagName: tag.Name,
-            Address: tag.Address,
-            Value: value,
-            IsSuccess: result.IsSuccess,
-            Error: result.Error,
-            OccurredAt: DateTimeOffset.UtcNow));   // ★ Timestamp 아닌 OccurredAt (CS8866 방지)
+            PlcId:      plcId,
+            TagId:      tagId,
+            TagName:    tag.Name,
+            Address:    tag.Address,
+            Value:      value,
+            IsSuccess:  result.IsSuccess,
+            Error:      result.Error,
+            OccurredAt: DateTimeOffset.UtcNow));
 
         return result;
     }
 
-    // §8 ─ 폴링 실패 처리 (C-12) ──────────────────────────
-
-    /// <summary>
-    /// 폴링 실패 시 해당 PLC 폴링을 중단하고 재연결을 예약합니다.
-    /// 이미 재연결 중이면 중복 예약하지 않습니다.
-    /// </summary>
-    private async Task _HandlePollFailureAsync(PlcRuntimeConfig plc, IProtocolDriver driver)
-    {
-        // 이미 재연결 예약됨
-        if (_retryTasks.ContainsKey(plc.PlcId)) return;
-
-        // 폴링 중단
-        if (_scheduledTasks.TryGetValue(plc.PlcId, out var pollTask))
-        {
-            pollTask.Cancel();
-            _scheduledTasks.Remove(plc.PlcId);
-        }
-
-        // 드라이버 해제
-        try { await driver.DisposeAsync(); } catch { }
-        _drivers.Remove(plc.PlcId);
-
-        _ScheduleRetry(plc);
-    }
-
-    // §11 ─ 일시정지 / 재개 (C-19 신규) ────────────────────
+    // §8 ─ 일시정지 / 재개 (C-19 신규) ──────────────────────
 
     /// <summary>
     /// 지정 PLC 의 폴링을 일시정지합니다. 드라이버 연결은 유지됩니다.
@@ -336,6 +320,10 @@ public sealed class FlowEngine : IAsyncDisposable
 
         LogManager.Instance.Info("FlowEngine", $"[{plcId}] 수집 일시정지");
         EventBus.Instance.Publish(new PlcPauseChangedEvent(plcId, true));
+
+        // ★ C-EX-03: 감사 로그 기록 (fire-and-forget)
+        _ = _auditLog.LogAsync("Pause", plcId, "수집 일시정지", true);
+
         return true;
     }
 
@@ -351,6 +339,10 @@ public sealed class FlowEngine : IAsyncDisposable
 
         LogManager.Instance.Info("FlowEngine", $"[{plcId}] 수집 재개");
         EventBus.Instance.Publish(new PlcPauseChangedEvent(plcId, false));
+
+        // ★ C-EX-03: 감사 로그 기록 (fire-and-forget)
+        _ = _auditLog.LogAsync("Resume", plcId, "수집 재개", true);
+
         return true;
     }
 
@@ -429,14 +421,33 @@ public sealed class FlowEngine : IAsyncDisposable
         _retryTasks[plc.PlcId] = retryTask;
     }
 
+    /// <summary>연속 폴링 실패 시 재연결 절차로 넘어갑니다 (드라이버 해제 후 재예약).</summary>
+    private async Task _HandlePollFailureAsync(PlcRuntimeConfig plc, IProtocolDriver driver)
+    {
+        if (_scheduledTasks.TryGetValue(plc.PlcId, out var task))
+        {
+            task.Cancel();
+            _scheduledTasks.Remove(plc.PlcId);
+        }
+
+        try { await driver.DisposeAsync(); }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Warn("FlowEngine", $"[{plc.Name}] 드라이버 해제 중 오류: {ex.Message}");
+        }
+        _drivers.Remove(plc.PlcId);
+
+        _ScheduleRetry(plc);
+    }
+
     // §10 ─ 재연결 상태 업데이트 ──────────────────────────
 
     private void _UpdateRetryStatus(string plcId, bool isRetrying, int count, string text)
     {
         if (!_stats.TryGetValue(plcId, out var stat)) return;
-        stat.IsConnected    = false;
-        stat.IsRetrying     = isRetrying;
-        stat.RetryCount     = count;
+        stat.IsConnected     = false;
+        stat.IsRetrying      = isRetrying;
+        stat.RetryCount      = count;
         stat.RetryStatusText = text;
 
         EventBus.Instance.Publish(new PlcConnectionChangedEvent(

@@ -3,14 +3,17 @@
 //  역할: ThresholdDetector 결과 수신 → 알람 상태 관리
 //        활성 알람 추가/ACK/복귀 처리 → EventBus.Publish(AlarmChangedEvent)
 //  C-06: 신규
-//  생성: 2026-06-29
+//  C-EX-03: ACK 처리 시 감사 로그(AuditLogService) 기록 추가
+//  생성: 2026-06-29 / 수정: 2026-07-06
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Events;
 using IIoT.Collector.Core.Models;
+using IIoT.Collector.Storage;
 using lssLib.Log;
 using lssLib.Messaging;
+using System.Linq;
 
 namespace IIoT.Collector.Core.Engine;
 
@@ -27,6 +30,7 @@ public sealed class AlarmStateManager
     // §1 ─ 필드 ────────────────────────────────────────────
 
     private readonly CollectorConfigLoader _configLoader;
+    private readonly AuditLogService       _auditLog;   // ★ C-EX-03 신규
 
     /// <summary>TagId → ThresholdDetector (AlarmEntryId 가 설정된 Tag만)</summary>
     private readonly Dictionary<string, ThresholdDetector> _detectors  = new();
@@ -39,9 +43,10 @@ public sealed class AlarmStateManager
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
-    public AlarmStateManager(CollectorConfigLoader configLoader)
+    public AlarmStateManager(CollectorConfigLoader configLoader, AuditLogService auditLog)
     {
         _configLoader = configLoader;
+        _auditLog     = auditLog;
     }
 
     // §3 ─ 초기화 ──────────────────────────────────────────
@@ -155,6 +160,9 @@ public sealed class AlarmStateManager
         ));
 
         LogManager.Instance.Info("AlarmMgr", $"알람 ACK: {alarmKey}");
+
+        // ★ C-EX-03: 감사 로그 기록 (fire-and-forget — 기존 동기 시그니처 유지)
+        _ = _auditLog.LogAsync("AlarmAck", alarmKey, $"Tag={tag?.Name ?? tagId}", true);
     }
 
     /// <summary>현재 활성 알람 수 (Active 상태만)</summary>
