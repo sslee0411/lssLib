@@ -73,6 +73,8 @@
                                     Binding="{Binding Port}" Width="80"/>
                 <DataGridCheckBoxColumn Header="활성"
                                         Binding="{Binding Enabled}" Width="60"/>
+                <DataGridTextColumn Header="연결상태"
+                                    Binding="{Binding StatusText}" Width="110" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Hub URL"
                                     Binding="{Binding HubUrl}" Width="*" IsReadOnly="True"/>
             </DataGrid.Columns>

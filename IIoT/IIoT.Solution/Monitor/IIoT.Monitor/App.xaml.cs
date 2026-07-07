@@ -12,10 +12,12 @@
 //         DI 등록 추가. monitor.json 로드는 CollectorManageView.Loaded 에서 수행되므로
 //         여기서는 등록만 한다 (Studio-P04와 동일하게 "요구하는 곳"+"등록하는 곳" 세트 확인).
 //         CommandQueue.Instance.Start() 는 EventBus 사용 시점(MN-01B)에 추가 예정.
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-01)
+//  MN-01B: CollectorConnectionManager DI 등록 추가 (CollectorId↔HubConnection 관리자)
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-01B)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Config;
+using IIoT.Monitor.Core.Connection;
 using IIoT.Monitor.ViewModels;
 using IIoT.Monitor.Views.CollectorManage;
 using IIoT.UI.Themes;
@@ -77,6 +79,9 @@ public partial class App : Application
     private static IServiceProvider _ConfigureServices()
     {
         var services = new ServiceCollection();
+
+        // ★ MN-01B 신규: Collector 연결 관리자 (CollectorId ↔ HubConnection)
+        services.AddSingleton<CollectorConnectionManager>();
 
         // ★ MN-01 신규: monitor.json 설정 + Collector 관리 화면
         services.AddSingleton<MonitorSettingsLoader>();

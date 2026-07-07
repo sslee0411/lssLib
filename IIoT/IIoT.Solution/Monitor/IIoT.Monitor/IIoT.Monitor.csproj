@@ -14,16 +14,33 @@
 		<AssemblyName>IIoT.Monitor</AssemblyName>
 	</PropertyGroup>
 
-	<!-- MN-Base-0: ASP.NET Core 내장 호스팅 선반영
-       (실제 WebApplication 구현은 MN-05에서 진행 — Collector C-11과 동일 패턴)
-       WPF(WinExe) + ASP.NET Core 공존: UseWPF=true 유지 + FrameworkReference 추가 -->
-	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
+	<!--
+    ★ FIX (MN-01B): Microsoft.AspNetCore.App FrameworkReference 제거.
+      MN-Base-0에서 MN-05(웹 브라우저용 Hub 내장)를 미리 대비해 선반영했으나,
+      Monitor는 Collector의 SignalR Hub에 "접속하는 클라이언트" 역할이 먼저 필요하고
+      (Microsoft.AspNetCore.SignalR.Client 패키지 사용),
+      FrameworkReference(서버 공유 프레임워크)와 SignalR.Client 패키지가
+      공유 의존성(Microsoft.Extensions.* 등) 버전 충돌을 일으켰다.
+      → Base-First 원칙(필요 시점에만 추가) 위반이었으므로 지금 제거.
+      → 실제로 Monitor 자체가 Hub를 호스팅하는 MN-05 시점에 재검토하여 추가한다.
+      (Collector는 Hub만 "호스팅"하므로 FrameworkReference만으로 충분 — SignalR.Client
+       패키지가 불필요해 이 충돌이 발생하지 않았음. Collector와 Monitor는 역할이 다르다.)
+  -->
 
+	<!--
+    ★ FIX (2026-07-07): Microsoft.Extensions.DependencyInjection 8.0.0 → 8.0.1 상향.
+      Microsoft.AspNetCore.SignalR.Client 8.0.28 → SignalR.Client.Core 8.0.28 이
+      내부적으로 Microsoft.Extensions.DependencyInjection >= 8.0.1 을 요구하는데
+      8.0.0 으로 명시하여 "패키지 다운그레이드 감지" 오류(경고→오류 처리)가 발생했음.
+      이 오류로 빌드 자체가 중단되어 IIoT.UI.Themes 어셈블리가 정상 빌드되지 못했고,
+      그 여파로 ThemePickerButton/BoolToVisibilityConverter가 "네임스페이스에 없음"으로
+      표시된 것 — 근본 원인은 이 버전 충돌 하나였음.
+  -->
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+		<!-- MN-01B: Collector SignalR Hub 접속용 클라이언트 (다중 HubConnection) -->
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.*" />
 	</ItemGroup>
 
 	<ItemGroup>

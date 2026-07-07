@@ -3,10 +3,12 @@
 //  역할: 등록된 Collector 1개의 접속 정보 (monitor.json Collectors[] 1항목)
 //        UI(DataGrid) 편집 + JSON 직렬화를 동일 모델로 겸용한다.
 //  MN-01: 신규
-//  생성: 2026-07-07
+//  MN-01B: StatusText 추가 (연결 상태 실시간 표시용, monitor.json 저장 제외)
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-01B)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace IIoT.Monitor.Models;
 
@@ -14,16 +16,16 @@ namespace IIoT.Monitor.Models;
 /// 등록된 Collector 1개의 접속 정보.
 /// <para>
 /// MN-01B 이후 이 정보를 기반으로 CollectorId(Id) → HubConnection 1:1 매핑을 생성한다.
-/// Id 는 Collector 측 settings.json 의 CollectorId(C-EX-10)와 문자열로 일치시켜야
-/// REST 스냅샷/실시간 이벤트의 출처를 올바르게 병합할 수 있다.
+/// Id 는 최초 등록 시 비워두거나 임의값으로 두어도 무방 — MN-01B의 자동 동기화
+/// 로직이 최초 연결 성공 시 Collector 측 실제 CollectorId(C-EX-10)로 자동 교정한다.
 /// </para>
 /// </summary>
 public partial class CollectorEndpoint : ObservableObject
 {
     /// <summary>
     /// Collector 고유 식별자.
-    /// ★ Collector 측 settings.json CollectorId(C-EX-10)와 반드시 동일한 값으로 입력할 것.
-    /// (자동 매칭 로직 없음 — MN-01 단계에서는 담당자가 직접 일치시켜 등록)
+    /// ★ MN-01B: 최초 연결 성공 시 Collector 응답의 실제 CollectorId로 자동 갱신됨.
+    ///   (수동 일치 불필요 — 틀리거나 비어 있어도 자동 교정)
     /// </summary>
     public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
 
@@ -44,8 +46,17 @@ public partial class CollectorEndpoint : ObservableObject
     private bool _enabled = true;
 
     /// <summary>
+    /// ★ MN-01B 신규: 현재 연결 상태 표시 텍스트 (예: "연결됨", "재연결 중...", "미연결").
+    /// CollectorConnection 이 실시간으로 갱신하며, monitor.json 에는 저장하지 않는다.
+    /// </summary>
+    [JsonIgnore]
+    [ObservableProperty]
+    private string _statusText = "미연결";
+
+    /// <summary>
     /// Hub 연결 URL을 조립합니다.
     /// 예: http://localhost:7878/iiot
     /// </summary>
+    [JsonIgnore]
     public string HubUrl => $"http://{Host}:{Port}/iiot";
 }
