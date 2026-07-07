@@ -5,7 +5,10 @@
      S-06: 초기 구현
      S-26: 편집기 하단에 미리보기 계산기 섹션 추가
            Raw→공학단위 / 공학단위→Raw 역방향 즉시 계산
-     생성: 2026-06-15 / 수정: 2026-06-20
+     버그 수정: 소수점 자릿수 ComboBox 에 SelectedValuePath="Content" 추가
+       (ComboBoxItem 객체가 그대로 DecimalPlaces(int) 에 대입되던 문제 —
+        TagEditorView DataType 콤보박스와 동일 패턴의 버그)
+     생성: 2026-06-15 / 수정: 2026-07-07
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.Scale.ScaleLibraryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -235,6 +238,7 @@
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="소수점 자릿수" FontSize="11" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
+                            <!-- ★ 버그 수정 확인됨: SelectedValuePath="Content" 정상 반영 -->
                             <ComboBox SelectedValue="{Binding DecimalPlaces}"
                                       SelectedValuePath="Content"
                                       Style="{DynamicResource PropCombo}">
