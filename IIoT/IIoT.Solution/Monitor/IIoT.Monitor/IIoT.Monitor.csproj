@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!--
+      ★ RootNamespace 명시: 파일명(IIoT.Monitor)의 . 이 네임스페이스 분리자로
+        인식되는 것을 방지. App.xaml x:Class="IIoT.Monitor.App" 와 일치.
+    -->
+		<RootNamespace>IIoT.Monitor</RootNamespace>
+		<AssemblyName>IIoT.Monitor</AssemblyName>
+	</PropertyGroup>
+
+	<!-- MN-Base-0: ASP.NET Core 내장 호스팅 선반영
+       (실제 WebApplication 구현은 MN-05에서 진행 — Collector C-11과 동일 패턴)
+       WPF(WinExe) + ASP.NET Core 공존: UseWPF=true 유지 + FrameworkReference 추가 -->
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- lssLib BCL — 로그 -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+
+		<!-- WPF 테마 (v1.5) -->
+		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+	</ItemGroup>
+
+</Project>

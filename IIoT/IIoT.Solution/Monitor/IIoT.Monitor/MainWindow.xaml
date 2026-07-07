@@ -1,0 +1,121 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Monitor · MainWindow.xaml
+     역할: 메인 창
+     MN-Base-0: 헤더(56px) + 본문 임시 블록 (테마 확인용)
+     MN-Base-1: 헤더 + 탭바(40px, 4개) + 본문(Grid, 탭별 임시 문구) 추가
+     MN-01: [Collector 관리] 탭(2) 전용 ContentControl(CollectorManageHost) 추가
+            (실제 View는 MainWindow.xaml.cs 생성자에서 DI 주입 — ④ 규칙)
+     FIX(MN-01): 브러시 키 오류 수정 — TextMutedBrush → Text2Brush
+                 (IIoT.UI.Themes 실제 키 목록 기준)
+     생성: 2026-07-07 / 수정: 2026-07-07 (MN-01)
+     규칙:
+       ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
+       ② BoolToVisibility: Window.Resources 직접 등록
+       ③ xmlns:uc assembly="IIoT.UI.Themes" (크로스-프로젝트 xmlns)
+       ④ DI 필요 View → ContentControl + 코드 주입 패턴
+       ⑤ 탭 버튼 CommandParameter는 string → ViewModel int.TryParse 처리
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.Monitor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        Title="IIoT Monitor — 모니터링"
+        Width="1280" Height="800"
+        MinWidth="1000" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <!-- 탭바 버튼 공통 스타일 -->
+        <Style x:Key="TabBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- § 헤더 (56px) -->
+        <Border DockPanel.Dock="Top"
+                Height="56"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel Margin="16,0">
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="IIoT.Monitor"
+                               FontSize="18" FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="  실시간 모니터링"
+                               FontSize="12"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+                <uc:ThemePickerButton DockPanel.Dock="Right"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- § 탭바 (40px) -->
+        <Border DockPanel.Dock="Top"
+                Height="40"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Stretch">
+                <Button Content="태그현황" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="0"/>
+                <Button Content="알람" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="1"/>
+                <Button Content="Collector 관리" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="2"/>
+                <Button Content="로그" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="3"/>
+            </StackPanel>
+        </Border>
+
+        <!-- § 본문 -->
+        <Grid Background="{DynamicResource BgBrush}">
+            <!-- 임시 안내 문구 (태그현황/알람/로그 탭) -->
+            <TextBlock Text="{Binding TabPlaceholderText}"
+                       Visibility="{Binding ShowPlaceholder, Converter={StaticResource BoolToVisibility}}"
+                       FontSize="14"
+                       Foreground="{DynamicResource Text2Brush}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+
+            <!-- ★ MN-01: [Collector 관리] 탭 전용 View 호스트
+                 실제 CollectorManageView 인스턴스는 MainWindow.xaml.cs 생성자에서
+                 DI로 주입받아 Content 에 대입한다 (DI 필요 View 규칙 ④). -->
+            <ContentControl x:Name="CollectorManageHost"
+                            Visibility="{Binding IsCollectorTab, Converter={StaticResource BoolToVisibility}}"/>
+        </Grid>
+
+    </DockPanel>
+</Window>

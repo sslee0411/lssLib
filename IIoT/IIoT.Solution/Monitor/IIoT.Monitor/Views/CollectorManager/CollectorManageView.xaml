@@ -1,0 +1,88 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Monitor · Views/CollectorManage/CollectorManageView.xaml
+     역할: [Collector 관리] 탭 화면
+           등록된 Collector 목록(DataGrid) + 추가/삭제/저장 툴바
+     MN-01: 신규
+     생성: 2026-07-07
+     FIX: 브러시 키 오류 수정 — AccentBrush→AccBrush, TextMutedBrush→Text2Brush
+          (IIoT.UI.Themes 실제 키: BgBrush/SurfaceBrush/CardBrush/BorderBrush/
+           Border2Brush/AccBrush/Acc2Brush/TextBrush/Text2Brush/Text3Brush)
+     규칙:
+       ① UserControl.Resources 는 <UserControl> 직계 자식만 허용
+       ② DynamicResource 필수 (테마 전환 대응)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Monitor.Views.CollectorManage.CollectorManageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </UserControl.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ══ 툴바 ══ -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+            <Button Content="＋ Collector 추가"
+                    Command="{Binding AddCollectorCommand}"
+                    Style="{DynamicResource PrimaryBtn}"
+                    Padding="12,6" Margin="0,0,8,0"/>
+            <Button Content="🗑 선택 삭제"
+                    Command="{Binding RemoveCollectorCommand}"
+                    Padding="12,6" Margin="0,0,8,0"
+                    Background="{DynamicResource CardBrush}"
+                    Foreground="{DynamicResource TextBrush}"
+                    BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                    Cursor="Hand"/>
+            <Button Content="💾 저장"
+                    Command="{Binding SaveCommand}"
+                    Padding="12,6"
+                    Background="{DynamicResource CardBrush}"
+                    Foreground="{DynamicResource TextBrush}"
+                    BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                    Cursor="Hand"/>
+        </StackPanel>
+
+        <!-- ══ Collector 목록 ══ -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Collectors}"
+                  SelectedItem="{Binding Selected, Mode=TwoWay}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  Background="{DynamicResource SurfaceBrush}"
+                  Foreground="{DynamicResource TextBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}"
+                  RowBackground="{DynamicResource SurfaceBrush}"
+                  AlternatingRowBackground="{DynamicResource CardBrush}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID (CollectorId 일치 필요)"
+                                    Binding="{Binding Id}" Width="180" IsReadOnly="False"/>
+                <DataGridTextColumn Header="이름"
+                                    Binding="{Binding Name}" Width="150"/>
+                <DataGridTextColumn Header="Host"
+                                    Binding="{Binding Host}" Width="150"/>
+                <DataGridTextColumn Header="Port"
+                                    Binding="{Binding Port}" Width="80"/>
+                <DataGridCheckBoxColumn Header="활성"
+                                        Binding="{Binding Enabled}" Width="60"/>
+                <DataGridTextColumn Header="Hub URL"
+                                    Binding="{Binding HubUrl}" Width="*" IsReadOnly="True"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- ══ 하단 상태바 ══ -->
+        <TextBlock Grid.Row="2"
+                   Text="{Binding StatusText}"
+                   Margin="0,8,0,0"
+                   FontSize="12"
+                   Foreground="{DynamicResource Text2Brush}"/>
+    </Grid>
+</UserControl>
