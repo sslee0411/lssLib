@@ -68,9 +68,14 @@ public sealed partial class VirtualTagEngine : IDisposable
     /// <summary>
     /// 가상 Tag 목록 구성 + EventBus 구독 + 평가 스케줄 등록.
     /// App.xaml.cs 에서 FlowEngine.StartAsync() 이후 호출.
+    /// ★ 버그 수정: device.json 재로드(ConfigReloadWatcher) 시 재호출될 수 있으므로
+    ///   기존 구독/스케줄을 먼저 해제해야 함 (미해제 시 이중 구독 누적).
     /// </summary>
     public void Initialize()
     {
+        _sub?.Dispose();
+        _task?.Cancel();
+
         _liveValues.Clear();
         _virtualTags.Clear();
 

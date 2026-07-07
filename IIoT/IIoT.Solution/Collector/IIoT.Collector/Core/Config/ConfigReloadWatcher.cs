@@ -17,11 +17,14 @@
 //    ③ CollectorConfigLoader.LoadAsync()    — 새 device.json 로드
 //    ④ AlarmStateManager.Initialize()       — 알람 감지기 재구성
 //    ⑤ StatusViewModel.Initialize()         — LiveTag 목록 재구성
+//    ⑤B DeviceInstanceService.Initialize()  — DeviceInstance 트리 재조립 (C-EX-01)
+//    ⑤C AnomalyFilterService.Initialize()   — 이상값 필터 재구성 (C-16, 신규)
+//    ⑤D VirtualTagEngine.Initialize()       — 가상 Tag 목록 재구성 (C-18, 신규)
 //    ⑥ DataCollectionService.Initialize()  — SDT + 저장 서비스 재시작
 //    ⑦ FlowEngine.StartAsync()             — 폴링 재시작
 //
 //  C-08: 신규
-//  생성: 2026-06-29
+//  수정: 2026-07-06 — AnomalyFilterService/VirtualTagEngine 재시작 연동 추가
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Engine;
@@ -56,6 +59,8 @@ public sealed class ConfigReloadWatcher : IAsyncDisposable
     private readonly AlarmViewModel          _alarmViewModel;
     private readonly DataCollectionService   _dataService;
     private readonly DeviceInstanceService   _deviceInstanceService;   // ★ C-EX-01 신규
+    private readonly AnomalyFilterService    _anomalyFilter;           // ★ C-16 신규 (재시작 연동)
+    private readonly VirtualTagEngine        _virtualTagEngine;        // ★ C-18 신규 (재시작 연동)
 
     private FileSystemWatcher? _watcher;
 
@@ -71,15 +76,19 @@ public sealed class ConfigReloadWatcher : IAsyncDisposable
         StatusViewModel        statusViewModel,
         AlarmViewModel         alarmViewModel,
         DataCollectionService  dataService,
-        DeviceInstanceService deviceInstanceService)   // ★ C-EX-01 신규
+        DeviceInstanceService  deviceInstanceService,   // ★ C-EX-01 신규
+        AnomalyFilterService   anomalyFilter,           // ★ 신규
+        VirtualTagEngine       virtualTagEngine)        // ★ 신규
     {
-        _configLoader    = configLoader;
-        _flowEngine      = flowEngine;
-        _alarmManager    = alarmManager;
-        _statusViewModel = statusViewModel;
-        _alarmViewModel  = alarmViewModel;
-        _dataService     = dataService;
-        _deviceInstanceService = deviceInstanceService;   // ★ C-EX-01 신규
+        _configLoader           = configLoader;
+        _flowEngine             = flowEngine;
+        _alarmManager           = alarmManager;
+        _statusViewModel        = statusViewModel;
+        _alarmViewModel         = alarmViewModel;
+        _dataService            = dataService;
+        _deviceInstanceService  = deviceInstanceService;   // ★ C-EX-01 신규
+        _anomalyFilter          = anomalyFilter;           // ★ 신규
+        _virtualTagEngine       = virtualTagEngine;        // ★ 신규
     }
 
     // §3 ─ 감시 시작 ───────────────────────────────────────
@@ -164,6 +173,12 @@ public sealed class ConfigReloadWatcher : IAsyncDisposable
 
             // ⑤B ★ C-EX-01: DeviceInstance 트리 재조립 (새 device.json 기준)
             _deviceInstanceService.Initialize();
+
+            // ⑤C ★ C-16 신규: 이상값 필터 재구성 (새 스케일 범위 기준으로 재계산)
+            _anomalyFilter.Initialize();
+
+            // ⑤D ★ C-18 신규: 가상 Tag 목록 재구성
+            _virtualTagEngine.Initialize();
 
             // ⑥ SDT + 저장 서비스 재시작
             _dataService.Initialize();
