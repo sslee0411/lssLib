@@ -10,7 +10,8 @@
 //    → 기존 C-01~C-19 파이프라인은 이 서비스 존재 여부와 무관하게 그대로 동작한다.
 //
 //  C-EX-01: 신규 (Collector 실무강화 이후, Monitor 착수 전 사전 작업)
-//  생성: 2026-07-06
+//  C-EX-10: CollectorId 필드 채우기 추가 (다중 Collector 인스턴스 구분용)
+//  생성: 2026-07-06 / 수정: 2026-07-07
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
@@ -34,7 +35,8 @@ public sealed class DeviceInstanceService : IDisposable
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly CollectorConfigLoader _configLoader;
+    private readonly CollectorConfigLoader   _configLoader;
+    private readonly CollectorSettingsLoader _settingsLoader;   // ★ C-EX-10 신규
 
     /// <summary>PlcId → DeviceInstance (조립된 트리)</summary>
     private readonly Dictionary<string, DeviceInstance> _devices = new();
@@ -49,9 +51,12 @@ public sealed class DeviceInstanceService : IDisposable
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
-    public DeviceInstanceService(CollectorConfigLoader configLoader)
+    public DeviceInstanceService(
+        CollectorConfigLoader   configLoader,
+        CollectorSettingsLoader settingsLoader)   // ★ C-EX-10 신규
     {
-        _configLoader = configLoader;
+        _configLoader   = configLoader;
+        _settingsLoader = settingsLoader;
     }
 
     // §3 ─ 공개 조회 API ───────────────────────────────────
@@ -144,6 +149,7 @@ public sealed class DeviceInstanceService : IDisposable
 
             _devices[plc.PlcId] = new DeviceInstance
             {
+                CollectorId = _settingsLoader.Settings.CollectorId,   // ★ C-EX-10 신규
                 PlcId    = plc.PlcId,
                 Name     = plc.Name,
                 NodeType = plc.NodeType,

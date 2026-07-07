@@ -24,6 +24,12 @@ namespace IIoT.Collector.Core.Config;
 
 public sealed class CollectorSettings
 {
+    // ★ C-EX-10 신규: 이 Collector 인스턴스의 고유 식별자
+    //   Monitor 가 여러 Collector 를 동시에 구독할 때 출처를 구분하는 용도.
+    //   배포 시 담당자가 직접 지정(예: "COL-01", "공장1-1호기") 권장.
+    //   빈 문자열이면 최초 로드 시 CollectorSettingsLoader 가 자동 GUID 생성 후 저장.
+    public string CollectorId { get; set; } = string.Empty;
+
     public StorageSettings  Storage  { get; set; } = new();
     public SignalRSettings  SignalR  { get; set; } = new();
     public RetrySettings    Retry    { get; set; } = new();
@@ -215,6 +221,7 @@ public sealed class CollectorSettingsLoader
     /// <summary>
     /// settings.json 을 로드합니다.
     /// 파일 없으면 기본값을 저장 후 반환합니다.
+    /// ★ C-EX-10: CollectorId 가 비어있으면(신규 생성이든 기존 파일이든) 자동 GUID 생성 후 저장.
     /// </summary>
     public async Task LoadAsync()
     {
@@ -223,11 +230,14 @@ public sealed class CollectorSettingsLoader
 
         if (!File.Exists(path))
         {
-            Settings = new CollectorSettings();
+            Settings = new CollectorSettings
+            {
+                CollectorId = _GenerateCollectorId()
+            };
             var json = JsonSerializer.Serialize(Settings, _opts);
             await File.WriteAllTextAsync(path, json, Encoding.UTF8);
             LogManager.Instance.Info("Settings",
-                $"settings.json 없음 → 기본값으로 생성: {path}");
+                $"settings.json 없음 → 기본값으로 생성 (CollectorId={Settings.CollectorId}): {path}");
             return;
         }
 
@@ -236,17 +246,32 @@ public sealed class CollectorSettingsLoader
             var json = await File.ReadAllTextAsync(path, Encoding.UTF8);
             Settings = JsonSerializer.Deserialize<CollectorSettings>(json, _opts)
                        ?? new CollectorSettings();
+
+            // ★ C-EX-10: 기존 파일인데 CollectorId 가 비어있으면 자동 생성 후 다시 저장
+            if (string.IsNullOrWhiteSpace(Settings.CollectorId))
+            {
+                Settings.CollectorId = _GenerateCollectorId();
+                var updatedJson = JsonSerializer.Serialize(Settings, _opts);
+                await File.WriteAllTextAsync(path, updatedJson, Encoding.UTF8);
+                LogManager.Instance.Info("Settings",
+                    $"CollectorId 미설정 상태 감지 → 자동 생성 및 저장: {Settings.CollectorId}");
+            }
+
             LogManager.Instance.Info("Settings",
-                $"settings.json 로드 완료 — Provider={Settings.Storage.Provider}, " +
-                $"SdtExcDev={Settings.Storage.SdtExcDevPercent}%");
+                $"settings.json 로드 완료 — CollectorId={Settings.CollectorId}, " +
+                $"Provider={Settings.Storage.Provider}, SdtExcDev={Settings.Storage.SdtExcDevPercent}%");
         }
         catch (Exception ex)
         {
             LogManager.Instance.Error("Settings",
                 $"settings.json 파싱 실패 → 기본값 사용: {ex.Message}");
-            Settings = new CollectorSettings();
+            Settings = new CollectorSettings { CollectorId = _GenerateCollectorId() };
         }
     }
+
+    /// <summary>새 CollectorId 생성 ("COL-" + GUID 앞 8자리, 예: COL-3F2A9B7C)</summary>
+    private static string _GenerateCollectorId()
+        => $"COL-{Guid.NewGuid():N}"[..12].ToUpperInvariant();
 }
 
 // ── 알림 섹션 (C-14 신규) ─────────────────────────────────

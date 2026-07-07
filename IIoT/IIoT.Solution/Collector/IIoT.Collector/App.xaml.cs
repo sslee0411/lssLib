@@ -12,9 +12,11 @@
 //    C-14 알람 에스컬레이션 / C-15 강제쓰기 / C-16 이상값 필터 /
 //    C-17 집계 엔진 / C-18 가상 Tag / C-19 일시정지 /
 //    C-EX-01 DeviceInstance 통합 조회 + [장비] 탭 /
-//    C-EX-02~08 보안·보존·억제·백업·CSV·자체진단
+//    C-EX-02~08 보안·보존·억제·백업·CSV·자체진단 /
+//    C-EX-10 CollectorId 반영 — settings.json 을 DeviceInstanceService.Initialize()
+//            보다 먼저 로드하도록 순서 변경 (CollectorId 가 DeviceInstance 에 포함되어야 함)
 //
-//  생성: 2026-06-29 / 수정: 2026-07-06
+//  생성: 2026-06-29 / 수정: 2026-07-07
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
@@ -45,7 +47,7 @@ public partial class App : Application
     // §1 ─ 필드 ──────────────────────────────────────────────
 
     private ThemeSettingsService? _themeSettings;
-    private IServiceProvider?     _services;
+    private IServiceProvider? _services;
 
     // §2 ─ 시작 ───────────────────────────────────────────────
 
@@ -60,12 +62,12 @@ public partial class App : Application
         // ② LogManager 시작 (반드시 DI 빌드 전에 호출)
         LogManager.Instance.Start(new LogConfig
         {
-            LogRootPath         = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log"),
-            ValidDays           = 30,
-            FileFormat          = LogFileFormat.Both,
-            MinimumLevel        = LogLevel.Debug,
+            LogRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log"),
+            ValidDays = 30,
+            FileFormat = LogFileFormat.Both,
+            MinimumLevel = LogLevel.Debug,
             MinimumConsoleLevel = LogLevel.Info,
-            MaxDisplayCount     = 2000
+            MaxDisplayCount = 2000
         });
 
         LogManager.Instance.Info("App", "IIoT.Collector 시작");
@@ -97,7 +99,12 @@ public partial class App : Application
             await _services.GetRequiredService<CollectorConfigLoader>()
                             .LoadAsync();
 
-            // ★ C-EX-01: DeviceInstance 트리 조립 (ConfigLoader 로드 직후)
+            // ★ C-07 / C-EX-10: settings.json 로드 — CollectorId 를 포함해야 하므로
+            //   DeviceInstanceService.Initialize() 보다 반드시 먼저 호출
+            await _services.GetRequiredService<CollectorSettingsLoader>()
+                            .LoadAsync();
+
+            // ★ C-EX-01: DeviceInstance 트리 조립 (ConfigLoader + SettingsLoader 로드 직후)
             _services.GetRequiredService<DeviceInstanceService>()
                      .Initialize();
 
@@ -119,10 +126,6 @@ public partial class App : Application
             // ★ C-14: 에스컬레이션 관리자 초기화 (AlarmStateManager 이후 — 동일 EventBus 이벤트 순서 보장)
             _services.GetRequiredService<EscalationManager>()
                      .Initialize();
-
-            // ★ C-07: settings.json 로드 (SQLite/InfluxDB Provider 결정)
-            await _services.GetRequiredService<CollectorSettingsLoader>()
-                            .LoadAsync();
 
             // ★ C-07: 저장소 초기화 (DB 연결 / 테이블 생성)
             await _services.GetRequiredService<ITimeSeriesStore>()

@@ -45,6 +45,13 @@ public sealed class DeviceInstance
 {
     // §1 ─ 불변 식별·설정 정보 ─────────────────────────────
 
+    /// <summary>
+    /// ★ C-EX-10 신규: 이 DeviceInstance 를 발행한 Collector 인스턴스의 고유 ID
+    /// (settings.json CollectorId). Monitor 가 여러 Collector 를 동시에 구독할 때
+    /// 출처를 구분하는 용도. 단일 Collector 환경에서는 그대로 두어도 무방.
+    /// </summary>
+    public string CollectorId { get; init; } = string.Empty;
+
     /// <summary>PLC/Device 고유 ID</summary>
     public string PlcId { get; init; } = string.Empty;
 
