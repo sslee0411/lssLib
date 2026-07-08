@@ -1,0 +1,89 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Monitor · Views/LiveTag/LiveTagView.xaml
+     역할: [태그현황] 탭 화면
+           CollectionViewSource 로 CollectorName → PlcId 2단계 그룹핑
+     MN-02: 신규
+     생성: 2026-07-07
+     규칙:
+       ① CollectionViewSource.Source 는 코드비하인드에서 대입
+          (Resources 는 DataContext 상속이 안 되므로 XAML Binding 사용 불가)
+       ② DynamicResource 필수 (테마 전환 대응)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Monitor.Views.LiveTag.LiveTagView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- Source 는 LiveTagView.xaml.cs 생성자에서 대입 -->
+        <CollectionViewSource x:Key="GroupedRows"/>
+
+        <!-- 그룹 헤더(Collector/PLC) 공통 스타일 -->
+        <Style x:Key="GroupHeaderText" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Margin" Value="4,6,0,2"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="실시간 Tag 현황 (Collector → PLC 계층 그룹핑)"
+                   FontSize="13"
+                   Foreground="{DynamicResource Text2Brush}"
+                   Margin="0,0,0,8"/>
+
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Source={StaticResource GroupedRows}}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  Background="{DynamicResource SurfaceBrush}"
+                  Foreground="{DynamicResource TextBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}"
+                  RowBackground="{DynamicResource SurfaceBrush}"
+                  AlternatingRowBackground="{DynamicResource CardBrush}">
+
+            <DataGrid.GroupStyle>
+                <!-- 1단계: Collector 이름 -->
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource GroupHeaderText}"/>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+                <!-- 2단계: PLC ID -->
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Margin="16,4,0,2"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource Text2Brush}">
+                                <Run Text="PLC: "/>
+                                <Run Text="{Binding Name}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="TagId"   Binding="{Binding TagId}"   Width="120"/>
+                <DataGridTextColumn Header="Raw"     Binding="{Binding RawValue, StringFormat=N2}" Width="100"/>
+                <DataGridTextColumn Header="공학값"   Binding="{Binding EngValue, StringFormat=N2}" Width="100"/>
+                <DataGridTextColumn Header="단위"     Binding="{Binding Unit}"    Width="70"/>
+                <DataGridTextColumn Header="품질"     Binding="{Binding Quality}" Width="90"/>
+                <DataGridTextColumn Header="갱신시각" Binding="{Binding UpdatedAt, StringFormat='HH:mm:ss'}" Width="90"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

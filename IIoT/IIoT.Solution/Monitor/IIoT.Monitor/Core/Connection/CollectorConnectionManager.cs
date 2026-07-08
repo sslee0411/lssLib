@@ -4,9 +4,11 @@
 //        CollectorId 기준 1:1로 동기화 관리한다 (DI 싱글턴).
 //        [Collector 관리] 탭에서 목록이 변경될 때마다 SyncFromEndpointsAsync() 호출.
 //  MN-01B: 신규
-//  생성: 2026-07-07
+//  MN-02: LiveTagAggregator 연동 — Collector 이름 등록 + TagValue 콜백 연결
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-02)
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Monitor.Core.Aggregation;
 using IIoT.Monitor.Core.Config;
 using IIoT.Monitor.Models;
 using lssLib.Log;
@@ -18,6 +20,8 @@ namespace IIoT.Monitor.Core.Connection;
 /// <para>
 /// 등록된 Collector 목록이 바뀔 때마다(<see cref="SyncFromEndpointsAsync"/>) 호출하면
 /// 새로 추가된 항목은 연결을 시작하고, 삭제되거나 비활성화된 항목은 연결을 종료한다.
+/// 연결된 각 CollectorConnection 이 수신한 TagValue 이벤트는
+/// <see cref="LiveTagAggregator"/> 로 전달되어 [태그현황] 탭에 실시간 반영된다.
 /// </para>
 /// </summary>
 public sealed class CollectorConnectionManager : IAsyncDisposable
@@ -25,13 +29,17 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
     // §1 ─ 필드 ────────────────────────────────────────────
 
     private readonly MonitorSettingsLoader _settingsLoader;
+    private readonly LiveTagAggregator     _tagAggregator;
     private readonly Dictionary<string, CollectorConnection> _connections = new();
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
-    public CollectorConnectionManager(MonitorSettingsLoader settingsLoader)
+    public CollectorConnectionManager(
+        MonitorSettingsLoader settingsLoader,
+        LiveTagAggregator     tagAggregator)
     {
         _settingsLoader = settingsLoader;
+        _tagAggregator  = tagAggregator;
     }
 
     // §3 ─ 동기화 ──────────────────────────────────────────
@@ -43,6 +51,7 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
     /// - 목록에서 사라졌거나 <c>Enabled=false</c> 로 바뀐 항목 → 연결 종료 및 제거
     /// </para>
     /// 이미 연결 중인 항목은 그대로 유지한다(재연결하지 않음).
+    /// 활성 상태인 모든 항목에 대해 표시 이름을 매번 최신화한다(이름 변경 즉시 반영).
     /// </summary>
     public async Task SyncFromEndpointsAsync(IEnumerable<CollectorEndpoint> endpoints)
     {
@@ -59,15 +68,19 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
                 $"Collector[{key}] 연결 해제 (목록에서 제거되었거나 비활성화됨)");
         }
 
-        // ② 신규 항목 연결 시작
+        // ② 신규 항목 연결 시작 + 표시 이름 최신화
         foreach (var (id, endpoint) in desired)
         {
+            // ★ MN-02: 이름은 변경될 수 있으므로 매번 갱신
+            _tagAggregator.RegisterCollectorName(id, endpoint.Name);
+
             if (_connections.ContainsKey(id))
                 continue;
 
             var conn = new CollectorConnection(
                 endpoint,
-                onCollectorIdResolved: (oldId, newId) => _OnCollectorIdResolved(oldId, newId));
+                onCollectorIdResolved: (oldId, newId) => _OnCollectorIdResolved(oldId, newId, endpoint),
+                onTagValue: _tagAggregator.OnTagValueReceived);
 
             _connections[id] = conn;
 
@@ -78,16 +91,18 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
 
     /// <summary>
     /// CollectorConnection 이 자동 동기화로 Id 를 변경했을 때 호출됨.
-    /// Dictionary 키를 갱신하고 monitor.json 을 즉시 저장한다
-    /// (다음 실행부터는 올바른 Id 로 로드되어 재동기화가 필요 없음).
+    /// Dictionary 키를 갱신하고, LiveTagAggregator 의 이름 매핑도 새 Id 로 등록하며,
+    /// monitor.json 을 즉시 저장한다(다음 실행부터는 올바른 Id 로 로드됨).
     /// </summary>
-    private void _OnCollectorIdResolved(string oldId, string newId)
+    private void _OnCollectorIdResolved(string oldId, string newId, CollectorEndpoint endpoint)
     {
         if (_connections.TryGetValue(oldId, out var conn))
         {
             _connections.Remove(oldId);
             _connections[newId] = conn;
         }
+
+        _tagAggregator.RegisterCollectorName(newId, endpoint.Name);
 
         // endpoint.Id 는 이미 CollectorConnection 내부에서 갱신된 동일 참조 객체이므로
         // Settings.Collectors 목록의 값도 이미 반영되어 있음 — 저장만 수행.

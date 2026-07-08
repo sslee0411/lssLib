@@ -13,13 +13,16 @@
 //         여기서는 등록만 한다 (Studio-P04와 동일하게 "요구하는 곳"+"등록하는 곳" 세트 확인).
 //         CommandQueue.Instance.Start() 는 EventBus 사용 시점(MN-01B)에 추가 예정.
 //  MN-01B: CollectorConnectionManager DI 등록 추가 (CollectorId↔HubConnection 관리자)
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-01B)
+//  MN-02: LiveTagAggregator / LiveTagViewModel / LiveTagView DI 등록 추가
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-02)
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Monitor.Core.Aggregation;
 using IIoT.Monitor.Core.Config;
 using IIoT.Monitor.Core.Connection;
 using IIoT.Monitor.ViewModels;
 using IIoT.Monitor.Views.CollectorManage;
+using IIoT.Monitor.Views.LiveTag;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,6 +83,12 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
+        // ★ MN-02 신규: 전체 Collector 통합 실시간 Tag 집계기 + 화면
+        //   (CollectorConnectionManager 보다 먼저 등록 — 생성자 의존성)
+        services.AddSingleton<LiveTagAggregator>();
+        services.AddSingleton<LiveTagViewModel>();
+        services.AddSingleton<LiveTagView>();
+
         // ★ MN-01B 신규: Collector 연결 관리자 (CollectorId ↔ HubConnection)
         services.AddSingleton<CollectorConnectionManager>();
 
@@ -95,7 +104,8 @@ public partial class App : Application
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
                 sp.GetRequiredService<MonitorMainViewModel>(),
-                sp.GetRequiredService<CollectorManageView>()));
+                sp.GetRequiredService<CollectorManageView>(),
+                sp.GetRequiredService<LiveTagView>()));
 
         return services.BuildServiceProvider();
     }

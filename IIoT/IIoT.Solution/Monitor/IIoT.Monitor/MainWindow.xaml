@@ -102,13 +102,17 @@
 
         <!-- § 본문 -->
         <Grid Background="{DynamicResource BgBrush}">
-            <!-- 임시 안내 문구 (태그현황/알람/로그 탭) -->
+            <!-- 임시 안내 문구 (알람/로그 탭) -->
             <TextBlock Text="{Binding TabPlaceholderText}"
                        Visibility="{Binding ShowPlaceholder, Converter={StaticResource BoolToVisibility}}"
                        FontSize="14"
                        Foreground="{DynamicResource Text2Brush}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"/>
+
+            <!-- ★ MN-02: [태그현황] 탭 전용 View 호스트 -->
+            <ContentControl x:Name="TagStatusHost"
+                            Visibility="{Binding IsTagTab, Converter={StaticResource BoolToVisibility}}"/>
 
             <!-- ★ MN-01: [Collector 관리] 탭 전용 View 호스트
                  실제 CollectorManageView 인스턴스는 MainWindow.xaml.cs 생성자에서
