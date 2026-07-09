@@ -16,12 +16,16 @@
 //  MN-02: LiveTagAggregator / LiveTagViewModel / LiveTagView DI 등록 추가
 //  MN-02B: DashboardViewModel / DashboardView DI 등록 추가 (대시보드 탭)
 //  MN-03: AlarmAggregator / AlarmViewModel / AlarmView DI 등록 추가
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-03)
+//  MN-04: DetectorHost DI 등록 + 예시 Detector/Responder 부트스트랩 등록
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-04)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
 using IIoT.Monitor.Core.Config;
 using IIoT.Monitor.Core.Connection;
+using IIoT.Monitor.Core.Detection;
+using IIoT.Monitor.Core.Detection.Detectors;
+using IIoT.Monitor.Core.Detection.Responders;
 using IIoT.Monitor.ViewModels;
 using IIoT.Monitor.Views.Alarm;
 using IIoT.Monitor.Views.CollectorManage;
@@ -68,6 +72,14 @@ public partial class App : Application
         // ③ DI 빌드
         _services = _ConfigureServices();
 
+        // ★ MN-04: 예시 Detector/Responder 등록
+        //   실제 운영 시에는 여기에 프로젝트에 맞는 Detector/Responder 를 자유롭게
+        //   추가하면 된다 (AbstractDetector 상속 + IDetectionResponder 구현).
+        //   TagId "T001"은 예시값 — 실제 감시할 Tag ID로 교체해서 사용할 것.
+        var detectorHost = _services.GetRequiredService<DetectorHost>();
+        detectorHost.RegisterResponder(new LogResponder());
+        detectorHost.RegisterDetector(new RateOfChangeDetector(tagId: "T001", maxRatePerSec: 5.0));
+
         // ④ 창 생성 및 표시
         _services.GetRequiredService<MainWindow>().Show();
     }
@@ -97,6 +109,10 @@ public partial class App : Application
         services.AddSingleton<AlarmAggregator>();
         services.AddSingleton<AlarmViewModel>();
         services.AddSingleton<AlarmView>();
+
+        // ★ MN-04 신규: AbstractDetector 커스텀 확장 호스트
+        //   (LiveTagAggregator 의존 — 위에서 먼저 등록됨)
+        services.AddSingleton<DetectorHost>();
 
         // ★ MN-01B 신규: Collector 연결 관리자 (CollectorId ↔ HubConnection)
         services.AddSingleton<CollectorConnectionManager>();

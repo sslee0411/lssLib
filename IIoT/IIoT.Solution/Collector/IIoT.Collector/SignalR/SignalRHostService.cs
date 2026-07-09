@@ -28,7 +28,12 @@
 //  운영:   settings.json SignalR.AllowedOrigins 에 도메인 지정
 //  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  C-11: 신규
-//  생성: 2026-06-29
+//  C-EX-12: IIoTHub 가 AlarmStateManager 를 생성자로 요구하게 되어(ACK 처리),
+//           ASP.NET Core 자체 DI 컨테이너(builder.Services)에도 WPF 쪽
+//           AlarmStateManager 싱글턴 인스턴스를 그대로 등록해 Hub 활성화 시
+//           주입되도록 함 (기존 DeviceInstanceService 클로저 재사용 원칙과
+//           동일 맥락 — 새 컨테이너를 만들지 않고 기존 인스턴스를 공유).
+//  생성: 2026-06-29 / 수정: 2026-07-07 (C-EX-12)
 // ══════════════════════════════════════════════════════════
 
 using System.IO;
@@ -56,6 +61,7 @@ public sealed class SignalRHostService : IAsyncDisposable
 
     private readonly CollectorSettingsLoader _settingsLoader;
     private readonly DeviceInstanceService _deviceInstanceService;   // ★ C-EX-01-7 신규
+    private readonly AlarmStateManager     _alarmStateManager;       // ★ C-EX-12 신규
 
     private WebApplication? _app;
     private Thread?         _serverThread;
@@ -68,10 +74,12 @@ public sealed class SignalRHostService : IAsyncDisposable
 
     public SignalRHostService(
         CollectorSettingsLoader settingsLoader,
-        DeviceInstanceService deviceInstanceService)   // ★ C-EX-01-7 신규
+        DeviceInstanceService deviceInstanceService,   // ★ C-EX-01-7 신규
+        AlarmStateManager alarmStateManager)            // ★ C-EX-12 신규
     {
         _settingsLoader = settingsLoader;
         _deviceInstanceService = deviceInstanceService;
+        _alarmStateManager = alarmStateManager;
     }
 
     // §3 ─ 시작 ────────────────────────────────────────────
@@ -118,6 +126,11 @@ public sealed class SignalRHostService : IAsyncDisposable
         {
             opt.EnableDetailedErrors = true;
         });
+
+        // ── ★ C-EX-12 신규: IIoTHub 생성자가 요구하는 AlarmStateManager 를
+        //    ASP.NET Core 자체 DI 컨테이너에도 등록 (WPF 쪽 싱글턴 인스턴스 그대로 공유).
+        //    이렇게 하지 않으면 Hub 활성화 시 "서비스를 찾을 수 없음" 예외 발생.
+        builder.Services.AddSingleton(_alarmStateManager);
 
         // ── 포트 설정
         builder.WebHost.UseUrls($"http://0.0.0.0:{s.Port}");
