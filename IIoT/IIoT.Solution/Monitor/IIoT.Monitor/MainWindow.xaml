@@ -3,11 +3,14 @@
      역할: 메인 창
      MN-Base-0/1: 헤더(56px) + 탭바(40px) + 본문
      MN-01/MN-02: CollectorManageHost / TagStatusHost 추가
-     MN-02B: UI 디자인 개선(B 스타일: 카드·필 배지) + [대시보드] 탭(D 스타일) 신규
-             - 탭바: 선택된 탭에 필(pill) 배경(AccFaintBrush) + 강조색 텍스트
-               (TabBg/TabFg 컨버터, App.xaml 전역 등록 — 7개 테마 전부 대응)
-             - DashboardHost 추가 (탭 인덱스 4)
-     생성: 2026-07-07 / 수정: 2026-07-07 (MN-02B)
+     MN-02B: UI 디자인 개선(B 스타일) + [대시보드] 탭(D 스타일) 신규
+     변경(2026-07-08): [로그]를 콘텐츠 탭에서 Studio/Collector와 동일한
+             "하단 고정 패널 토글" 방식으로 전환 (GridSplitter로 높이 조절 가능).
+             콘텐츠 탭 5개로 재편성: 0=태그현황,1=알람,2=Collector관리,
+             3=대시보드,4=차트. 탭바 맨 끝 "📋 로그" 버튼은 CommandParameter="L"
+             로 패널만 토글(탭 전환 없음).
+     MN-EX-04: 헤더에 연결상태 요약 배지 추가 — 어느 탭에 있든 항상 표시
+     생성: 2026-07-07 / 수정: 2026-07-08 (로그 하단 패널화 + MN-EX-04)
      규칙:
        ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
        ② BoolToVisibility: Window.Resources 직접 등록
@@ -28,7 +31,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <!-- ★ MN-02B: 탭바 버튼 — 선택 시 필(pill) 배경 + 강조 텍스트
+        <!-- 탭바 버튼 — 선택 시 필(pill) 배경 + 강조 텍스트
              Background/Foreground 는 각 Button 인스턴스에서 ConverterParameter(탭 인덱스)로 바인딩 -->
         <Style x:Key="TabBtn" TargetType="Button">
             <Setter Property="BorderThickness" Value="0"/>
@@ -73,9 +76,42 @@
                                Foreground="{DynamicResource Text2Brush}"
                                VerticalAlignment="Center"/>
                 </StackPanel>
+
                 <uc:ThemePickerButton DockPanel.Dock="Right"
                                       HorizontalAlignment="Right"
                                       VerticalAlignment="Center"/>
+
+                <!-- ★ MN-EX-04: 연결상태 요약 배지 — 어느 탭에 있든 항상 표시 -->
+                <Border DockPanel.Dock="Right"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="20"
+                        Padding="12,5"
+                        Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,7,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{DynamicResource RedBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ConnectedCollectorCount}" Value="0">
+                                            <Setter Property="Fill" Value="{DynamicResource RedBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}">
+                            <Run Text="Collector "/>
+                            <Run Text="{Binding ConnectedCollectorCount, Mode=OneWay}"/>
+                            <Run Text="/"/>
+                            <Run Text="{Binding TotalCollectorCount, Mode=OneWay}"/>
+                            <Run Text=" 연결됨"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
             </DockPanel>
         </Border>
 
@@ -85,49 +121,72 @@
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="📊 태그현황" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="0"
-                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=0}"
-                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=0}"/>
-                <Button Content="🔔 알람" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="1"
-                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=1}"
-                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=1}"/>
-                <Button Content="🔌 Collector 관리" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="2"
-                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=2}"
-                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=2}"/>
-                <Button Content="📜 로그" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="3"
-                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=3}"
-                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=3}"/>
-                <Button Content="🗂 대시보드" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="4"
-                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=4}"
-                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=4}"/>
-                <Button Content="📈 차트" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="5"
-                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=5}"
-                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=5}"/>
-            </StackPanel>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="📊 태그현황" Style="{StaticResource TabBtn}"
+                            Command="{Binding SwitchTabCommand}" CommandParameter="0"
+                            Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=0}"
+                            Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=0}"/>
+                    <Button Content="🔔 알람" Style="{StaticResource TabBtn}"
+                            Command="{Binding SwitchTabCommand}" CommandParameter="1"
+                            Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=1}"
+                            Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=1}"/>
+                    <Button Content="🔌 Collector 관리" Style="{StaticResource TabBtn}"
+                            Command="{Binding SwitchTabCommand}" CommandParameter="2"
+                            Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=2}"
+                            Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=2}"/>
+                    <Button Content="🗂 대시보드" Style="{StaticResource TabBtn}"
+                            Command="{Binding SwitchTabCommand}" CommandParameter="3"
+                            Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=3}"
+                            Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=3}"/>
+                    <Button Content="📈 차트" Style="{StaticResource TabBtn}"
+                            Command="{Binding SwitchTabCommand}" CommandParameter="4"
+                            Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=4}"
+                            Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=4}"/>
+                </StackPanel>
+
+                <!-- ★ 로그 패널 토글 버튼 — Studio/Collector와 동일하게 GhostBtn 스타일 사용
+                     (탭 전환이 아닌 하단 패널 토글, 우측 배치) -->
+                <Button DockPanel.Dock="Right"
+                        Content="📋  로그" Style="{DynamicResource GhostBtn}"
+                        Height="40" Padding="16,0"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="L"/>
+            </DockPanel>
         </Border>
 
-        <!-- § 본문 -->
-        <Grid Background="{DynamicResource BgBrush}">
-            <!-- 임시 안내 문구 (알람/로그 탭) -->
-            <TextBlock Text="{Binding TabPlaceholderText}"
-                       Visibility="{Binding ShowPlaceholder, Converter={StaticResource BoolToVisibility}}"
-                       FontSize="14"
-                       Foreground="{DynamicResource Text2Brush}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
+        <!-- ══════════════════════════════════════════════════
+             § 하단 로그 패널 (토글) — DockPanel.Dock="Bottom"
+             본문 Grid(LastChildFill) 보다 먼저 선언되어야 본문 위/로그 아래 배치됨
+             GridSplitter 로 위쪽 드래그하여 높이 조절 가능
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Bottom"
+                Height="220"
+                Visibility="{Binding LogPanelVisible, Converter={StaticResource BoolToVisibility}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="4"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
+                <GridSplitter Grid.Row="0"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              Background="{DynamicResource BorderBrush}"
+                              ResizeDirection="Rows"
+                              ResizeBehavior="PreviousAndNext"
+                              Cursor="SizeNS"/>
+
+                <ContentControl x:Name="LogHost" Grid.Row="1"/>
+            </Grid>
+        </Border>
+
+        <!-- § 본문 (마지막 자식 — 나머지 공간 채움) -->
+        <Grid Background="{DynamicResource BgBrush}">
             <!-- [태그현황] 탭 전용 View 호스트 -->
             <ContentControl x:Name="TagStatusHost"
                             Visibility="{Binding IsTagTab, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ★ MN-03: [알람] 탭 전용 View 호스트 -->
+            <!-- [알람] 탭 전용 View 호스트 -->
             <ContentControl x:Name="AlarmHost"
                             Visibility="{Binding IsAlarmTab, Converter={StaticResource BoolToVisibility}}"/>
 
@@ -135,11 +194,11 @@
             <ContentControl x:Name="CollectorManageHost"
                             Visibility="{Binding IsCollectorTab, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ★ MN-02B: [대시보드] 탭 전용 View 호스트 -->
+            <!-- [대시보드] 탭 전용 View 호스트 -->
             <ContentControl x:Name="DashboardHost"
                             Visibility="{Binding IsDashboardTab, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ★ MN-06: [차트] 탭 전용 View 호스트 -->
+            <!-- [차트] 탭 전용 View 호스트 -->
             <ContentControl x:Name="ChartHost"
                             Visibility="{Binding IsChartTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>

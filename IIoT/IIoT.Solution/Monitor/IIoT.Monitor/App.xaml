@@ -33,6 +33,9 @@
                     <!-- ★ MN-03: 알람 레벨/상태 색상 컨버터 -->
                     <mconv:AlarmLevelColorConverter x:Key="AlarmLevelColor"/>
                     <mconv:AlarmStatusColorConverter x:Key="AlarmStatusColor"/>
+
+                    <!-- ★ MN-EX-05: 즐겨찾기 아이콘 컨버터 -->
+                    <mconv:FavoriteIconConverter x:Key="FavoriteIcon"/>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

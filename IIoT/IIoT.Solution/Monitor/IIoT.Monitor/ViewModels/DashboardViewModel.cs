@@ -7,7 +7,9 @@
 //         않으므로 타이머 기반 재계산이 가장 단순하고 안전함 — MN-04 이후
 //         이벤트 기반으로 고도화 가능)
 //  MN-02B: 신규
-//  생성: 2026-07-07
+//  MN-EX-05: FavoriteTags 추가 — 즐겨찾기 Tag만 모은 목록(2초 주기 재구성,
+//            KPI 재계산과 동일한 타이머 재사용)
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-05)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -34,6 +36,9 @@ public partial class DashboardViewModel : ObservableObject
     /// <summary>전체 Collector 통합 실시간 Tag 목록 (LiveTagAggregator 와 동일 참조)</summary>
     public ObservableCollection<LiveTagRow> Tags { get; }
 
+    /// <summary>★ MN-EX-05: 즐겨찾기(IsFavorite=true)만 모은 목록. 2초 주기로 재구성된다.</summary>
+    public ObservableCollection<LiveTagRow> FavoriteTags { get; } = new();
+
     [ObservableProperty] private int _connectedCollectorCount;
     [ObservableProperty] private int _totalCollectorCount;
     [ObservableProperty] private int _totalTagCount;
@@ -49,7 +54,7 @@ public partial class DashboardViewModel : ObservableObject
         Collectors.CollectionChanged += (_, _) => _Recalculate();
         Tags.CollectionChanged       += (_, _) => _Recalculate();
 
-        // ★ 개별 항목의 StatusText/Quality 실시간 변경 반영용 — 2초 주기 재계산
+        // ★ 개별 항목의 StatusText/Quality/IsFavorite 실시간 변경 반영용 — 2초 주기 재계산
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _refreshTimer.Tick += (_, _) => _Recalculate();
         _refreshTimer.Start();
@@ -65,5 +70,11 @@ public partial class DashboardViewModel : ObservableObject
         ConnectedCollectorCount = Collectors.Count(c => c.StatusText == "연결됨");
         TotalTagCount           = Tags.Count;
         GoodQualityCount        = Tags.Count(t => t.Quality == "Good");
+
+        // ★ MN-EX-05: 즐겨찾기 목록 재구성 (건수가 적어 매번 재구성해도 부담 없음)
+        var favorites = Tags.Where(t => t.IsFavorite).ToList();
+        FavoriteTags.Clear();
+        foreach (var t in favorites)
+            FavoriteTags.Add(t);
     }
 }

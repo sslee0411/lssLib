@@ -6,6 +6,7 @@
      MN-02B: UI 디자인 개선(B 스타일) — DataGrid를 둥근 카드(Border)로 감싸고,
              품질 컬럼을 색상 점(Ellipse) + 텍스트 조합으로 교체
              (QualColor 컨버터, App.xaml 전역 등록 — 7개 테마 전부 대응)
+     MN-EX-05: 즐겨찾기(⭐) 토글 컬럼 추가 (FavoriteIcon 컨버터)
      FIX: DataGrid에 Style="{DynamicResource IIoTGrid}" 미적용으로 테마가
           반영되지 않던 문제 수정 — Collector StatusView.xaml과 동일하게
           Style="{DynamicResource IIoTGrid}" + RowStyle BasedOn="{StaticResource
@@ -94,6 +95,20 @@
                 </DataGrid.GroupStyle>
 
                 <DataGrid.Columns>
+                    <!-- ★ MN-EX-05: 즐겨찾기 토글 (⭐/☆) -->
+                    <DataGridTemplateColumn Header="★" Width="36" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding IsFavorite, Converter={StaticResource FavoriteIcon}}"
+                                        FontSize="14" Background="Transparent" BorderThickness="0"
+                                        Cursor="Hand" Padding="0" HorizontalAlignment="Center"
+                                        Command="{Binding DataContext.ToggleFavoriteCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
                     <DataGridTextColumn Header="TagId"   Binding="{Binding TagId}"   Width="120"/>
                     <DataGridTextColumn Header="Raw"     Binding="{Binding RawValue, StringFormat=N2}" Width="100"/>
                     <DataGridTextColumn Header="공학값"   Binding="{Binding EngValue, StringFormat=N2}" Width="100"/>

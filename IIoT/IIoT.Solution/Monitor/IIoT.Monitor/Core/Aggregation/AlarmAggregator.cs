@@ -5,7 +5,12 @@
 //        [알람] 탭(AlarmView)이 이 컬렉션을 그대로 바인딩한다.
 //        구조는 LiveTagAggregator(MN-02)와 동일한 패턴.
 //  MN-03: 신규
-//  생성: 2026-07-07
+//  FIX(2026-07-08): Dispatcher.Invoke(동기·블로킹) → Dispatcher.BeginInvoke(비동기)
+//                   로 변경 — LiveTagAggregator.cs 와 동일한 사유(앱 종료 시
+//                   교착상태로 디버깅이 멈추지 않던 문제).
+//  MN-EX-01: NewAlarmCreated 이벤트 추가 — TrayNotificationService 연동용
+//  MN-EX-02: AlarmRecorded 이벤트 추가 — AlarmHistoryService(SQLite 이력저장) 연동용
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-02)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Models;
@@ -13,6 +18,7 @@ using lssLib.Log;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace IIoT.Monitor.Core.Aggregation;
 
@@ -29,6 +35,22 @@ public sealed class AlarmAggregator
     /// <summary>전체 Collector 통합 실시간 알람 목록 (UI 바인딩 대상)</summary>
     public ObservableCollection<AlarmRow> Rows { get; } = new();
 
+    /// <summary>
+    /// ★ MN-EX-01 신규: 새 알람이 "처음" 생성될 때만 발행되는 이벤트
+    /// (기존 알람의 상태 갱신 시에는 발행되지 않음 — 중복 알림 방지).
+    /// TrayNotificationService 가 이 이벤트를 구독해 사운드+트레이 알림을 표시한다.
+    /// UI 스레드(Dispatcher.BeginInvoke 콜백 내부)에서 발행되므로 구독자는
+    /// 별도 스레드 마샬링 없이 UI 요소를 안전하게 다룰 수 있다.
+    /// </summary>
+    public event Action<AlarmRow>? NewAlarmCreated;
+
+    /// <summary>
+    /// ★ MN-EX-02 신규: 알람이 생성되거나 상태가 바뀔 때마다(Active→Acked→Recovered
+    /// 전이 포함) 매번 발행되는 이벤트. AlarmHistoryService 가 구독하여 모든
+    /// 상태 전이를 SQLite 이력에 기록한다 (NewAlarmCreated 와 달리 갱신 시에도 발행).
+    /// </summary>
+    public event Action<AlarmRow>? AlarmRecorded;
+
     // §3 ─ Collector 이름 등록 ─────────────────────────────
 
     /// <summary>CollectorId → 표시 이름 매핑을 등록/갱신한다 (LiveTagAggregator와 동일 패턴).</summary>
@@ -36,12 +58,13 @@ public sealed class AlarmAggregator
     {
         _collectorNames[collectorId] = name;
 
-        Application.Current?.Dispatcher.Invoke(() =>
+        // ★ FIX: BeginInvoke(비동기) — Invoke(동기)는 앱 종료 시 교착상태 유발
+        Application.Current?.Dispatcher.BeginInvoke(() =>
         {
             foreach (var row in Rows)
                 if (row.CollectorId == collectorId)
                     row.CollectorName = name;
-        });
+        }, DispatcherPriority.Background);
     }
 
     // §4 ─ AlarmChanged 수신 처리 ──────────────────────────
@@ -73,7 +96,8 @@ public sealed class AlarmAggregator
 
             var key = $"{collectorId}:{alarmKey}";
 
-            Application.Current?.Dispatcher.Invoke(() =>
+            // ★ FIX: BeginInvoke(비동기) — Invoke(동기)는 앱 종료 시 교착상태 유발
+            Application.Current?.Dispatcher.BeginInvoke(() =>
             {
                 if (_index.TryGetValue(key, out var row))
                 {
@@ -81,6 +105,9 @@ public sealed class AlarmAggregator
                     row.Message   = message;
                     row.EngValue  = engValue;
                     row.OccurredAt = occurredAt;
+
+                    // ★ MN-EX-02: 상태 갱신도 이력에 기록
+                    AlarmRecorded?.Invoke(row);
                 }
                 else
                 {
@@ -100,8 +127,13 @@ public sealed class AlarmAggregator
                     };
                     _index[key] = newRow;
                     Rows.Insert(0, newRow); // 최신 알람이 위로 오도록
+
+                    // ★ MN-EX-01: 신규 알람 생성 시에만 알림 이벤트 발행 (갱신 시엔 발행 안 함)
+                    NewAlarmCreated?.Invoke(newRow);
+                    // ★ MN-EX-02: 신규 생성도 이력에 기록
+                    AlarmRecorded?.Invoke(newRow);
                 }
-            });
+            }, DispatcherPriority.Background);
         }
         catch (Exception ex)
         {

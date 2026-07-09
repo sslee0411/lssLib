@@ -2,7 +2,8 @@
 //  IIoT.Monitor · Models/LiveTagRow.cs
 //  역할: [태그현황] 그리드 1행 — Collector→PLC→Tag 계층 그룹핑의 최하위 단위
 //  MN-02: 신규
-//  생성: 2026-07-07
+//  MN-EX-05: IsFavorite 속성 추가 (즐겨찾기/핀 고정)
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-05)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -39,6 +40,9 @@ public partial class LiveTagRow : ObservableObject
     [ObservableProperty] private string _quality = "Good";
 
     [ObservableProperty] private DateTimeOffset _updatedAt;
+
+    /// <summary>★ MN-EX-05 신규: 즐겨찾기(핀 고정) 여부. FavoriteTagService 가 관리한다.</summary>
+    [ObservableProperty] private bool _isFavorite;
 
     /// <summary>내부 인덱싱용 고유 키 (CollectorId:PlcId:TagId)</summary>
     public string RowKey => $"{CollectorId}:{PlcId}:{TagId}";

@@ -19,7 +19,11 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
-using System.Windows.Media;
+// ★ FIX(2026-07-08): UseWindowsForms=true 로 System.Drawing 도 전역 using에
+//   걸려 Brush/Brushes 가 System.Drawing.Brush(es) 와 모호해짐 — 별칭으로
+//   WPF(System.Windows.Media) 쪽을 명시적으로 고정.
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace IIoT.Monitor.Core.Converters;
 
@@ -130,6 +134,16 @@ public sealed class AlarmStatusColorConverter : IValueConverter
             "Recovered" => ThemeResource.Find("GreenBrush"),
             _           => ThemeResource.Find("Text2Brush")
         };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>★ MN-EX-05: LiveTagRow.IsFavorite(bool) → 아이콘 문자열. true="⭐", false="☆"</summary>
+public sealed class FavoriteIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value is true) ? "⭐" : "☆";
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();

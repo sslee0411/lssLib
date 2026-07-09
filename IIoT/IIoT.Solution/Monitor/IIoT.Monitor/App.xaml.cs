@@ -24,7 +24,19 @@
 //  FIX(2026-07-08): 앱 종료 시 CollectorConnectionManager(N개 HubConnection/
 //                   HttpClient)가 정리되지 않아 프로세스가 정상 종료되지
 //                   않던 문제 수정 — OnExit에서 함께 Dispose하도록 추가
-//  생성: 2026-07-07 / 수정: 2026-07-08 (종료 처리 수정)
+//  FIX(2, 2026-07-08): 위 종료 정리가 UI 스레드를 블로킹하는 동안 Aggregator의
+//                      Dispatcher.Invoke(동기)와 맞물려 교착상태 발생 —
+//                      Aggregator를 BeginInvoke로 수정 + 5초 타임아웃 안전장치 추가
+//  MN-EX-01: TrayNotificationService DI 등록 + 초기화 + AlarmAggregator.
+//            NewAlarmCreated 구독(신규 알람 시 사운드+트레이 풍선 알림)
+//  MN-EX-02: AlarmHistoryService DI 등록 + AlarmAggregator.AlarmRecorded 구독
+//            (알람 생성/상태전이마다 SQLite 이력 저장). 초기화는 MainWindow.
+//            Loaded 에서 수행(파일 I/O이므로 창 표시 전 블로킹 방지)
+//  신규(2026-07-08): LogPanelView DI 등록 — [로그] 탭 실제 구현 (기존 미구현 확인)
+//  MN-EX-03: 트레이 상주 + 최소화 — TrayNotificationService 에 RestoreRequested/
+//            ExitRequested 이벤트 추가, MainWindow 에서 최소화 시 트레이로 숨김
+//  MN-EX-05: FavoriteTagService DI 등록 (즐겨찾기/핀 고정)
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-05)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
@@ -33,6 +45,9 @@ using IIoT.Monitor.Core.Connection;
 using IIoT.Monitor.Core.Detection;
 using IIoT.Monitor.Core.Detection.Detectors;
 using IIoT.Monitor.Core.Detection.Responders;
+using IIoT.Monitor.Core.Favorites;
+using IIoT.Monitor.Core.Notification;
+using IIoT.Monitor.Core.Storage;
 using IIoT.Monitor.SignalR;
 using IIoT.Monitor.ViewModels;
 using IIoT.Monitor.Views.Alarm;
@@ -40,6 +55,7 @@ using IIoT.Monitor.Views.Chart;
 using IIoT.Monitor.Views.CollectorManage;
 using IIoT.Monitor.Views.Dashboard;
 using IIoT.Monitor.Views.LiveTag;
+using IIoT.Monitor.Views.Log;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -89,6 +105,21 @@ public partial class App : Application
         detectorHost.RegisterResponder(new LogResponder());
         detectorHost.RegisterDetector(new RateOfChangeDetector(tagId: "T001", maxRatePerSec: 5.0));
 
+        // ★ MN-EX-01: 트레이 알림 초기화 + 신규 알람 발생 시 사운드/풍선 알림 연결
+        var tray = _services.GetRequiredService<TrayNotificationService>();
+        tray.Initialize();
+
+        var alarmAggregator = _services.GetRequiredService<AlarmAggregator>();
+        alarmAggregator.NewAlarmCreated += row =>
+            tray.NotifyNewAlarm(
+                row.Level,
+                $"[{row.Level}] 알람 발생 — {row.CollectorName}",
+                $"{row.TagId} · {row.Message}");
+
+        // ★ MN-EX-02: 알람 생성/상태전이 시마다 SQLite 이력 저장 (fire-and-forget)
+        var alarmHistory = _services.GetRequiredService<AlarmHistoryService>();
+        alarmAggregator.AlarmRecorded += row => _ = alarmHistory.RecordAsync(row);
+
         // ④ 창 생성 및 표시
         _services.GetRequiredService<MainWindow>().Show();
     }
@@ -100,15 +131,41 @@ public partial class App : Application
         // ★ FIX(2026-07-08): CollectorConnectionManager 가 종료 시 전혀 정리되지
         //   않아 N개 Collector에 대한 SignalR HubConnection/HttpClient가 살아있는
         //   채로 남아 프로세스가 정상 종료되지 않던 문제 수정.
-        //   MonitorHostService 와 동일하게 짧은 타임아웃 내 블로킹 대기로 정리한다.
-        _services?.GetService<CollectorConnectionManager>()?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        //   ★ 근본 원인은 LiveTagAggregator/AlarmAggregator의 Dispatcher.Invoke
+        //   (동기·블로킹)가 이 블로킹 대기와 맞물려 교착상태를 일으켰던 것 —
+        //   BeginInvoke로 수정 완료. 아래 5초 타임아웃은 그 외의 사유(네트워크
+        //   지연 등)로 인한 무한 대기까지 방어하는 안전장치.
+        _WaitWithTimeout(_services?.GetService<CollectorConnectionManager>()?.DisposeAsync().AsTask());
+        _WaitWithTimeout(_services?.GetService<MonitorHostService>()?.DisposeAsync().AsTask());
 
-        // ★ MN-05: 웹 Hub 정상 종료 (동기 컨텍스트이므로 짧은 타임아웃 내 블로킹 대기)
-        _services?.GetService<MonitorHostService>()?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        // ★ MN-EX-01: 트레이 아이콘 정리 (남아있으면 작업표시줄에 유령 아이콘으로 남음)
+        _services?.GetService<TrayNotificationService>()?.Dispose();
+
+        // ★ MN-EX-02: 알람 이력 DB 연결 정리
+        _WaitWithTimeout(_services?.GetService<AlarmHistoryService>()?.DisposeAsync().AsTask());
 
         _themeSettings?.Dispose();   // 이벤트 구독 해제 필수
         LogManager.Instance.Info("App", "IIoT.Monitor 종료");
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// 종료 정리 Task 를 최대 5초까지만 기다린다. 그 안에 끝나지 않으면
+    /// 로그만 남기고 포기한다 — 앱 종료 자체가 무한정 멈추는 것을 방지하는 안전장치.
+    /// </summary>
+    private static void _WaitWithTimeout(Task? task)
+    {
+        if (task is null) return;
+
+        try
+        {
+            if (!task.Wait(TimeSpan.FromSeconds(5)))
+                LogManager.Instance.Warn("App", "종료 정리 작업이 5초 내 완료되지 않아 건너뜁니다.");
+        }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Warn("App", $"종료 정리 중 예외(무시하고 계속 종료): {ex.Message}");
+        }
     }
 
     // §4 ─ DI 구성 ────────────────────────────────────────────
@@ -116,6 +173,9 @@ public partial class App : Application
     private static IServiceProvider _ConfigureServices()
     {
         var services = new ServiceCollection();
+
+        // ★ MN-EX-05 신규: Tag 즐겨찾기 서비스 (LiveTagAggregator 의존성이므로 먼저 등록)
+        services.AddSingleton<FavoriteTagService>();
 
         // ★ MN-02 신규: 전체 Collector 통합 실시간 Tag 집계기 + 화면
         //   (CollectorConnectionManager 보다 먼저 등록 — 생성자 의존성)
@@ -131,6 +191,12 @@ public partial class App : Application
         // ★ MN-04 신규: AbstractDetector 커스텀 확장 호스트
         //   (LiveTagAggregator 의존 — 위에서 먼저 등록됨)
         services.AddSingleton<DetectorHost>();
+
+        // ★ MN-EX-01 신규: 알람 사운드 + 트레이 알림
+        services.AddSingleton<TrayNotificationService>();
+
+        // ★ MN-EX-02 신규: 알람 이력 SQLite 저장
+        services.AddSingleton<AlarmHistoryService>();
 
         // ★ MN-01B 신규: Collector 연결 관리자 (CollectorId ↔ HubConnection)
         services.AddSingleton<CollectorConnectionManager>();
@@ -155,6 +221,9 @@ public partial class App : Application
         services.AddSingleton<ChartViewModel>();
         services.AddSingleton<ChartView>();
 
+        // ★ 신규: [로그] 탭 (LogManager 싱글턴 이벤트 구독 — DI 의존성 없음)
+        services.AddSingleton<LogPanelView>();
+
         // ★ 반드시 AddSingleton (Transient → 이중 창 버그)
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
@@ -164,7 +233,10 @@ public partial class App : Application
                 sp.GetRequiredService<AlarmView>(),
                 sp.GetRequiredService<DashboardView>(),
                 sp.GetRequiredService<ChartView>(),
-                sp.GetRequiredService<MonitorHostService>()));
+                sp.GetRequiredService<LogPanelView>(),
+                sp.GetRequiredService<MonitorHostService>(),
+                sp.GetRequiredService<AlarmHistoryService>(),
+                sp.GetRequiredService<TrayNotificationService>()));
 
         return services.BuildServiceProvider();
     }

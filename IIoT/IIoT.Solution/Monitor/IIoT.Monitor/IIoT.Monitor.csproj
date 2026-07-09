@@ -12,7 +12,27 @@
     -->
 		<RootNamespace>IIoT.Monitor</RootNamespace>
 		<AssemblyName>IIoT.Monitor</AssemblyName>
+		<!-- ★ MN-EX-01: 트레이 아이콘(NotifyIcon)을 쓰기 위해 WinForms 활성화.
+		     주의: System.Windows.Forms 는 System.Windows(WPF) 와 겹치는 타입명이
+		     있으므로(MessageBox, Application 등), Forms 관련 코드 파일에서는
+		     "using System.Windows.Forms;" 만 단독으로 쓰고 "using System.Windows;"
+		     와 같은 파일에서 함께 열지 않는다(모호한 참조 오류 방지). -->
+		<UseWindowsForms>true</UseWindowsForms>
 	</PropertyGroup>
+
+	<!--
+    ★ FIX (2026-07-08): UseWindowsForms=true + ImplicitUsings=enable 조합은
+      System.Windows.Forms 를 프로젝트 "전역" using으로 자동 추가한다.
+      WPF의 System.Windows 도 전역 using이라, Application/UserControl/Brush
+      등 겹치는 타입명이 프로젝트 전체(App.xaml.cs, 모든 View.xaml.cs 등)에서
+      CS0104(모호한 참조) 오류를 일으켰다.
+      → System.Windows.Forms 의 "전역" using만 제거(어셈블리 참조는 유지).
+        TrayNotificationService.cs 처럼 실제로 Forms 타입이 필요한 파일은
+        그 파일 안에서만 "using System.Windows.Forms;" 를 개별 선언해서 쓴다.
+  -->
+	<ItemGroup>
+		<Using Remove="System.Windows.Forms" />
+	</ItemGroup>
 
 	<!--
     ★ FIX (MN-01B, 2026-07-07): Microsoft.AspNetCore.App FrameworkReference 제거했었음.
@@ -47,6 +67,10 @@
 
 	<ItemGroup>
 		<!-- lssLib BCL — 로그 -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj" />
+
+		<!-- ★ MN-EX-02: lssLib BCL — SQLite (알람 이력 저장) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 
 		<!-- WPF 테마 (v1.5) -->

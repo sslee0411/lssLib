@@ -4,7 +4,8 @@
 //        경로: {Monitor 실행파일}\Config\monitor.json
 //  MN-01: 신규 — Collectors[] (등록된 Collector 목록) 저장
 //  MN-05: Web(WebHostSettings) 섹션 추가 — 자체 SignalR Hub 포트/활성화 설정
-//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-05)
+//  MN-EX-05: FavoriteTagKeys 추가 — 즐겨찾기 Tag 영구 저장
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-05)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Models;
@@ -22,6 +23,9 @@ public sealed class MonitorSettings
 {
     /// <summary>등록된 Collector 목록. MN-01 [Collector 관리] 탭에서 CRUD.</summary>
     public List<CollectorEndpoint> Collectors { get; set; } = new();
+
+    /// <summary>★ MN-EX-05 신규: 즐겨찾기(핀 고정) Tag 키 목록 (CollectorId:PlcId:TagId 형식)</summary>
+    public List<string> FavoriteTagKeys { get; set; } = new();
 
     /// <summary>★ MN-05 신규: Monitor 자체 웹 Hub(브라우저 연동) 설정</summary>
     public WebHostSettings Web { get; set; } = new();
