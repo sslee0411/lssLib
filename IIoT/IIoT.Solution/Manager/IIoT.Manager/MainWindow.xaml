@@ -1,0 +1,65 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Manager · MainWindow.xaml
+     역할: 메인 창
+     MG-Base-0: 빈 창 + 테마 (헤더 56px: 타이틀 + ThemePickerButton)
+     생성: 2026-07-09
+     규칙:
+       ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
+       ② BoolToVisibility: Window.Resources 직접 등록
+       ③ xmlns:uc assembly="IIoT.UI.Themes" (크로스-프로젝트 xmlns)
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.Manager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        Title="IIoT Manager — 통합 관리"
+        Width="1280" Height="800"
+        MinWidth="1000" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- § 헤더 (56px) -->
+        <Border DockPanel.Dock="Top"
+                Height="56"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel Margin="16,0">
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="IIoT.Manager"
+                               FontSize="18" FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="  통합 관리"
+                               FontSize="12"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- 테마 선택 버튼 (우측) -->
+                <uc:ThemePickerButton DockPanel.Dock="Right"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- § 본문 (MG-Base-0: 빈 영역 — MG-01 에서 프로세스 상태 카드 추가 예정) -->
+        <Grid>
+            <TextBlock Text="IIoT.Manager — MG-Base-0"
+                       FontSize="14"
+                       Foreground="{DynamicResource Text2Brush}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+        </Grid>
+
+    </DockPanel>
+
+</Window>
