@@ -3,10 +3,14 @@
      역할: [Collector 관리] 탭 화면
            등록된 Collector 목록(DataGrid) + 추가/삭제/저장 툴바
      MN-01: 신규
-     생성: 2026-07-07
-     FIX: 브러시 키 오류 수정 — AccentBrush→AccBrush, TextMutedBrush→Text2Brush
-          (IIoT.UI.Themes 실제 키: BgBrush/SurfaceBrush/CardBrush/BorderBrush/
-           Border2Brush/AccBrush/Acc2Brush/TextBrush/Text2Brush/Text3Brush)
+     MN-02B: UI 디자인 개선(B 스타일) — DataGrid를 둥근 카드(Border)로 감싸고,
+             연결상태 컬럼을 색상 점(Ellipse) + 텍스트 조합으로 교체
+             (ConnColor 컨버터, App.xaml 전역 등록 — 7개 테마 전부 대응)
+     FIX: DataGrid에 Style="{DynamicResource IIoTGrid}" 미적용으로 테마가
+          반영되지 않던 문제 수정 — Collector StatusView.xaml과 동일하게
+          Style="{DynamicResource IIoTGrid}" + RowStyle BasedOn="{StaticResource
+          IIoTGridRow}" 패턴 적용 (개별 Background/Foreground 수동 지정 제거)
+     생성: 2026-07-07 / 수정: 2026-07-07 (IIoTGrid 테마 수정)
      규칙:
        ① UserControl.Resources 는 <UserControl> 직계 자식만 허용
        ② DynamicResource 필수 (테마 전환 대응)
@@ -17,9 +21,10 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <!-- ConnColor 는 App.xaml 에서 전역 등록됨 -->
     </UserControl.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -27,63 +32,83 @@
         </Grid.RowDefinitions>
 
         <!-- ══ 툴바 ══ -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,14">
             <Button Content="＋ Collector 추가"
                     Command="{Binding AddCollectorCommand}"
                     Style="{DynamicResource PrimaryBtn}"
-                    Padding="12,6" Margin="0,0,8,0"/>
+                    Padding="14,7" Margin="0,0,8,0"/>
             <Button Content="🗑 선택 삭제"
                     Command="{Binding RemoveCollectorCommand}"
-                    Padding="12,6" Margin="0,0,8,0"
+                    Padding="14,7" Margin="0,0,8,0"
                     Background="{DynamicResource CardBrush}"
                     Foreground="{DynamicResource TextBrush}"
                     BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                     Cursor="Hand"/>
             <Button Content="💾 저장"
                     Command="{Binding SaveCommand}"
-                    Padding="12,6"
+                    Padding="14,7"
                     Background="{DynamicResource CardBrush}"
                     Foreground="{DynamicResource TextBrush}"
                     BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                     Cursor="Hand"/>
         </StackPanel>
 
-        <!-- ══ Collector 목록 ══ -->
-        <DataGrid Grid.Row="1"
-                  ItemsSource="{Binding Collectors}"
-                  SelectedItem="{Binding Selected, Mode=TwoWay}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  HeadersVisibility="Column"
-                  GridLinesVisibility="Horizontal"
-                  Background="{DynamicResource SurfaceBrush}"
-                  Foreground="{DynamicResource TextBrush}"
-                  BorderBrush="{DynamicResource BorderBrush}"
-                  RowBackground="{DynamicResource SurfaceBrush}"
-                  AlternatingRowBackground="{DynamicResource CardBrush}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID (CollectorId 일치 필요)"
-                                    Binding="{Binding Id}" Width="180" IsReadOnly="False"/>
-                <DataGridTextColumn Header="이름"
-                                    Binding="{Binding Name}" Width="150"/>
-                <DataGridTextColumn Header="Host"
-                                    Binding="{Binding Host}" Width="150"/>
-                <DataGridTextColumn Header="Port"
-                                    Binding="{Binding Port}" Width="80"/>
-                <DataGridCheckBoxColumn Header="활성"
-                                        Binding="{Binding Enabled}" Width="60"/>
-                <DataGridTextColumn Header="연결상태"
-                                    Binding="{Binding StatusText}" Width="110" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Hub URL"
-                                    Binding="{Binding HubUrl}" Width="*" IsReadOnly="True"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- ══ Collector 목록 — 둥근 카드로 감싸기 ══ -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="1">
+            <DataGrid ItemsSource="{Binding Collectors}"
+                      SelectedItem="{Binding Selected, Mode=TwoWay}"
+                      Style="{DynamicResource IIoTGrid}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource IIoTGridRow}"/>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID (CollectorId 일치 필요)"
+                                        Binding="{Binding Id}" Width="180" IsReadOnly="False"/>
+                    <DataGridTextColumn Header="이름"
+                                        Binding="{Binding Name}" Width="150"/>
+                    <DataGridTextColumn Header="Host"
+                                        Binding="{Binding Host}" Width="150"/>
+                    <DataGridTextColumn Header="Port"
+                                        Binding="{Binding Port}" Width="80"/>
+                    <DataGridCheckBoxColumn Header="활성"
+                                            Binding="{Binding Enabled}" Width="60"/>
+
+                    <!-- ★ MN-02B: 연결상태 — 색상 점 + 텍스트 (ConnColor 컨버터) -->
+                    <DataGridTemplateColumn Header="연결상태" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="4,0">
+                                    <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
+                                             Fill="{Binding StatusText, Converter={StaticResource ConnColor}}"/>
+                                    <TextBlock Text="{Binding StatusText}" FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{Binding StatusText, Converter={StaticResource ConnColor}}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Hub URL"
+                                        Binding="{Binding HubUrl}" Width="*" IsReadOnly="True"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
         <!-- ══ 하단 상태바 ══ -->
         <TextBlock Grid.Row="2"
                    Text="{Binding StatusText}"
-                   Margin="0,8,0,0"
+                   Margin="0,10,0,0"
                    FontSize="12"
                    Foreground="{DynamicResource Text2Brush}"/>
     </Grid>

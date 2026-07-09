@@ -1,13 +1,13 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.Monitor · MainWindow.xaml
      역할: 메인 창
-     MN-Base-0: 헤더(56px) + 본문 임시 블록 (테마 확인용)
-     MN-Base-1: 헤더 + 탭바(40px, 4개) + 본문(Grid, 탭별 임시 문구) 추가
-     MN-01: [Collector 관리] 탭(2) 전용 ContentControl(CollectorManageHost) 추가
-            (실제 View는 MainWindow.xaml.cs 생성자에서 DI 주입 — ④ 규칙)
-     FIX(MN-01): 브러시 키 오류 수정 — TextMutedBrush → Text2Brush
-                 (IIoT.UI.Themes 실제 키 목록 기준)
-     생성: 2026-07-07 / 수정: 2026-07-07 (MN-01)
+     MN-Base-0/1: 헤더(56px) + 탭바(40px) + 본문
+     MN-01/MN-02: CollectorManageHost / TagStatusHost 추가
+     MN-02B: UI 디자인 개선(B 스타일: 카드·필 배지) + [대시보드] 탭(D 스타일) 신규
+             - 탭바: 선택된 탭에 필(pill) 배경(AccFaintBrush) + 강조색 텍스트
+               (TabBg/TabFg 컨버터, App.xaml 전역 등록 — 7개 테마 전부 대응)
+             - DashboardHost 추가 (탭 인덱스 4)
+     생성: 2026-07-07 / 수정: 2026-07-07 (MN-02B)
      규칙:
        ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
        ② BoolToVisibility: Window.Resources 직접 등록
@@ -28,27 +28,24 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <!-- 탭바 버튼 공통 스타일 -->
+        <!-- ★ MN-02B: 탭바 버튼 — 선택 시 필(pill) 배경 + 강조 텍스트
+             Background/Foreground 는 각 Button 인스턴스에서 ConverterParameter(탭 인덱스)로 바인딩 -->
         <Style x:Key="TabBtn" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Margin" Value="4,4,0,4"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
             <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -82,21 +79,33 @@
             </DockPanel>
         </Border>
 
-        <!-- § 탭바 (40px) -->
+        <!-- § 탭바 (48px) -->
         <Border DockPanel.Dock="Top"
-                Height="40"
-                Background="{DynamicResource CardBrush}"
+                Height="48"
+                Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Stretch">
-                <Button Content="태그현황" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="0"/>
-                <Button Content="알람" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="1"/>
-                <Button Content="Collector 관리" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="2"/>
-                <Button Content="로그" Style="{StaticResource TabBtn}"
-                        Command="{Binding SwitchTabCommand}" CommandParameter="3"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="📊 태그현황" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="0"
+                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=0}"
+                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=0}"/>
+                <Button Content="🔔 알람" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="1"
+                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=1}"
+                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=1}"/>
+                <Button Content="🔌 Collector 관리" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="2"
+                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=2}"
+                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=2}"/>
+                <Button Content="📜 로그" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="3"
+                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=3}"
+                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=3}"/>
+                <Button Content="🗂 대시보드" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="4"
+                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=4}"
+                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=4}"/>
             </StackPanel>
         </Border>
 
@@ -110,15 +119,21 @@
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"/>
 
-            <!-- ★ MN-02: [태그현황] 탭 전용 View 호스트 -->
+            <!-- [태그현황] 탭 전용 View 호스트 -->
             <ContentControl x:Name="TagStatusHost"
                             Visibility="{Binding IsTagTab, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- ★ MN-01: [Collector 관리] 탭 전용 View 호스트
-                 실제 CollectorManageView 인스턴스는 MainWindow.xaml.cs 생성자에서
-                 DI로 주입받아 Content 에 대입한다 (DI 필요 View 규칙 ④). -->
+            <!-- ★ MN-03: [알람] 탭 전용 View 호스트 -->
+            <ContentControl x:Name="AlarmHost"
+                            Visibility="{Binding IsAlarmTab, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- [Collector 관리] 탭 전용 View 호스트 -->
             <ContentControl x:Name="CollectorManageHost"
                             Visibility="{Binding IsCollectorTab, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- ★ MN-02B: [대시보드] 탭 전용 View 호스트 -->
+            <ContentControl x:Name="DashboardHost"
+                            Visibility="{Binding IsDashboardTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

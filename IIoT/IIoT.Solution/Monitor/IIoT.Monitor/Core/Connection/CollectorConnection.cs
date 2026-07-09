@@ -4,11 +4,13 @@
 //        ① REST GET /api/devices 최초 스냅샷 조회 (+ CollectorId 자동 동기화)
 //        ② SignalR HubConnection 생명주기 관리 (연결/재연결/종료)
 //        ③ "TagValue" 이벤트 구독 → LiveTagAggregator 로 전달 (MN-02)
-//        "AlarmChanged" 이벤트 구독은 MN-03에서 추가한다.
+//        ④ "AlarmChanged" 이벤트 구독 → AlarmAggregator 로 전달 (MN-03)
+//        ⑤ AcknowledgeAsync() — 이 Collector 로만 ACK 요청 전송 (MN-03)
 //  MN-01B: 신규
 //  MN-02: "TagValue" 이벤트 구독 추가 (onTagValue 콜백)
+//  MN-03: "AlarmChanged" 이벤트 구독 + AcknowledgeAsync() 추가
 //  FIX: CS0246 HttpClient 못 찾음 — using System.Net.Http; 누락 추가
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-02 버그 수정)
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-03)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Models;
@@ -27,17 +29,18 @@ namespace IIoT.Monitor.Core.Connection;
 ///  ① HttpClient 로 GET /api/devices 를 1회 조회하여 실제 CollectorId 를 확인하고,
 ///     로컬 <see cref="CollectorEndpoint.Id"/> 와 다르면 자동으로 교정한다(자동 동기화).
 ///  ② SignalR HubConnection 을 생성하고 자동 재연결(WithAutomaticReconnect)과 함께 시작한다.
-///  ③ "TagValue" 이벤트를 구독하여 onTagValue 콜백(LiveTagAggregator)으로 전달한다.
+///  ③④ "TagValue"/"AlarmChanged" 이벤트를 구독하여 각각의 Aggregator 로 전달한다.
 /// </para>
 /// </summary>
 public sealed class CollectorConnection : IAsyncDisposable
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly CollectorEndpoint _endpoint;
-    private readonly Action<string, string> _onCollectorIdResolved;
+    private readonly CollectorEndpoint           _endpoint;
+    private readonly Action<string, string>      _onCollectorIdResolved;
     private readonly Action<string, JsonElement> _onTagValue;
-    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
+    private readonly Action<string, JsonElement> _onAlarmChanged;
+    private readonly HttpClient                  _http = new() { Timeout = TimeSpan.FromSeconds(5) };
 
     private HubConnection? _hub;
 
@@ -54,22 +57,19 @@ public sealed class CollectorConnection : IAsyncDisposable
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     /// <param name="endpoint">대상 Collector 접속 정보</param>
-    /// <param name="onCollectorIdResolved">
-    /// CollectorId 자동 동기화 발생 시 호출되는 콜백 (oldId, newId).
-    /// CollectorConnectionManager 가 내부 Dictionary 키 갱신 + monitor.json 저장에 사용.
-    /// </param>
-    /// <param name="onTagValue">
-    /// ★ MN-02: "TagValue" 이벤트 수신 시 호출되는 콜백 (collectorId, payload).
-    /// LiveTagAggregator.OnTagValueReceived 가 전달된다.
-    /// </param>
+    /// <param name="onCollectorIdResolved">CollectorId 자동 동기화 발생 시 호출(oldId, newId)</param>
+    /// <param name="onTagValue">★ MN-02: "TagValue" 이벤트 수신 시 호출(collectorId, payload)</param>
+    /// <param name="onAlarmChanged">★ MN-03: "AlarmChanged" 이벤트 수신 시 호출(collectorId, payload)</param>
     public CollectorConnection(
-        CollectorEndpoint endpoint,
-        Action<string, string> onCollectorIdResolved,
-        Action<string, JsonElement> onTagValue)
+        CollectorEndpoint           endpoint,
+        Action<string, string>      onCollectorIdResolved,
+        Action<string, JsonElement> onTagValue,
+        Action<string, JsonElement> onAlarmChanged)
     {
-        _endpoint = endpoint;
+        _endpoint              = endpoint;
         _onCollectorIdResolved = onCollectorIdResolved;
-        _onTagValue = onTagValue;
+        _onTagValue            = onTagValue;
+        _onAlarmChanged        = onAlarmChanged;
     }
 
     // §4 ─ 시작 ────────────────────────────────────────────
@@ -110,8 +110,9 @@ public sealed class CollectorConnection : IAsyncDisposable
             return Task.CompletedTask;
         };
 
-        // ★ MN-02: TagValue 이벤트 구독 — collectorId(연결 출처)를 함께 전달
-        _hub.On<JsonElement>("TagValue", data => _onTagValue(_endpoint.Id, data));
+        // ★ MN-02/MN-03: TagValue/AlarmChanged 이벤트 구독 — collectorId(연결 출처)를 함께 전달
+        _hub.On<JsonElement>("TagValue",     data => _onTagValue(_endpoint.Id, data));
+        _hub.On<JsonElement>("AlarmChanged", data => _onAlarmChanged(_endpoint.Id, data));
 
         try
         {
@@ -131,11 +132,6 @@ public sealed class CollectorConnection : IAsyncDisposable
 
     // §5 ─ CollectorId 자동 동기화 ─────────────────────────
 
-    /// <summary>
-    /// GET /api/devices 를 1회 조회하여 실제 CollectorId 를 확인하고,
-    /// 로컬 Id 와 다르면 자동으로 교정한다.
-    /// ★ 사용자가 Id 를 비워두거나 잘못 입력해도 최초 연결 성공 시 자동으로 바로잡힌다.
-    /// </summary>
     private async Task _TrySyncCollectorIdAsync()
     {
         var url = $"http://{_endpoint.Host}:{_endpoint.Port}/api/devices";
@@ -161,14 +157,41 @@ public sealed class CollectorConnection : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            // REST 조회 실패는 치명적이지 않음 — Collector 미실행 상태일 수 있으므로
-            // SignalR 연결 시도는 계속 진행한다.
             LogManager.Instance.Warn("CollectorConnection",
                 $"[{_endpoint.Name}] REST 스냅샷 조회 실패(CollectorId 자동 동기화 생략): {ex.Message}");
         }
     }
 
-    // §6 ─ 종료 ────────────────────────────────────────────
+    // §6 ─ 알람 ACK 요청 (MN-03) ───────────────────────────
+
+    /// <summary>
+    /// 이 Collector 로만 ACK 요청을 전송한다("발생 출처로만 전송" 원칙, MN-03 설계).
+    /// ★ C-EX-12(Collector 측 후속 작업) 완료 전까지는 Hub 에 해당 서버 메서드가
+    /// 없어 HubException 이 발생할 수 있음 — 이 경우 경고 로그만 남기고 UI는
+    /// 계속 정상 동작한다(예외를 상위로 전파하지 않음).
+    /// </summary>
+    public async Task AcknowledgeAsync(string alarmKey)
+    {
+        if (_hub is not { State: HubConnectionState.Connected })
+        {
+            LogManager.Instance.Warn("CollectorConnection",
+                $"[{_endpoint.Name}] ACK 전송 불가 — Hub 미연결 상태 (alarmKey={alarmKey})");
+            return;
+        }
+
+        try
+        {
+            await _hub.InvokeAsync("AcknowledgeAlarm", alarmKey);
+        }
+        catch (Exception ex)
+        {
+            // C-EX-12 미완료 시 여기서 HubException("Method does not exist") 발생 — 정상적인 과도기 상태
+            LogManager.Instance.Warn("CollectorConnection",
+                $"[{_endpoint.Name}] AcknowledgeAlarm 호출 실패 — Collector 측 C-EX-12 미완료 가능성: {ex.Message}");
+        }
+    }
+
+    // §7 ─ 종료 ────────────────────────────────────────────
 
     public async Task StopAsync()
     {

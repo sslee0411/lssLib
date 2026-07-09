@@ -1,0 +1,130 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Monitor · Views/Alarm/AlarmView.xaml
+     역할: [알람] 탭 화면
+           CollectionViewSource 로 CollectorName 그룹핑, 최신 알람이 위로 정렬
+           ACK 버튼은 발생 출처 Collector 로만 요청 전송 (오발송 방지)
+     MN-03: 신규
+     생성: 2026-07-07
+     규칙:
+       ① CollectionViewSource.Source 는 코드비하인드에서 대입
+       ② DynamicResource 필수 (테마 전환 대응)
+       ③ IIoTGrid 테마 스타일 필수 적용 (MN-02/MN-02B 버그 재발 방지)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Monitor.Views.Alarm.AlarmView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <CollectionViewSource x:Key="GroupedAlarms"/>
+        <!-- AlarmLevelColor/AlarmStatusColor 는 App.xaml 에서 전역 등록됨 -->
+
+        <Style x:Key="CollectorGroupHeader" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="4,10,0,4"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="실시간 알람 (Collector별 그룹핑, 최신순)"
+                   FontSize="13"
+                   Foreground="{DynamicResource Text2Brush}"
+                   Margin="0,0,0,10"/>
+
+        <Border Grid.Row="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="1">
+            <DataGrid ItemsSource="{Binding Source={StaticResource GroupedAlarms}}"
+                      Style="{DynamicResource IIoTGrid}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0">
+
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource IIoTGridRow}"/>
+                </DataGrid.RowStyle>
+
+                <DataGrid.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource CollectorGroupHeader}" HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12.5"
+                                               Foreground="{DynamicResource AccBrush}"/>
+                                </Border>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </DataGrid.GroupStyle>
+
+                <DataGrid.Columns>
+                    <!-- 레벨 — 색상 배지 -->
+                    <DataGridTemplateColumn Header="레벨" Width="70">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding Level, Converter={StaticResource AlarmLevelColor}}"
+                                        CornerRadius="4" Padding="8,2" Margin="4,3" HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding Level}" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="TagId"   Binding="{Binding TagId}"   Width="90"/>
+                    <DataGridTextColumn Header="Tag 이름" Binding="{Binding TagName}" Width="130"/>
+                    <DataGridTextColumn Header="메시지"   Binding="{Binding Message}" Width="180"/>
+                    <DataGridTextColumn Header="값"       Binding="{Binding EngValue, StringFormat=N2}" Width="80"/>
+
+                    <!-- 상태 — 색상 점 + 텍스트 -->
+                    <DataGridTemplateColumn Header="상태" Width="90">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="4,0">
+                                    <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
+                                             Fill="{Binding Status, Converter={StaticResource AlarmStatusColor}}"/>
+                                    <TextBlock Text="{Binding Status}" FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{Binding Status, Converter={StaticResource AlarmStatusColor}}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="발생시각" Binding="{Binding OccurredAt, StringFormat='HH:mm:ss'}" Width="90"/>
+
+                    <!-- ACK 버튼 — Active 상태에서만 활성화 -->
+                    <DataGridTemplateColumn Header="ACK" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="확인"
+                                        FontSize="11" Padding="10,3"
+                                        IsEnabled="{Binding CanAcknowledge}"
+                                        Command="{Binding DataContext.AcknowledgeCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Background="{DynamicResource CardBrush}"
+                                        Foreground="{DynamicResource TextBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                        Cursor="Hand"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

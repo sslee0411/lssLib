@@ -3,7 +3,14 @@
      역할: [태그현황] 탭 화면
            CollectionViewSource 로 CollectorName → PlcId 2단계 그룹핑
      MN-02: 신규
-     생성: 2026-07-07
+     MN-02B: UI 디자인 개선(B 스타일) — DataGrid를 둥근 카드(Border)로 감싸고,
+             품질 컬럼을 색상 점(Ellipse) + 텍스트 조합으로 교체
+             (QualColor 컨버터, App.xaml 전역 등록 — 7개 테마 전부 대응)
+     FIX: DataGrid에 Style="{DynamicResource IIoTGrid}" 미적용으로 테마가
+          반영되지 않던 문제 수정 — Collector StatusView.xaml과 동일하게
+          Style="{DynamicResource IIoTGrid}" + RowStyle BasedOn="{StaticResource
+          IIoTGridRow}" 패턴 적용 (개별 Background/Foreground 수동 지정 제거)
+     생성: 2026-07-07 / 수정: 2026-07-07 (IIoTGrid 테마 수정)
      규칙:
        ① CollectionViewSource.Source 는 코드비하인드에서 대입
           (Resources 는 DataContext 상속이 안 되므로 XAML Binding 사용 불가)
@@ -16,17 +23,18 @@
     <UserControl.Resources>
         <!-- Source 는 LiveTagView.xaml.cs 생성자에서 대입 -->
         <CollectionViewSource x:Key="GroupedRows"/>
+        <!-- QualColor 는 App.xaml 에서 전역 등록됨 -->
 
-        <!-- 그룹 헤더(Collector/PLC) 공통 스타일 -->
-        <Style x:Key="GroupHeaderText" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-            <Setter Property="Margin" Value="4,6,0,2"/>
+        <!-- 그룹 헤더(Collector) 스타일 — 강조 배경 필(pill) -->
+        <Style x:Key="CollectorGroupHeader" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="4,10,0,4"/>
         </Style>
     </UserControl.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -36,54 +44,79 @@
                    Text="실시간 Tag 현황 (Collector → PLC 계층 그룹핑)"
                    FontSize="13"
                    Foreground="{DynamicResource Text2Brush}"
-                   Margin="0,0,0,8"/>
+                   Margin="0,0,0,10"/>
 
-        <DataGrid Grid.Row="1"
-                  ItemsSource="{Binding Source={StaticResource GroupedRows}}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True"
-                  HeadersVisibility="Column"
-                  GridLinesVisibility="Horizontal"
-                  Background="{DynamicResource SurfaceBrush}"
-                  Foreground="{DynamicResource TextBrush}"
-                  BorderBrush="{DynamicResource BorderBrush}"
-                  RowBackground="{DynamicResource SurfaceBrush}"
-                  AlternatingRowBackground="{DynamicResource CardBrush}">
+        <!-- ══ 둥근 카드로 감싸기 ══ -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="1">
+            <DataGrid ItemsSource="{Binding Source={StaticResource GroupedRows}}"
+                      Style="{DynamicResource IIoTGrid}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0">
 
-            <DataGrid.GroupStyle>
-                <!-- 1단계: Collector 이름 -->
-                <GroupStyle>
-                    <GroupStyle.HeaderTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" Style="{StaticResource GroupHeaderText}"/>
-                        </DataTemplate>
-                    </GroupStyle.HeaderTemplate>
-                </GroupStyle>
-                <!-- 2단계: PLC ID -->
-                <GroupStyle>
-                    <GroupStyle.HeaderTemplate>
-                        <DataTemplate>
-                            <TextBlock Margin="16,4,0,2"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource Text2Brush}">
-                                <Run Text="PLC: "/>
-                                <Run Text="{Binding Name}" FontWeight="SemiBold"/>
-                            </TextBlock>
-                        </DataTemplate>
-                    </GroupStyle.HeaderTemplate>
-                </GroupStyle>
-            </DataGrid.GroupStyle>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource IIoTGridRow}"/>
+                </DataGrid.RowStyle>
 
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="TagId"   Binding="{Binding TagId}"   Width="120"/>
-                <DataGridTextColumn Header="Raw"     Binding="{Binding RawValue, StringFormat=N2}" Width="100"/>
-                <DataGridTextColumn Header="공학값"   Binding="{Binding EngValue, StringFormat=N2}" Width="100"/>
-                <DataGridTextColumn Header="단위"     Binding="{Binding Unit}"    Width="70"/>
-                <DataGridTextColumn Header="품질"     Binding="{Binding Quality}" Width="90"/>
-                <DataGridTextColumn Header="갱신시각" Binding="{Binding UpdatedAt, StringFormat='HH:mm:ss'}" Width="90"/>
-            </DataGrid.Columns>
-        </DataGrid>
+                <DataGrid.GroupStyle>
+                    <!-- 1단계: Collector 이름 — 강조 배경 필 -->
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource CollectorGroupHeader}" HorizontalAlignment="Left">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12.5"
+                                               Foreground="{DynamicResource AccBrush}"/>
+                                </Border>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                    <!-- 2단계: PLC ID -->
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Margin="20,4,0,2" FontSize="11.5" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Text2Brush}">
+                                    <Run Text="PLC · "/>
+                                    <Run Text="{Binding Name}"/>
+                                </TextBlock>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </DataGrid.GroupStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="TagId"   Binding="{Binding TagId}"   Width="120"/>
+                    <DataGridTextColumn Header="Raw"     Binding="{Binding RawValue, StringFormat=N2}" Width="100"/>
+                    <DataGridTextColumn Header="공학값"   Binding="{Binding EngValue, StringFormat=N2}" Width="100"/>
+                    <DataGridTextColumn Header="단위"     Binding="{Binding Unit}"    Width="70"/>
+
+                    <!-- ★ MN-02B: 품질 — 색상 점 + 텍스트 (QualColor 컨버터) -->
+                    <DataGridTemplateColumn Header="품질" Width="90">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="4,0">
+                                    <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
+                                             Fill="{Binding Quality, Converter={StaticResource QualColor}}"/>
+                                    <TextBlock Text="{Binding Quality}" FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{Binding Quality, Converter={StaticResource QualColor}}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="갱신시각" Binding="{Binding UpdatedAt, StringFormat='HH:mm:ss'}" Width="90"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
     </Grid>
 </UserControl>

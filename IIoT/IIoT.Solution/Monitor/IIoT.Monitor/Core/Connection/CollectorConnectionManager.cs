@@ -5,7 +5,9 @@
 //        [Collector 관리] 탭에서 목록이 변경될 때마다 SyncFromEndpointsAsync() 호출.
 //  MN-01B: 신규
 //  MN-02: LiveTagAggregator 연동 — Collector 이름 등록 + TagValue 콜백 연결
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-02)
+//  MN-03: AlarmAggregator 연동 + AcknowledgeAlarmAsync() — 알람 ACK를 발생
+//         출처 Collector 로만 라우팅
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-03)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
@@ -20,8 +22,8 @@ namespace IIoT.Monitor.Core.Connection;
 /// <para>
 /// 등록된 Collector 목록이 바뀔 때마다(<see cref="SyncFromEndpointsAsync"/>) 호출하면
 /// 새로 추가된 항목은 연결을 시작하고, 삭제되거나 비활성화된 항목은 연결을 종료한다.
-/// 연결된 각 CollectorConnection 이 수신한 TagValue 이벤트는
-/// <see cref="LiveTagAggregator"/> 로 전달되어 [태그현황] 탭에 실시간 반영된다.
+/// 연결된 각 CollectorConnection 이 수신한 TagValue/AlarmChanged 이벤트는
+/// 각각 <see cref="LiveTagAggregator"/>/<see cref="AlarmAggregator"/> 로 전달된다.
 /// </para>
 /// </summary>
 public sealed class CollectorConnectionManager : IAsyncDisposable
@@ -30,26 +32,25 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
 
     private readonly MonitorSettingsLoader _settingsLoader;
     private readonly LiveTagAggregator     _tagAggregator;
+    private readonly AlarmAggregator       _alarmAggregator;
     private readonly Dictionary<string, CollectorConnection> _connections = new();
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
     public CollectorConnectionManager(
         MonitorSettingsLoader settingsLoader,
-        LiveTagAggregator     tagAggregator)
+        LiveTagAggregator     tagAggregator,
+        AlarmAggregator       alarmAggregator)
     {
-        _settingsLoader = settingsLoader;
-        _tagAggregator  = tagAggregator;
+        _settingsLoader  = settingsLoader;
+        _tagAggregator   = tagAggregator;
+        _alarmAggregator = alarmAggregator;
     }
 
     // §3 ─ 동기화 ──────────────────────────────────────────
 
     /// <summary>
     /// 등록된 Collector 목록과 현재 연결 상태를 동기화합니다.
-    /// <para>
-    /// - <c>Enabled=true</c> 이고 아직 연결이 없는 항목 → 신규 연결 시작<br/>
-    /// - 목록에서 사라졌거나 <c>Enabled=false</c> 로 바뀐 항목 → 연결 종료 및 제거
-    /// </para>
     /// 이미 연결 중인 항목은 그대로 유지한다(재연결하지 않음).
     /// 활성 상태인 모든 항목에 대해 표시 이름을 매번 최신화한다(이름 변경 즉시 반영).
     /// </summary>
@@ -71,8 +72,8 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
         // ② 신규 항목 연결 시작 + 표시 이름 최신화
         foreach (var (id, endpoint) in desired)
         {
-            // ★ MN-02: 이름은 변경될 수 있으므로 매번 갱신
             _tagAggregator.RegisterCollectorName(id, endpoint.Name);
+            _alarmAggregator.RegisterCollectorName(id, endpoint.Name);
 
             if (_connections.ContainsKey(id))
                 continue;
@@ -80,7 +81,8 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
             var conn = new CollectorConnection(
                 endpoint,
                 onCollectorIdResolved: (oldId, newId) => _OnCollectorIdResolved(oldId, newId, endpoint),
-                onTagValue: _tagAggregator.OnTagValueReceived);
+                onTagValue:     _tagAggregator.OnTagValueReceived,
+                onAlarmChanged: _alarmAggregator.OnAlarmChanged);
 
             _connections[id] = conn;
 
@@ -91,8 +93,8 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
 
     /// <summary>
     /// CollectorConnection 이 자동 동기화로 Id 를 변경했을 때 호출됨.
-    /// Dictionary 키를 갱신하고, LiveTagAggregator 의 이름 매핑도 새 Id 로 등록하며,
-    /// monitor.json 을 즉시 저장한다(다음 실행부터는 올바른 Id 로 로드됨).
+    /// Dictionary 키를 갱신하고, 양쪽 Aggregator 의 이름 매핑도 새 Id 로 등록하며,
+    /// monitor.json 을 즉시 저장한다.
     /// </summary>
     private void _OnCollectorIdResolved(string oldId, string newId, CollectorEndpoint endpoint)
     {
@@ -103,13 +105,27 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
         }
 
         _tagAggregator.RegisterCollectorName(newId, endpoint.Name);
+        _alarmAggregator.RegisterCollectorName(newId, endpoint.Name);
 
-        // endpoint.Id 는 이미 CollectorConnection 내부에서 갱신된 동일 참조 객체이므로
-        // Settings.Collectors 목록의 값도 이미 반영되어 있음 — 저장만 수행.
         _ = _settingsLoader.SaveAsync();
     }
 
-    // §4 ─ 정리 ────────────────────────────────────────────
+    // §4 ─ 알람 ACK (MN-03) ────────────────────────────────
+
+    /// <summary>
+    /// 지정된 CollectorId 의 연결로만 ACK 요청을 전송한다("발생 출처로만 전송" 원칙).
+    /// 해당 Collector 가 현재 연결되어 있지 않으면 아무 동작도 하지 않는다(조용히 무시).
+    /// </summary>
+    public async Task AcknowledgeAlarmAsync(string collectorId, string alarmKey)
+    {
+        if (_connections.TryGetValue(collectorId, out var conn))
+            await conn.AcknowledgeAsync(alarmKey);
+        else
+            LogManager.Instance.Warn("CollectorConnectionManager",
+                $"ACK 전송 실패 — Collector[{collectorId}] 연결 없음 (alarmKey={alarmKey})");
+    }
+
+    // §5 ─ 정리 ────────────────────────────────────────────
 
     public async ValueTask DisposeAsync()
     {

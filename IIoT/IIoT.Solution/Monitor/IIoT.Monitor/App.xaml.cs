@@ -14,14 +14,18 @@
 //         CommandQueue.Instance.Start() 는 EventBus 사용 시점(MN-01B)에 추가 예정.
 //  MN-01B: CollectorConnectionManager DI 등록 추가 (CollectorId↔HubConnection 관리자)
 //  MN-02: LiveTagAggregator / LiveTagViewModel / LiveTagView DI 등록 추가
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-02)
+//  MN-02B: DashboardViewModel / DashboardView DI 등록 추가 (대시보드 탭)
+//  MN-03: AlarmAggregator / AlarmViewModel / AlarmView DI 등록 추가
+//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-03)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
 using IIoT.Monitor.Core.Config;
 using IIoT.Monitor.Core.Connection;
 using IIoT.Monitor.ViewModels;
+using IIoT.Monitor.Views.Alarm;
 using IIoT.Monitor.Views.CollectorManage;
+using IIoT.Monitor.Views.Dashboard;
 using IIoT.Monitor.Views.LiveTag;
 using IIoT.UI.Themes;
 using lssLib.Log;
@@ -89,6 +93,11 @@ public partial class App : Application
         services.AddSingleton<LiveTagViewModel>();
         services.AddSingleton<LiveTagView>();
 
+        // ★ MN-03 신규: 전체 Collector 통합 실시간 알람 집계기 + 화면
+        services.AddSingleton<AlarmAggregator>();
+        services.AddSingleton<AlarmViewModel>();
+        services.AddSingleton<AlarmView>();
+
         // ★ MN-01B 신규: Collector 연결 관리자 (CollectorId ↔ HubConnection)
         services.AddSingleton<CollectorConnectionManager>();
 
@@ -100,12 +109,18 @@ public partial class App : Application
         // ★ MN-Base-1: MainWindow DataContext
         services.AddSingleton<MonitorMainViewModel>();
 
+        // ★ MN-02B 신규: 대시보드 탭 (CollectorManageViewModel/LiveTagAggregator 의존)
+        services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<DashboardView>();
+
         // ★ 반드시 AddSingleton (Transient → 이중 창 버그)
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
                 sp.GetRequiredService<MonitorMainViewModel>(),
                 sp.GetRequiredService<CollectorManageView>(),
-                sp.GetRequiredService<LiveTagView>()));
+                sp.GetRequiredService<LiveTagView>(),
+                sp.GetRequiredService<AlarmView>(),
+                sp.GetRequiredService<DashboardView>()));
 
         return services.BuildServiceProvider();
     }
