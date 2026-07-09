@@ -3,7 +3,8 @@
 //  역할: Monitor 런타임 설정 (monitor.json) DTO + 로더/세이버
 //        경로: {Monitor 실행파일}\Config\monitor.json
 //  MN-01: 신규 — Collectors[] (등록된 Collector 목록) 저장
-//  생성: 2026-07-07
+//  MN-05: Web(WebHostSettings) 섹션 추가 — 자체 SignalR Hub 포트/활성화 설정
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-05)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Models;
@@ -21,6 +22,19 @@ public sealed class MonitorSettings
 {
     /// <summary>등록된 Collector 목록. MN-01 [Collector 관리] 탭에서 CRUD.</summary>
     public List<CollectorEndpoint> Collectors { get; set; } = new();
+
+    /// <summary>★ MN-05 신규: Monitor 자체 웹 Hub(브라우저 연동) 설정</summary>
+    public WebHostSettings Web { get; set; } = new();
+}
+
+/// <summary>Monitor 자체 SignalR Hub(웹 브라우저 연동, MN-05) 설정.</summary>
+public sealed class WebHostSettings
+{
+    /// <summary>true 면 Monitor 시작 시 자체 웹 서버를 함께 구동한다.</summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>웹 Hub 포트. Collector(7878)와 겹치지 않도록 기본 7879 사용.</summary>
+    public int Port { get; set; } = 7879;
 }
 
 // ── 로더/세이버 ────────────────────────────────────────────

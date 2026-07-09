@@ -7,7 +7,14 @@
 //  MN-02: LiveTagAggregator 연동 — Collector 이름 등록 + TagValue 콜백 연결
 //  MN-03: AlarmAggregator 연동 + AcknowledgeAlarmAsync() — 알람 ACK를 발생
 //         출처 Collector 로만 라우팅
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-03)
+//  FIX(2026-07-07): Host/Port 편집 후 저장해도 기존 연결이 재시작되지 않던
+//                   문제 수정 — CollectorConnection.StartedHubUrl 과 비교하여
+//                   변경 시 기존 연결 종료 후 재생성
+//  FIX(2): 중복 CollectorId 로 인해 ToDictionary() 가 예외를 던지며 전체
+//          동기화(다른 정상 Collector 포함)가 조용히 중단되던 심각한 버그 수정.
+//          SyncFromEndpointsAsync() 가 이제 발생한 오류 메시지 목록을 반환하며,
+//          호출부(CollectorManageViewModel)가 StatusText 로 노출한다.
+//  생성: 2026-07-07 / 수정: 2026-07-07 (중복 ID 방어 처리 + 오류 노출)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
@@ -54,41 +61,95 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
     /// 이미 연결 중인 항목은 그대로 유지한다(재연결하지 않음).
     /// 활성 상태인 모든 항목에 대해 표시 이름을 매번 최신화한다(이름 변경 즉시 반영).
     /// </summary>
-    public async Task SyncFromEndpointsAsync(IEnumerable<CollectorEndpoint> endpoints)
+    /// <returns>
+    /// 동기화 중 발생한 예외 메시지 목록 (정상이면 빈 목록).
+    /// 호출부(CollectorManageViewModel)가 StatusText 등으로 사용자에게 노출할 수 있다.
+    /// </returns>
+    public async Task<List<string>> SyncFromEndpointsAsync(IEnumerable<CollectorEndpoint> endpoints)
     {
-        var desired = endpoints.Where(e => e.Enabled).ToDictionary(e => e.Id);
+        var errors = new List<string>();
 
-        // ① 목록에서 사라졌거나 비활성화된 연결 정리
-        foreach (var key in _connections.Keys.Except(desired.Keys).ToList())
+        // ★ FIX: ToDictionary(e => e.Id) 는 Id 가 중복되면 ArgumentException 을 던지며
+        //   그 즉시 전체 동기화가 중단된다 — 문제 항목뿐 아니라 나머지 정상 Collector 의
+        //   연결 시도까지 전부 무산되는 심각한 연쇄 실패였다. 중복 시 첫 항목만 채택하고
+        //   경고 로그 + errors 목록에 사유를 남기도록 안전하게 변경.
+        var duplicateIds = endpoints
+            .Where(e => e.Enabled)
+            .GroupBy(e => e.Id)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        foreach (var dupId in duplicateIds)
         {
-            await _connections[key].StopAsync();
-            await _connections[key].DisposeAsync();
-            _connections.Remove(key);
-
-            LogManager.Instance.Info("CollectorConnectionManager",
-                $"Collector[{key}] 연결 해제 (목록에서 제거되었거나 비활성화됨)");
+            var msg = $"CollectorId 중복 감지: '{dupId}' — 첫 항목만 연결하고 나머지는 건너뜁니다. " +
+                      "[Collector 관리] 탭에서 ID를 서로 다르게 수정해 주세요.";
+            LogManager.Instance.Error("CollectorConnectionManager", msg);
+            errors.Add(msg);
         }
 
-        // ② 신규 항목 연결 시작 + 표시 이름 최신화
-        foreach (var (id, endpoint) in desired)
+        var desired = endpoints
+            .Where(e => e.Enabled)
+            .GroupBy(e => e.Id)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        try
         {
-            _tagAggregator.RegisterCollectorName(id, endpoint.Name);
-            _alarmAggregator.RegisterCollectorName(id, endpoint.Name);
+            // ① 목록에서 사라졌거나 비활성화된 연결 정리
+            foreach (var key in _connections.Keys.Except(desired.Keys).ToList())
+            {
+                await _connections[key].StopAsync();
+                await _connections[key].DisposeAsync();
+                _connections.Remove(key);
 
-            if (_connections.ContainsKey(id))
-                continue;
+                LogManager.Instance.Info("CollectorConnectionManager",
+                    $"Collector[{key}] 연결 해제 (목록에서 제거되었거나 비활성화됨)");
+            }
 
-            var conn = new CollectorConnection(
-                endpoint,
-                onCollectorIdResolved: (oldId, newId) => _OnCollectorIdResolved(oldId, newId, endpoint),
-                onTagValue:     _tagAggregator.OnTagValueReceived,
-                onAlarmChanged: _alarmAggregator.OnAlarmChanged);
+            // ② 신규 항목 연결 시작 + 표시 이름 최신화 + Host/Port 변경 시 재시작
+            foreach (var (id, endpoint) in desired)
+            {
+                _tagAggregator.RegisterCollectorName(id, endpoint.Name);
+                _alarmAggregator.RegisterCollectorName(id, endpoint.Name);
 
-            _connections[id] = conn;
+                if (_connections.TryGetValue(id, out var existing))
+                {
+                    // ★ FIX: Host/Port 가 편집된 경우 기존(구주소) 연결을 그대로 두면
+                    //    영원히 이전 주소로만 접속을 시도하게 된다 — 재시작 필요.
+                    if (existing.StartedHubUrl == endpoint.HubUrl)
+                        continue; // 변경 없음 — 기존 연결 유지
 
-            // fire-and-forget — 개별 Collector 연결 실패가 다른 Collector나 UI를 막지 않도록
-            _ = conn.StartAsync();
+                    await existing.StopAsync();
+                    await existing.DisposeAsync();
+                    _connections.Remove(id);
+
+                    LogManager.Instance.Info("CollectorConnectionManager",
+                        $"Collector[{id}] Host/Port 변경 감지 → 연결 재시작 ({endpoint.HubUrl})");
+                }
+
+                var conn = new CollectorConnection(
+                    endpoint,
+                    onCollectorIdResolved: (oldId, newId) => _OnCollectorIdResolved(oldId, newId, endpoint),
+                    onTagValue:     _tagAggregator.OnTagValueReceived,
+                    onAlarmChanged: _alarmAggregator.OnAlarmChanged);
+
+                _connections[id] = conn;
+
+                // fire-and-forget — 개별 Collector 연결 실패가 다른 Collector나 UI를 막지 않도록
+                _ = conn.StartAsync();
+            }
         }
+        catch (Exception ex)
+        {
+            // ★ FIX: 이전에는 여기서 예외가 나면 SaveCommand 호출부까지 조용히 삼켜져
+            //   "저장을 눌러도 미연결에서 전혀 안 바뀌는" 증상으로 나타났다.
+            //   이제는 반드시 로그로 남기고 errors 로 호출부에 전달한다.
+            var msg = $"Collector 연결 동기화 중 예외 발생: {ex.Message}";
+            LogManager.Instance.Error("CollectorConnectionManager", msg);
+            errors.Add(msg);
+        }
+
+        return errors;
     }
 
     /// <summary>

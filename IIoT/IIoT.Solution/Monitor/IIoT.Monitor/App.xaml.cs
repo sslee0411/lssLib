@@ -17,7 +17,14 @@
 //  MN-02B: DashboardViewModel / DashboardView DI 등록 추가 (대시보드 탭)
 //  MN-03: AlarmAggregator / AlarmViewModel / AlarmView DI 등록 추가
 //  MN-04: DetectorHost DI 등록 + 예시 Detector/Responder 부트스트랩 등록
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-04)
+//  MN-05: MonitorHostService DI 등록 (자체 SignalR Hub — 웹 브라우저 연동).
+//         실제 시작(StartAsync)은 MainWindow.Loaded 에서 수행 (Collector의
+//         win.Loaded 패턴과 동일 — 창이 뜬 뒤 웹 서버 기동)
+//  MN-06: ChartViewModel / ChartView DI 등록 추가 (실시간 차트 탭)
+//  FIX(2026-07-08): 앱 종료 시 CollectorConnectionManager(N개 HubConnection/
+//                   HttpClient)가 정리되지 않아 프로세스가 정상 종료되지
+//                   않던 문제 수정 — OnExit에서 함께 Dispose하도록 추가
+//  생성: 2026-07-07 / 수정: 2026-07-08 (종료 처리 수정)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
@@ -26,8 +33,10 @@ using IIoT.Monitor.Core.Connection;
 using IIoT.Monitor.Core.Detection;
 using IIoT.Monitor.Core.Detection.Detectors;
 using IIoT.Monitor.Core.Detection.Responders;
+using IIoT.Monitor.SignalR;
 using IIoT.Monitor.ViewModels;
 using IIoT.Monitor.Views.Alarm;
+using IIoT.Monitor.Views.Chart;
 using IIoT.Monitor.Views.CollectorManage;
 using IIoT.Monitor.Views.Dashboard;
 using IIoT.Monitor.Views.LiveTag;
@@ -88,6 +97,15 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // ★ FIX(2026-07-08): CollectorConnectionManager 가 종료 시 전혀 정리되지
+        //   않아 N개 Collector에 대한 SignalR HubConnection/HttpClient가 살아있는
+        //   채로 남아 프로세스가 정상 종료되지 않던 문제 수정.
+        //   MonitorHostService 와 동일하게 짧은 타임아웃 내 블로킹 대기로 정리한다.
+        _services?.GetService<CollectorConnectionManager>()?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+        // ★ MN-05: 웹 Hub 정상 종료 (동기 컨텍스트이므로 짧은 타임아웃 내 블로킹 대기)
+        _services?.GetService<MonitorHostService>()?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+
         _themeSettings?.Dispose();   // 이벤트 구독 해제 필수
         LogManager.Instance.Info("App", "IIoT.Monitor 종료");
         base.OnExit(e);
@@ -129,6 +147,14 @@ public partial class App : Application
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<DashboardView>();
 
+        // ★ MN-05 신규: Monitor 자체 SignalR Hub (웹 브라우저 연동)
+        //   (LiveTagAggregator/AlarmAggregator/MonitorSettingsLoader 의존 — 위에서 먼저 등록됨)
+        services.AddSingleton<MonitorHostService>();
+
+        // ★ MN-06 신규: 실시간 차트 (CollectorManageViewModel/LiveTagAggregator 의존)
+        services.AddSingleton<ChartViewModel>();
+        services.AddSingleton<ChartView>();
+
         // ★ 반드시 AddSingleton (Transient → 이중 창 버그)
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
@@ -136,7 +162,9 @@ public partial class App : Application
                 sp.GetRequiredService<CollectorManageView>(),
                 sp.GetRequiredService<LiveTagView>(),
                 sp.GetRequiredService<AlarmView>(),
-                sp.GetRequiredService<DashboardView>()));
+                sp.GetRequiredService<DashboardView>(),
+                sp.GetRequiredService<ChartView>(),
+                sp.GetRequiredService<MonitorHostService>()));
 
         return services.BuildServiceProvider();
     }

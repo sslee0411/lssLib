@@ -73,7 +73,7 @@
                         <GroupStyle.HeaderTemplate>
                             <DataTemplate>
                                 <Border Style="{StaticResource CollectorGroupHeader}" HorizontalAlignment="Left">
-                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12.5"
+                                    <TextBlock Text="{Binding Name, Mode=OneWay}" FontWeight="Bold" FontSize="12.5"
                                                Foreground="{DynamicResource AccBrush}"/>
                                 </Border>
                             </DataTemplate>
@@ -86,7 +86,7 @@
                                 <TextBlock Margin="20,4,0,2" FontSize="11.5" FontWeight="SemiBold"
                                            Foreground="{DynamicResource Text2Brush}">
                                     <Run Text="PLC · "/>
-                                    <Run Text="{Binding Name}"/>
+                                    <Run Text="{Binding Name, Mode=OneWay}"/>
                                 </TextBlock>
                             </DataTemplate>
                         </GroupStyle.HeaderTemplate>

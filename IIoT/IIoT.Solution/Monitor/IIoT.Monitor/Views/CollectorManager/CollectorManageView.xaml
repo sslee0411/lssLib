@@ -10,7 +10,15 @@
           반영되지 않던 문제 수정 — Collector StatusView.xaml과 동일하게
           Style="{DynamicResource IIoTGrid}" + RowStyle BasedOn="{StaticResource
           IIoTGridRow}" 패턴 적용 (개별 Background/Foreground 수동 지정 제거)
-     생성: 2026-07-07 / 수정: 2026-07-07 (IIoTGrid 테마 수정)
+     FIX(2026-07-07): DataGrid IsReadOnly="False" 명시 누락으로 ID/Host/Port
+          등 모든 컬럼이 편집 불가였던 문제 수정. IIoTGrid 스타일 기본값이
+          IsReadOnly="True"(읽기전용 현황판 그리드 기준)이며, DataGrid.IsReadOnly는
+          컬럼별 IsReadOnly보다 항상 우선하므로 이 화면(입력 화면)에서는
+          반드시 명시적으로 덮어써야 함. "CollectorID 입력이 안 되던" 문제의 근본 원인.
+     FIX(2026-07-08): 선택 삭제/저장 버튼이 Style 없이 개별 속성만 사용해
+          IsEnabled=False(초기 미선택 상태) 시각 처리가 없어 테마가 깨져
+          보이던 문제 수정 — DangerBtn/SecondaryBtn 정식 테마 스타일 적용.
+     생성: 2026-07-07 / 수정: 2026-07-08 (버튼 테마 수정)
      규칙:
        ① UserControl.Resources 는 <UserControl> 직계 자식만 허용
        ② DynamicResource 필수 (테마 전환 대응)
@@ -39,18 +47,12 @@
                     Padding="14,7" Margin="0,0,8,0"/>
             <Button Content="🗑 선택 삭제"
                     Command="{Binding RemoveCollectorCommand}"
-                    Padding="14,7" Margin="0,0,8,0"
-                    Background="{DynamicResource CardBrush}"
-                    Foreground="{DynamicResource TextBrush}"
-                    BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
-                    Cursor="Hand"/>
+                    Style="{DynamicResource DangerBtn}"
+                    Padding="14,7" Margin="0,0,8,0"/>
             <Button Content="💾 저장"
                     Command="{Binding SaveCommand}"
-                    Padding="14,7"
-                    Background="{DynamicResource CardBrush}"
-                    Foreground="{DynamicResource TextBrush}"
-                    BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
-                    Cursor="Hand"/>
+                    Style="{DynamicResource SecondaryBtn}"
+                    Padding="14,7"/>
         </StackPanel>
 
         <!-- ══ Collector 목록 — 둥근 카드로 감싸기 ══ -->
@@ -63,18 +65,24 @@
             <DataGrid ItemsSource="{Binding Collectors}"
                       SelectedItem="{Binding Selected, Mode=TwoWay}"
                       Style="{DynamicResource IIoTGrid}"
+                      IsReadOnly="False"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal"
                       BorderThickness="0">
+                <!-- ★ FIX: IIoTGrid 스타일 기본값(IsReadOnly=True, 읽기전용 현황판 그리드 기준)을
+                     이 화면(입력 화면)에서는 명시적으로 덮어써야 함. DataGrid.IsReadOnly는
+                     컬럼별 IsReadOnly보다 항상 우선하므로, 이 속성이 없으면 컬럼에
+                     IsReadOnly="False"를 아무리 넣어도 편집이 절대 불가능함
+                     (증상: ID/Host/Port 입력이 전혀 안 되던 문제의 근본 원인). -->
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow" BasedOn="{StaticResource IIoTGridRow}"/>
                 </DataGrid.RowStyle>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID (CollectorId 일치 필요)"
-                                        Binding="{Binding Id}" Width="180" IsReadOnly="False"/>
+                    <DataGridTextColumn Header="ID (비워두면 최초 연결 시 자동 설정됨)"
+                                        Binding="{Binding Id}" Width="220" IsReadOnly="False"/>
                     <DataGridTextColumn Header="이름"
                                         Binding="{Binding Name}" Width="150"/>
                     <DataGridTextColumn Header="Host"

@@ -9,8 +9,12 @@
 //  MN-01B: 신규
 //  MN-02: "TagValue" 이벤트 구독 추가 (onTagValue 콜백)
 //  MN-03: "AlarmChanged" 이벤트 구독 + AcknowledgeAsync() 추가
-//  FIX: CS0246 HttpClient 못 찾음 — using System.Net.Http; 누락 추가
-//  생성: 2026-07-07 / 수정: 2026-07-07 (MN-03)
+//  FIX(1): CS0246 HttpClient 못 찾음 — using System.Net.Http; 누락 추가
+//  FIX(2): _endpoint.StatusText/_endpoint.Id 를 백그라운드 스레드에서 직접
+//          수정하고 있어(HubConnection 콜백·HttpClient 응답은 UI 스레드가 아님)
+//          크로스 스레드 오류 및 화면 미갱신 위험이 있었음 — 모든 변경을
+//          Dispatcher.Invoke 로 마샬링하는 _SetStatus/_SetId 헬퍼로 통일.
+//  생성: 2026-07-07 / 수정: 2026-07-07 (스레드 안전성 수정 + StartedHubUrl 추가)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Models;
@@ -19,6 +23,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Windows;
 
 namespace IIoT.Monitor.Core.Connection;
 
@@ -30,6 +35,11 @@ namespace IIoT.Monitor.Core.Connection;
 ///     로컬 <see cref="CollectorEndpoint.Id"/> 와 다르면 자동으로 교정한다(자동 동기화).
 ///  ② SignalR HubConnection 을 생성하고 자동 재연결(WithAutomaticReconnect)과 함께 시작한다.
 ///  ③④ "TagValue"/"AlarmChanged" 이벤트를 구독하여 각각의 Aggregator 로 전달한다.
+/// </para>
+/// <para>
+/// ★ 모든 <see cref="CollectorEndpoint"/> 프로퍼티 변경은 백그라운드 스레드(HTTP 응답,
+/// SignalR 콜백)에서 발생할 수 있으므로 반드시 UI Dispatcher 로 마샬링한다
+/// (<see cref="_SetStatus"/> / <see cref="_SetId"/> 헬퍼를 통해서만 변경).
 /// </para>
 /// </summary>
 public sealed class CollectorConnection : IAsyncDisposable
@@ -54,6 +64,15 @@ public sealed class CollectorConnection : IAsyncDisposable
     /// <summary>이 연결이 대상으로 하는 Collector 접속 정보</summary>
     public CollectorEndpoint Endpoint => _endpoint;
 
+    /// <summary>
+    /// ★ FIX: 이 연결이 실제로 StartAsync() 시점에 사용한 HubUrl.
+    /// SignalR HubConnection 은 빌드 시점의 URL로 고정되므로, 이후 사용자가
+    /// Host/Port 를 수정해도 이미 만들어진 연결에는 반영되지 않는다.
+    /// CollectorConnectionManager 가 이 값과 현재 Endpoint.HubUrl 을 비교하여
+    /// 변경 여부를 감지하고, 다르면 연결을 재시작한다.
+    /// </summary>
+    public string? StartedHubUrl { get; private set; }
+
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     /// <param name="endpoint">대상 Collector 접속 정보</param>
@@ -72,17 +91,30 @@ public sealed class CollectorConnection : IAsyncDisposable
         _onAlarmChanged        = onAlarmChanged;
     }
 
-    // §4 ─ 시작 ────────────────────────────────────────────
+    // §4 ─ UI 스레드 안전 setter ────────────────────────────
+
+    /// <summary>_endpoint.StatusText 를 UI 스레드에서 안전하게 변경한다.</summary>
+    private void _SetStatus(string text)
+        => Application.Current?.Dispatcher.Invoke(() => _endpoint.StatusText = text);
+
+    /// <summary>_endpoint.Id 를 UI 스레드에서 안전하게 변경한다.</summary>
+    private void _SetId(string id)
+        => Application.Current?.Dispatcher.Invoke(() => _endpoint.Id = id);
+
+    // §5 ─ 시작 ────────────────────────────────────────────
 
     public async Task StartAsync()
     {
-        _endpoint.StatusText = "연결 중...";
+        _SetStatus("연결 중...");
 
         // ① REST 스냅샷 조회 → CollectorId 자동 동기화 (Hub 연결 전에 완료되어야
         //    아래 ②에서 구독하는 콜백에 최종 확정된 CollectorId 가 전달된다)
         await _TrySyncCollectorIdAsync();
 
         // ② SignalR Hub 연결
+        // ★ FIX: 실제 이 연결에서 사용하는 URL을 기록 (Host/Port 변경 감지용)
+        StartedHubUrl = _endpoint.HubUrl;
+
         _hub = new HubConnectionBuilder()
             .WithUrl(_endpoint.HubUrl)
             .WithAutomaticReconnect(new[]
@@ -94,19 +126,11 @@ public sealed class CollectorConnection : IAsyncDisposable
             })
             .Build();
 
-        _hub.Reconnecting += _ =>
+        _hub.Reconnecting += _ => { _SetStatus("재연결 중..."); return Task.CompletedTask; };
+        _hub.Reconnected  += _ => { _SetStatus("연결됨");        return Task.CompletedTask; };
+        _hub.Closed       += ex =>
         {
-            _endpoint.StatusText = "재연결 중...";
-            return Task.CompletedTask;
-        };
-        _hub.Reconnected += _ =>
-        {
-            _endpoint.StatusText = "연결됨";
-            return Task.CompletedTask;
-        };
-        _hub.Closed += ex =>
-        {
-            _endpoint.StatusText = ex is null ? "연결 종료" : $"오류: {ex.Message}";
+            _SetStatus(ex is null ? "연결 종료" : $"오류: {ex.Message}");
             return Task.CompletedTask;
         };
 
@@ -117,20 +141,20 @@ public sealed class CollectorConnection : IAsyncDisposable
         try
         {
             await _hub.StartAsync();
-            _endpoint.StatusText = "연결됨";
+            _SetStatus("연결됨");
             LogManager.Instance.Info("CollectorConnection",
                 $"[{_endpoint.Name}] Hub 연결 성공 — {_endpoint.HubUrl}");
         }
         catch (Exception ex)
         {
-            _endpoint.StatusText = $"연결 실패: {ex.Message}";
+            _SetStatus($"연결 실패: {ex.Message}");
             LogManager.Instance.Warn("CollectorConnection",
                 $"[{_endpoint.Name}] Hub 연결 실패(자동 재시도 없음 — WithAutomaticReconnect는 " +
                 $"최초 연결 성공 후에만 동작): {ex.Message}");
         }
     }
 
-    // §5 ─ CollectorId 자동 동기화 ─────────────────────────
+    // §6 ─ CollectorId 자동 동기화 ─────────────────────────
 
     private async Task _TrySyncCollectorIdAsync()
     {
@@ -149,7 +173,7 @@ public sealed class CollectorConnection : IAsyncDisposable
                 return;
 
             var oldId = _endpoint.Id;
-            _endpoint.Id = actualId;
+            _SetId(actualId);
             _onCollectorIdResolved(oldId, actualId);
 
             LogManager.Instance.Info("CollectorConnection",
@@ -162,13 +186,12 @@ public sealed class CollectorConnection : IAsyncDisposable
         }
     }
 
-    // §6 ─ 알람 ACK 요청 (MN-03) ───────────────────────────
+    // §7 ─ 알람 ACK 요청 (MN-03) ───────────────────────────
 
     /// <summary>
     /// 이 Collector 로만 ACK 요청을 전송한다("발생 출처로만 전송" 원칙, MN-03 설계).
-    /// ★ C-EX-12(Collector 측 후속 작업) 완료 전까지는 Hub 에 해당 서버 메서드가
-    /// 없어 HubException 이 발생할 수 있음 — 이 경우 경고 로그만 남기고 UI는
-    /// 계속 정상 동작한다(예외를 상위로 전파하지 않음).
+    /// ★ C-EX-12(Collector 측 완료) 이후에는 정상 동작한다. 완료 전에는 HubException
+    /// 이 발생할 수 있으며, 이 경우 경고 로그만 남기고 UI는 계속 정상 동작한다.
     /// </summary>
     public async Task AcknowledgeAsync(string alarmKey)
     {
@@ -185,13 +208,12 @@ public sealed class CollectorConnection : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            // C-EX-12 미완료 시 여기서 HubException("Method does not exist") 발생 — 정상적인 과도기 상태
             LogManager.Instance.Warn("CollectorConnection",
-                $"[{_endpoint.Name}] AcknowledgeAlarm 호출 실패 — Collector 측 C-EX-12 미완료 가능성: {ex.Message}");
+                $"[{_endpoint.Name}] AcknowledgeAlarm 호출 실패: {ex.Message}");
         }
     }
 
-    // §7 ─ 종료 ────────────────────────────────────────────
+    // §8 ─ 종료 ────────────────────────────────────────────
 
     public async Task StopAsync()
     {
@@ -201,7 +223,7 @@ public sealed class CollectorConnection : IAsyncDisposable
             await _hub.DisposeAsync();
             _hub = null;
         }
-        _endpoint.StatusText = "미연결";
+        _SetStatus("미연결");
     }
 
     public async ValueTask DisposeAsync()

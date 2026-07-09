@@ -106,6 +106,10 @@
                         Command="{Binding SwitchTabCommand}" CommandParameter="4"
                         Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=4}"
                         Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=4}"/>
+                <Button Content="📈 차트" Style="{StaticResource TabBtn}"
+                        Command="{Binding SwitchTabCommand}" CommandParameter="5"
+                        Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=5}"
+                        Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=5}"/>
             </StackPanel>
         </Border>
 
@@ -134,6 +138,10 @@
             <!-- ★ MN-02B: [대시보드] 탭 전용 View 호스트 -->
             <ContentControl x:Name="DashboardHost"
                             Visibility="{Binding IsDashboardTab, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- ★ MN-06: [차트] 탭 전용 View 호스트 -->
+            <ContentControl x:Name="ChartHost"
+                            Visibility="{Binding IsChartTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>
