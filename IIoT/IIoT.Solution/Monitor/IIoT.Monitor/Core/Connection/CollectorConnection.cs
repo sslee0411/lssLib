@@ -6,6 +6,7 @@
 //        ③ "TagValue" 이벤트 구독 → LiveTagAggregator 로 전달 (MN-02)
 //        ④ "AlarmChanged" 이벤트 구독 → AlarmAggregator 로 전달 (MN-03)
 //        ⑤ AcknowledgeAsync() — 이 Collector 로만 ACK 요청 전송 (MN-03)
+//        ⑥ 연결 끊김/복구 디바운스 알림 (MN-EX-08)
 //  MN-01B: 신규
 //  MN-02: "TagValue" 이벤트 구독 추가 (onTagValue 콜백)
 //  MN-03: "AlarmChanged" 이벤트 구독 + AcknowledgeAsync() 추가
@@ -14,7 +15,12 @@
 //          수정하고 있어(HubConnection 콜백·HttpClient 응답은 UI 스레드가 아님)
 //          크로스 스레드 오류 및 화면 미갱신 위험이 있었음 — 모든 변경을
 //          Dispatcher.Invoke 로 마샬링하는 _SetStatus/_SetId 헬퍼로 통일.
-//  생성: 2026-07-07 / 수정: 2026-07-07 (스레드 안전성 수정 + StartedHubUrl 추가)
+//  MN-EX-08: onConnectionIssue/onConnectionRecovered 콜백 추가.
+//            WithAutomaticReconnect 는 최대 4회(1/3/5/10초) 재시도하는 동안
+//            Reconnecting 이벤트를 매번 발생시키는데, 그때마다 알림을 보내면
+//            한 번의 "끊김"에 최대 4번 중복 알림이 발생한다 — _issueAlerted
+//            플래그로 "끊김 진입" 1회, "복구" 1회만 알리도록 디바운스한다.
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-08)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Models;
@@ -46,13 +52,18 @@ public sealed class CollectorConnection : IAsyncDisposable
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly CollectorEndpoint           _endpoint;
-    private readonly Action<string, string>      _onCollectorIdResolved;
-    private readonly Action<string, JsonElement> _onTagValue;
-    private readonly Action<string, JsonElement> _onAlarmChanged;
-    private readonly HttpClient                  _http = new() { Timeout = TimeSpan.FromSeconds(5) };
+    private readonly CollectorEndpoint            _endpoint;
+    private readonly Action<string, string>       _onCollectorIdResolved;
+    private readonly Action<string, JsonElement>  _onTagValue;
+    private readonly Action<string, JsonElement>  _onAlarmChanged;
+    private readonly Action<CollectorEndpoint>    _onConnectionIssue;
+    private readonly Action<CollectorEndpoint>    _onConnectionRecovered;
+    private readonly HttpClient                   _http = new() { Timeout = TimeSpan.FromSeconds(5) };
 
     private HubConnection? _hub;
+
+    /// <summary>★ MN-EX-08: 현재 "끊김" 알림이 이미 발생한 상태인지(중복 알림 방지)</summary>
+    private bool _issueAlerted;
 
     private static readonly JsonSerializerOptions _jsonOpts = new()
     {
@@ -79,16 +90,26 @@ public sealed class CollectorConnection : IAsyncDisposable
     /// <param name="onCollectorIdResolved">CollectorId 자동 동기화 발생 시 호출(oldId, newId)</param>
     /// <param name="onTagValue">★ MN-02: "TagValue" 이벤트 수신 시 호출(collectorId, payload)</param>
     /// <param name="onAlarmChanged">★ MN-03: "AlarmChanged" 이벤트 수신 시 호출(collectorId, payload)</param>
+    /// <param name="onConnectionIssue">
+    /// ★ MN-EX-08: 연결이 "끊김" 상태로 진입할 때 1회만 호출(재시도 중 중복 호출 없음)
+    /// </param>
+    /// <param name="onConnectionRecovered">
+    /// ★ MN-EX-08: 끊김 상태였다가 재연결에 성공했을 때 1회만 호출
+    /// </param>
     public CollectorConnection(
         CollectorEndpoint           endpoint,
         Action<string, string>      onCollectorIdResolved,
         Action<string, JsonElement> onTagValue,
-        Action<string, JsonElement> onAlarmChanged)
+        Action<string, JsonElement> onAlarmChanged,
+        Action<CollectorEndpoint>   onConnectionIssue,
+        Action<CollectorEndpoint>   onConnectionRecovered)
     {
-        _endpoint              = endpoint;
-        _onCollectorIdResolved = onCollectorIdResolved;
-        _onTagValue            = onTagValue;
-        _onAlarmChanged        = onAlarmChanged;
+        _endpoint               = endpoint;
+        _onCollectorIdResolved  = onCollectorIdResolved;
+        _onTagValue             = onTagValue;
+        _onAlarmChanged         = onAlarmChanged;
+        _onConnectionIssue      = onConnectionIssue;
+        _onConnectionRecovered  = onConnectionRecovered;
     }
 
     // §4 ─ UI 스레드 안전 setter ────────────────────────────
@@ -126,11 +147,33 @@ public sealed class CollectorConnection : IAsyncDisposable
             })
             .Build();
 
-        _hub.Reconnecting += _ => { _SetStatus("재연결 중..."); return Task.CompletedTask; };
-        _hub.Reconnected  += _ => { _SetStatus("연결됨");        return Task.CompletedTask; };
-        _hub.Closed       += ex =>
+        // ★ MN-EX-08: Reconnecting 은 재시도마다(최대 4회) 발생하므로
+        //   _issueAlerted 로 "끊김 진입" 시점 1회만 알림
+        _hub.Reconnecting += _ =>
+        {
+            _SetStatus("재연결 중...");
+            if (!_issueAlerted)
+            {
+                _issueAlerted = true;
+                _onConnectionIssue(_endpoint);
+            }
+            return Task.CompletedTask;
+        };
+        _hub.Reconnected += _ =>
+        {
+            _SetStatus("연결됨");
+            if (_issueAlerted)
+            {
+                _issueAlerted = false;
+                _onConnectionRecovered(_endpoint);
+            }
+            return Task.CompletedTask;
+        };
+        _hub.Closed += ex =>
         {
             _SetStatus(ex is null ? "연결 종료" : $"오류: {ex.Message}");
+            // 재시도를 모두 소진하고 영구 종료된 경우 — Reconnecting 이 먼저 발생해
+            // 이미 알림이 나갔을 것이므로 여기서는 별도 알림 없음(중복 방지)
             return Task.CompletedTask;
         };
 
@@ -151,6 +194,13 @@ public sealed class CollectorConnection : IAsyncDisposable
             LogManager.Instance.Warn("CollectorConnection",
                 $"[{_endpoint.Name}] Hub 연결 실패(자동 재시도 없음 — WithAutomaticReconnect는 " +
                 $"최초 연결 성공 후에만 동작): {ex.Message}");
+
+            // ★ MN-EX-08: 최초 연결 자체가 실패한 경우도 "끊김"으로 간주하여 1회 알림
+            if (!_issueAlerted)
+            {
+                _issueAlerted = true;
+                _onConnectionIssue(_endpoint);
+            }
         }
     }
 

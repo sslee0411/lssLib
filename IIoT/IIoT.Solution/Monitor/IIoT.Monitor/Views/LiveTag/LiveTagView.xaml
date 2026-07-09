@@ -7,6 +7,7 @@
              품질 컬럼을 색상 점(Ellipse) + 텍스트 조합으로 교체
              (QualColor 컨버터, App.xaml 전역 등록 — 7개 테마 전부 대응)
      MN-EX-05: 즐겨찾기(⭐) 토글 컬럼 추가 (FavoriteIcon 컨버터)
+     MN-EX-07: 상단에 CSV 내보내기 버튼 + 상태 텍스트 추가
      FIX: DataGrid에 Style="{DynamicResource IIoTGrid}" 미적용으로 테마가
           반영되지 않던 문제 수정 — Collector StatusView.xaml과 동일하게
           Style="{DynamicResource IIoTGrid}" + RowStyle BasedOn="{StaticResource
@@ -41,11 +42,22 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="실시간 Tag 현황 (Collector → PLC 계층 그룹핑)"
-                   FontSize="13"
-                   Foreground="{DynamicResource Text2Brush}"
-                   Margin="0,0,0,10"/>
+        <!-- ★ MN-EX-07: 제목 + CSV 내보내기 버튼 + 상태 텍스트 -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,10">
+            <Button DockPanel.Dock="Right"
+                    Content="📤 CSV 내보내기"
+                    Command="{Binding ExportCsvCommand}"
+                    Style="{DynamicResource SecondaryBtn}"
+                    Padding="12,6"/>
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding ExportStatus}"
+                       FontSize="11.5" Foreground="{DynamicResource Text2Brush}"
+                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <TextBlock Text="실시간 Tag 현황 (Collector → PLC 계층 그룹핑)"
+                       FontSize="13"
+                       Foreground="{DynamicResource Text2Brush}"
+                       VerticalAlignment="Center"/>
+        </DockPanel>
 
         <!-- ══ 둥근 카드로 감싸기 ══ -->
         <Border Grid.Row="1"

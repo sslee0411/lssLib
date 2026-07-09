@@ -14,11 +14,14 @@
 //          동기화(다른 정상 Collector 포함)가 조용히 중단되던 심각한 버그 수정.
 //          SyncFromEndpointsAsync() 가 이제 발생한 오류 메시지 목록을 반환하며,
 //          호출부(CollectorManageViewModel)가 StatusText 로 노출한다.
-//  생성: 2026-07-07 / 수정: 2026-07-07 (중복 ID 방어 처리 + 오류 노출)
+//  MN-EX-08: TrayNotificationService 주입 — CollectorConnection 의 디바운스된
+//            연결 끊김/복구 콜백을 트레이 알림 + 로그로 연결
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-08)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
 using IIoT.Monitor.Core.Config;
+using IIoT.Monitor.Core.Notification;
 using IIoT.Monitor.Models;
 using lssLib.Log;
 
@@ -37,21 +40,24 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly MonitorSettingsLoader _settingsLoader;
-    private readonly LiveTagAggregator     _tagAggregator;
-    private readonly AlarmAggregator       _alarmAggregator;
+    private readonly MonitorSettingsLoader   _settingsLoader;
+    private readonly LiveTagAggregator       _tagAggregator;
+    private readonly AlarmAggregator         _alarmAggregator;
+    private readonly TrayNotificationService _trayService;
     private readonly Dictionary<string, CollectorConnection> _connections = new();
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
     public CollectorConnectionManager(
-        MonitorSettingsLoader settingsLoader,
-        LiveTagAggregator     tagAggregator,
-        AlarmAggregator       alarmAggregator)
+        MonitorSettingsLoader   settingsLoader,
+        LiveTagAggregator       tagAggregator,
+        AlarmAggregator         alarmAggregator,
+        TrayNotificationService trayService)
     {
         _settingsLoader  = settingsLoader;
         _tagAggregator   = tagAggregator;
         _alarmAggregator = alarmAggregator;
+        _trayService     = trayService;
     }
 
     // §3 ─ 동기화 ──────────────────────────────────────────
@@ -131,7 +137,19 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
                     endpoint,
                     onCollectorIdResolved: (oldId, newId) => _OnCollectorIdResolved(oldId, newId, endpoint),
                     onTagValue:     _tagAggregator.OnTagValueReceived,
-                    onAlarmChanged: _alarmAggregator.OnAlarmChanged);
+                    onAlarmChanged: _alarmAggregator.OnAlarmChanged,
+                    onConnectionIssue: ep =>
+                    {
+                        var msg = $"Collector [{ep.Name}] 연결 끊김";
+                        LogManager.Instance.Warn("CollectorConnectionManager", msg);
+                        _trayService.NotifyConnectionEvent("⚠ Collector 연결 끊김", msg, isRecovery: false);
+                    },
+                    onConnectionRecovered: ep =>
+                    {
+                        var msg = $"Collector [{ep.Name}] 연결 복구됨";
+                        LogManager.Instance.Info("CollectorConnectionManager", msg);
+                        _trayService.NotifyConnectionEvent("✔ Collector 연결 복구", msg, isRecovery: true);
+                    });
 
                 _connections[id] = conn;
 

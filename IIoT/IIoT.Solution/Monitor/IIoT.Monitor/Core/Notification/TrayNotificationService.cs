@@ -8,7 +8,8 @@
 //          있어 같은 파일에서 함께 열면 모호한 참조 컴파일 오류가 발생한다.
 //  MN-EX-01: 신규
 //  MN-EX-03: RestoreRequested/ExitRequested 이벤트 + 컨텍스트메뉴 추가
-//  생성: 2026-07-08 / 수정: 2026-07-08 (MN-EX-03)
+//  MN-EX-08: NotifyConnectionEvent() 추가 — Collector 연결 끊김/복구 알림
+//  생성: 2026-07-08 / 수정: 2026-07-08 (MN-EX-08)
 // ══════════════════════════════════════════════════════════
 
 using lssLib.Log;
@@ -95,6 +96,20 @@ public sealed class TrayNotificationService : IDisposable
         catch (Exception ex)
         {
             LogManager.Instance.Warn("TrayNotification", $"알람 알림 표시 실패: {ex.Message}");
+        }
+    }
+
+    /// <summary>★ MN-EX-08: Collector 연결 끊김/복구 시 트레이 풍선 알림 (사운드 없이 조용히)</summary>
+    public void NotifyConnectionEvent(string title, string message, bool isRecovery)
+    {
+        try
+        {
+            var icon = isRecovery ? ToolTipIcon.Info : ToolTipIcon.Warning;
+            _icon?.ShowBalloonTip(3000, title, message, icon);
+        }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Warn("TrayNotification", $"연결상태 알림 표시 실패: {ex.Message}");
         }
     }
 

@@ -4,7 +4,8 @@
            CollectionViewSource 로 CollectorName 그룹핑, 최신 알람이 위로 정렬
            ACK 버튼은 발생 출처 Collector 로만 요청 전송 (오발송 방지)
      MN-03: 신규
-     생성: 2026-07-07
+     MN-EX-06: 필터/검색 툴바 추가 (Collector/레벨/상태 콤보 + 자유 검색)
+     생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-06)
      규칙:
        ① CollectionViewSource.Source 는 코드비하인드에서 대입
        ② DynamicResource 필수 (테마 전환 대응)
@@ -29,6 +30,7 @@
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -38,7 +40,37 @@
                    Foreground="{DynamicResource Text2Brush}"
                    Margin="0,0,0,10"/>
 
-        <Border Grid.Row="1"
+        <!-- ★ MN-EX-06: 필터/검색 툴바 -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+            <TextBlock Text="Collector" VerticalAlignment="Center"
+                       Foreground="{DynamicResource Text2Brush}" FontSize="12" Margin="0,0,6,0"/>
+            <ComboBox ItemsSource="{Binding CollectorOptions}"
+                      SelectedItem="{Binding SelectedCollector}"
+                      Width="140" Margin="0,0,16,0"/>
+
+            <TextBlock Text="레벨" VerticalAlignment="Center"
+                       Foreground="{DynamicResource Text2Brush}" FontSize="12" Margin="0,0,6,0"/>
+            <ComboBox ItemsSource="{Binding LevelOptions}"
+                      SelectedItem="{Binding SelectedLevel}"
+                      Width="90" Margin="0,0,16,0"/>
+
+            <TextBlock Text="상태" VerticalAlignment="Center"
+                       Foreground="{DynamicResource Text2Brush}" FontSize="12" Margin="0,0,6,0"/>
+            <ComboBox ItemsSource="{Binding StatusOptions}"
+                      SelectedItem="{Binding SelectedStatus}"
+                      Width="110" Margin="0,0,16,0"/>
+
+            <TextBlock Text="검색" VerticalAlignment="Center"
+                       Foreground="{DynamicResource Text2Brush}" FontSize="12" Margin="0,0,6,0"/>
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     Width="200"
+                     Padding="8,5"
+                     Background="{DynamicResource CardBrush}"
+                     Foreground="{DynamicResource TextBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+        </StackPanel>
+
+        <Border Grid.Row="2"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"

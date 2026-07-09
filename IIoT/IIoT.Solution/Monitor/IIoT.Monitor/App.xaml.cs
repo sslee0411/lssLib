@@ -36,7 +36,8 @@
 //  MN-EX-03: 트레이 상주 + 최소화 — TrayNotificationService 에 RestoreRequested/
 //            ExitRequested 이벤트 추가, MainWindow 에서 최소화 시 트레이로 숨김
 //  MN-EX-05: FavoriteTagService DI 등록 (즐겨찾기/핀 고정)
-//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-05)
+//  MN-EX-07: SnapshotCsvExportService DI 등록 (현재값 스냅샷 CSV 내보내기)
+//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-07)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Monitor.Core.Aggregation;
@@ -45,6 +46,7 @@ using IIoT.Monitor.Core.Connection;
 using IIoT.Monitor.Core.Detection;
 using IIoT.Monitor.Core.Detection.Detectors;
 using IIoT.Monitor.Core.Detection.Responders;
+using IIoT.Monitor.Core.Export;
 using IIoT.Monitor.Core.Favorites;
 using IIoT.Monitor.Core.Notification;
 using IIoT.Monitor.Core.Storage;
@@ -176,6 +178,9 @@ public partial class App : Application
 
         // ★ MN-EX-05 신규: Tag 즐겨찾기 서비스 (LiveTagAggregator 의존성이므로 먼저 등록)
         services.AddSingleton<FavoriteTagService>();
+
+        // ★ MN-EX-07 신규: 현재값 스냅샷 CSV 내보내기 (LiveTagViewModel 의존성이므로 먼저 등록)
+        services.AddSingleton<SnapshotCsvExportService>();
 
         // ★ MN-02 신규: 전체 Collector 통합 실시간 Tag 집계기 + 화면
         //   (CollectorConnectionManager 보다 먼저 등록 — 생성자 의존성)
