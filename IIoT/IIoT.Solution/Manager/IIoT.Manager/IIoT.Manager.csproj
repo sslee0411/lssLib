@@ -35,6 +35,9 @@
 
 		<!-- WPF 테마 (v1.5) -->
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+
+		<!-- ★ MG-03: 헬스체크 파이프명 규칙 공유 (HealthPipeServer.GetPipeName) -->
+		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -15,10 +15,14 @@
 //    C-EX-02~08 보안·보존·억제·백업·CSV·자체진단 /
 //    C-EX-10 CollectorId 반영 — settings.json 을 DeviceInstanceService.Initialize()
 //            보다 먼저 로드하도록 순서 변경 (CollectorId 가 DeviceInstance 에 포함되어야 함)
+//    MG-03 (2026-07-09): HealthPipeServer 추가 — Manager 헬스체크(NamedPipe
+//            핑/퐁) 응답. 파이프명 "IIoT.Health.IIoT.Collector".
+//            pong 상태문구에 FlowEngine 실행 여부 포함. OnExit 정리 세트 추가.
 //
-//  생성: 2026-06-29 / 수정: 2026-07-07
+//  생성: 2026-06-29 / 수정: 2026-07-09 (MG-03)
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Contracts.Health;
 using IIoT.Collector.Core.Config;
 using IIoT.Collector.Core.Engine;
 using IIoT.Collector.SignalR;
@@ -48,6 +52,9 @@ public partial class App : Application
 
     private ThemeSettingsService? _themeSettings;
     private IServiceProvider? _services;
+
+    // ★ MG-03: Manager 헬스체크 응답 서버 (NamedPipe 핑/퐁)
+    private HealthPipeServer? _healthServer;
 
     // §2 ─ 시작 ───────────────────────────────────────────────
 
@@ -80,6 +87,23 @@ public partial class App : Application
 
         // ③ DI 빌드
         _services = _ConfigureServices();
+
+        // ★ MG-03: 헬스체크 응답 서버 시작 (Manager 가 핑을 보냄)
+        //   상태문구에 FlowEngine 실행 여부 포함 — "UI 만 살아있는 좀비" 감지용
+        _healthServer = new HealthPipeServer(
+            "IIoT.Collector",
+            statusProvider: () =>
+            {
+                try
+                {
+                    var flow = _services?.GetService<FlowEngine>();
+                    return flow is null ? "초기화 중"
+                                        : $"수집 엔진 {(flow.IsRunning ? "실행 중" : "정지")}";
+                }
+                catch { return "상태 조회 불가"; }
+            },
+            onLog: m => LogManager.Instance.Debug("Health", m));
+        _healthServer.Start();
 
         // ④ 창 생성
         var win = _services.GetRequiredService<MainWindow>();
@@ -200,6 +224,10 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         LogManager.Instance.Info("App", "IIoT.Collector 종료");
+
+        // ★ MG-03: 헬스체크 파이프 정리 (내부 2초 타임아웃 — 무한 대기 없음)
+        if (_healthServer is not null)
+            await _healthServer.DisposeAsync();
 
         // ★ C-03: 수집 정지 (드라이버 연결 해제) — LogManager 정지보다 먼저
         if (_services is not null)

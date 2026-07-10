@@ -2,11 +2,14 @@
      IIoT.Manager · MainWindow.xaml
      역할: 메인 창
      MG-Base-0: 빈 창 + 테마 (헤더 56px: 타이틀 + ThemePickerButton)
-     생성: 2026-07-09
+     MG-01: 본문에 ProcessStatusHost(ContentControl) + 하단 상태바 추가
+            (DI 필요 View → ContentControl + 코드 주입 패턴)
+     생성: 2026-07-09 / 수정: 2026-07-09 (MG-01)
      규칙:
        ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
        ② BoolToVisibility: Window.Resources 직접 등록
        ③ xmlns:uc assembly="IIoT.UI.Themes" (크로스-프로젝트 xmlns)
+       ④ DI 필요 View → ContentControl + 코드 주입 패턴
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Manager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -51,14 +54,21 @@
             </DockPanel>
         </Border>
 
-        <!-- § 본문 (MG-Base-0: 빈 영역 — MG-01 에서 프로세스 상태 카드 추가 예정) -->
-        <Grid>
-            <TextBlock Text="IIoT.Manager — MG-Base-0"
-                       FontSize="14"
-                       Foreground="{DynamicResource Text2Brush}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
-        </Grid>
+        <!-- § 하단 상태바 (26px) — 마지막 갱신 시각 -->
+        <Border DockPanel.Dock="Bottom"
+                Height="26"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <TextBlock Text="{Binding StatusText}"
+                       FontSize="11"
+                       Foreground="{DynamicResource Text3Brush}"
+                       VerticalAlignment="Center"
+                       Margin="16,0"/>
+        </Border>
+
+        <!-- § 본문 — MG-01: 프로세스 상태 화면 (DI 주입 호스트) -->
+        <ContentControl x:Name="ProcessStatusHost"/>
 
     </DockPanel>
 

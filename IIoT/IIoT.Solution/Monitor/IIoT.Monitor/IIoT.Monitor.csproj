@@ -75,6 +75,9 @@
 
 		<!-- WPF 테마 (v1.5) -->
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+
+		<!-- ★ MG-03: Manager 헬스체크 응답 서버 (HealthPipeServer) -->
+		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -1,0 +1,148 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Manager · Views/ProcessStatus/ProcessStatusView.xaml
+     역할: 프로세스 상태 카드 목록 화면 (Studio·Collector·Monitor)
+     MG-01: 신규 — 상태 표시만
+     MG-02: ▶시작/⏹정지/🔄재시작 버튼 + 오류 문구 추가
+            (버그 #9 교훈: 버튼은 반드시 테마 정식 스타일 사용 —
+             SuccessBtn/DangerBtn/SecondaryBtn, 비활성 시각 처리 포함)
+     MG-03: 헬스체크 응답시간(ms) + 내부 상태 문구 표시 추가
+     생성: 2026-07-09 / 수정: 2026-07-09 (MG-03)
+     규칙:
+       ① DynamicResource 필수 (Trigger Setter 포함)
+       ② UserControl.Resources 는 UserControl 직계 자식
+       ③ DataTemplate 안 x:Name/DataType 병용 금지 (XDG0008)
+       ④ Grid 는 Padding 불가 → Border.Padding 사용 (MC3072)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Manager.Views.ProcessStatus.ProcessStatusView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- 상태 카드 스타일 -->
+        <Style x:Key="ProcessCard" TargetType="Border">
+            <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"    Value="10"/>
+            <Setter Property="Padding"         Value="20,16"/>
+            <Setter Property="Margin"          Value="0,0,16,16"/>
+            <Setter Property="Width"           Value="260"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Padding="24">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+
+                <!-- § 섹션 타이틀 -->
+                <TextBlock Text="프로세스 상태"
+                           FontSize="16" FontWeight="Bold"
+                           Foreground="{DynamicResource TextBrush}"
+                           Margin="0,0,0,16"/>
+
+                <!-- § 상태 카드 목록 -->
+                <ItemsControl ItemsSource="{Binding Processes}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource ProcessCard}">
+                                <StackPanel>
+
+                                    <!-- 상태 점 + 프로그램 이름 -->
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="10" Height="10"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,8,0">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <!-- 기본: 정지(빨강) -->
+                                                    <Setter Property="Fill" Value="{DynamicResource RedBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="실행 중">
+                                                            <Setter Property="Fill" Value="{DynamicResource GreenBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StatusText}" Value="응답 없음">
+                                                            <Setter Property="Fill" Value="{DynamicResource YellowBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding Info.Name}"
+                                                   FontSize="14" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- 설명 -->
+                                    <TextBlock Text="{Binding Info.Description}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"
+                                               Margin="18,4,0,10"/>
+
+                                    <!-- 상태 문구 + PID -->
+                                    <StackPanel Orientation="Horizontal" Margin="18,0,0,12">
+                                        <TextBlock Text="{Binding StatusText}"
+                                                   FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Text2Brush}"/>
+                                        <TextBlock Text="  ·  "
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource Text3Brush}"/>
+                                        <TextBlock Text="{Binding PidText}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource Text3Brush}"/>
+                                        <!-- ★ MG-03: 헬스체크 응답시간 -->
+                                        <TextBlock Text="  ·  "
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource Text3Brush}"/>
+                                        <TextBlock Text="{Binding PingText}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource Text2Brush}"/>
+                                    </StackPanel>
+
+                                    <!-- ★ MG-03: pong 에 실려온 내부 상태 문구 (없으면 자동 축소) -->
+                                    <TextBlock Text="{Binding HealthStatus}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource Text3Brush}"
+                                               TextWrapping="Wrap"
+                                               Margin="18,4,0,0"/>
+
+                                    <!-- ★ MG-02: 제어 버튼 (테마 정식 스타일 — 비활성 시각 처리 포함) -->
+                                    <StackPanel Orientation="Horizontal" Margin="18,0,0,0">
+                                        <Button Content="▶ 시작"
+                                                Style="{DynamicResource SuccessBtn}"
+                                                Command="{Binding StartCommand}"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="⏹ 정지"
+                                                Style="{DynamicResource DangerBtn}"
+                                                Command="{Binding StopCommand}"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="🔄 재시작"
+                                                Style="{DynamicResource SecondaryBtn}"
+                                                Command="{Binding RestartCommand}"/>
+                                    </StackPanel>
+
+                                    <!-- ★ MG-02: 마지막 제어 오류 (성공 시 빈 문자열 → 자동 축소) -->
+                                    <TextBlock Text="{Binding LastError}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource RedBrush}"
+                                               TextWrapping="Wrap"
+                                               Margin="18,8,0,0"/>
+
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+
+</UserControl>

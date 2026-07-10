@@ -7,9 +7,13 @@
 //  Studio-P04 fix: LoadPlugins()를 win.Loaded 안으로 이동
 //                  → LogPanelView.LogAdded 구독 완료 후 실행되어야
 //                    플러그인 로드 로그가 패널에 표시됨
-//  생성: 2026-06-15 / 수정: 2026-06-27
+//  MG-03 (2026-07-09): HealthPipeServer 추가 — Manager 헬스체크(NamedPipe
+//                      핑/퐁) 응답. 파이프명 "IIoT.Health.IIoT.Studio".
+//                      OnExit 에서 DisposeAsync 정리.
+//  생성: 2026-06-15 / 수정: 2026-07-09 (MG-03)
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Contracts.Health;
 using IIoT.Studio.Core.Config;
 using IIoT.Studio.Core.Plugin;
 using IIoT.Studio.ViewModels;
@@ -25,6 +29,9 @@ public partial class App : Application
 {
     private ThemeSettingsService? _themeSettings;
     private IServiceProvider?     _services;
+
+    // ★ MG-03: Manager 헬스체크 응답 서버 (NamedPipe 핑/퐁)
+    private HealthPipeServer?     _healthServer;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -46,6 +53,13 @@ public partial class App : Application
         });
 
         LogManager.Instance.Info("App", "IIoT.Studio 시작");
+
+        // ★ MG-03: 헬스체크 응답 서버 시작 (Manager 가 핑을 보냄)
+        _healthServer = new HealthPipeServer(
+            "IIoT.Studio",
+            statusProvider: () => "설정 편집기 정상",
+            onLog: m => LogManager.Instance.Debug("Health", m));
+        _healthServer.Start();
 
         // ③ DI 빌드
         _services = _ConfigureServices();
@@ -89,6 +103,11 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         LogManager.Instance.Info("App", "IIoT.Studio 종료");
+
+        // ★ MG-03: 헬스체크 파이프 정리 (내부 2초 타임아웃 — 무한 대기 없음)
+        if (_healthServer is not null)
+            await _healthServer.DisposeAsync();
+
         await LogManager.Instance.StopAsync();
         _themeSettings?.Dispose();
         base.OnExit(e);

@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v8.2 | 현재 위치: IIoT.Manager MG-Base-0 (빌드 확인 대기)**
+**작성일: 2026-07-09 | 버전: v8.5 | 현재 위치: IIoT.Manager MG-03 (빌드 확인 대기)**
 
 ---
 
@@ -284,9 +284,35 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
              Manager\IIoT.Manager\AssemblyInfo.cs
              Manager\IIoT.Manager\App.xaml(.cs)
              Manager\IIoT.Manager\MainWindow.xaml(.cs)
-  MG-01      프로세스 상태 표시 (Studio·Collector·Monitor)
-  MG-02      Start/Stop → 프로세스 제어
-  MG-03      NamedPipe 헬스체크
+  MG-01      프로세스 상태 표시 (Studio·Collector·Monitor)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+             신규: Models\ManagedProcessInfo.cs / ViewModels\ProcessCardViewModel.cs
+                  ViewModels\ManagerMainViewModel.cs / Views\ProcessStatus\ProcessStatusView.xaml(.cs)
+             수정: MainWindow.xaml(.cs) — ProcessStatusHost + 하단 상태바 / App.xaml.cs — DI 등록
+             구조: 2초 DispatcherTimer → ProcessCardViewModel.Refresh()
+                  (Process.GetProcessesByName, 상태점 Green/Red/Yellow DataTrigger)
+  MG-02      Start/Stop → 프로세스 제어  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+             신규: Core\Config\ManagerSettings.cs (manager.json DTO+로더 — monitor.json 패턴)
+                  Core\ProcessManager.cs (Start / StopAsync[정상종료→5초→Kill] / RestartAsync)
+             수정: Models\ManagedProcessInfo.cs (ExePath 추가, json DTO 겸용)
+                  ViewModels\ProcessCardViewModel.cs (커맨드 3종 + IsBusy + LastError,
+                    규칙⑬ NotifyCanExecuteChangedFor 적용)
+                  ViewModels\ManagerMainViewModel.cs (설정 로드 InitializeAsync — Loaded 호출)
+                  Views\ProcessStatus\ProcessStatusView.xaml (SuccessBtn/DangerBtn/SecondaryBtn)
+                  MainWindow.xaml.cs / App.xaml.cs
+             설정: Config\manager.json — Processes[] { Id,Name,Description,ProcessName,ExePath }
+                  ExePath 상대경로 = Manager 실행폴더 기준 (기본값: 각 프로그램 Debug 출력)
+  MG-03      NamedPipe 헬스체크  ← 🔄 코드 생성 완료 (빌드 확인 대기, B안 확정)
+             프로토콜: 파이프 "IIoT.Health.{ProcessName}" / "ping" → "pong|{상태문구}"
+             신규: Contracts\Health\HealthPipeServer.cs (의존성 없음 — onLog 콜백)
+                  Manager Core\HealthCheckService.cs (핑 클라이언트, 1초 한도, ms 측정)
+             Manager 수정: ManagedProcessInfo(AutoRestart 추가) / ProcessCardViewModel
+                  (RefreshAsync 전환: 프로세스검사→핑→연속3회 실패+AutoRestart 시 자동재시작,
+                   응답없음 상태에서도 정지/재시작 가능) / ManagerMainViewModel(재진입 가드)
+                  / ProcessStatusView.xaml(응답시간·상태문구) / App.xaml.cs / csproj·sln(Contracts)
+             ★ 대상 3개 프로그램 수정 (재빌드 필수):
+                  Studio App.xaml.cs / Collector App.xaml.cs (pong에 FlowEngine.IsRunning)
+                  / Monitor App.xaml.cs + csproj·sln (Contracts 참조 신규)
+             AutoRestart 기본 false — manager.json 에서 프로그램별 활성화
   MG-04      로그 뷰어 통합
   MG-05      대시보드 (전체 요약)
   MG-06(신규 추가 필요)  설정 배포 관리 (요구사항 4-2-7)
@@ -313,6 +339,17 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
               Monitor 패턴 준수: RootNamespace 명시 / StartupUri 없음 /
               AddSingleton MainWindow / FrameworkReference 미포함(버그 #1 교훈) /
               DI 패키지 8.0.1 명시(버그 #2 교훈) |
+| v8.3 (2026-07-09) | MG-01 코드 생성 완료 — 프로세스 상태 카드 3종 + 2초 갱신 타이머.
+              Process 객체 Dispose 처리, 오류 시 로그+카드 노출(조용히 삼키기 금지),
+              DataTrigger 상태점 색상(DynamicResource), 하단 상태바 추가 |
+| v8.4 (2026-07-09) | MG-02 코드 생성 완료 — manager.json + ProcessManager +
+              시작/정지/재시작 버튼. 정지는 CloseMainWindow(정상종료, 대상 앱
+              OnExit 정리 보장) → 5초 → Kill(트리포함). ProcessManager 는 핸들
+              미보관(OnExit 정리 불필요, Manager 종료 후에도 대상 프로세스 유지) |
+| v8.5 (2026-07-09) | MG-03 코드 생성 완료 — NamedPipe 헬스체크(B안).
+              HealthPipeServer 를 Contracts\Health 에 신설(공용), 3개 프로그램
+              탑재(구버전 빌드 실행 시 🟡 응답없음으로 표시됨 — 재빌드 필요).
+              응답시간(ms)·내부상태 표시, 연속 3회 실패+AutoRestart 시 자동복구 |
 
 ---
 

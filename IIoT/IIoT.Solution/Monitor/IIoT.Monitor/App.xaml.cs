@@ -37,9 +37,13 @@
 //            ExitRequested 이벤트 추가, MainWindow 에서 최소화 시 트레이로 숨김
 //  MN-EX-05: FavoriteTagService DI 등록 (즐겨찾기/핀 고정)
 //  MN-EX-07: SnapshotCsvExportService DI 등록 (현재값 스냅샷 CSV 내보내기)
-//  생성: 2026-07-07 / 수정: 2026-07-08 (MN-EX-07)
+//  MG-03 (2026-07-09): HealthPipeServer 추가 — Manager 헬스체크(NamedPipe
+//            핑/퐁) 응답. 파이프명 "IIoT.Health.IIoT.Monitor".
+//            csproj 에 IIoT.Contracts 참조 신규 추가. OnExit 정리 세트 추가.
+//  생성: 2026-07-07 / 수정: 2026-07-09 (MG-03)
 // ══════════════════════════════════════════════════════════
 
+using IIoT.Contracts.Health;
 using IIoT.Monitor.Core.Aggregation;
 using IIoT.Monitor.Core.Config;
 using IIoT.Monitor.Core.Connection;
@@ -73,6 +77,9 @@ public partial class App : Application
     private ThemeSettingsService? _themeSettings;
     private IServiceProvider?     _services;
 
+    // ★ MG-03: Manager 헬스체크 응답 서버 (NamedPipe 핑/퐁)
+    private HealthPipeServer?     _healthServer;
+
     // §2 ─ 시작 ───────────────────────────────────────────────
 
     protected override void OnStartup(StartupEventArgs e)
@@ -95,6 +102,13 @@ public partial class App : Application
         });
 
         LogManager.Instance.Info("App", "IIoT.Monitor 시작");
+
+        // ★ MG-03: 헬스체크 응답 서버 시작 (Manager 가 핑을 보냄)
+        _healthServer = new HealthPipeServer(
+            "IIoT.Monitor",
+            statusProvider: () => "모니터링 정상",
+            onLog: m => LogManager.Instance.Debug("Health", m));
+        _healthServer.Start();
 
         // ③ DI 빌드
         _services = _ConfigureServices();
@@ -145,6 +159,9 @@ public partial class App : Application
 
         // ★ MN-EX-02: 알람 이력 DB 연결 정리
         _WaitWithTimeout(_services?.GetService<AlarmHistoryService>()?.DisposeAsync().AsTask());
+
+        // ★ MG-03: 헬스체크 파이프 정리 (내부 2초 타임아웃 + 외부 5초 이중 방어)
+        _WaitWithTimeout(_healthServer?.DisposeAsync().AsTask());
 
         _themeSettings?.Dispose();   // 이벤트 구독 해제 필수
         LogManager.Instance.Info("App", "IIoT.Monitor 종료");
