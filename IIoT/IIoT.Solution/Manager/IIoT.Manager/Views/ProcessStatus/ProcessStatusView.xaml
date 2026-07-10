@@ -26,7 +26,8 @@
             <Setter Property="CornerRadius"    Value="10"/>
             <Setter Property="Padding"         Value="20,16"/>
             <Setter Property="Margin"          Value="0,0,16,16"/>
-            <Setter Property="Width"           Value="260"/>
+            <!-- ★ MG-04(사용자 요청): 카드 폭 260 → 340 확대 (버튼 3개 + 상태문구 여유) -->
+            <Setter Property="Width"           Value="340"/>
         </Style>
     </UserControl.Resources>
 

@@ -5,11 +5,14 @@
 //  MG-03: 신규
 //  프로토콜: HealthPipeServer(IIoT.Contracts) 와 쌍
 //    파이프명: "IIoT.Health.{processName}" / 요청 "ping" / 응답 "pong|{상태}"
-//  생성: 2026-07-09
+//  생성: 2026-07-09 / 수정: 2026-07-09 (FIX: using System.IO 누락 — CS0246)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts.Health;
 using System.Diagnostics;
+// ★ FIX(2026-07-09): StreamReader/StreamWriter 는 System.IO 소속 —
+//   System.IO.Pipes 만으로는 CS0246 발생 (HealthPipeServer 와 동일 수정)
+using System.IO;
 using System.IO.Pipes;
 
 namespace IIoT.Manager.Core;

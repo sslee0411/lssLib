@@ -8,7 +8,9 @@
 //  MG-03: NamedPipe 헬스체크 통합 — Refresh() → RefreshAsync() 전환.
 //         실행 중 + 핑 실패 → 🟡 응답 없음. 응답시간(ms)·상태문구 표시.
 //         AutoRestart=true 인 프로그램은 연속 3회 실패 시 자동 재시작.
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-03)
+//  MG-05: EventHistoryService 연동 — 수동 시작/정지/재시작, 자동 재시작,
+//         상태 변경(감지)을 대시보드 이벤트 이력에 기록.
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-05)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -31,8 +33,9 @@ public partial class ProcessCardViewModel : ObservableObject
 {
     // §1 ─ 필드 ──────────────────────────────────────────────
 
-    private readonly ProcessManager     _processManager;
-    private readonly HealthCheckService _healthCheck;
+    private readonly ProcessManager      _processManager;
+    private readonly HealthCheckService  _healthCheck;
+    private readonly EventHistoryService _events;
 
     /// <summary>★ MG-03: 헬스체크 연속 실패 횟수 (자동복구 판정용, 성공 시 리셋)</summary>
     private int _healthFailCount;
@@ -100,14 +103,31 @@ public partial class ProcessCardViewModel : ObservableObject
 
     // §4 ─ 생성자 ─────────────────────────────────────────────
 
-    public ProcessCardViewModel(ManagedProcessInfo info,
-                                ProcessManager     processManager,
-                                HealthCheckService healthCheck)
+    public ProcessCardViewModel(ManagedProcessInfo  info,
+                                ProcessManager      processManager,
+                                HealthCheckService  healthCheck,
+                                EventHistoryService events)
     {
         Info            = info;
         _processManager = processManager;
         _healthCheck    = healthCheck;
+        _events         = events;
     }
+
+    // ★ MG-05: 상태 변경 감지 → 이벤트 이력 기록
+    //   (ObservableProperty partial 메서드 — 수동/외부 종료 모두 포착)
+    partial void OnStateChanged(ProcessState oldValue, ProcessState newValue)
+    {
+        if (oldValue != newValue)
+            _events.Record(Info.Name, $"상태 변경: {_StateText(oldValue)} → {_StateText(newValue)}");
+    }
+
+    private static string _StateText(ProcessState s) => s switch
+    {
+        ProcessState.Running => "실행 중",
+        ProcessState.Error   => "응답 없음",
+        _                    => "정지",
+    };
 
     // §5 ─ 커맨드 (MG-02) ─────────────────────────────────────
 
@@ -127,6 +147,9 @@ public partial class ProcessCardViewModel : ObservableObject
         {
             var result = _processManager.Start(Info);
             LastError = result.Ok ? "" : result.Error ?? "알 수 없는 오류";
+
+            // ★ MG-05: 이벤트 기록
+            _events.Record(Info.Name, result.Ok ? "수동 시작" : $"수동 시작 실패: {LastError}");
             await RefreshAsync();
         }
         finally { IsBusy = false; }
@@ -141,6 +164,9 @@ public partial class ProcessCardViewModel : ObservableObject
         {
             var result = await _processManager.StopAsync(Info);
             LastError = result.Ok ? "" : result.Error ?? "알 수 없는 오류";
+
+            // ★ MG-05: 이벤트 기록
+            _events.Record(Info.Name, result.Ok ? "수동 정지" : $"수동 정지 실패: {LastError}");
             await RefreshAsync();
         }
         finally { IsBusy = false; }
@@ -155,6 +181,9 @@ public partial class ProcessCardViewModel : ObservableObject
         {
             var result = await _processManager.RestartAsync(Info);
             LastError = result.Ok ? "" : result.Error ?? "알 수 없는 오류";
+
+            // ★ MG-05: 이벤트 기록
+            _events.Record(Info.Name, result.Ok ? "수동 재시작" : $"수동 재시작 실패: {LastError}");
             await RefreshAsync();
         }
         finally { IsBusy = false; }
@@ -227,12 +256,18 @@ public partial class ProcessCardViewModel : ObservableObject
             lssLib.Log.LogManager.Instance.Warn("ProcessCard",
                 $"{Info.Name} 헬스체크 연속 {_autoRestartThreshold}회 실패 — 자동 재시작 시도");
 
+            // ★ MG-05: 이벤트 기록 (자동복구 발동)
+            _events.Record(Info.Name, $"자동 재시작 발동 (헬스체크 {_autoRestartThreshold}회 연속 실패)");
+
             IsBusy = true;
             try
             {
                 var result = await _processManager.RestartAsync(Info);
                 if (!result.Ok)
+                {
                     LastError = $"자동 재시작 실패: {result.Error}";
+                    _events.Record(Info.Name, LastError);
+                }
             }
             finally { IsBusy = false; }
         }

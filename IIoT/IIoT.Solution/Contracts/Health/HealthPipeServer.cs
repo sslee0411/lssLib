@@ -12,9 +12,12 @@
 //      (Contracts 는 플러그인 계약 레이어 — 외부 의존 최소화 원칙)
 //    - statusProvider 로 내부 상태 문구 확장 가능
 //      (예: Collector → "수집 루프 정상, Tag 1240개")
-//  생성: 2026-07-09
+//  생성: 2026-07-09 / 수정: 2026-07-09 (FIX: using System.IO 누락 — CS0246)
 // ══════════════════════════════════════════════════════════
 
+// ★ FIX(2026-07-09): StreamReader/StreamWriter 는 System.IO 소속 —
+//   System.IO.Pipes 만으로는 CS0246 발생 (Monitor 버그 #3 HttpClient 와 동일 패턴)
+using System.IO;
 using System.IO.Pipes;
 
 namespace IIoT.Contracts.Health;

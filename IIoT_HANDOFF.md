@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v8.5 | 현재 위치: IIoT.Manager MG-03 (빌드 확인 대기)**
+**작성일: 2026-07-09 | 버전: v9.1 | 현재 위치: IIoT.Manager MG-05 (빌드 확인 대기)**
 
 ---
 
@@ -262,11 +262,30 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
 ⑤ 세션 종료 전 이 핸드오프 파일(D:\lssLib\IIoT_HANDOFF.md) 갱신 + Git 커밋 권장
    → 세션이 닫혀도 소스+진행상황 손실 없음 (세션 컨텍스트는 소멸됨)
 ⑥ 응답 마지막에 "✅ 작업 완료" 표시
+⑦ 파일 삭제가 필요한 경우: 삭제 원인을 먼저 설명하고 사용자 허락을
+   받은 후에만 진행 (임의 삭제 금지 — 2026-07-09 사용자 지시)
 ```
 
 > ⚠️ **SKILL.md 버전 참고**: 솔루션 루트의 `IIoT.Solution\SKILL.md`(v4.x대)와
 > Claude 스킬 캐시본(v6.3)은 모두 구버전. 최신 이력(v7.x~)은 스킬 설정에
 > 업로드된 원본 기준이므로, 진행 상태 판단은 **이 핸드오프 파일을 최우선**으로 할 것.
+
+---
+
+## 🔧 2차 정리 예정 항목 (전체 업데이트 단계에서 일괄 수정)
+
+> 개별 Step 진행 중에는 건드리지 않고, Manager~Sequence 완료 후
+> **전체 정리(리팩터링) 단계**에서 일괄 진행할 항목 목록.
+
+```
+① Monitor MonitorMainViewModel.cs 위치 정렬
+   현재: Monitor\IIoT.Monitor\ViewModels\MonitorMainViewModel.cs (규칙 예외)
+   목표: 프로젝트 루트로 이동 + namespace IIoT.Monitor
+   규칙: "메인 ViewModel 루트 레벨 고정" — Studio·Collector·Manager 는 준수 중
+   보류 사유: Monitor 는 완료 프로그램 — 진행 중 회귀 위험 방지
+   수정 범위: 파일 이동 + namespace 변경 + App.xaml.cs/MainWindow.xaml.cs using 정리
+② (추가 발견 시 여기에 누적)
+```
 
 ---
 
@@ -313,8 +332,29 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
                   Studio App.xaml.cs / Collector App.xaml.cs (pong에 FlowEngine.IsRunning)
                   / Monitor App.xaml.cs + csproj·sln (Contracts 참조 신규)
              AutoRestart 기본 false — manager.json 에서 프로그램별 활성화
-  MG-04      로그 뷰어 통합
-  MG-05      대시보드 (전체 요약)
+  MG-04      로그 뷰어 통합  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+             방식: 각 프로그램 {exe폴더}\Log\yyyy_MM\dd\All.txt 파일 테일링(1초 폴링,
+                  핸들 미보관, 최초 발견 시 끝으로 이동 — 과거 이력 미출력)
+             신규: Models\LogRow.cs / Core\LogTailService.cs
+                  ViewModels\LogViewerViewModel.cs (최대 2000행, ICollectionView 필터)
+                  Views\LogViewer\LogViewerView.xaml(.cs) (소스필터·검색·일시정지·지우기·자동스크롤)
+             수정: MainWindow.xaml — 탭바 신설 [⚙프로세스][📋로그] (Visibility 토글,
+                  TabBtn0/1 DataTrigger 필 스타일) / ManagerMainViewModel — ActiveTabIndex
+                  + SwitchTab(규칙⑤ TryParse) + LogTail.Start() / MainWindow.xaml.cs / App.xaml.cs
+             UI: 카드 폭 260→340 확대 (사용자 요청)
+  MG-05      대시보드 (전체 요약)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+             구성: 요약 칩 4개(전체/실행/응답없음/정지) + 프로그램 현황 미니 목록(상태점+ms)
+                  + 최근 이벤트 이력(최대 200건) + 시스템 정보(가동시간·설정경로)
+             신규: Models\EventRow.cs / Core\EventHistoryService.cs (Record → 로그에도 기록)
+                  ViewModels\DashboardViewModel.cs (2초 집계 타이머 — Monitor 패턴)
+                  Views\Dashboard\DashboardView.xaml(.cs)
+             수정: ProcessCardViewModel — 이벤트 기록(수동 시작/정지/재시작, 자동복구,
+                  상태변경 OnStateChanged partial) / ManagerMainViewModel — 탭 2 추가
+                  / MainWindow.xaml(.cs) — [📊 대시보드] 탭 + DashboardHost / App.xaml.cs
+             ※ MG-04 로그탭 UI 를 표준 LogPanelView 패턴으로 정렬 (사용자 요청):
+               34px 툴바(GhostBtn·PropCombo·PropInput) + 시각/레벨/프로그램/Source/내용
+               컬럼 + 레벨별 행 색상 + lssLib.Log TXT 라인 파서(LogRow.Parse)
+               + 크기 롤링(All_2.txt…) 최신 파일 자동 추적
   MG-06(신규 추가 필요)  설정 배포 관리 (요구사항 4-2-7)
   MG-07(신규 추가 필요)  스케줄 관리 (요구사항 4-2-8)
 ```
@@ -350,6 +390,31 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
               HealthPipeServer 를 Contracts\Health 에 신설(공용), 3개 프로그램
               탑재(구버전 빌드 실행 시 🟡 응답없음으로 표시됨 — 재빌드 필요).
               응답시간(ms)·내부상태 표시, 연속 3회 실패+AutoRestart 시 자동복구 |
+| v8.6 (2026-07-09) | ManagerMainViewModel 을 ViewModels\ → 프로젝트 루트로 이동
+              + namespace IIoT.Manager (규칙 "메인 VM 루트 레벨 고정" 정렬 —
+              Studio·Collector 준수 / Monitor 만 ViewModels 하위 예외로 유지).
+              App.xaml.cs·MainWindow.xaml.cs using 정리 |
+| v8.7 (2026-07-09) | "🔧 2차 정리 예정 항목" 섹션 신설 — Monitor 메인 VM 위치
+              정렬을 전체 정리 단계 항목 ①로 등록 (개별 Step 중 미수정 방침) |
+| v8.8 (2026-07-09) | MG-03 빌드 오류 수정 — HealthPipeServer.cs CS0246
+              (StreamReader/Writer): using System.IO 누락 추가 (버그 #3 동일
+              패턴). Manager CS0006 은 Contracts 실패 연쇄 — 자동 해소.
+              운영 규칙 ⑦ 신설: 파일 삭제는 원인 설명 + 사용자 허락 후 진행 |
+| v8.9 (2026-07-09) | HealthCheckService.cs 동일 CS0246 수정 + 신규 파일 전수
+              점검(누락 0건). ★ 규칙 확정: 이 솔루션의 WPF(net8.0-windows)
+              프로젝트에서 StreamReader/Writer·File·Path·Directory 사용 파일은
+              ImplicitUsings 에 의존하지 말고 반드시 "using System.IO;" 명시 |
+| v9.0 (2026-07-09) | MG-04 코드 생성 완료 — 통합 로그 뷰어 (파일 테일링 방식,
+              LogTailService 1초 폴링·핸들 미보관). Manager 에 탭바 신설
+              (프로세스/로그, Visibility 토글로 숨김 탭도 수신 지속).
+              카드 폭 340 확대. ★ 운영 규칙 추가: 다음 Step 예고 시
+              진행 내용(무엇을 만들지) 설명을 함께 제시 (사용자 요청) |
+| v9.1 (2026-07-09) | ① 로그탭 표준 LogPanelView UI 정렬 (사용자 요청) — 툴바·
+              컬럼·레벨색 동일, LogRow.Parse 라인 파서, 롤링 파일 추적
+              ② MG-05 코드 생성 완료 — 대시보드 (요약 칩·프로그램 현황·
+              최근 이벤트·시스템 정보, EventHistoryService 신설).
+              SKILL.md 원안 Step 맵(MG-Base-0~05) 코드 작성 완료 —
+              다음: 신규 MG-06(설정 배포)·MG-07(스케줄 관리) |
 
 ---
 

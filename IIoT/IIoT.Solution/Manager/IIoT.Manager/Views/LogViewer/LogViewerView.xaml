@@ -1,0 +1,192 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Manager · Views/LogViewer/LogViewerView.xaml
+     역할: [로그] 탭 — 통합 로그 뷰어 (프로그램·레벨 필터 + 검색 + 일시정지 + 지우기)
+     MG-04: 신규
+     개선(2026-07-09, 사용자 요청): 표준 LogPanelView UI 정렬 —
+           Studio/Collector/Monitor 의 LogPanelView 와 동일한 룩앤필
+           (34px 툴바 + GhostBtn 지우기 + PropCombo/PropInput +
+            LogGridHeader 컬럼 헤더 + 레벨별 행 색상)
+     생성: 2026-07-09 / 수정: 2026-07-09
+     규칙:
+       ① DynamicResource 필수
+       ② UserControl.Resources 는 UserControl 직계 자식
+       ③ ComboBox → PropCombo 스타일 필수 (시스템 컬러 우회)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Manager.Views.LogViewer.LogViewerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- 레벨별 전경색 (표준 LogPanelView 와 동일 값) -->
+        <SolidColorBrush x:Key="DebugFg"  Color="#888888" />
+        <SolidColorBrush x:Key="InfoFg"   Color="#B0C4DE" />
+        <SolidColorBrush x:Key="WarnFg"   Color="#EF9F27" />
+        <SolidColorBrush x:Key="ErrorFg"  Color="#E05050" />
+        <SolidColorBrush x:Key="FatalFg"  Color="#FF4444" />
+
+        <!-- GridViewColumnHeader 테마 스타일 (표준 LogPanelView 의 LogGridHeader 동일) -->
+        <Style x:Key="LogGridHeader" TargetType="GridViewColumnHeader">
+            <Setter Property="Background"      Value="{DynamicResource CardBrush}" />
+            <Setter Property="Foreground"      Value="{DynamicResource Text3Brush}" />
+            <Setter Property="FontWeight"      Value="Bold" />
+            <Setter Property="FontSize"        Value="11" />
+            <Setter Property="Padding"         Value="8,4" />
+            <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor"          Value="Arrow" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GridViewColumnHeader">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left"
+                                               VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="{DynamicResource SurfaceBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="34" />  <!-- 툴바 -->
+            <RowDefinition Height="*"  />  <!-- 로그 목록 -->
+        </Grid.RowDefinitions>
+
+        <!-- ── 툴바 (표준 LogPanelView 패턴) ─────────────────── -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="8,0">
+            <DockPanel>
+
+                <!-- 우측: 지우기 버튼 -->
+                <Button DockPanel.Dock="Right"
+                        Content="🗑 지우기"
+                        Style="{DynamicResource GhostBtn}"
+                        FontSize="11" Padding="8,2"
+                        Command="{Binding ClearCommand}" />
+
+                <!-- 우측: 카운트 -->
+                <TextBlock DockPanel.Dock="Right"
+                           Text="{Binding CountText}"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text3Brush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0" />
+
+                <!-- 프로그램 필터 -->
+                <TextBlock Text="프로그램:"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0" />
+                <ComboBox Style="{DynamicResource PropCombo}"
+                          FontSize="11"
+                          Width="130"
+                          Padding="6,2"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding Programs}"
+                          SelectedItem="{Binding SelectedProgram}"
+                          Margin="0,0,12,0" />
+
+                <!-- 레벨 필터 -->
+                <TextBlock Text="레벨:"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0" />
+                <ComboBox Style="{DynamicResource PropCombo}"
+                          FontSize="11"
+                          Width="80"
+                          Padding="6,2"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding Levels}"
+                          SelectedItem="{Binding SelectedLevel}"
+                          Margin="0,0,12,0" />
+
+                <!-- 검색 -->
+                <TextBlock Text="검색:"
+                           FontSize="11"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0" />
+                <TextBox Style="{DynamicResource PropInput}"
+                         FontSize="11"
+                         Width="150"
+                         Padding="6,2"
+                         VerticalAlignment="Center"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <!-- 일시정지 -->
+                <CheckBox Content="일시정지"
+                          FontSize="11"
+                          IsChecked="{Binding IsPaused}"
+                          Foreground="{DynamicResource Text2Brush}"
+                          VerticalAlignment="Center"
+                          Margin="12,0,0,0" />
+
+                <TextBlock Text="📋 통합 로그"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0" />
+            </DockPanel>
+        </Border>
+
+        <!-- ── 로그 목록 (표준 LogPanelView 패턴 + 프로그램 컬럼 추가) ── -->
+        <ListView x:Name="LogList"
+                  Grid.Row="1"
+                  ItemsSource="{Binding RowsView}"
+                  Background="{DynamicResource SurfaceBrush}"
+                  Foreground="{DynamicResource TextBrush}"
+                  BorderThickness="0"
+                  FontSize="11"
+                  FontFamily="Consolas, Courier New"
+                  VirtualizingPanel.IsVirtualizing="True">
+            <ListView.View>
+                <GridView ColumnHeaderContainerStyle="{StaticResource LogGridHeader}">
+                    <GridViewColumn Header="시각"     Width="96"
+                                    DisplayMemberBinding="{Binding TimeText}" />
+                    <GridViewColumn Header="레벨"     Width="56"
+                                    DisplayMemberBinding="{Binding LevelText}" />
+                    <GridViewColumn Header="프로그램" Width="110"
+                                    DisplayMemberBinding="{Binding Program}" />
+                    <GridViewColumn Header="Source"   Width="140"
+                                    DisplayMemberBinding="{Binding Source}" />
+                    <GridViewColumn Header="내용"     Width="900"
+                                    DisplayMemberBinding="{Binding Message}" />
+                </GridView>
+            </ListView.View>
+
+            <!-- 행 스타일: 레벨별 색상 (표준 LogPanelView 동일) -->
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Foreground" Value="{DynamicResource Text2Brush}" />
+                    <Setter Property="Padding" Value="2,1" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding LevelText}" Value="WARN">
+                            <Setter Property="Foreground" Value="{StaticResource WarnFg}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding LevelText}" Value="ERROR">
+                            <Setter Property="Foreground" Value="{StaticResource ErrorFg}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding LevelText}" Value="FATAL">
+                            <Setter Property="Foreground" Value="{StaticResource FatalFg}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding LevelText}" Value="DEBUG">
+                            <Setter Property="Foreground" Value="{StaticResource DebugFg}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+    </Grid>
+
+</UserControl>

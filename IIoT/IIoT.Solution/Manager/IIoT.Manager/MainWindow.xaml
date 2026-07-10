@@ -4,12 +4,15 @@
      MG-Base-0: 빈 창 + 테마 (헤더 56px: 타이틀 + ThemePickerButton)
      MG-01: 본문에 ProcessStatusHost(ContentControl) + 하단 상태바 추가
             (DI 필요 View → ContentControl + 코드 주입 패턴)
-     생성: 2026-07-09 / 수정: 2026-07-09 (MG-01)
+     MG-04: 탭바(48px) 추가 — [프로세스][로그] 2탭, LogViewerHost 신설.
+            탭 전환은 Visibility 토글 (콘텐츠 유지 — 로그 수신 지속)
+     생성: 2026-07-09 / 수정: 2026-07-09 (MG-04)
      규칙:
        ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
        ② BoolToVisibility: Window.Resources 직접 등록
        ③ xmlns:uc assembly="IIoT.UI.Themes" (크로스-프로젝트 xmlns)
        ④ DI 필요 View → ContentControl + 코드 주입 패턴
+       ⑤ 탭 버튼 CommandParameter 는 string → ViewModel int.TryParse 처리
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Manager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -23,6 +26,60 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <!-- ★ MG-04: 탭 버튼 필(pill) 스타일 — 선택 여부는 각 버튼의 DataTrigger 로 처리 -->
+        <Style x:Key="TabBtnBase" TargetType="Button">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Margin" Value="4,4,0,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 탭 0 (프로세스) 선택 시 강조 -->
+        <Style x:Key="TabBtn0" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsProcessTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 탭 1 (로그) 선택 시 강조 -->
+        <Style x:Key="TabBtn1" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsLogTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ★ MG-05: 탭 2 (대시보드) 선택 시 강조 -->
+        <Style x:Key="TabBtn2" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDashboardTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
@@ -54,6 +111,29 @@
             </DockPanel>
         </Border>
 
+        <!-- § MG-04: 탭바 (48px) -->
+        <Border DockPanel.Dock="Top"
+                Height="48"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="12,0">
+                <Button Content="⚙ 프로세스"
+                        Style="{StaticResource TabBtn0}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="0"/>
+                <Button Content="📋 로그"
+                        Style="{StaticResource TabBtn1}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="1"/>
+                <!-- ★ MG-05 -->
+                <Button Content="📊 대시보드"
+                        Style="{StaticResource TabBtn2}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="2"/>
+            </StackPanel>
+        </Border>
+
         <!-- § 하단 상태바 (26px) — 마지막 갱신 시각 -->
         <Border DockPanel.Dock="Bottom"
                 Height="26"
@@ -67,8 +147,16 @@
                        Margin="16,0"/>
         </Border>
 
-        <!-- § 본문 — MG-01: 프로세스 상태 화면 (DI 주입 호스트) -->
-        <ContentControl x:Name="ProcessStatusHost"/>
+        <!-- § 본문 — 탭별 호스트 (Visibility 토글: 숨김 탭도 수신 지속) -->
+        <Grid>
+            <ContentControl x:Name="ProcessStatusHost"
+                            Visibility="{Binding IsProcessTab, Converter={StaticResource BoolToVisibility}}"/>
+            <ContentControl x:Name="LogViewerHost"
+                            Visibility="{Binding IsLogTab, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- ★ MG-05 -->
+            <ContentControl x:Name="DashboardHost"
+                            Visibility="{Binding IsDashboardTab, Converter={StaticResource BoolToVisibility}}"/>
+        </Grid>
 
     </DockPanel>
 

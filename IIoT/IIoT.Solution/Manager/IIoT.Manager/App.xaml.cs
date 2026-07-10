@@ -14,12 +14,20 @@
 //          Manager 가 시작한 프로세스는 Manager 종료 후에도 계속 실행: 의도된 동작)
 //  MG-03: HealthCheckService DI 등록 추가 (NamedPipe 핑 클라이언트 —
 //         매 호출 시 파이프 생성·해제, 핸들 미보관 → OnExit 정리 불필요)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-03)
+//  MG-04: LogTailService / LogViewerViewModel / LogViewerView DI 등록 추가.
+//         OnExit 에 LogTailService.Dispose() (타이머 정지 — 동기, 즉시 완료)
+//  MG-05: EventHistoryService / DashboardViewModel / DashboardView DI 등록 추가
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-05)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Core;
 using IIoT.Manager.Core.Config;
+// ★ 이동(2026-07-09): ManagerMainViewModel 이 루트 namespace(IIoT.Manager)로
+//   이동해 ViewModels using 불필요 (Studio·Collector 컨벤션 정렬)
+// ★ MG-04: LogViewerViewModel 은 ViewModels 하위 (메인 VM 아님 — 규칙 준수)
 using IIoT.Manager.ViewModels;
+using IIoT.Manager.Views.Dashboard;
+using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
 using IIoT.UI.Themes;
 using lssLib.Log;
@@ -73,6 +81,10 @@ public partial class App : Application
         // ★ Monitor 버그 #10/#11 교훈: 리소스 보유 싱글턴(NamedPipe 등)이
         //   추가되는 Step(MG-03~)부터는 여기서 _WaitWithTimeout 세트로
         //   반드시 정리할 것. (ProcessManager 는 핸들 미보관 — 대상 아님)
+
+        // ★ MG-04: 로그 테일링 타이머 정지 (동기 — 즉시 완료, 파일 핸들 미보관)
+        _services?.GetService<LogTailService>()?.Dispose();
+
         _themeSettings?.Dispose();   // 이벤트 구독 해제 필수
         LogManager.Instance.Info("App", "IIoT.Manager 종료");
         base.OnExit(e);
@@ -93,17 +105,33 @@ public partial class App : Application
         // ★ MG-03 신규: NamedPipe 헬스체크 클라이언트
         services.AddSingleton<HealthCheckService>();
 
+        // ★ MG-04 신규: 로그 테일링 + 로그 뷰어 (LogTailService 가 VM 의존성 — 먼저 등록)
+        services.AddSingleton<LogTailService>();
+        services.AddSingleton<LogViewerViewModel>();
+        services.AddSingleton<LogViewerView>(sp =>
+            new LogViewerView(sp.GetRequiredService<LogViewerViewModel>()));
+
+        // ★ MG-05 신규: 이벤트 이력 (ManagerMainViewModel/카드 의존성 — 먼저 등록)
+        services.AddSingleton<EventHistoryService>();
+
         // ★ MG-01 신규: MainWindow DataContext (카드 목록 + 2초 갱신 타이머)
         services.AddSingleton<ManagerMainViewModel>();
 
         // ★ MG-01 신규: 프로세스 상태 화면 (DataContext 는 MainWindow 상속)
         services.AddSingleton<ProcessStatusView>();
 
+        // ★ MG-05 신규: 대시보드 (ManagerMainViewModel 의존 — 위에서 먼저 등록됨)
+        services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<DashboardView>(sp =>
+            new DashboardView(sp.GetRequiredService<DashboardViewModel>()));
+
         // ★ 반드시 AddSingleton (Transient → 이중 창 버그)
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
                 sp.GetRequiredService<ManagerMainViewModel>(),
-                sp.GetRequiredService<ProcessStatusView>()));
+                sp.GetRequiredService<ProcessStatusView>(),
+                sp.GetRequiredService<LogViewerView>(),
+                sp.GetRequiredService<DashboardView>()));
 
         return services.BuildServiceProvider();
     }

@@ -6,10 +6,15 @@
 //         ProcessStatusView(ContentControl 호스트 주입)
 //  MG-02: Loaded 에서 ManagerMainViewModel.InitializeAsync() 호출
 //         (manager.json 로드 — 파일 I/O 는 창 표시 후, Monitor 패턴)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-02)
+//  MG-04: LogViewerView 주입 추가 (LogViewerHost)
+//  MG-05: DashboardView 주입 추가 (DashboardHost)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-05)
 // ══════════════════════════════════════════════════════════
 
-using IIoT.Manager.ViewModels;
+// ★ 이동(2026-07-09): ManagerMainViewModel 이 루트 namespace(IIoT.Manager)로
+//   이동해 ViewModels using 불필요 (Studio·Collector 컨벤션 정렬)
+using IIoT.Manager.Views.Dashboard;
+using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
 using System.Windows;
 
@@ -23,16 +28,26 @@ public partial class MainWindow : Window
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
-    public MainWindow(ManagerMainViewModel vm, ProcessStatusView processStatusView)
+    public MainWindow(ManagerMainViewModel vm,
+                      ProcessStatusView    processStatusView,
+                      LogViewerView        logViewerView,
+                      DashboardView        dashboardView)
     {
         InitializeComponent();
 
         // ★ DataContext — ProcessStatusView 는 상속으로 같은 VM 을 사용
+        //   (LogViewerView/DashboardView 는 자체 VM 을 생성자에서 주입받음)
         _vm         = vm;
         DataContext = vm;
 
         // ★ DI 필요 View → ContentControl + 코드 주입 패턴
         ProcessStatusHost.Content = processStatusView;
+
+        // ★ MG-04: 로그 뷰어 주입
+        LogViewerHost.Content = logViewerView;
+
+        // ★ MG-05: 대시보드 주입
+        DashboardHost.Content = dashboardView;
 
         // ★ MG-02: manager.json 로드 (창 표시 후 — 파일 I/O 블로킹 방지)
         Loaded += _OnLoaded;
