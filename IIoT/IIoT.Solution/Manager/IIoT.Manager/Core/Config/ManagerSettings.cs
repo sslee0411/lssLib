@@ -4,7 +4,8 @@
 //        경로: {Manager 실행파일}\Config\manager.json
 //  MG-02: 신규 — Processes[] (관리 대상 프로그램 + 실행 경로)
 //         MonitorSettingsLoader(monitor.json) 와 동일한 패턴
-//  생성: 2026-07-09
+//  MG-06: Deploy 섹션 추가 — 설정 배포 (소스 Config 폴더 + 배포 파일 목록)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-06)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Models;
@@ -22,6 +23,27 @@ public sealed class ManagerSettings
 {
     /// <summary>관리 대상 프로그램 목록. 파일이 없으면 기본 3개(Studio·Collector·Monitor)로 생성.</summary>
     public List<ManagedProcessInfo> Processes { get; set; } = new();
+
+    /// <summary>★ MG-06: 설정 배포 설정 (구버전 manager.json 에 없으면 기본값 사용)</summary>
+    public DeploySettings Deploy { get; set; } = new();
+}
+
+/// <summary>
+/// ★ MG-06: 설정 배포 설정.
+/// 소스(마스터) = Studio 의 Config 폴더 — Studio 에서 [저장]한 설정이 원본.
+/// 대상 = 각 프로그램의 {exe 폴더}\Config.
+/// </summary>
+public sealed class DeploySettings
+{
+    /// <summary>
+    /// 마스터 설정 폴더. 절대 경로 또는 Manager 실행 폴더 기준 상대 경로.
+    /// 기본값: Studio Debug 출력의 Config 폴더.
+    /// </summary>
+    public string SourceConfigDir { get; set; } =
+        @"..\..\..\..\..\Studio\IIoT.Studio\bin\Debug\net8.0-windows\Config";
+
+    /// <summary>배포 대상 파일 목록 (소스 폴더 기준 파일명)</summary>
+    public List<string> Files { get; set; } = ["device.json", "collect.json"];
 }
 
 // ── 로더/세이버 ────────────────────────────────────────────

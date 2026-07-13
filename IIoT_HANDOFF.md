@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v9.1 | 현재 위치: IIoT.Manager MG-05 (빌드 확인 대기)**
+**작성일: 2026-07-09 | 버전: v9.2 | 현재 위치: IIoT.Manager MG-06 (빌드 확인 대기)**
 
 ---
 
@@ -355,7 +355,18 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
                34px 툴바(GhostBtn·PropCombo·PropInput) + 시각/레벨/프로그램/Source/내용
                컬럼 + 레벨별 행 색상 + lssLib.Log TXT 라인 파서(LogRow.Parse)
                + 크기 롤링(All_2.txt…) 최신 파일 자동 추적
-  MG-06(신규 추가 필요)  설정 배포 관리 (요구사항 4-2-7)
+  MG-06      설정 배포 관리 (요구사항 4-2-7)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+             흐름: 소스(Studio Config) → 대상 {exe폴더}\Config 로
+                  ① 기존 파일 백업(Config\Backup\yyyyMMdd_HHmmss\) ② 복사
+                  ③ device.json.signal 발행 (Collector FSW 자동 재로드 규약 준수)
+             신규: Core\ConfigDeployService.cs / ViewModels\DeployViewModel.cs
+                  (SourceFileInfo·DeployTargetItem 포함) / Views\Deploy\DeployView.xaml(.cs)
+             수정: ManagerSettings.cs — Deploy 섹션 { SourceConfigDir, Files[] } 추가
+                  (구버전 manager.json 은 기본값 자동 적용)
+                  ManagerMainViewModel — 탭 3 + DeployVm.Initialize()
+                  MainWindow.xaml(.cs) — [🚀 배포] 탭 + DeployHost / App.xaml.cs
+             대상: Processes 중 studio 제외 (자기 자신 재배포 방지) / 배포 이력은
+                  EventHistoryService(대시보드)와 로그에 기록
   MG-07(신규 추가 필요)  스케줄 관리 (요구사항 4-2-8)
 ```
 
@@ -415,6 +426,9 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
               최근 이벤트·시스템 정보, EventHistoryService 신설).
               SKILL.md 원안 Step 맵(MG-Base-0~05) 코드 작성 완료 —
               다음: 신규 MG-06(설정 배포)·MG-07(스케줄 관리) |
+| v9.2 (2026-07-09) | MG-06 코드 생성 완료 — 설정 배포 관리 (요구사항 4-2-7).
+              백업→복사→.signal 발행 3단계, 부분 배포 방지(소스 파일 누락 시
+              전체 중단), manager.json Deploy 섹션 신설. 다음: MG-07 스케줄 관리 |
 
 ---
 

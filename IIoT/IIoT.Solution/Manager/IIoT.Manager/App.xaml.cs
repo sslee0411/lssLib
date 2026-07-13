@@ -17,7 +17,8 @@
 //  MG-04: LogTailService / LogViewerViewModel / LogViewerView DI 등록 추가.
 //         OnExit 에 LogTailService.Dispose() (타이머 정지 — 동기, 즉시 완료)
 //  MG-05: EventHistoryService / DashboardViewModel / DashboardView DI 등록 추가
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-05)
+//  MG-06: ConfigDeployService / DeployViewModel / DeployView DI 등록 추가
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-06)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Core;
@@ -27,6 +28,7 @@ using IIoT.Manager.Core.Config;
 // ★ MG-04: LogViewerViewModel 은 ViewModels 하위 (메인 VM 아님 — 규칙 준수)
 using IIoT.Manager.ViewModels;
 using IIoT.Manager.Views.Dashboard;
+using IIoT.Manager.Views.Deploy;
 using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
 using IIoT.UI.Themes;
@@ -114,6 +116,12 @@ public partial class App : Application
         // ★ MG-05 신규: 이벤트 이력 (ManagerMainViewModel/카드 의존성 — 먼저 등록)
         services.AddSingleton<EventHistoryService>();
 
+        // ★ MG-06 신규: 설정 배포 (DeployViewModel 이 ManagerMainViewModel 의존성 — 먼저 등록)
+        services.AddSingleton<ConfigDeployService>();
+        services.AddSingleton<DeployViewModel>();
+        services.AddSingleton<DeployView>(sp =>
+            new DeployView(sp.GetRequiredService<DeployViewModel>()));
+
         // ★ MG-01 신규: MainWindow DataContext (카드 목록 + 2초 갱신 타이머)
         services.AddSingleton<ManagerMainViewModel>();
 
@@ -131,7 +139,8 @@ public partial class App : Application
                 sp.GetRequiredService<ManagerMainViewModel>(),
                 sp.GetRequiredService<ProcessStatusView>(),
                 sp.GetRequiredService<LogViewerView>(),
-                sp.GetRequiredService<DashboardView>()));
+                sp.GetRequiredService<DashboardView>(),
+                sp.GetRequiredService<DeployView>()));
 
         return services.BuildServiceProvider();
     }

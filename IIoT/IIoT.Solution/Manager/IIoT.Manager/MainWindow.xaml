@@ -80,6 +80,16 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- ★ MG-06: 탭 3 (배포) 선택 시 강조 -->
+        <Style x:Key="TabBtn3" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDeployTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
@@ -131,6 +141,11 @@
                         Style="{StaticResource TabBtn2}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="2"/>
+                <!-- ★ MG-06 -->
+                <Button Content="🚀 배포"
+                        Style="{StaticResource TabBtn3}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="3"/>
             </StackPanel>
         </Border>
 
@@ -156,6 +171,9 @@
             <!-- ★ MG-05 -->
             <ContentControl x:Name="DashboardHost"
                             Visibility="{Binding IsDashboardTab, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- ★ MG-06 -->
+            <ContentControl x:Name="DeployHost"
+                            Visibility="{Binding IsDeployTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

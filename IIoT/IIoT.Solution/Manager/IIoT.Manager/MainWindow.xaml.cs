@@ -8,12 +8,14 @@
 //         (manager.json 로드 — 파일 I/O 는 창 표시 후, Monitor 패턴)
 //  MG-04: LogViewerView 주입 추가 (LogViewerHost)
 //  MG-05: DashboardView 주입 추가 (DashboardHost)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-05)
+//  MG-06: DeployView 주입 추가 (DeployHost)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-06)
 // ══════════════════════════════════════════════════════════
 
 // ★ 이동(2026-07-09): ManagerMainViewModel 이 루트 namespace(IIoT.Manager)로
 //   이동해 ViewModels using 불필요 (Studio·Collector 컨벤션 정렬)
 using IIoT.Manager.Views.Dashboard;
+using IIoT.Manager.Views.Deploy;
 using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
 using System.Windows;
@@ -31,7 +33,8 @@ public partial class MainWindow : Window
     public MainWindow(ManagerMainViewModel vm,
                       ProcessStatusView    processStatusView,
                       LogViewerView        logViewerView,
-                      DashboardView        dashboardView)
+                      DashboardView        dashboardView,
+                      DeployView           deployView)
     {
         InitializeComponent();
 
@@ -48,6 +51,9 @@ public partial class MainWindow : Window
 
         // ★ MG-05: 대시보드 주입
         DashboardHost.Content = dashboardView;
+
+        // ★ MG-06: 배포 주입
+        DeployHost.Content = deployView;
 
         // ★ MG-02: manager.json 로드 (창 표시 후 — 파일 I/O 블로킹 방지)
         Loaded += _OnLoaded;
