@@ -90,6 +90,16 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- ★ MG-07: 탭 4 (스케줄) 선택 시 강조 -->
+        <Style x:Key="TabBtn4" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsScheduleTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
@@ -146,6 +156,11 @@
                         Style="{StaticResource TabBtn3}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="3"/>
+                <!-- ★ MG-07 -->
+                <Button Content="⏰ 스케줄"
+                        Style="{StaticResource TabBtn4}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="4"/>
             </StackPanel>
         </Border>
 
@@ -174,6 +189,9 @@
             <!-- ★ MG-06 -->
             <ContentControl x:Name="DeployHost"
                             Visibility="{Binding IsDeployTab, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- ★ MG-07 -->
+            <ContentControl x:Name="ScheduleHost"
+                            Visibility="{Binding IsScheduleTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

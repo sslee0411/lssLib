@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v9.2 | 현재 위치: IIoT.Manager MG-06 (빌드 확인 대기)**
+**작성일: 2026-07-09 | 버전: v9.3 | 현재 위치: IIoT.Manager MG-07 완료 (빌드 확인 대기) — Manager 원안+신규 Step 전체 코드 작성 완료**
 
 ---
 
@@ -272,6 +272,37 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
 
 ---
 
+## 📌 MG-EX 실무강화 후보 목록 (2026-07-09 확정 — MG-07 완료 후 착수)
+
+> Monitor MN-EX 시리즈와 동일한 방식의 Manager 실무강화 후보 12건.
+> 추천 착수 순서: MG-EX-01→02→03→04 (안정 운영 세트, Monitor 검증 패턴 재사용)
+> → 나머지는 IIoT.HMI 착수 전 필요분만 선별.
+
+```
+[A. 안정 운영 — 우선]
+ MG-EX-01  트레이 상주 + 최소화 (MN-EX-03 패턴 재사용)
+ MG-EX-02  이벤트 알림 — 사운드 + 트레이 풍선 (자동복구·비정상종료 시, MN-EX-01 패턴)
+ MG-EX-03  Windows 시작 시 자동 실행 + AutoStart 프로그램 순차 자동 기동 (지연 옵션)
+ MG-EX-04  이벤트 이력 SQLite 영구 저장 (MN-EX-02 AlarmHistoryService 패턴)
+
+[B. 진단·가시성]
+ MG-EX-05  프로세스별 CPU/메모리 리소스 모니터링 + 임계 초과 이벤트
+ MG-EX-06  헬스체크 응답시간(ms) 미니 추세 차트 (OxyPlot 스파크라인)
+ MG-EX-07  로그 검색 강화 — 과거 일자 로그 파일 열기 + CSV 내보내기
+
+[C. 배포·설정 운영]
+ MG-EX-08  배포 롤백 버튼 (Config\Backup\ 시점 선택 → 원클릭 복원)
+ MG-EX-09  배포 전 설정 비교(diff) 표시 (실수 배포 방지)
+ MG-EX-10  배포 후 자동 재시작 옵션 (.signal 미지원 프로그램용)
+
+[D. 원격·확장 — 후순위 (HMI/Sequence 이후 권장)]
+ MG-EX-11  웹 상태 페이지 (자체 SignalR Hub — MN-05 패턴,
+           ★ FrameworkReference 도입 필요: Monitor 버그 #1 교훈상 별도 Step 신중히)
+ MG-EX-12  원격 Collector 관리 (NamedPipe → TCP 확장, 규모 큼)
+```
+
+---
+
 ## 🔧 2차 정리 예정 항목 (전체 업데이트 단계에서 일괄 수정)
 
 > 개별 Step 진행 중에는 건드리지 않고, Manager~Sequence 완료 후
@@ -367,8 +398,21 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
                   MainWindow.xaml(.cs) — [🚀 배포] 탭 + DeployHost / App.xaml.cs
              대상: Processes 중 studio 제외 (자기 자신 재배포 방지) / 배포 이력은
                   EventHistoryService(대시보드)와 로그에 기록
-  MG-07(신규 추가 필요)  스케줄 관리 (요구사항 4-2-8)
+  MG-07      스케줄 관리 (요구사항 4-2-8)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+             기능: 지정 요일·시각(HH:mm)에 프로그램 자동 시작/정지/재시작.
+                  30초 주기 검사 + 스케줄별 "yyyyMMdd HH:mm" 실행 키로 중복 방지
+             신규: Models\ScheduleEntry.cs (enum ScheduleAction, DaysText/ActionText)
+                  Core\ScheduleService.cs / ViewModels\ScheduleViewModel.cs
+                  (DaySelectItem·ScheduleItemVm — 활성 토글 즉시 저장)
+                  Views\Schedule\ScheduleView.xaml(.cs) (추가 폼 + 목록 CRUD)
+             수정: ManagerSettings.cs — Schedules[] + JsonStringEnumConverter
+                  ManagerMainViewModel — 탭 4 + ScheduleVm.Initialize + Service.Start
+                  MainWindow.xaml(.cs) — [⏰ 스케줄] 탭 + ScheduleHost / App.xaml.cs
+             ※ 주의: Stop 스케줄 + AutoRestart=true 조합이면 헬스체크가 다시
+               살릴 수 있음 — 정지 유지가 필요한 프로그램은 AutoRestart 비활성 권장
 ```
+
+★ Manager 탭 최종 구성: [⚙프로세스][📋로그][📊대시보드][🚀배포][⏰스케줄] (인덱스 0~4)
 
 Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
 **IIoT.Sequence** → **Studio 보류 4개 항목** 순으로 이어집니다.
@@ -429,6 +473,10 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
 | v9.2 (2026-07-09) | MG-06 코드 생성 완료 — 설정 배포 관리 (요구사항 4-2-7).
               백업→복사→.signal 발행 3단계, 부분 배포 방지(소스 파일 누락 시
               전체 중단), manager.json Deploy 섹션 신설. 다음: MG-07 스케줄 관리 |
+| v9.3 (2026-07-09) | ① MG-EX 실무강화 후보 12건 확정·등록 (착수: MG-EX-01→02→03→04 권장)
+              ② MG-07 코드 생성 완료 — 스케줄 관리 (요구사항 4-2-8).
+              ★ IIoT.Manager 원안(MG-Base-0~05)+신규(MG-06/07) 전체 코드 작성 완료.
+              빌드 확인 후 다음: MG-EX 시리즈 또는 IIoT.HMI 착수 |
 
 ---
 

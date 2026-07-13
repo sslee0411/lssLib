@@ -18,7 +18,9 @@
 //         OnExit 에 LogTailService.Dispose() (타이머 정지 — 동기, 즉시 완료)
 //  MG-05: EventHistoryService / DashboardViewModel / DashboardView DI 등록 추가
 //  MG-06: ConfigDeployService / DeployViewModel / DeployView DI 등록 추가
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-06)
+//  MG-07: ScheduleService / ScheduleViewModel / ScheduleView DI 등록 추가.
+//         OnExit 에 ScheduleService.Dispose() (타이머 정지 — 동기, 즉시 완료)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-07)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Core;
@@ -31,6 +33,7 @@ using IIoT.Manager.Views.Dashboard;
 using IIoT.Manager.Views.Deploy;
 using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
+using IIoT.Manager.Views.Schedule;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -87,6 +90,9 @@ public partial class App : Application
         // ★ MG-04: 로그 테일링 타이머 정지 (동기 — 즉시 완료, 파일 핸들 미보관)
         _services?.GetService<LogTailService>()?.Dispose();
 
+        // ★ MG-07: 스케줄 검사 타이머 정지 (동기 — 즉시 완료)
+        _services?.GetService<ScheduleService>()?.Dispose();
+
         _themeSettings?.Dispose();   // 이벤트 구독 해제 필수
         LogManager.Instance.Info("App", "IIoT.Manager 종료");
         base.OnExit(e);
@@ -122,6 +128,12 @@ public partial class App : Application
         services.AddSingleton<DeployView>(sp =>
             new DeployView(sp.GetRequiredService<DeployViewModel>()));
 
+        // ★ MG-07 신규: 스케줄 (ScheduleVm/Service 가 ManagerMainViewModel 의존성 — 먼저 등록)
+        services.AddSingleton<ScheduleService>();
+        services.AddSingleton<ScheduleViewModel>();
+        services.AddSingleton<ScheduleView>(sp =>
+            new ScheduleView(sp.GetRequiredService<ScheduleViewModel>()));
+
         // ★ MG-01 신규: MainWindow DataContext (카드 목록 + 2초 갱신 타이머)
         services.AddSingleton<ManagerMainViewModel>();
 
@@ -140,7 +152,8 @@ public partial class App : Application
                 sp.GetRequiredService<ProcessStatusView>(),
                 sp.GetRequiredService<LogViewerView>(),
                 sp.GetRequiredService<DashboardView>(),
-                sp.GetRequiredService<DeployView>()));
+                sp.GetRequiredService<DeployView>(),
+                sp.GetRequiredService<ScheduleView>()));
 
         return services.BuildServiceProvider();
     }

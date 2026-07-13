@@ -5,7 +5,8 @@
 //  MG-02: 신규 — Processes[] (관리 대상 프로그램 + 실행 경로)
 //         MonitorSettingsLoader(monitor.json) 와 동일한 패턴
 //  MG-06: Deploy 섹션 추가 — 설정 배포 (소스 Config 폴더 + 배포 파일 목록)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-06)
+//  MG-07: Schedules[] 추가 — 스케줄 관리 (지정 시각 자동 시작/정지/재시작)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-07)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Models;
@@ -26,6 +27,9 @@ public sealed class ManagerSettings
 
     /// <summary>★ MG-06: 설정 배포 설정 (구버전 manager.json 에 없으면 기본값 사용)</summary>
     public DeploySettings Deploy { get; set; } = new();
+
+    /// <summary>★ MG-07: 스케줄 목록 (구버전 manager.json 에 없으면 빈 목록)</summary>
+    public List<ScheduleEntry> Schedules { get; set; } = new();
 }
 
 /// <summary>
@@ -63,7 +67,10 @@ public sealed class ManagerSettingsLoader
         PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition      = JsonIgnoreCondition.WhenWritingNull,
         Encoder                     = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented               = true
+        WriteIndented               = true,
+        // ★ MG-07: enum 을 문자열로 직렬화 (Schedules[].Action = "Restart" 등 —
+        //   사람이 manager.json 직접 편집 가능하도록. 숫자도 역직렬화 허용됨)
+        Converters                  = { new JsonStringEnumConverter() }
     };
 
     public static string SettingsPath =>

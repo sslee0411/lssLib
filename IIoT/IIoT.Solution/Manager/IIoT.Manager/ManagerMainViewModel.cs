@@ -14,7 +14,9 @@
 //  MG-04: 탭 상태(ActiveTabIndex/SwitchTab) 추가 + LogTailService 시작 연동
 //  MG-05: 대시보드 탭(인덱스 2) 추가 + EventHistoryService 카드 전달
 //  MG-06: 배포 탭(인덱스 3) 추가 + DeployViewModel.Initialize() 연동
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-06)
+//  MG-07: 스케줄 탭(인덱스 4) 추가 + ScheduleViewModel.Initialize()
+//         + ScheduleService.Start() 연동
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-07)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -44,7 +46,9 @@ public partial class ManagerMainViewModel : ObservableObject
     private readonly HealthCheckService    _healthCheck;
     private readonly LogTailService        _logTail;
     private readonly EventHistoryService   _events;
-    private readonly ViewModels.DeployViewModel _deployVm;
+    private readonly ViewModels.DeployViewModel   _deployVm;
+    private readonly ViewModels.ScheduleViewModel _scheduleVm;
+    private readonly ScheduleService              _scheduleService;
     private readonly DispatcherTimer       _refreshTimer;
     private bool                           _initialized;
 
@@ -62,18 +66,20 @@ public partial class ManagerMainViewModel : ObservableObject
     [ObservableProperty]
     private string _statusText = "초기화 중…";
 
-    /// <summary>★ MG-04/05/06: 현재 선택된 탭 인덱스 (0=프로세스, 1=로그, 2=대시보드, 3=배포)</summary>
+    /// <summary>★ MG-04~07: 현재 선택된 탭 인덱스 (0=프로세스, 1=로그, 2=대시보드, 3=배포, 4=스케줄)</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsProcessTab))]
     [NotifyPropertyChangedFor(nameof(IsLogTab))]
     [NotifyPropertyChangedFor(nameof(IsDashboardTab))]
     [NotifyPropertyChangedFor(nameof(IsDeployTab))]
+    [NotifyPropertyChangedFor(nameof(IsScheduleTab))]
     private int _activeTabIndex;
 
     public bool IsProcessTab   => ActiveTabIndex == 0;
     public bool IsLogTab       => ActiveTabIndex == 1;
     public bool IsDashboardTab => ActiveTabIndex == 2;
     public bool IsDeployTab    => ActiveTabIndex == 3;
+    public bool IsScheduleTab  => ActiveTabIndex == 4;
 
     // §4 ─ 생성자 ─────────────────────────────────────────────
 
@@ -82,14 +88,18 @@ public partial class ManagerMainViewModel : ObservableObject
                                 HealthCheckService    healthCheck,
                                 LogTailService        logTail,
                                 EventHistoryService   events,
-                                ViewModels.DeployViewModel deployVm)
+                                ViewModels.DeployViewModel   deployVm,
+                                ViewModels.ScheduleViewModel scheduleVm,
+                                ScheduleService              scheduleService)
     {
-        _settingsLoader = settingsLoader;
-        _processManager = processManager;
-        _healthCheck    = healthCheck;
-        _logTail        = logTail;
-        _events         = events;
-        _deployVm       = deployVm;
+        _settingsLoader  = settingsLoader;
+        _processManager  = processManager;
+        _healthCheck     = healthCheck;
+        _logTail         = logTail;
+        _events          = events;
+        _deployVm        = deployVm;
+        _scheduleVm      = scheduleVm;
+        _scheduleService = scheduleService;
 
         // ★ 2초 주기 상태 갱신 (UI 스레드 — MN-EX-04 와 동일 패턴)
         //   카드가 채워지기 전(초기화 전)에는 빈 컬렉션 순회 — 무해
@@ -133,6 +143,10 @@ public partial class ManagerMainViewModel : ObservableObject
 
             // ★ MG-06: 배포 탭 초기화 (소스·대상 구성 — 설정 로드 후)
             _deployVm.Initialize();
+
+            // ★ MG-07: 스케줄 탭 초기화 + 스케줄 검사 시작 (설정 로드 후)
+            _scheduleVm.Initialize();
+            _scheduleService.Start();
 
             await _RefreshAllAsync();   // 첫 화면부터 상태가 보이도록 즉시 1회 갱신
         }
