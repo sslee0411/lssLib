@@ -116,10 +116,18 @@ public partial class ProcessCardViewModel : ObservableObject
 
     // ★ MG-05: 상태 변경 감지 → 이벤트 이력 기록
     //   (ObservableProperty partial 메서드 — 수동/외부 종료 모두 포착)
+    // ★ MG-EX-02: 심각도 판정 — "실행 중 → 정지/응답없음" 이 수동 조작(IsBusy)
+    //   없이 발생하면 비정상 종료/행 의심 → Warning (트레이 알림 대상)
     partial void OnStateChanged(ProcessState oldValue, ProcessState newValue)
     {
-        if (oldValue != newValue)
-            _events.Record(Info.Name, $"상태 변경: {_StateText(oldValue)} → {_StateText(newValue)}");
+        if (oldValue == newValue) return;
+
+        var severity = oldValue == ProcessState.Running && !IsBusy
+            ? EventSeverity.Warning
+            : EventSeverity.Info;
+
+        _events.Record(Info.Name,
+            $"상태 변경: {_StateText(oldValue)} → {_StateText(newValue)}", severity);
     }
 
     private static string _StateText(ProcessState s) => s switch
@@ -256,8 +264,10 @@ public partial class ProcessCardViewModel : ObservableObject
             lssLib.Log.LogManager.Instance.Warn("ProcessCard",
                 $"{Info.Name} 헬스체크 연속 {_autoRestartThreshold}회 실패 — 자동 재시작 시도");
 
-            // ★ MG-05: 이벤트 기록 (자동복구 발동)
-            _events.Record(Info.Name, $"자동 재시작 발동 (헬스체크 {_autoRestartThreshold}회 연속 실패)");
+            // ★ MG-05: 이벤트 기록 (자동복구 발동) — MG-EX-02: Warning (트레이 알림)
+            _events.Record(Info.Name,
+                $"자동 재시작 발동 (헬스체크 {_autoRestartThreshold}회 연속 실패)",
+                EventSeverity.Warning);
 
             IsBusy = true;
             try
@@ -266,7 +276,8 @@ public partial class ProcessCardViewModel : ObservableObject
                 if (!result.Ok)
                 {
                     LastError = $"자동 재시작 실패: {result.Error}";
-                    _events.Record(Info.Name, LastError);
+                    // ★ MG-EX-02: Warning (트레이 알림)
+                    _events.Record(Info.Name, LastError, EventSeverity.Warning);
                 }
             }
             finally { IsBusy = false; }

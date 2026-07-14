@@ -108,7 +108,9 @@ public sealed class ScheduleService : IDisposable
                                     .FirstOrDefault(p => p.Id == s.ProcessId);
         if (target is null)
         {
-            _events.Record("스케줄", $"[{s.Time}] 대상 프로그램 없음: {s.ProcessId} (건너뜀)");
+            // ★ MG-EX-02: Warning (트레이 알림 — 설정 오류 가능성)
+            _events.Record("스케줄", $"[{s.Time}] 대상 프로그램 없음: {s.ProcessId} (건너뜀)",
+                EventSeverity.Warning);
             return;
         }
 
@@ -119,9 +121,11 @@ public sealed class ScheduleService : IDisposable
             _                      => await _processManager.RestartAsync(target),
         };
 
+        // ★ MG-EX-02: 실패는 Warning (트레이 알림)
         _events.Record(target.Name,
             result.Ok
                 ? $"스케줄 {s.ActionText} 실행 ({s.Time})"
-                : $"스케줄 {s.ActionText} 실패 ({s.Time}) — {result.Error}");
+                : $"스케줄 {s.ActionText} 실패 ({s.Time}) — {result.Error}",
+            result.Ok ? EventSeverity.Info : EventSeverity.Warning);
     }
 }

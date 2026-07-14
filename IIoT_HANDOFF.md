@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v9.3 | 현재 위치: IIoT.Manager MG-07 완료 (빌드 확인 대기) — Manager 원안+신규 Step 전체 코드 작성 완료**
+**작성일: 2026-07-09 | 버전: v9.5 | 현재 위치: IIoT.Manager MG-EX-02 (빌드 확인 대기) — 실무강화 진행 중**
 
 ---
 
@@ -280,8 +280,19 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
 
 ```
 [A. 안정 운영 — 우선]
- MG-EX-01  트레이 상주 + 최소화 (MN-EX-03 패턴 재사용)
- MG-EX-02  이벤트 알림 — 사운드 + 트레이 풍선 (자동복구·비정상종료 시, MN-EX-01 패턴)
+ MG-EX-01  트레이 상주 + 최소화 (MN-EX-03 패턴 재사용)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           신규: Core\Notification\TrayService.cs (Forms using 단독 파일)
+           수정: csproj — UseWindowsForms=true + <Using Remove="System.Windows.Forms"/>
+                (버그 #12 예방) / MainWindow.xaml.cs — StateChanged 최소화→Hide,
+                RestoreRequested 복원, ExitRequested→Application.Current.Shutdown
+                / App.xaml.cs — DI + Initialize(MainWindow 생성 전) + OnExit Dispose
+ MG-EX-02  이벤트 알림 — 사운드 + 트레이 풍선  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           구조: EventHistoryService 에 EventSeverity(Info/Warning) + Recorded 이벤트
+                → App 에서 Warning 만 TrayService.NotifyEvent 로 연결 (과다 알림 방지)
+           Warning 대상: 자동복구 발동/실패, 비정상 종료·행 감지
+                ("실행 중→정지/응답없음" 이 IsBusy(수동조작) 없이 발생), 스케줄·배포 실패
+           수정: EventHistoryService / TrayService(NotifyEvent+System.Media)
+                / ProcessCardViewModel / ScheduleService / DeployViewModel / App.xaml.cs
  MG-EX-03  Windows 시작 시 자동 실행 + AutoStart 프로그램 순차 자동 기동 (지연 옵션)
  MG-EX-04  이벤트 이력 SQLite 영구 저장 (MN-EX-02 AlarmHistoryService 패턴)
 
@@ -477,6 +488,14 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
               ② MG-07 코드 생성 완료 — 스케줄 관리 (요구사항 4-2-8).
               ★ IIoT.Manager 원안(MG-Base-0~05)+신규(MG-06/07) 전체 코드 작성 완료.
               빌드 확인 후 다음: MG-EX 시리즈 또는 IIoT.HMI 착수 |
+| v9.4 (2026-07-09) | MG-EX-01 코드 생성 완료 — 트레이 상주 + 최소화.
+              UseWindowsForms 도입 (버그 #12 예방 조치 선반영: Using Remove +
+              Forms using 단독 파일 + Application/WindowState 전체 수식).
+              다음: MG-EX-02 (이벤트 알림 — 사운드+트레이 풍선) |
+| v9.5 (2026-07-09) | MG-EX-02 코드 생성 완료 — 경고 이벤트 트레이 알림.
+              EventSeverity 도입, Warning 판정 규칙: 수동 조작(IsBusy) 없는
+              "실행 중→정지/응답없음" 전이 + 자동복구·스케줄·배포 실패.
+              다음: MG-EX-03 (Windows 자동 실행 + AutoStart 순차 기동) |
 
 ---
 

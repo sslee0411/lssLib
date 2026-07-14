@@ -13,7 +13,20 @@
     -->
 		<RootNamespace>IIoT.Manager</RootNamespace>
 		<AssemblyName>IIoT.Manager</AssemblyName>
+		<!-- ★ MG-EX-01: 트레이 아이콘(NotifyIcon)용 WinForms 활성화.
+		     Forms 타입이 필요한 파일(TrayService.cs)에서만
+		     "using System.Windows.Forms;" 단독 선언해서 사용 -->
+		<UseWindowsForms>true</UseWindowsForms>
 	</PropertyGroup>
+
+	<!--
+    ★ MG-EX-01 (Monitor 버그 #12 교훈): UseWindowsForms=true + ImplicitUsings=enable
+      조합은 System.Windows.Forms 를 전역 using 으로 추가해 WPF System.Windows 와
+      CS0104(모호한 참조)를 프로젝트 전체에 유발 → 전역 using 만 제거(어셈블리 참조 유지)
+  -->
+	<ItemGroup>
+		<Using Remove="System.Windows.Forms" />
+	</ItemGroup>
 
 	<!--
     ★ MG-Base-0 (2026-07-09): 최소 구성 원칙.

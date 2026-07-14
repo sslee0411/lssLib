@@ -10,11 +10,15 @@
 //  MG-05: DashboardView 주입 추가 (DashboardHost)
 //  MG-06: DeployView 주입 추가 (DeployHost)
 //  MG-07: ScheduleView 주입 추가 (ScheduleHost)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-07)
+//  MG-EX-01: 트레이 상주 — 최소화 시 트레이로 숨김(작업표시줄 제거),
+//            트레이 더블클릭/메뉴 "열기" 복원, 메뉴 "종료" 실제 종료
+//            (Monitor MN-EX-03 패턴 이식)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-01)
 // ══════════════════════════════════════════════════════════
 
 // ★ 이동(2026-07-09): ManagerMainViewModel 이 루트 namespace(IIoT.Manager)로
 //   이동해 ViewModels using 불필요 (Studio·Collector 컨벤션 정렬)
+using IIoT.Manager.Core.Notification;
 using IIoT.Manager.Views.Dashboard;
 using IIoT.Manager.Views.Deploy;
 using IIoT.Manager.Views.Schedule;
@@ -37,7 +41,8 @@ public partial class MainWindow : Window
                       LogViewerView        logViewerView,
                       DashboardView        dashboardView,
                       DeployView           deployView,
-                      ScheduleView         scheduleView)
+                      ScheduleView         scheduleView,
+                      TrayService          trayService)
     {
         InitializeComponent();
 
@@ -63,6 +68,30 @@ public partial class MainWindow : Window
 
         // ★ MG-02: manager.json 로드 (창 표시 후 — 파일 I/O 블로킹 방지)
         Loaded += _OnLoaded;
+
+        // ★ MG-EX-01: 최소화 → 트레이로 숨김 (작업표시줄에서도 제거)
+        StateChanged += (_, _) =>
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                Hide();
+                ShowInTaskbar = false;
+            }
+        };
+
+        // ★ MG-EX-01: 트레이 더블클릭/메뉴 "열기" → 창 복원
+        //   (NotifyIcon 이벤트는 UI 스레드에서 발생 — 직접 조작 안전)
+        trayService.RestoreRequested += () =>
+        {
+            Show();
+            WindowState   = WindowState.Normal;
+            ShowInTaskbar = true;
+            Activate();
+        };
+
+        // ★ MG-EX-01: 트레이 메뉴 "종료" → 실제 종료 (OnExit 정리 루틴 수행)
+        trayService.ExitRequested += () =>
+            System.Windows.Application.Current.Shutdown();
     }
 
     // §3 ─ 내부 메서드 ────────────────────────────────────────

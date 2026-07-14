@@ -154,10 +154,11 @@ public partial class DeployViewModel : ObservableObject
                     ? $"✅ {result.Message} ({DateTime.Now:HH:mm:ss})"
                     : $"❌ {result.Message}";
 
-                // ★ 대시보드 이벤트 이력 + 로그 기록
+                // ★ 대시보드 이벤트 이력 + 로그 기록 (MG-EX-02: 실패는 Warning)
                 _events.Record(t.Info.Name,
                     result.Ok ? $"설정 배포 성공 — {result.Message}"
-                              : $"설정 배포 실패 — {result.Message}");
+                              : $"설정 배포 실패 — {result.Message}",
+                    result.Ok ? EventSeverity.Info : EventSeverity.Warning);
 
                 if (result.Ok) ok++; else fail++;
             }

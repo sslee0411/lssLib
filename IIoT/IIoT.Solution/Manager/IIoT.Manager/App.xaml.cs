@@ -20,11 +20,16 @@
 //  MG-06: ConfigDeployService / DeployViewModel / DeployView DI 등록 추가
 //  MG-07: ScheduleService / ScheduleViewModel / ScheduleView DI 등록 추가.
 //         OnExit 에 ScheduleService.Dispose() (타이머 정지 — 동기, 즉시 완료)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-07)
+//  MG-EX-01: TrayService DI 등록 + Initialize() + OnExit Dispose
+//            (미정리 시 유령 트레이 아이콘 잔류 — Monitor 교훈)
+//  MG-EX-02: EventHistoryService.Recorded → TrayService.NotifyEvent 연결
+//            (Warning 이벤트만 알림 — Info 는 이력/로그만)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-02)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Core;
 using IIoT.Manager.Core.Config;
+using IIoT.Manager.Core.Notification;
 // ★ 이동(2026-07-09): ManagerMainViewModel 이 루트 namespace(IIoT.Manager)로
 //   이동해 ViewModels using 불필요 (Studio·Collector 컨벤션 정렬)
 // ★ MG-04: LogViewerViewModel 은 ViewModels 하위 (메인 VM 아님 — 규칙 준수)
@@ -75,6 +80,20 @@ public partial class App : Application
         // ③ DI 빌드
         _services = _ConfigureServices();
 
+        // ★ MG-EX-01: 트레이 아이콘 초기화 (MainWindow 생성 전 —
+        //   MainWindow 생성자가 RestoreRequested/ExitRequested 를 구독)
+        var tray = _services.GetRequiredService<TrayService>();
+        tray.Initialize();
+
+        // ★ MG-EX-02: 경고 이벤트 → 트레이 풍선+사운드 알림 연결
+        //   (자동복구 발동/실패, 비정상 종료·행 감지, 스케줄·배포 실패)
+        //   Info 이벤트는 알림 제외 — 과다 알림 방지 (이력·로그에만 기록)
+        _services.GetRequiredService<EventHistoryService>().Recorded += (row, severity) =>
+        {
+            if (severity == EventSeverity.Warning)
+                tray.NotifyEvent($"IIoT.Manager — {row.Program}", row.Text, warning: true);
+        };
+
         // ④ 창 생성 및 표시
         _services.GetRequiredService<MainWindow>().Show();
     }
@@ -92,6 +111,9 @@ public partial class App : Application
 
         // ★ MG-07: 스케줄 검사 타이머 정지 (동기 — 즉시 완료)
         _services?.GetService<ScheduleService>()?.Dispose();
+
+        // ★ MG-EX-01: 트레이 아이콘 정리 (미정리 시 유령 아이콘 잔류)
+        _services?.GetService<TrayService>()?.Dispose();
 
         _themeSettings?.Dispose();   // 이벤트 구독 해제 필수
         LogManager.Instance.Info("App", "IIoT.Manager 종료");
@@ -112,6 +134,9 @@ public partial class App : Application
 
         // ★ MG-03 신규: NamedPipe 헬스체크 클라이언트
         services.AddSingleton<HealthCheckService>();
+
+        // ★ MG-EX-01 신규: 트레이 상주 (MainWindow 의존성 — 먼저 등록)
+        services.AddSingleton<TrayService>();
 
         // ★ MG-04 신규: 로그 테일링 + 로그 뷰어 (LogTailService 가 VM 의존성 — 먼저 등록)
         services.AddSingleton<LogTailService>();
@@ -153,7 +178,8 @@ public partial class App : Application
                 sp.GetRequiredService<LogViewerView>(),
                 sp.GetRequiredService<DashboardView>(),
                 sp.GetRequiredService<DeployView>(),
-                sp.GetRequiredService<ScheduleView>()));
+                sp.GetRequiredService<ScheduleView>(),
+                sp.GetRequiredService<TrayService>()));
 
         return services.BuildServiceProvider();
     }
