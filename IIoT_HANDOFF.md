@@ -1,594 +1,201 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v10.4 | 현재 위치: IIoT.Manager MG-EX 완료(빌드 대기) + lssLib.SignalR 모듈 신설**
+**작성일: 2026-07-09 | 버전: v11.0 | 다음 세션 시작점: ① Manager 통합 빌드 확인 → ② IIoT.HMI HM-Base-0 착수**
+
+> 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
+> SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
+> (스킬 캐시본/솔루션 루트 SKILL.md 는 구버전 — v6.3/v4.x).
 
 ---
 
-## 📌 프로젝트 요구사항 원문
+## 📌 프로젝트 개요
 
-프로그램은 설정, 수집, 모니터링, 매니저(+ 후속 HMI/Sequence)로 구성
-
-### 1. 설정 프로그램 (IIoT.Studio) → **✅ 100% 완료**
-```
-1-1. JSON 기반 자료형·데이터 구조·통신구조 설정
-1-2. NodeRed 형식 설정 캔버스
-1-3. Node = 추상Class 상속 구조
-1-4. 스케일 설정 및 관리 포함
-1-5. 장비 구조(그룹·장비·PLC) 트리 관리
-```
-
-### 2. 수집 프로그램 (IIoT.Collector) → **✅ 100% 완료**
-```
-2-1. 설정 파일 업데이트 후 자동 재시작
-2-2. 데이터 흐름 시각화
-2-3. 전체 수집 데이터 관리
-2-4. 스케일 설정 및 관리 포함
-```
-
-### 3. 모니터링 프로그램 (IIoT.Monitor) → **✅ Step 맵 + 실무강화 전체 완료**
-```
-3-1. 수집 데이터 기반 이상작업 진행
-3-2. 상속·확장으로 커스텀 가능한 구조
-3-3. 로컬(C#)+웹 양쪽에서 보이는 확장성
-```
-
-### 4. 매니저 프로그램 (IIoT.Manager) → **⭕ 미착수 (다음 시작점)**
-```
-4-1. 각 프로그램 전체 관리
-4-2. 세부: 실행/종료/재시작 제어, 상태 모니터링, 헬스체크,
-     로그뷰어 통합, 요약 대시보드, 자동복구, 설정배포, 스케줄관리
-```
-
-> ⚠️ **주의**: 4-2-7(설정배포관리)/4-2-8(스케줄관리)은 아직 SKILL.md Step 맵에
-> 세부 Step으로 미등록 — Manager 착수 시 MG-06/MG-07로 신규 추가 필요.
-
-### 5. 생산현황판 (IIoT.HMI, 신규 확정) → **⭕ Manager 완료 후 착수**
-```
-모터·컨베이어 등 장비가 Tag/SignalR/DB 연동으로 애니메이션 표시되고
-화면에서 직접 제어(ForceWrite) 가능한 생산현황판. 별도 프로그램으로 분리 확정.
-```
-
-### 6. 시퀀스 제어 (IIoT.Sequence) → **⭕ HMI 이후 착수**
-
-### 7. Studio 보류 4개 항목 → **⭕ IIoT.Sequence 완료 후 착수**
-```
-가상 Tag · N포트 노드 · Function노드 · 프로토콜 편집
-```
-
-**★ 전체 착수 순서: Manager → HMI → Sequence → Studio 보류 4개 항목**
-
----
-
-## 🗂 솔루션 구조
+C# .NET 8 / WPF / lssLib v5 기반 산업용 IIoT/SCADA 플랫폼.
+위치: `D:\lssLib\IIoT\IIoT.Solution\` (프로그램별 개별 .sln 구조)
 
 ```
-D:\lssLib\IIoT\IIoT.Solution\
-├── Contracts\IIoT.Contracts\          ← 플러그인 계약 레이어
-├── Plugins\ (ModbusTcp / Mitsubishi / Virtual)
-├── Studio\IIoT.Studio\                ← ✅ 100%
-├── Collector\IIoT.Collector\          ← ✅ 100%
-├── Monitor\IIoT.Monitor\              ← ✅ 100% (Step맵 + 실무강화)
-├── Manager\IIoT.Manager\              ← ⭕ 미착수 (다음 시작점 — 폴더 자체 미생성 확인됨)
-├── HMI\IIoT.HMI\                      ← ⭕ Manager 이후 (별도 프로그램 확정)
-├── Sequence\IIoT.Sequence\            ← ⭕ HMI 이후
-└── UI\Themes\IIoT.UI.Themes\          ← WPF 공통 테마 (7개 테마: DarkNavy/
-                                          NeonCyber/WarmAmber/ArcticFrost/
-                                          TerminalGreen/CarbonElite/SteelLight)
-```
-
-**★ 솔루션 파일 구조 (2026-07-09 로컬 소스 실측 확인)**
-```
-프로그램별 개별 .sln 구조:
-  Studio\IIoT.Studio.sln / Collector\IIoT.Collector.sln / Monitor\IIoT.Monitor.sln
-  Contracts\IIoT.Contracts.sln / Plugins\IIoT.Driver.sln
-  UI\Themes\IIoT.UI.Themes.sln / UI\IIoT.UI.Controls\Iiot.Controls.sln
-루트 IIoT.Solution.sln: UI.Themes + Iiot.Controls + lssLib 계열(18 프로젝트)
-→ Manager 착수 시 Manager\IIoT.Manager.sln + Manager\IIoT.Manager\IIoT.Manager.csproj
-  형태로 동일 패턴 신규 생성
+프로그램            상태
+IIoT.Studio         ✅ 100% (설정 편집기 — 보류 4건은 Sequence 이후)
+IIoT.Collector      ✅ 100% (수집+감지+저장, SignalR Hub 7878 — C-EX-11만 후속 보류)
+IIoT.Monitor        ✅ 100% (실시간 모니터링, 자체 Hub 7879, MN-EX 8건 전부)
+IIoT.Manager        🔄 코드 100% — 통합 빌드 확인만 남음 (아래 상세)
+IIoT.HMI            ⭕ 다음 착수 (생산현황판 — 별도 프로그램 확정)
+IIoT.Sequence       ⭕ HMI 이후
+공통: Contracts(플러그인 계약+Health) · Plugins(ModbusTcp/Mitsubishi/Virtual)
+     · UI.Themes(7테마) · UI.Controls
+★ 전체 착수 순서: Manager 마감 → HMI → Sequence → Studio 보류 4건 → 전체 정리
 ```
 
 ---
 
-## 📊 전체 진행률
+## ✅ IIoT.Manager 완료 내역 (이번 세션 전체 구현)
 
+경로: `Manager\IIoT.Manager.sln` + `Manager\IIoT.Manager\`
+참조: lssLib.Log · lssLib.DB(+Sqlite) · IIoT.UI.Themes · IIoT.Contracts
+패키지: CommunityToolkit.Mvvm 8.4.2 / DI 8.0.1 / OxyPlot.Wpf 2.2.0 / UseWindowsForms
+
+### Step 맵
 ```
-공통 기반              ████████████ 100%
-IIoT.Studio            ████████████ 100%  (보류 4건은 Sequence 이후)
-IIoT.Collector         ████████████ 100%  (C-EX-11만 후속 보류)
-IIoT.Monitor           ████████████ 100%  (Step맵 + MN-EX 실무강화 8건 전부)
-IIoT.Manager           ░░░░░░░░░░░░   0%  ← 다음 세션 시작점
-IIoT.HMI               ░░░░░░░░░░░░   0%  (Manager 이후)
-IIoT.Sequence           ░░░░░░░░░░░░   0%  (HMI 이후)
-```
-
----
-
-## ✅ IIoT.Monitor 완료 내역 상세
-
-### Step 맵 (MN-Base-0 ~ MN-06)
-```
-MN-Base-0  빈 WPF + ASP.NET Core FrameworkReference 선반영 + 테마
-MN-Base-1  메인 레이아웃 (헤더+탭바+본문)
-MN-01      Collector 등록 관리 (monitor.json Collectors[])
-MN-01B     다중 HubConnection 연결 관리자 + CollectorId 자동 동기화
-MN-02      실시간 Tag 현황 (Collector→PLC 계층 그룹핑)
-MN-02B     UI 디자인 개선(B스타일: 카드·필배지) + [대시보드] 탭(D스타일) 신규
-MN-03      알람 현황 (Collector별 구분 + ACK)
-MN-04      AbstractDetector 커스텀 확장 패턴 (Detector/Responder 분리 설계)
-MN-05      Monitor 자체 SignalR Hub 내장 (웹 브라우저 연동, 포트 7879)
-MN-06      실시간 차트 (Collector·PLC·Tag 필터 + OxyPlot)
+MG-Base-0  빈 WPF + 테마                              ✅ 빌드 확인 완료
+MG-01   프로세스 상태 카드 (2초 감지, 이름 기반)       ✅ 빌드 확인 완료
+MG-02   Start/Stop/재시작 + manager.json              ✅ 빌드 확인 완료
+        (정지: CloseMainWindow → 5초 → Kill 트리)
+MG-03   NamedPipe 헬스체크 (B안)                      ✅ 빌드 확인 완료
+        파이프 "IIoT.Health.{ProcessName}" / "ping"→"pong|{상태}"
+        HealthPipeServer 는 Contracts\Health\ (공용) — Studio·Collector·
+        Monitor 3개 App.xaml.cs 에 탑재됨 (★구버전 빌드 실행 시 🟡 응답없음)
+        AutoRestart: 연속 3회 실패 시 자동 재시작 (기본 false)
+MG-04   통합 로그 뷰어                                 🔄 빌드 확인 대기
+        {exe}\Log\yyyy_MM\dd\All*.txt 테일링(1초, 핸들 미보관, 롤링 추적)
+        표준 LogPanelView UI (시각/레벨/프로그램/Source/내용 + 레벨색)
+MG-05   대시보드 (요약칩·프로그램현황·최근이벤트·시스템정보) 🔄 대기
+MG-06   설정 배포 (요구사항 4-2-7)                     🔄 대기
+        소스(Studio Config) → 대상 Config: 백업→복사→.signal 발행
+MG-07   스케줄 관리 (요구사항 4-2-8)                   🔄 대기
+        요일+HH:mm 자동 시작/정지/재시작, 30초 검사, 중복실행 방지
+        ※ Stop 스케줄 + AutoRestart=true 조합 주의 (헬스체크가 되살림)
 ```
 
-### 실무강화 (MN-EX-01 ~ 08, 전체 완료)
+### MG-EX 실무강화 (10/12 코드 완료)
 ```
-MN-EX-01  알람 사운드 + Windows 트레이 알림 (TrayNotificationService)
-MN-EX-02  알람 이력 SQLite 저장 (AlarmHistoryService, 90일 보존)
-MN-EX-03  트레이 상주 + 최소화 (최소화 시 작업표시줄 숨김)
-MN-EX-04  연결상태 요약 배지 (탭바 우측 고정 "Collector N/M 연결됨")
-MN-EX-05  Tag 즐겨찾기/핀 고정 (⭐, monitor.json 영구 저장)
-MN-EX-06  알람 필터/검색 (Collector·레벨·상태 + 자유검색)
-MN-EX-07  현재값 스냅샷 CSV 내보내기
-MN-EX-08  재연결 알림 억제 (Reconnecting 최대 4회 중 1회만 알림)
-```
-
-### 최종 UI 구조
-```
-헤더(56px): 타이틀 + ThemePickerButton
-탭바(48px): [태그현황][알람][Collector관리][대시보드][차트][📋 로그] 좌측정렬
-            + "Collector N/M 연결됨" 배지 우측정렬
-하단 로그 패널: "📋 로그" 토글 시 GridSplitter로 크기조절 가능한 고정 패널
-              (모든 탭에서 함께 열어둘 수 있음 — 탭 아님)
-콘텐츠 탭 인덱스: 0=태그현황,1=알람,2=Collector관리,3=대시보드,4=차트
+A그룹(안정 운영) — 전체 완료 🔄 빌드 대기
+ EX-01 트레이 상주+최소화  EX-02 경고 이벤트 알림(사운드+풍선)
+ EX-03 Windows 자동실행(HKCU Run)+AutoStart 순차 기동(지연 옵션)
+ EX-04 이벤트 이력 SQLite (Data\manager.db, 90일 보존, _WaitWithTimeout 정리)
+B그룹(진단·가시성) — 전체 완료 🔄 빌드 대기
+ EX-05 CPU/메모리 모니터링(임계 경고 5분 쿨다운)  EX-06 응답시간 스파크라인(OxyPlot)
+ EX-07 로그 과거일자 조회 + CSV 내보내기(UTF-8 BOM)
+C그룹(배포 운영) — 전체 완료 🔄 빌드 대기
+ EX-08 배포 롤백(백업 시점 콤보+직전상태 자동백업)  EX-09 배포 전 diff 비교
+ EX-10 배포 후 자동 재시작 옵션
+D그룹 — ⭕ 보류 (HMI/Sequence 이후): EX-11 웹 상태 페이지  EX-12 원격 관리
 ```
 
----
-
-## 🏗 IIoT.Monitor 핵심 아키텍처
-
-### 프로젝트 구조
+### 구조 요약
 ```
-Monitor/IIoT.Monitor/
-├── App.xaml(.cs)              ← DI 컨테이너 구성, 시작/종료 처리
-├── MainWindow.xaml(.cs)        ← 탭 호스트, 트레이 최소화 연동
-├── Core/
-│   ├── Config/                 MonitorSettings.cs, MonitorSettingsLoader
-│   ├── Connection/              CollectorConnection.cs, CollectorConnectionManager.cs
-│   ├── Aggregation/             LiveTagAggregator.cs, AlarmAggregator.cs
-│   ├── Detection/                AbstractDetector.cs, DetectorHost.cs (+Detectors/Responders)
-│   ├── Converters/               UiConverters.cs (탭 필배지, 상태색상, 즐겨찾기 아이콘)
-│   ├── Notification/             TrayNotificationService.cs
-│   ├── Storage/                  AlarmHistoryService.cs (SQLite)
-│   ├── Favorites/                FavoriteTagService.cs
-│   └── Export/                   SnapshotCsvExportService.cs
-├── SignalR/                     MonitorHub.cs, MonitorHostService.cs (자체 웹 Hub)
-├── Models/                      CollectorEndpoint, LiveTagRow, AlarmRow, DeviceSnapshotDto
-├── ViewModels/                  각 탭 ViewModel + MonitorMainViewModel
-└── Views/                       CollectorManage, LiveTag, Alarm, Dashboard, Chart, Log
-```
-
-### DI 등록 순서 (App.xaml.cs `_ConfigureServices`)
-```
-FavoriteTagService → SnapshotCsvExportService → LiveTagAggregator
-→ AlarmAggregator → DetectorHost → TrayNotificationService
-→ AlarmHistoryService → CollectorConnectionManager → MonitorSettingsLoader
-→ CollectorManageViewModel/View → MonitorMainViewModel → DashboardViewModel/View
-→ MonitorHostService → ChartViewModel/View → LogPanelView → MainWindow
-```
-※ .NET DI는 지연 해석이라 등록 순서 자체는 무관하지만, 의존관계 주석은 유지 중.
-
-### 초기화 흐름
-```
-App.OnStartup():
-  ① 테마 로드 ② LogManager.Start() ③ DI 빌드
-  ④ DetectorHost 예시 등록(RateOfChangeDetector+LogResponder)
-  ⑤ TrayNotificationService.Initialize() + AlarmAggregator 이벤트 연결
-  ⑥ MainWindow.Show()
-
-MainWindow.Loaded (비동기):
-  ① AlarmHistoryService.InitializeAsync() (SQLite 오픈)
-  ② MonitorHostService.StartAsync() (자체 웹 Hub 기동, 포트 7879)
-
-CollectorManageView.Loaded:
-  → CollectorManageViewModel.InitializeAsync()
-    → monitor.json 로드 → CollectorConnectionManager.SyncFromEndpointsAsync()
-    → 각 Collector 별 CollectorConnection.StartAsync()
-      (REST CollectorId 자동동기화 → SignalR Hub 접속 → TagValue/AlarmChanged 구독)
-
-App.OnExit():
-  ① CollectorConnectionManager.DisposeAsync() (5초 타임아웃)
-  ② MonitorHostService.DisposeAsync() (5초 타임아웃)
-  ③ TrayNotificationService.Dispose()
-  ④ AlarmHistoryService.DisposeAsync() (5초 타임아웃)
-```
-
-### monitor.json 스키마
-```json
-{
-  "Collectors": [
-    { "Id": "...", "Name": "...", "Host": "localhost", "Port": 7878, "Enabled": true }
-  ],
-  "FavoriteTagKeys": ["collectorId:plcId:tagId", "..."],
-  "Web": { "Enabled": true, "Port": 7879 }
-}
+탭: [⚙프로세스][📋로그][📊대시보드][🚀배포][⏰스케줄] (인덱스 0~4, Visibility 토글)
+메인 VM: ManagerMainViewModel — 프로젝트 루트 (규칙: 메인 VM 루트 고정)
+Core\: ProcessManager·HealthCheckService·LogTailService·EventHistoryService·
+      ScheduleService·ConfigDeployService·StartupRegistrationService·
+      Config\ManagerSettings·Notification\TrayService·Storage\EventHistoryDbService
+manager.json (Config\): Processes[]{Id,Name,Description,ProcessName,ExePath,
+      AutoRestart,AutoStart,AutoStartDelaySec} + Deploy{SourceConfigDir,Files[]}
+      + Schedules[]{Id,Enabled,ProcessId,Action,Time,Days[]} + Resource{Cpu/MemWarn}
+경고 알림 규칙: 수동조작(IsBusy) 없는 "실행중→정지/응답없음" 전이·자동복구·
+      스케줄/배포 실패·리소스 임계 초과 → Warning(트레이 풍선+사운드+DB)
 ```
 
 ---
 
-## 🐞 누적 버그 수정 이력 (Monitor 세션, 총 13건)
+## 🆕 lssLib.SignalR 모듈 (이번 세션 신설, 빌드 확인 대기)
 
-| # | 오류 | 원인 | 수정 |
-|---|---|---|---|
-| 1 | 빌드 중단 | FrameworkReference + SignalR.Client 버전 충돌 | FrameworkReference 임시 제거 → MN-05 시점 재도입 |
-| 2 | 패키지 다운그레이드 | Microsoft.Extensions.DependencyInjection 8.0.0 고정이 낮음 | 8.0.1 상향, 이후 명시버전 완전 제거 |
-| 3 | CS0246 HttpClient | using System.Net.Http 누락 | using 추가 |
-| 4 | 테마 미적용 | DataGrid에 Style="{DynamicResource IIoTGrid}" 누락 | 적용 + RowStyle |
-| 5 | 입력 화면 편집 불가 | IIoTGrid 스타일 자체 IsReadOnly=True 기본값 | 로컬 IsReadOnly="False" 재정의 |
-| 6 | 연결 안 됨(1) | Host/Port 수정해도 기존 HubConnection URL 고정 | StartedHubUrl 비교 후 재생성 |
-| 7 | 연결 안 됨(2) | 중복 CollectorId → ToDictionary 예외로 전체 동기화 조용히 중단 | GroupBy 방어 + 오류 목록 반환·노출 |
-| 8 | XamlParseException | GroupStyle.HeaderTemplate {Binding Name}이 TwoWay 시도 (CollectionViewGroupInternal 읽기전용) | Mode=OneWay 명시 |
-| 9 | 버튼 테마 깨짐 | 비활성(IsEnabled=False) 시각 처리 없음 | DangerBtn/SecondaryBtn 정식 스타일 적용 |
-| 10 | 디버깅 종료 안 됨(1) | CollectorConnectionManager 미정리 | OnExit에 DisposeAsync 추가 |
-| 11 | 디버깅 종료 안 됨(2, 근본원인) | OnExit 블로킹 대기 + Aggregator의 Dispatcher.Invoke(동기) 교착 | Dispatcher.BeginInvoke로 전환 + 5초 타임아웃 |
-| 12 | CS0104 다수 | UseWindowsForms=true가 System.Windows.Forms/System.Drawing을 전역 using으로 추가 | Forms는 `<Using Remove>`, Drawing 충돌은 using 별칭으로 해결 |
-| 13 | CS1061/CS0103 | using Microsoft.AspNetCore.Hosting/Http 누락 (UseUrls/Results) | using 추가 |
-
----
-
-## 📐 WPF 핵심 규칙 (Monitor 세션 신규 확정분)
-
+경로: `D:\lssLib\Base\BCL\SignalR\` (Net_Ver5 구조 준용: 라이브러리+Demo+sln)
 ```
-DataGrid.IsReadOnly는 컬럼별 IsReadOnly보다 항상 우선 → 입력 화면은 반드시
-  로컬 IsReadOnly="False" 명시 (IIoTGrid 스타일 기본값 True 주의)
-GroupStyle.HeaderTemplate에서 그룹 Name 바인딩은 반드시 Mode=OneWay
-백그라운드 스레드 → UI 마샬링은 Dispatcher.BeginInvoke 사용 (Invoke 금지 —
-  OnExit 블로킹 대기와 맞물려 교착상태 유발)
-UseWindowsForms=true 사용 시 `<Using Remove="System.Windows.Forms" />` 필수
-  (System.Drawing 충돌은 파일 단위 using 별칭으로 대응)
-DI 리소스(HubConnection/HttpClient/DB연결 등)를 보유한 싱글턴은 반드시
-  App.OnExit()에 Dispose 호출 세트로 등록 (등록만 하고 정리 누락 주의)
-async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류를 로그+UI
-  상태 텍스트에 노출 (조용히 삼켜지면 디버깅 불가)
+lssLib.SignalR (net8.0 + FrameworkReference AspNetCore — 전이됨):
+  SignalRHostConfig/ClientConfig · SignalRHostService<THub>(Kestrel+MapHub,
+  IHubContext 노출) · SignalRClientConnection(자동재연결 0/2/10/30초, 상태이벤트,
+  On/Invoke 헬퍼) · BroadcastHub(토픽 Pub/Sub+Ping, 수신메서드 "Receive",
+  TrafficLogged 정적 훅 — 서버측 트래픽 관찰용)
+Demo: 1 셀프테스트(외부서버 불필요) / 2 서버만(트래픽 표시) / 3 클라이언트만
+용도: HMI Tag 구독 기반(예정) · MG-EX-11 기반 · Collector/Monitor 공통화 후보(2차 정리)
 ```
 
 ---
 
-## 🛠 세션 운영 규칙 (2026-07-09 확정)
+## 🛠 세션 운영 규칙 (준수 필수)
 
 ```
-① 코드 납품: 부분 수정 목록 금지 → 전체 파일 최종본을 실제 소스 경로
-   (D:\lssLib\IIoT\IIoT.Solution\...)에 직접 저장 + 경로 명시
-② 기존 파일 수정 시 변경 없는 부분(주석·참조 포함)은 그대로 유지
+① 코드 납품: 부분 수정 목록 금지 → 전체 파일 최종본을 실제 소스 경로에
+   직접 저장 + 경로 명시
+② 기존 파일 수정 시 변경 없는 부분(주석·참조) 그대로 유지
 ③ 매 Step 완료 시 [컴파일 확인 체크리스트] + [사용 설명] 제공
 ④ 판단 필요 사항은 구현 전 사용자 확인
-⑤ 세션 종료 전 이 핸드오프 파일(D:\lssLib\IIoT_HANDOFF.md) 갱신 + Git 커밋 권장
-   → 세션이 닫혀도 소스+진행상황 손실 없음 (세션 컨텍스트는 소멸됨)
+⑤ 세션 종료 전 이 핸드오프 갱신 + Git 커밋 권장
 ⑥ 응답 마지막에 "✅ 작업 완료" 표시
-⑦ 파일 삭제가 필요한 경우: 삭제 원인을 먼저 설명하고 사용자 허락을
-   받은 후에만 진행 (임의 삭제 금지 — 2026-07-09 사용자 지시)
-```
-
-> ⚠️ **SKILL.md 버전 참고**: 솔루션 루트의 `IIoT.Solution\SKILL.md`(v4.x대)와
-> Claude 스킬 캐시본(v6.3)은 모두 구버전. 최신 이력(v7.x~)은 스킬 설정에
-> 업로드된 원본 기준이므로, 진행 상태 판단은 **이 핸드오프 파일을 최우선**으로 할 것.
-
----
-
-## 📌 MG-EX 실무강화 후보 목록 (2026-07-09 확정 — MG-07 완료 후 착수)
-
-> Monitor MN-EX 시리즈와 동일한 방식의 Manager 실무강화 후보 12건.
-> 추천 착수 순서: MG-EX-01→02→03→04 (안정 운영 세트, Monitor 검증 패턴 재사용)
-> → 나머지는 IIoT.HMI 착수 전 필요분만 선별.
-
-```
-[A. 안정 운영 — 우선]
- MG-EX-01  트레이 상주 + 최소화 (MN-EX-03 패턴 재사용)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           신규: Core\Notification\TrayService.cs (Forms using 단독 파일)
-           수정: csproj — UseWindowsForms=true + <Using Remove="System.Windows.Forms"/>
-                (버그 #12 예방) / MainWindow.xaml.cs — StateChanged 최소화→Hide,
-                RestoreRequested 복원, ExitRequested→Application.Current.Shutdown
-                / App.xaml.cs — DI + Initialize(MainWindow 생성 전) + OnExit Dispose
- MG-EX-02  이벤트 알림 — 사운드 + 트레이 풍선  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           구조: EventHistoryService 에 EventSeverity(Info/Warning) + Recorded 이벤트
-                → App 에서 Warning 만 TrayService.NotifyEvent 로 연결 (과다 알림 방지)
-           Warning 대상: 자동복구 발동/실패, 비정상 종료·행 감지
-                ("실행 중→정지/응답없음" 이 IsBusy(수동조작) 없이 발생), 스케줄·배포 실패
-           수정: EventHistoryService / TrayService(NotifyEvent+System.Media)
-                / ProcessCardViewModel / ScheduleService / DeployViewModel / App.xaml.cs
- MG-EX-03  Windows 자동 실행 + AutoStart 순차 기동  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           신규: Core\StartupRegistrationService.cs (HKCU Run 레지스트리 — 관리자 권한 불필요)
-           수정: ManagedProcessInfo — AutoStart(기본 false)·AutoStartDelaySec(기본 3) 추가
-                ManagerMainViewModel — RunAtWindowsStartup 토글 + _AutoStartProgramsAsync
-                (배열 순서 순차 시작, 이미 실행 중이면 건너뜀, fire-and-forget+자체 try/catch)
-                ProcessStatusView.xaml — 타이틀 우측 자동 실행 체크박스 / App.xaml.cs — DI
- MG-EX-04  이벤트 이력 SQLite 영구 저장  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           신규: Core\Storage\EventHistoryDbService.cs (MN-EX-02 패턴 —
-                Data\manager.db, event_history 테이블, WAL, 보존 90일)
-           수정: csproj·sln — lssLib.DB + lssLib.DB.Sqlite 참조 추가
-                ManagerMainViewModel — InitializeAsync 에서 DB 오픈 (설정 로드 전)
-                App.xaml.cs — Recorded 구독(모든 이벤트 DB 기록, fire-and-forget)
-                + _WaitWithTimeout 헬퍼 도입(버그 #11 패턴) + OnExit DisposeAsync
-           ※ 조회 UI 는 미포함 — 필요 시 후속 (DB 툴 또는 MG-EX-07 과 통합 검토)
-
-[B. 진단·가시성]
- MG-EX-05  CPU/메모리 리소스 모니터링  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           구조: RefreshAsync ① 단계에서 핸들 살아있을 때 샘플 채집 —
-                CPU% = TotalProcessorTime 증분/(경과×코어수), 메모리 = WorkingSet64
-                PID 변경(재시작) 시 샘플 리셋 / 접근거부 등은 표시만 생략
-           경고: manager.json Resource { CpuWarnPercent=80, MemoryWarnMb=1024 }
-                초과 시 Warning 이벤트 (항목별 5분 쿨다운 — 반복 알림 방지)
-           수정: ManagerSettings(Resource 섹션) / ProcessCardViewModel(_SampleResources)
-                / ManagerMainViewModel(설정 전달) / ProcessStatusView.xaml(리소스 줄)
- MG-EX-06  응답시간 추세 스파크라인  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           구조: 대시보드 신규 섹션 "응답시간 추세 (최근 5분)" — 프로그램별
-                PingTrendItem(OxyPlot PlotModel, 축·테두리 숨김, 150샘플 링버퍼)
-                DashboardViewModel 2초 집계 틱에서 card.PingMs 누적,
-                핑 실패/정지 = NaN → 선 끊김 표시
-           수정: csproj — OxyPlot.Wpf 2.2.0 (MN-06/C-13 동일 버전 고정)
-                DashboardViewModel(PingTrendItem+PingTrends) / DashboardView.xaml
-                (xmlns:oxy + 행 재배치 0~4, PlotView IsHitTestVisible=False)
- MG-EX-07  로그 검색 강화  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           기능: ① DatePicker 과거 일자 조회 — 모든 대상의 All*.txt(롤링 순서)
-                시각순 병합 로드, 최대 5000행(초과 시 최근 유지), 실시간↔과거 전환
-                ② CSV 내보내기 — 필터 적용된 뷰 기준, UTF-8 BOM (Excel 한글)
-           수정: LogTailService(Targets 공개) / LogViewerViewModel(모드·조회·CSV)
-                / LogViewerView.xaml(DatePicker+과거조회+실시간+CSV 버튼, 모드 라벨)
-           ※ 이벤트 이력 DB(manager.db) 조회 UI 는 미포함 — 필요 시 후속
-
-[C. 배포·설정 운영]
- MG-EX-08  배포 롤백  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           흐름: 백업 시점 콤보(최신순) 선택 → [↩ 롤백] → ① 현재 상태 추가 백업
-                (롤백의 롤백 가능) ② 백업 파일 복원 ③ .signal 발행(자동 재로드)
-           수정: ConfigDeployService(GetBackupNames/RollbackAsync)
-                / DeployViewModel(DeployTargetItem.Backups·SelectedBackup,
-                  RollbackCommand, 배포·롤백 후 목록 자동 갱신)
-                / DeployView.xaml(대상 행 DockPanel 재배치 — 콤보+롤백 버튼)
- MG-EX-09  배포 전 설정 비교(diff)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           방식: 라인 단위 멀티셋 비교 (순서 이동 무시, 내용 추가/제거만 판정)
-                파일별 상태: 동일 / 다름(+n/-n줄) / 대상에 없음 / 소스에 없음
-                + 샘플 변경 라인(+/- 각 5줄, 80자 컷)
-           수정: ConfigDeployService(FileCompareResult+CompareAsync)
-                / DeployViewModel(CompareText+CompareCommand)
-                / DeployView.xaml([🔎 비교] 버튼 + 하단 결과창 — 빈 문자열 시 숨김)
- MG-EX-10  배포 후 자동 재시작 옵션  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-           동작: "배포 후 재시작" 체크 시 — 배포 성공 + 실행 중인 대상만
-                자동 재시작 (정지 프로그램은 건드리지 않음), 결과 이벤트 기록
-           수정: ProcessManager(IsRunning 공개) / DeployViewModel(RestartAfterDeploy
-                + 배포 루프 내 재시작) / DeployView.xaml(실행 줄 체크박스)
-
-[D. 원격·확장 — 후순위 (HMI/Sequence 이후 권장)]
- MG-EX-11  웹 상태 페이지 (자체 SignalR Hub — MN-05 패턴,
-           ★ FrameworkReference 도입 필요: Monitor 버그 #1 교훈상 별도 Step 신중히)
- MG-EX-12  원격 Collector 관리 (NamedPipe → TCP 확장, 규모 큼)
+⑦ 파일 삭제: 원인 설명 + 사용자 허락 후에만 진행
+⑧ 다음 Step 예고 시 진행 내용(무엇을 만들지) 설명 포함
+⑨ Step 진행 시 단계 표시 (예: "진행 단계: MG-04 [1/3] …")
 ```
 
 ---
 
-## 🔧 2차 정리 예정 항목 (전체 업데이트 단계에서 일괄 수정)
-
-> 개별 Step 진행 중에는 건드리지 않고, Manager~Sequence 완료 후
-> **전체 정리(리팩터링) 단계**에서 일괄 진행할 항목 목록.
+## 🐞 핵심 버그 규칙 (재발 방지 — 코드 작성 시 필수 적용)
 
 ```
-① Monitor MonitorMainViewModel.cs 위치 정렬
-   현재: Monitor\IIoT.Monitor\ViewModels\MonitorMainViewModel.cs (규칙 예외)
-   목표: 프로젝트 루트로 이동 + namespace IIoT.Monitor
-   규칙: "메인 ViewModel 루트 레벨 고정" — Studio·Collector·Manager 는 준수 중
-   보류 사유: Monitor 는 완료 프로그램 — 진행 중 회귀 위험 방지
-   수정 범위: 파일 이동 + namespace 변경 + App.xaml.cs/MainWindow.xaml.cs using 정리
-② (추가 발견 시 여기에 누적)
+★ 이번 세션 신규 확정:
+ - WPF(net8.0-windows) 프로젝트에서 StreamReader/Writer·File·Path·Directory
+   사용 파일은 반드시 "using System.IO;" 명시 (ImplicitUsings 미의존 —
+   CS0246 실제 발생 2건). System.Linq 도 동일 방침으로 명시 중.
+★ Monitor 세션 누적 (요약):
+ - DI: MainWindow 반드시 AddSingleton (Transient → 이중 창) / StartupUri 금지
+ - UI 마샬링: Dispatcher.BeginInvoke (Invoke 금지 — OnExit 교착, 버그 #11)
+ - OnExit: 리소스 보유 싱글턴은 _WaitWithTimeout(5초) 세트로 정리
+ - UseWindowsForms=true 시 <Using Remove="System.Windows.Forms"/> +
+   Forms using 은 단독 파일에서만 (CS0104, 버그 #12)
+ - FrameworkReference(AspNetCore) 선반영 금지 — 필요 Step 에서 도입 (버그 #1)
+   Microsoft.Extensions.* 명시 버전 금지 (FrameworkReference 제공 버전 사용)
+ - IIoTGrid 기본 IsReadOnly=True → 입력 화면은 로컬 재정의 (버그 #5)
+ - GroupStyle HeaderTemplate {Binding Name}은 Mode=OneWay (버그 #8)
+ - [RelayCommand(CanExecute=…)] 트리거 프로퍼티에 [NotifyCanExecuteChangedFor] 필수
+ - DisplayMemberPath+ItemTemplate 병용 금지 / Grid Padding 불가(Border 사용)
+ - ComboBox=PropCombo, TextBox=PropInput, 버튼=테마 정식 스타일(Success/Danger/
+   Secondary/Ghost/PrimaryBtn) / DynamicResource 필수 (Trigger Setter 포함)
+ - static 이벤트 구독은 반드시 해제 (누수)
+ - Process/파일 핸들은 매 사용 후 Dispose (미보관 원칙)
+전체 오류 참조표: SKILL.md "오류 빠른 참조" 절 참조
 ```
 
 ---
 
-## 🔜 다음 세션 시작 지점
-
-**IIoT.Manager — MG-Base-0부터 신규 착수**
-(Manager 폴더 미생성 상태 확인됨 — 2026-07-09 로컬 소스 실측)
+## 🔧 후속·보류 항목
 
 ```
-예정 작업 순서:
-  MG-Base-0  빈 WPF + 테마                    ← 🔄 코드 생성 완료 (2026-07-09, 빌드 확인 대기)
-             생성 파일 6개:
-             Manager\IIoT.Manager.sln
-             Manager\IIoT.Manager\IIoT.Manager.csproj
-             Manager\IIoT.Manager\AssemblyInfo.cs
-             Manager\IIoT.Manager\App.xaml(.cs)
-             Manager\IIoT.Manager\MainWindow.xaml(.cs)
-  MG-01      프로세스 상태 표시 (Studio·Collector·Monitor)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-             신규: Models\ManagedProcessInfo.cs / ViewModels\ProcessCardViewModel.cs
-                  ViewModels\ManagerMainViewModel.cs / Views\ProcessStatus\ProcessStatusView.xaml(.cs)
-             수정: MainWindow.xaml(.cs) — ProcessStatusHost + 하단 상태바 / App.xaml.cs — DI 등록
-             구조: 2초 DispatcherTimer → ProcessCardViewModel.Refresh()
-                  (Process.GetProcessesByName, 상태점 Green/Red/Yellow DataTrigger)
-  MG-02      Start/Stop → 프로세스 제어  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-             신규: Core\Config\ManagerSettings.cs (manager.json DTO+로더 — monitor.json 패턴)
-                  Core\ProcessManager.cs (Start / StopAsync[정상종료→5초→Kill] / RestartAsync)
-             수정: Models\ManagedProcessInfo.cs (ExePath 추가, json DTO 겸용)
-                  ViewModels\ProcessCardViewModel.cs (커맨드 3종 + IsBusy + LastError,
-                    규칙⑬ NotifyCanExecuteChangedFor 적용)
-                  ViewModels\ManagerMainViewModel.cs (설정 로드 InitializeAsync — Loaded 호출)
-                  Views\ProcessStatus\ProcessStatusView.xaml (SuccessBtn/DangerBtn/SecondaryBtn)
-                  MainWindow.xaml.cs / App.xaml.cs
-             설정: Config\manager.json — Processes[] { Id,Name,Description,ProcessName,ExePath }
-                  ExePath 상대경로 = Manager 실행폴더 기준 (기본값: 각 프로그램 Debug 출력)
-  MG-03      NamedPipe 헬스체크  ← 🔄 코드 생성 완료 (빌드 확인 대기, B안 확정)
-             프로토콜: 파이프 "IIoT.Health.{ProcessName}" / "ping" → "pong|{상태문구}"
-             신규: Contracts\Health\HealthPipeServer.cs (의존성 없음 — onLog 콜백)
-                  Manager Core\HealthCheckService.cs (핑 클라이언트, 1초 한도, ms 측정)
-             Manager 수정: ManagedProcessInfo(AutoRestart 추가) / ProcessCardViewModel
-                  (RefreshAsync 전환: 프로세스검사→핑→연속3회 실패+AutoRestart 시 자동재시작,
-                   응답없음 상태에서도 정지/재시작 가능) / ManagerMainViewModel(재진입 가드)
-                  / ProcessStatusView.xaml(응답시간·상태문구) / App.xaml.cs / csproj·sln(Contracts)
-             ★ 대상 3개 프로그램 수정 (재빌드 필수):
-                  Studio App.xaml.cs / Collector App.xaml.cs (pong에 FlowEngine.IsRunning)
-                  / Monitor App.xaml.cs + csproj·sln (Contracts 참조 신규)
-             AutoRestart 기본 false — manager.json 에서 프로그램별 활성화
-  MG-04      로그 뷰어 통합  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-             방식: 각 프로그램 {exe폴더}\Log\yyyy_MM\dd\All.txt 파일 테일링(1초 폴링,
-                  핸들 미보관, 최초 발견 시 끝으로 이동 — 과거 이력 미출력)
-             신규: Models\LogRow.cs / Core\LogTailService.cs
-                  ViewModels\LogViewerViewModel.cs (최대 2000행, ICollectionView 필터)
-                  Views\LogViewer\LogViewerView.xaml(.cs) (소스필터·검색·일시정지·지우기·자동스크롤)
-             수정: MainWindow.xaml — 탭바 신설 [⚙프로세스][📋로그] (Visibility 토글,
-                  TabBtn0/1 DataTrigger 필 스타일) / ManagerMainViewModel — ActiveTabIndex
-                  + SwitchTab(규칙⑤ TryParse) + LogTail.Start() / MainWindow.xaml.cs / App.xaml.cs
-             UI: 카드 폭 260→340 확대 (사용자 요청)
-  MG-05      대시보드 (전체 요약)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-             구성: 요약 칩 4개(전체/실행/응답없음/정지) + 프로그램 현황 미니 목록(상태점+ms)
-                  + 최근 이벤트 이력(최대 200건) + 시스템 정보(가동시간·설정경로)
-             신규: Models\EventRow.cs / Core\EventHistoryService.cs (Record → 로그에도 기록)
-                  ViewModels\DashboardViewModel.cs (2초 집계 타이머 — Monitor 패턴)
-                  Views\Dashboard\DashboardView.xaml(.cs)
-             수정: ProcessCardViewModel — 이벤트 기록(수동 시작/정지/재시작, 자동복구,
-                  상태변경 OnStateChanged partial) / ManagerMainViewModel — 탭 2 추가
-                  / MainWindow.xaml(.cs) — [📊 대시보드] 탭 + DashboardHost / App.xaml.cs
-             ※ MG-04 로그탭 UI 를 표준 LogPanelView 패턴으로 정렬 (사용자 요청):
-               34px 툴바(GhostBtn·PropCombo·PropInput) + 시각/레벨/프로그램/Source/내용
-               컬럼 + 레벨별 행 색상 + lssLib.Log TXT 라인 파서(LogRow.Parse)
-               + 크기 롤링(All_2.txt…) 최신 파일 자동 추적
-  MG-06      설정 배포 관리 (요구사항 4-2-7)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-             흐름: 소스(Studio Config) → 대상 {exe폴더}\Config 로
-                  ① 기존 파일 백업(Config\Backup\yyyyMMdd_HHmmss\) ② 복사
-                  ③ device.json.signal 발행 (Collector FSW 자동 재로드 규약 준수)
-             신규: Core\ConfigDeployService.cs / ViewModels\DeployViewModel.cs
-                  (SourceFileInfo·DeployTargetItem 포함) / Views\Deploy\DeployView.xaml(.cs)
-             수정: ManagerSettings.cs — Deploy 섹션 { SourceConfigDir, Files[] } 추가
-                  (구버전 manager.json 은 기본값 자동 적용)
-                  ManagerMainViewModel — 탭 3 + DeployVm.Initialize()
-                  MainWindow.xaml(.cs) — [🚀 배포] 탭 + DeployHost / App.xaml.cs
-             대상: Processes 중 studio 제외 (자기 자신 재배포 방지) / 배포 이력은
-                  EventHistoryService(대시보드)와 로그에 기록
-  MG-07      스케줄 관리 (요구사항 4-2-8)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
-             기능: 지정 요일·시각(HH:mm)에 프로그램 자동 시작/정지/재시작.
-                  30초 주기 검사 + 스케줄별 "yyyyMMdd HH:mm" 실행 키로 중복 방지
-             신규: Models\ScheduleEntry.cs (enum ScheduleAction, DaysText/ActionText)
-                  Core\ScheduleService.cs / ViewModels\ScheduleViewModel.cs
-                  (DaySelectItem·ScheduleItemVm — 활성 토글 즉시 저장)
-                  Views\Schedule\ScheduleView.xaml(.cs) (추가 폼 + 목록 CRUD)
-             수정: ManagerSettings.cs — Schedules[] + JsonStringEnumConverter
-                  ManagerMainViewModel — 탭 4 + ScheduleVm.Initialize + Service.Start
-                  MainWindow.xaml(.cs) — [⏰ 스케줄] 탭 + ScheduleHost / App.xaml.cs
-             ※ 주의: Stop 스케줄 + AutoRestart=true 조합이면 헬스체크가 다시
-               살릴 수 있음 — 정지 유지가 필요한 프로그램은 AutoRestart 비활성 권장
+[2차 정리 — Manager~Sequence 완료 후 일괄]
+ ① Monitor MonitorMainViewModel.cs → 루트 이동 + namespace 정렬 (규칙 예외 해소)
+ ② Collector/Monitor SignalR 코드의 lssLib.SignalR 공통화 검토
+ ③ 이벤트 이력 DB(manager.db) 조회 UI (MG-EX-07 통합 검토)
+[보류]
+ MG-EX-11 웹 상태 페이지 / MG-EX-12 원격 관리 (HMI/Sequence 이후)
+ C-EX-11 (Collector 후속) / Studio 보류 4건 (가상Tag·N포트·Function·프로토콜편집)
 ```
-
-★ Manager 탭 최종 구성: [⚙프로세스][📋로그][📊대시보드][🚀배포][⏰스케줄] (인덱스 0~4)
-
-Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
-**IIoT.Sequence** → **Studio 보류 4개 항목** 순으로 이어집니다.
 
 ---
 
-## Ver History (요약 — 전체 이력은 SKILL.md 참조)
-| 버전 범위 | 내용 |
+## 🔜 다음 세션 진행 순서
+
+### ① Manager + lssLib.SignalR 통합 빌드 확인 (최우선)
+```
+빌드 순서: Contracts → Studio → Collector → Monitor → Manager → lssLib.SignalR
+ (MG-03 이 3개 프로그램 App.xaml.cs 를 수정했으므로 전체 재빌드 필수)
+런타임 핵심 확인:
+ [ ] Manager 5탭 표시 + 카드(상태점·ms·CPU/메모리) + 제어 버튼
+ [ ] 트레이 상주(최소화→복원) + 경고 알림(강제 종료 시 풍선)
+ [ ] manager.json AutoStart 순차 기동 / 스케줄 실행 / 배포→비교→롤백
+ [ ] 로그탭: 실시간·과거 조회·CSV
+ [ ] SignalR Demo 메뉴 1 셀프 테스트 성공
+오류 발생 시: 오류 코드+메시지 붙여넣기 → 전체 파일 최종본으로 수정
+```
+
+### ② IIoT.HMI 착수 (생산현황판 — 신규 프로그램)
+```
+요구사항: 모터·컨베이어 등 장비가 Tag/SignalR/DB 연동으로 애니메이션 표시,
+         화면에서 직접 제어(ForceWrite — Collector C-15 연동)
+착수 방식: Manager 때와 동일 — HMI\IIoT.HMI.sln 신규 생성(개별 sln 패턴),
+         HM-Base-0(빈 WPF+테마)부터 증분 개발, 착수 시 세부 Step 맵 설계 먼저
+기반 재사용: Tag 구독 = lssLib.SignalR 클라이언트 (Monitor MN-01B 패턴 단순화)
+```
+
+---
+
+## Ver History (요약)
+| 버전 | 내용 |
 |---|---|
-| v6.7~v7.4 | Studio·Collector 완료 (이전 세션) |
-| v7.5~v7.22 | Monitor MN-Base~MN-06 Step맵 전체 완료 + 각종 버그 수정 |
-| v7.23~v7.38 | Monitor 실무강화 MN-EX-01~08 전체 완료, IIoT.HMI 신규 확정,
-              Studio 보류 4건 착수 시점(Sequence 이후) 확정, 문서 정리 |
-| v8.0 (2026-07-08) | 핸드오프 파일 재작성 — 다음 시작점 IIoT.Manager MG-Base-0 확정 |
-| v8.1 (2026-07-09) | D:\lssLib 로컬 저장본 신규 생성. 로컬 소스 실측 검증 반영
-              (프로그램별 개별 .sln 구조 / Manager 폴더 미생성 확인),
-              세션 운영 규칙 ①~⑥ 신설, SKILL.md 버전 불일치 주의사항 추가 |
-| v8.2 (2026-07-09) | MG-Base-0 코드 생성 완료 (6개 파일, 빌드 확인 대기).
-              Monitor 패턴 준수: RootNamespace 명시 / StartupUri 없음 /
-              AddSingleton MainWindow / FrameworkReference 미포함(버그 #1 교훈) /
-              DI 패키지 8.0.1 명시(버그 #2 교훈) |
-| v8.3 (2026-07-09) | MG-01 코드 생성 완료 — 프로세스 상태 카드 3종 + 2초 갱신 타이머.
-              Process 객체 Dispose 처리, 오류 시 로그+카드 노출(조용히 삼키기 금지),
-              DataTrigger 상태점 색상(DynamicResource), 하단 상태바 추가 |
-| v8.4 (2026-07-09) | MG-02 코드 생성 완료 — manager.json + ProcessManager +
-              시작/정지/재시작 버튼. 정지는 CloseMainWindow(정상종료, 대상 앱
-              OnExit 정리 보장) → 5초 → Kill(트리포함). ProcessManager 는 핸들
-              미보관(OnExit 정리 불필요, Manager 종료 후에도 대상 프로세스 유지) |
-| v8.5 (2026-07-09) | MG-03 코드 생성 완료 — NamedPipe 헬스체크(B안).
-              HealthPipeServer 를 Contracts\Health 에 신설(공용), 3개 프로그램
-              탑재(구버전 빌드 실행 시 🟡 응답없음으로 표시됨 — 재빌드 필요).
-              응답시간(ms)·내부상태 표시, 연속 3회 실패+AutoRestart 시 자동복구 |
-| v8.6 (2026-07-09) | ManagerMainViewModel 을 ViewModels\ → 프로젝트 루트로 이동
-              + namespace IIoT.Manager (규칙 "메인 VM 루트 레벨 고정" 정렬 —
-              Studio·Collector 준수 / Monitor 만 ViewModels 하위 예외로 유지).
-              App.xaml.cs·MainWindow.xaml.cs using 정리 |
-| v8.7 (2026-07-09) | "🔧 2차 정리 예정 항목" 섹션 신설 — Monitor 메인 VM 위치
-              정렬을 전체 정리 단계 항목 ①로 등록 (개별 Step 중 미수정 방침) |
-| v8.8 (2026-07-09) | MG-03 빌드 오류 수정 — HealthPipeServer.cs CS0246
-              (StreamReader/Writer): using System.IO 누락 추가 (버그 #3 동일
-              패턴). Manager CS0006 은 Contracts 실패 연쇄 — 자동 해소.
-              운영 규칙 ⑦ 신설: 파일 삭제는 원인 설명 + 사용자 허락 후 진행 |
-| v8.9 (2026-07-09) | HealthCheckService.cs 동일 CS0246 수정 + 신규 파일 전수
-              점검(누락 0건). ★ 규칙 확정: 이 솔루션의 WPF(net8.0-windows)
-              프로젝트에서 StreamReader/Writer·File·Path·Directory 사용 파일은
-              ImplicitUsings 에 의존하지 말고 반드시 "using System.IO;" 명시 |
-| v9.0 (2026-07-09) | MG-04 코드 생성 완료 — 통합 로그 뷰어 (파일 테일링 방식,
-              LogTailService 1초 폴링·핸들 미보관). Manager 에 탭바 신설
-              (프로세스/로그, Visibility 토글로 숨김 탭도 수신 지속).
-              카드 폭 340 확대. ★ 운영 규칙 추가: 다음 Step 예고 시
-              진행 내용(무엇을 만들지) 설명을 함께 제시 (사용자 요청) |
-| v9.1 (2026-07-09) | ① 로그탭 표준 LogPanelView UI 정렬 (사용자 요청) — 툴바·
-              컬럼·레벨색 동일, LogRow.Parse 라인 파서, 롤링 파일 추적
-              ② MG-05 코드 생성 완료 — 대시보드 (요약 칩·프로그램 현황·
-              최근 이벤트·시스템 정보, EventHistoryService 신설).
-              SKILL.md 원안 Step 맵(MG-Base-0~05) 코드 작성 완료 —
-              다음: 신규 MG-06(설정 배포)·MG-07(스케줄 관리) |
-| v9.2 (2026-07-09) | MG-06 코드 생성 완료 — 설정 배포 관리 (요구사항 4-2-7).
-              백업→복사→.signal 발행 3단계, 부분 배포 방지(소스 파일 누락 시
-              전체 중단), manager.json Deploy 섹션 신설. 다음: MG-07 스케줄 관리 |
-| v9.3 (2026-07-09) | ① MG-EX 실무강화 후보 12건 확정·등록 (착수: MG-EX-01→02→03→04 권장)
-              ② MG-07 코드 생성 완료 — 스케줄 관리 (요구사항 4-2-8).
-              ★ IIoT.Manager 원안(MG-Base-0~05)+신규(MG-06/07) 전체 코드 작성 완료.
-              빌드 확인 후 다음: MG-EX 시리즈 또는 IIoT.HMI 착수 |
-| v9.4 (2026-07-09) | MG-EX-01 코드 생성 완료 — 트레이 상주 + 최소화.
-              UseWindowsForms 도입 (버그 #12 예방 조치 선반영: Using Remove +
-              Forms using 단독 파일 + Application/WindowState 전체 수식).
-              다음: MG-EX-02 (이벤트 알림 — 사운드+트레이 풍선) |
-| v9.5 (2026-07-09) | MG-EX-02 코드 생성 완료 — 경고 이벤트 트레이 알림.
-              EventSeverity 도입, Warning 판정 규칙: 수동 조작(IsBusy) 없는
-              "실행 중→정지/응답없음" 전이 + 자동복구·스케줄·배포 실패.
-              다음: MG-EX-03 (Windows 자동 실행 + AutoStart 순차 기동) |
-| v9.6 (2026-07-09) | MG-EX-03 코드 생성 완료 — Windows 자동 실행(HKCU Run) +
-              AutoStart 순차 기동(배열 순서·프로그램별 지연·중복 방지).
-              재부팅 → Manager 자동 실행 → 프로그램 자동 복원 체계 완성.
-              다음: MG-EX-04 (이벤트 이력 SQLite 영구 저장 — A그룹 마지막) |
-| v9.7 (2026-07-09) | MG-EX-04 코드 생성 완료 — 이벤트 이력 SQLite 영구 저장.
-              ★ A그룹(안정 운영 4건) 코드 전체 완료. Manager: lssLib.DB 참조
-              추가, _WaitWithTimeout 종료 정리 세트 도입. 다음: B·C그룹 선별
-              또는 IIoT.HMI 착수 |
-| v9.8 (2026-07-09) | MG-EX-05 코드 생성 완료 — CPU/메모리 리소스 모니터링 +
-              임계 초과 경고(5분 쿨다운). 카드에 "CPU n% · 메모리 n MB" 표시.
-              다음: MG-EX-06 (응답시간 추세 차트) 또는 선별 진행 |
-| v9.9 (2026-07-09) | MG-EX-06 코드 생성 완료 — 대시보드 응답시간 추세
-              스파크라인 (OxyPlot 2.2.0, 프로그램별 최근 5분).
-              다음: MG-EX-07 (로그 검색 강화) 또는 선별 진행 |
-| v10.0 (2026-07-09) | MG-EX-07 코드 생성 완료 — 과거 일자 로그 조회 + CSV
-              내보내기. ★ B그룹(진단·가시성 3건) 코드 전체 완료.
-              누적: A그룹 4건 + B그룹 3건 = MG-EX 7/12.
-              다음: C그룹(배포 운영 08~10) 선별 또는 IIoT.HMI 착수 |
-| v10.1 (2026-07-09) | MG-EX-08 코드 생성 완료 — 배포 롤백 (백업 시점 콤보 +
-              원클릭 복원 + 직전 상태 자동 백업 + .signal). MG-EX 8/12.
-              다음: MG-EX-09 (배포 전 diff) 또는 선별 진행 |
-| v10.2 (2026-07-09) | MG-EX-09 코드 생성 완료 — 배포 전 설정 비교 (라인 diff
-              요약 + 샘플 변경 라인, 하단 결과창). MG-EX 9/12.
-              다음: MG-EX-10 (배포 후 자동 재시작 옵션 — C그룹 마지막) |
-| v10.3 (2026-07-09) | MG-EX-10 코드 생성 완료 — 배포 후 자동 재시작 옵션.
-              ★ MG-EX A·B·C그룹(10/12) 코드 전체 완료 — D그룹(11·12)은
-              HMI/Sequence 이후 보류 방침대로 유지.
-              ★ IIoT.Manager 사실상 전체 완료 (전 Step 빌드 확인만 남음).
-              다음: 전체 빌드 확인 → IIoT.HMI 착수 |
-| v10.4 (2026-07-09) | ★ lssLib.SignalR 모듈 신설 (Base\BCL\SignalR\ —
-              Net_Ver5 구조 준용: 라이브러리 + Demo + sln).
-              구성: SignalRHostConfig/ClientConfig · SignalRHostService<THub>
-              (Kestrel+MapHub, IHubContext 노출) · SignalRClientConnection
-              (자동재연결 0/2/10/30초, 상태이벤트, On/Invoke 헬퍼) ·
-              BroadcastHub (범용 토픽 Pub/Sub + Ping, 수신메서드 "Receive").
-              Demo: 1 셀프테스트(호스트+클라2, 외부서버 불필요) / 2 서버만
-              / 3 클라이언트만. TFM net8.0 + FrameworkReference(전이됨).
-              보완: BroadcastHub.TrafficLogged 정적 이벤트 신설 (허브는
-              호출마다 새 인스턴스 → 정적 훅) — 서버 콘솔에 접속/해제/
-              구독/발행/핑 표시, 미구독 시 무부하 (사용자 요청).
-              용도: IIoT.HMI Tag 구독(예정) · Collector/Monitor Hub 코드의
-              공통화 후보(2차 정리 검토), MG-EX-11 웹 상태 페이지 기반 |
+| ~v7.38 | Studio·Collector·Monitor 완료 (이전 세션들 — 상세는 구버전 핸드오프/SKILL.md) |
+| v8.0~v8.9 | Manager MG-Base-0~03 + 운영 규칙 확립 + CS0246(System.IO) 규칙 확정 |
+| v9.0~v9.3 | MG-04~07 완료 (로그뷰어 표준 UI·대시보드·배포·스케줄) + MG-EX 후보 12건 등록 |
+| v9.4~v10.3 | MG-EX-01~10 완료 (A·B·C그룹 — 상주·알림·자동기동·이력DB·리소스·추세·로그검색·롤백·diff·배포후재시작) |
+| v10.4 | lssLib.SignalR 모듈 신설 (Base\BCL\SignalR — 라이브러리+Demo+sln) + TrafficLogged 훅 |
+| **v11.0** | **새 세션용 핸드오프 전면 재작성 (이력 압축) — 시작점: 통합 빌드 확인 → HMI** |
 
 ---
 
-*다음 세션 시작 시 이 파일(D:\lssLib\IIoT_HANDOFF.md)을 먼저 읽고,
- IIoT.Manager MG-Base-0부터 진행할 것*
-*SKILL.md는 항상 함께 참조하되, 진행 상태·착수 순서는 이 핸드오프 파일이 우선*
+*다음 세션: 이 파일을 먼저 읽고 → ① 통합 빌드 확인 → ② IIoT.HMI HM-Base-0 착수*
