@@ -40,6 +40,10 @@
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+		<!-- ★ MG-EX-06: 응답시간 추세 스파크라인. Monitor MN-06/Collector C-13 과
+		     동일 버전 고정 (오류 참조표 "NU1701 SkiaSharp" 패턴 —
+		     LiveChartsCore 대신 이 버전 사용) -->
+		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
 	</ItemGroup>
 
 	<ItemGroup>

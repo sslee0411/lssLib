@@ -3,10 +3,14 @@
      역할: [배포] 탭 — 설정 배포 관리 (요구사항 4-2-7)
            소스 파일 현황 + 대상 선택 + 배포 실행 + 결과
      MG-06: 신규
-     생성: 2026-07-09
+     MG-EX-08: 대상 행 우측에 백업 시점 콤보 + [↩ 롤백] 버튼 추가
+     MG-EX-09: [🔎 비교] 버튼 + 하단 비교 결과창 (빈 문자열이면 숨김)
+     MG-EX-10: 실행 줄에 "배포 후 재시작" 체크박스 추가
+     생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-10)
      규칙:
        ① DynamicResource 필수 (버튼: 테마 정식 스타일 — 버그 #9 교훈)
        ② UserControl.Resources 는 UserControl 직계 자식
+       ③ ComboBox → PropCombo 스타일 필수
        ④ Grid 는 Padding 불가 → Border.Padding 사용 (MC3072)
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Manager.Views.Deploy.DeployView"
@@ -28,6 +32,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>  <!-- 소스 현황 -->
                 <RowDefinition Height="*"/>     <!-- 대상 목록 -->
+                <RowDefinition Height="Auto"/>  <!-- ★ MG-EX-09: 비교 결과 -->
                 <RowDefinition Height="Auto"/>  <!-- 실행 줄 -->
             </Grid.RowDefinitions>
 
@@ -101,7 +106,34 @@
                                 <Border BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1"
                                         Padding="0,8">
-                                    <StackPanel Orientation="Horizontal">
+                                    <DockPanel>
+                                        <!-- ★ MG-EX-08/09: 우측 — 비교 · 백업 시점 선택 · 롤백 -->
+                                        <Button DockPanel.Dock="Right"
+                                                Content="↩ 롤백"
+                                                Style="{DynamicResource SecondaryBtn}"
+                                                FontSize="11" Padding="8,3"
+                                                Command="{Binding DataContext.RollbackCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                        <ComboBox DockPanel.Dock="Right"
+                                                  Width="150"
+                                                  Style="{DynamicResource PropCombo}"
+                                                  FontSize="11"
+                                                  VerticalAlignment="Center"
+                                                  ItemsSource="{Binding Backups}"
+                                                  SelectedItem="{Binding SelectedBackup}"
+                                                  ToolTip="복원할 백업 시점 (최신순 — Config\Backup\ 폴더)"
+                                                  Margin="0,0,6,0"/>
+                                        <!-- ★ MG-EX-09: 배포 전 소스↔대상 비교 -->
+                                        <Button DockPanel.Dock="Right"
+                                                Content="🔎 비교"
+                                                Style="{DynamicResource GhostBtn}"
+                                                FontSize="11" Padding="8,3"
+                                                Command="{Binding DataContext.CompareCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,6,0"/>
+
                                         <CheckBox IsChecked="{Binding IsSelected}"
                                                   VerticalAlignment="Center"
                                                   Margin="0,0,10,0"/>
@@ -118,8 +150,9 @@
                                         <TextBlock Text="{Binding LastResult}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource Text2Brush}"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -127,12 +160,51 @@
                 </Grid>
             </Border>
 
+            <!-- § ★ MG-EX-09: 비교 결과 (내용 없으면 자동 숨김) -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="12,8"
+                    Margin="0,0,0,12">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CompareText}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBox Text="{Binding CompareText, Mode=OneWay}"
+                         IsReadOnly="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Foreground="{DynamicResource Text2Brush}"
+                         FontFamily="Consolas, Courier New"
+                         FontSize="11"
+                         MaxHeight="180"
+                         VerticalScrollBarVisibility="Auto"
+                         TextWrapping="NoWrap"
+                         HorizontalScrollBarVisibility="Auto"/>
+            </Border>
+
             <!-- § 실행 줄 -->
-            <DockPanel Grid.Row="2">
+            <DockPanel Grid.Row="3">
                 <Button DockPanel.Dock="Left"
                         Content="🚀 선택 대상에 배포"
                         Style="{DynamicResource PrimaryBtn}"
                         Command="{Binding DeployCommand}"/>
+                <!-- ★ MG-EX-10: 배포 후 자동 재시작 옵션 -->
+                <CheckBox DockPanel.Dock="Left"
+                          Content="배포 후 재시작"
+                          IsChecked="{Binding RestartAfterDeploy}"
+                          FontSize="12"
+                          Foreground="{DynamicResource Text2Brush}"
+                          VerticalAlignment="Center"
+                          Margin="14,0,0,0"
+                          ToolTip="체크 시 배포 성공한 대상 중 실행 중인 프로그램을 자동 재시작합니다 (.signal 자동 재로드를 지원하지 않는 프로그램용)"/>
                 <TextBlock Text="{Binding StatusText}"
                            FontSize="12"
                            Foreground="{DynamicResource Text2Brush}"

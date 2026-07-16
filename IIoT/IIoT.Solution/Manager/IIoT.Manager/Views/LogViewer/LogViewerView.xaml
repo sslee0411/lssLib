@@ -6,7 +6,9 @@
            Studio/Collector/Monitor 의 LogPanelView 와 동일한 룩앤필
            (34px 툴바 + GhostBtn 지우기 + PropCombo/PropInput +
             LogGridHeader 컬럼 헤더 + 레벨별 행 색상)
-     생성: 2026-07-09 / 수정: 2026-07-09
+     MG-EX-07: DatePicker + [과거 조회]/[실시간] 전환 + [CSV] 내보내기 추가.
+           모드 표시("● 실시간"/"과거: 날짜")는 우측 라벨에 바인딩
+     생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-07)
      규칙:
        ① DynamicResource 필수
        ② UserControl.Resources 는 UserControl 직계 자식
@@ -72,6 +74,14 @@
                         FontSize="11" Padding="8,2"
                         Command="{Binding ClearCommand}" />
 
+                <!-- ★ MG-EX-07: CSV 내보내기 (현재 필터 적용 목록) -->
+                <Button DockPanel.Dock="Right"
+                        Content="📄 CSV"
+                        Style="{DynamicResource GhostBtn}"
+                        FontSize="11" Padding="8,2"
+                        Command="{Binding ExportCsvCommand}"
+                        Margin="0,0,6,0" />
+
                 <!-- 우측: 카운트 -->
                 <TextBlock DockPanel.Dock="Right"
                            Text="{Binding CountText}"
@@ -123,7 +133,7 @@
                          VerticalAlignment="Center"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
 
-                <!-- 일시정지 -->
+                <!-- 일시정지 (실시간 모드 전용) -->
                 <CheckBox Content="일시정지"
                           FontSize="11"
                           IsChecked="{Binding IsPaused}"
@@ -131,9 +141,26 @@
                           VerticalAlignment="Center"
                           Margin="12,0,0,0" />
 
-                <TextBlock Text="📋 통합 로그"
+                <!-- ★ MG-EX-07: 과거 일자 조회 -->
+                <DatePicker SelectedDate="{Binding SelectedDate}"
+                            FontSize="11"
+                            Width="115"
+                            VerticalAlignment="Center"
+                            Margin="12,0,4,0" />
+                <Button Content="🔍 과거 조회"
+                        Style="{DynamicResource GhostBtn}"
+                        FontSize="11" Padding="8,2"
+                        Command="{Binding LoadHistoryCommand}"
+                        Margin="0,0,4,0" />
+                <Button Content="▶ 실시간"
+                        Style="{DynamicResource GhostBtn}"
+                        FontSize="11" Padding="8,2"
+                        Command="{Binding BackToLiveCommand}" />
+
+                <!-- 모드 표시 -->
+                <TextBlock Text="{Binding ModeText}"
                            FontSize="11" FontWeight="SemiBold"
-                           Foreground="{DynamicResource Text2Brush}"
+                           Foreground="{DynamicResource AccBrush}"
                            VerticalAlignment="Center"
                            Margin="12,0,0,0" />
             </DockPanel>

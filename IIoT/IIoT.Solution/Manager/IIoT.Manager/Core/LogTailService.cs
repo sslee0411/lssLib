@@ -38,6 +38,9 @@ public sealed class LogTailService : IDisposable
     /// <summary>테일 대상: (표시 이름, Log 루트 폴더)</summary>
     private readonly List<(string Source, string LogRoot)> _targets = [];
 
+    /// <summary>★ MG-EX-07: 대상 목록 공개 — 과거 일자 조회(LogViewerViewModel)에서 사용</summary>
+    public IReadOnlyList<(string Source, string LogRoot)> Targets => _targets;
+
     /// <summary>파일 경로별 읽기 오프셋 (마지막 개행까지 처리한 위치)</summary>
     private readonly Dictionary<string, long> _offsets = new();
 

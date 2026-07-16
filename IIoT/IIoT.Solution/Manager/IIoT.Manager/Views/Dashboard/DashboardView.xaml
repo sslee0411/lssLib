@@ -3,7 +3,8 @@
      역할: [대시보드] 탭 — 전체 요약 (상태 집계 칩 + 프로그램 미니 목록 +
            최근 이벤트 + 시스템 정보)
      MG-05: 신규 — Monitor 대시보드(D스타일) 룩앤필 준용
-     생성: 2026-07-09
+     MG-EX-06: 응답시간 추세 스파크라인 섹션 추가 (OxyPlot PlotView)
+     생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-06)
      규칙:
        ① DynamicResource 필수 (Trigger Setter 포함)
        ② UserControl.Resources 는 UserControl 직계 자식
@@ -11,7 +12,8 @@
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Manager.Views.Dashboard.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:oxy="http://oxyplot.org/wpf">
 
     <UserControl.Resources>
         <!-- 요약 칩 카드 -->
@@ -50,6 +52,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>  <!-- 요약 칩 -->
                 <RowDefinition Height="Auto"/>  <!-- 프로그램 미니 목록 -->
+                <RowDefinition Height="Auto"/>  <!-- ★ MG-EX-06: 응답시간 추세 -->
                 <RowDefinition Height="*"/>     <!-- 최근 이벤트 -->
                 <RowDefinition Height="Auto"/>  <!-- 시스템 정보 -->
             </Grid.RowDefinitions>
@@ -142,8 +145,46 @@
                 </StackPanel>
             </Border>
 
-            <!-- § 최근 이벤트 -->
+            <!-- § ★ MG-EX-06: 응답시간 추세 (최근 5분 스파크라인) -->
             <Border Grid.Row="2" Style="{StaticResource SectionCard}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="응답시간 추세 (최근 5분)"
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}"
+                               Margin="0,0,0,8"/>
+                    <ItemsControl ItemsSource="{Binding PingTrends}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,24,4" Width="220">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Text2Brush}"/>
+                                        <TextBlock Text="  ·  "
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource Text3Brush}"/>
+                                        <TextBlock Text="{Binding CurrentText}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource AccBrush}"/>
+                                    </StackPanel>
+                                    <oxy:PlotView Model="{Binding Plot}"
+                                                  Height="56"
+                                                  Background="Transparent"
+                                                  IsHitTestVisible="False"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- § 최근 이벤트 -->
+            <Border Grid.Row="3" Style="{StaticResource SectionCard}" Margin="0,0,0,16">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -186,7 +227,7 @@
             </Border>
 
             <!-- § 시스템 정보 -->
-            <Border Grid.Row="3" Style="{StaticResource SectionCard}">
+            <Border Grid.Row="4" Style="{StaticResource SectionCard}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="가동 시간: "
                                FontSize="11"

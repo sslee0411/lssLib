@@ -3,6 +3,7 @@
 //  역할: 관리 대상 프로그램의 시작/정지/재시작 실행자
 //        정지 순서: CloseMainWindow(정상 종료 요청) → 5초 대기 → Kill(강제)
 //  MG-02: 신규
+//  MG-EX-10: IsRunning() 공개 — 배포 후 자동 재시작 판정(DeployViewModel)에서 사용
 //  설계 메모:
 //    - Process 핸들을 보관하지 않는다 (매 호출 시 이름으로 조회 → 즉시 Dispose).
 //      따라서 App.OnExit 정리 대상 아님. Manager 가 시작한 프로세스는
@@ -125,6 +126,9 @@ public sealed class ProcessManager
             foreach (var p in found) p.Dispose();
         }
     }
+
+    /// <summary>★ MG-EX-10: 프로그램 실행 여부 (배포 후 자동 재시작 판정용).</summary>
+    public bool IsRunning(ManagedProcessInfo info) => _IsRunning(info.ProcessName);
 
     /// <summary>프로그램을 재시작한다 (정지 → 0.5초 대기 → 시작).</summary>
     public async Task<ProcessOpResult> RestartAsync(ManagedProcessInfo info)

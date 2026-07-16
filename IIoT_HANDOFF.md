@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v9.8 | 현재 위치: IIoT.Manager MG-EX-05 (빌드 확인 대기) — B그룹 진행 중**
+**작성일: 2026-07-09 | 버전: v10.3 | 현재 위치: IIoT.Manager MG-EX-10 (빌드 확인 대기) — A·B·C그룹 코드 전체 완료 (MG-EX 10/12)**
 
 ---
 
@@ -317,13 +317,42 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
                 초과 시 Warning 이벤트 (항목별 5분 쿨다운 — 반복 알림 방지)
            수정: ManagerSettings(Resource 섹션) / ProcessCardViewModel(_SampleResources)
                 / ManagerMainViewModel(설정 전달) / ProcessStatusView.xaml(리소스 줄)
- MG-EX-06  헬스체크 응답시간(ms) 미니 추세 차트 (OxyPlot 스파크라인)
- MG-EX-07  로그 검색 강화 — 과거 일자 로그 파일 열기 + CSV 내보내기
+ MG-EX-06  응답시간 추세 스파크라인  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           구조: 대시보드 신규 섹션 "응답시간 추세 (최근 5분)" — 프로그램별
+                PingTrendItem(OxyPlot PlotModel, 축·테두리 숨김, 150샘플 링버퍼)
+                DashboardViewModel 2초 집계 틱에서 card.PingMs 누적,
+                핑 실패/정지 = NaN → 선 끊김 표시
+           수정: csproj — OxyPlot.Wpf 2.2.0 (MN-06/C-13 동일 버전 고정)
+                DashboardViewModel(PingTrendItem+PingTrends) / DashboardView.xaml
+                (xmlns:oxy + 행 재배치 0~4, PlotView IsHitTestVisible=False)
+ MG-EX-07  로그 검색 강화  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           기능: ① DatePicker 과거 일자 조회 — 모든 대상의 All*.txt(롤링 순서)
+                시각순 병합 로드, 최대 5000행(초과 시 최근 유지), 실시간↔과거 전환
+                ② CSV 내보내기 — 필터 적용된 뷰 기준, UTF-8 BOM (Excel 한글)
+           수정: LogTailService(Targets 공개) / LogViewerViewModel(모드·조회·CSV)
+                / LogViewerView.xaml(DatePicker+과거조회+실시간+CSV 버튼, 모드 라벨)
+           ※ 이벤트 이력 DB(manager.db) 조회 UI 는 미포함 — 필요 시 후속
 
 [C. 배포·설정 운영]
- MG-EX-08  배포 롤백 버튼 (Config\Backup\ 시점 선택 → 원클릭 복원)
- MG-EX-09  배포 전 설정 비교(diff) 표시 (실수 배포 방지)
- MG-EX-10  배포 후 자동 재시작 옵션 (.signal 미지원 프로그램용)
+ MG-EX-08  배포 롤백  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           흐름: 백업 시점 콤보(최신순) 선택 → [↩ 롤백] → ① 현재 상태 추가 백업
+                (롤백의 롤백 가능) ② 백업 파일 복원 ③ .signal 발행(자동 재로드)
+           수정: ConfigDeployService(GetBackupNames/RollbackAsync)
+                / DeployViewModel(DeployTargetItem.Backups·SelectedBackup,
+                  RollbackCommand, 배포·롤백 후 목록 자동 갱신)
+                / DeployView.xaml(대상 행 DockPanel 재배치 — 콤보+롤백 버튼)
+ MG-EX-09  배포 전 설정 비교(diff)  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           방식: 라인 단위 멀티셋 비교 (순서 이동 무시, 내용 추가/제거만 판정)
+                파일별 상태: 동일 / 다름(+n/-n줄) / 대상에 없음 / 소스에 없음
+                + 샘플 변경 라인(+/- 각 5줄, 80자 컷)
+           수정: ConfigDeployService(FileCompareResult+CompareAsync)
+                / DeployViewModel(CompareText+CompareCommand)
+                / DeployView.xaml([🔎 비교] 버튼 + 하단 결과창 — 빈 문자열 시 숨김)
+ MG-EX-10  배포 후 자동 재시작 옵션  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           동작: "배포 후 재시작" 체크 시 — 배포 성공 + 실행 중인 대상만
+                자동 재시작 (정지 프로그램은 건드리지 않음), 결과 이벤트 기록
+           수정: ProcessManager(IsRunning 공개) / DeployViewModel(RestartAfterDeploy
+                + 배포 루프 내 재시작) / DeployView.xaml(실행 줄 체크박스)
 
 [D. 원격·확장 — 후순위 (HMI/Sequence 이후 권장)]
  MG-EX-11  웹 상태 페이지 (자체 SignalR Hub — MN-05 패턴,
@@ -526,6 +555,24 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
 | v9.8 (2026-07-09) | MG-EX-05 코드 생성 완료 — CPU/메모리 리소스 모니터링 +
               임계 초과 경고(5분 쿨다운). 카드에 "CPU n% · 메모리 n MB" 표시.
               다음: MG-EX-06 (응답시간 추세 차트) 또는 선별 진행 |
+| v9.9 (2026-07-09) | MG-EX-06 코드 생성 완료 — 대시보드 응답시간 추세
+              스파크라인 (OxyPlot 2.2.0, 프로그램별 최근 5분).
+              다음: MG-EX-07 (로그 검색 강화) 또는 선별 진행 |
+| v10.0 (2026-07-09) | MG-EX-07 코드 생성 완료 — 과거 일자 로그 조회 + CSV
+              내보내기. ★ B그룹(진단·가시성 3건) 코드 전체 완료.
+              누적: A그룹 4건 + B그룹 3건 = MG-EX 7/12.
+              다음: C그룹(배포 운영 08~10) 선별 또는 IIoT.HMI 착수 |
+| v10.1 (2026-07-09) | MG-EX-08 코드 생성 완료 — 배포 롤백 (백업 시점 콤보 +
+              원클릭 복원 + 직전 상태 자동 백업 + .signal). MG-EX 8/12.
+              다음: MG-EX-09 (배포 전 diff) 또는 선별 진행 |
+| v10.2 (2026-07-09) | MG-EX-09 코드 생성 완료 — 배포 전 설정 비교 (라인 diff
+              요약 + 샘플 변경 라인, 하단 결과창). MG-EX 9/12.
+              다음: MG-EX-10 (배포 후 자동 재시작 옵션 — C그룹 마지막) |
+| v10.3 (2026-07-09) | MG-EX-10 코드 생성 완료 — 배포 후 자동 재시작 옵션.
+              ★ MG-EX A·B·C그룹(10/12) 코드 전체 완료 — D그룹(11·12)은
+              HMI/Sequence 이후 보류 방침대로 유지.
+              ★ IIoT.Manager 사실상 전체 완료 (전 Step 빌드 확인만 남음).
+              다음: 전체 빌드 확인 → IIoT.HMI 착수 |
 
 ---
 
