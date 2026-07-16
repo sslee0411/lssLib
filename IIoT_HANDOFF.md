@@ -1,9 +1,9 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-16 | 버전: v11.1 | 다음 세션 시작점: ② IIoT.HMI HM-Base-0 착수 (세부 Step 맵 설계 먼저)**
+**작성일: 2026-07-16 | 버전: v11.3 | 다음 세션 시작점: ① C-EX-13 빌드·런타임 확인 → ② HM-Base-0 착수**
 
 > 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
 > SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
-> (스킬 캐시본/솔루션 루트 SKILL.md 는 구버전 — v6.3/v4.x).
+> (스킬 캐시본/솔루션 루트 SKILL.md 는 구버전 — v6.3/v4.x, HMI Step 맵 미반영).
 
 ---
 
@@ -15,10 +15,10 @@ C# .NET 8 / WPF / lssLib v5 기반 산업용 IIoT/SCADA 플랫폼.
 ```
 프로그램            상태
 IIoT.Studio         ✅ 100% (설정 편집기 — 보류 4건은 Sequence 이후)
-IIoT.Collector      ✅ 100% (수집+감지+저장, SignalR Hub 7878 — C-EX-11만 후속 보류)
+IIoT.Collector      ✅ 100% (수집+감지+저장, SignalR Hub 7878 — C-EX-13 코드완료/빌드대기, C-EX-11 후속 보류)
 IIoT.Monitor        ✅ 100% (실시간 모니터링, 자체 Hub 7879, MN-EX 8건 전부)
 IIoT.Manager        ✅ 100% (코드+통합 빌드+런타임 확인 완료 — 2026-07-16)
-IIoT.HMI            ⭕ 다음 착수 (생산현황판 — 별도 프로그램 확정)
+IIoT.HMI            ⏳ Step 맵 설계 완료 — 착수 대기 (생산현황판)
 IIoT.Sequence       ⭕ HMI 이후
 공통: Contracts(플러그인 계약+Health) · Plugins(ModbusTcp/Mitsubishi/Virtual)
      · UI.Themes(7테마) · UI.Controls
@@ -101,6 +101,114 @@ Demo: 1 셀프테스트(외부서버 불필요) / 2 서버만(트래픽 표시) 
 
 ---
 
+## 🆕 IIoT.HMI — Step 맵 설계 (확정 — 2026-07-16)
+
+### 설계 확정 사항 (사용자 확인 완료)
+```
+① ForceWrite 원격 제어: Collector에 Hub 메서드 추가 (C-EX-13 선행 Step, 아래 상세)
+② 레이아웃 캔버스: Studio 캔버스 인프라 재사용 (프리폼 배치 — PortsLayer 제외,
+   NodesLayer 방식만 이식하여 아이콘 자유 배치·드래그·줌/팬 구현)
+③ Collector 연결 범위: Monitor와 동일하게 다중 Collector 지원
+   (CollectorConnectionManager/CollectorConnection 그대로 이식 또는 공용화 검토)
+```
+
+### 실제 코드 기반 확인된 재사용 자산
+```
+Collector/IIoT.Collector/SignalR/IIoTHub.cs
+  ← 현재 서버→클라 Push: "TagValue"/"AlarmChanged" (IIoTHubPusher)
+  ← 현재 클라→서버 호출: AcknowledgeAlarm(alarmKey) 만 존재 (ForceWrite 없음)
+Collector/IIoT.Collector/Core/Engine/ForceWriteService.cs (C-15)
+  ← WriteAsync(plcId,tagId,value,apiKey) — 검증(Enabled/ApiKey/Tag존재/활성/형식)
+    후 FlowEngine.WriteTagAsync() 위임 + AuditLogService 기록. 원격 Hub 메서드만
+    추가하면 그대로 재사용 가능.
+Collector GET /api/devices (C-EX-01-7)
+  ← DeviceInstance/TagInstance 트리 스냅샷 (CollectorId·연결상태·Tag값·알람상태 포함)
+Monitor/IIoT.Monitor/Core/Connection/CollectorConnection.cs · CollectorConnectionManager.cs (MN-01B)
+  ← REST 스냅샷 1회 조회 + SignalR HubConnection 자동재연결 + TagValue/AlarmChanged
+    구독 + AcknowledgeAsync() — HMI가 그대로 이식할 기반 코드
+Studio 캔버스 인프라 (S-11~S-13B)
+  ← CanvasNode/CanvasConnection/PortsLayer 절대좌표 배치 패턴 중 NodesLayer(카드
+    배치·드래그·줌/팬) 부분만 재사용, 포트/연결선 로직은 HMI에 불필요(제외)
+```
+
+### C-EX-13: Collector ForceWrite Hub 메서드 추가 — ✅ 코드 완료 (2026-07-16, 빌드 확인 대기)
+```
+변경 파일 (전체 최종본 반영 완료):
+  Collector/IIoT.Collector/SignalR/IIoTHub.cs
+    ← ForceWriteService 필드+생성자 주입 추가
+    ← public Task<ForceWriteResult> ForceWrite(plcId, tagId, value, apiKey="")
+      → _forceWriteService.WriteAsync() 위임 (AcknowledgeAlarm과 동일 패턴)
+    ← IIoTHubPusher.PushForceWriteResultAsync(payload) 추가
+      (클라이언트 JS: connection.on("ForceWriteResult", (data) => {...}))
+  Collector/IIoT.Collector/SignalR/SignalRHostService.cs
+    ← ForceWriteService 필드+생성자 주입 추가 (기존 App.xaml.cs 에 이미
+      services.AddSingleton<ForceWriteService>() 등록되어 있어 DI 자동 주입됨)
+    ← StartAsync() 에서 builder.Services.AddSingleton(_forceWriteService) 추가
+      (AlarmStateManager 클로저 재사용 패턴과 동일 원칙)
+  Collector/IIoT.Collector/SignalR/SignalRPushService.cs
+    ← TagForceWriteEvent 구독 추가 (FlowEngine.WriteTagAsync 에서 이미 발행 중이던
+      이벤트 — 로컬 UI 강제쓰기든 원격 Hub 호출이든 동일 경로로 자동 Push됨)
+    ← 모든 연결 클라이언트(다른 HMI 화면·Monitor 등)에 "ForceWriteResult" Push
+
+클라이언트 호출 예: await conn.InvokeAsync<ForceWriteResult>("ForceWrite", plcId, tagId, value, apiKey);
+
+컴파일 확인 체크리스트:
+  [ ] Collector 빌드 → 오류 0개
+  [ ] Collector 자체 UI(StatusView ForceWriteDialog)는 기존과 동일하게 동작 (회귀 없음)
+  [ ] SignalR Demo 또는 브라우저 콘솔에서 conn.invoke("ForceWrite", plcId, tagId, value, "")
+      → ForceWriteResult{IsSuccess,Error} 정상 응답 확인
+  [ ] 강제쓰기 발생 시 다른 연결 클라이언트에서 conn.on("ForceWriteResult", ...) 로
+      Push 수신 확인 (설정된 apiKey 없을 시 "" 로 호출)
+```
+
+### IIoT.HMI Step 맵
+```
+━━━ 기반 구조 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HM-Base-0  빈 WPF + 테마 (HMI\IIoT.HMI.sln 신규 — Manager/Studio 패턴 동일)  ⏳
+HM-Base-1  메인 레이아웃 (헤더+탭바+본문)                                    ⏳
+           탭: [현황판][레이아웃 편집][Collector 관리][알람][로그]
+HM-Base-2  탭 전환 5개                                                      ⏳
+
+━━━ Collector 연동 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HM-01   CollectorConnection/CollectorConnectionManager 이식               ⏳
+        (Monitor MN-01B 코드 기반 — 다중 Collector, REST 스냅샷+SignalR 구독)
+HM-02   Collector 관리 탭 (등록/편집/삭제 — Monitor CollectorManage 패턴)   ⏳
+
+━━━ 레이아웃 캔버스 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HM-03   레이아웃 캔버스 기반 구조 (Studio NodesLayer 이식 — 포트/연결선 제외) ⏳
+        자유 배치·드래그·줌/팬·그리드 스냅
+HM-04   장비 아이콘 팔레트 (모터/컨베이어/탱크/밸브 등 기본 도형 세트)        ⏳
+HM-05   아이콘 ↔ Tag 바인딩 (DeviceInstance/TagInstance 실시간 값 연결)      ⏳
+HM-06   애니메이션 엔진 (회전=RawValue 비례, 색상=알람/연결상태, 흐름효과)    ⏳
+HM-07   레이아웃 저장·불러오기 (hmi-layout.json, 다중 화면 페이지)          ⏳
+
+━━━ 알람·제어 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HM-08   알람 오버레이 (아이콘 배지 + 상세 팝업 + ACK — AcknowledgeAlarm 재사용) ⏳
+HM-09   ForceWrite 제어 다이얼로그 (아이콘 더블클릭 → 값 입력 →              ⏳
+        SignalR Invoke("ForceWrite") — C-EX-13 선행 필수)
+HM-10   다중 화면 관리 (레이아웃 페이지 탭/트리)                             ⏳
+
+━━━ 확장성 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HM-11   웹 브라우저 표시 확장 (자체 SignalR Hub + wwwroot —                 ⏳
+        Collector C-11/wwwroot 패턴 재사용, 로컬(C#)+웹 동시 지원 요구사항)
+HM-12   보안 (ForceWrite API Key 입력 확인 — Collector Security.ForceWriteApiKey 재사용) ⏳
+
+━━━ 후속 (HMI 1차 마감 후 검토) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HM-EX   히스토리 트렌드 오버레이 / 화면 캡처·PDF 리포트 / 다중 모니터 지원  ⭕ 보류
+```
+
+### 착수 순서
+```
+① C-EX-13 (Collector ForceWrite Hub 메서드 추가) — 최우선 선행
+② HM-Base-0 → HM-Base-2 (빈 WPF + 레이아웃 + 탭 전환)
+③ HM-01~02 (Collector 연동) → 실시간 데이터 확보 후
+④ HM-03~07 (캔버스+아이콘+바인딩+애니메이션+저장) — 핵심 기능
+⑤ HM-08~10 (알람+제어+다중화면)
+⑥ HM-11~12 (웹 확장+보안) — Manager MG-EX-11(보류)과 함께 검토 가능
+```
+
+---
+
 ## 🛠 세션 운영 규칙 (준수 필수)
 
 ```
@@ -141,6 +249,11 @@ Demo: 1 셀프테스트(외부서버 불필요) / 2 서버만(트래픽 표시) 
    Secondary/Ghost/PrimaryBtn) / DynamicResource 필수 (Trigger Setter 포함)
  - static 이벤트 구독은 반드시 해제 (누수)
  - Process/파일 핸들은 매 사용 후 Dispose (미보관 원칙)
+★ HMI 착수 전 신규 확인 사항 (2026-07-16):
+ - CollectorConnection(MN-01B)의 HttpClient/HubConnection 콜백은 UI 스레드가
+   아니므로 Endpoint 등 관찰 가능 상태 변경은 반드시 Dispatcher.Invoke 로 마샬링
+   (Monitor에서 이미 확정된 _SetStatus/_SetId 헬퍼 패턴 그대로 재사용)
+ - IIoTHub 인스턴스는 요청마다 생성·소멸 — 필드에 상태 보관 금지 (C-EX-13 추가 시 동일 적용)
 전체 오류 참조표: SKILL.md "오류 빠른 참조" 절 참조
 ```
 
@@ -152,10 +265,12 @@ Demo: 1 셀프테스트(외부서버 불필요) / 2 서버만(트래픽 표시) 
 [2차 정리 — Manager~Sequence 완료 후 일괄]
  ① Monitor MonitorMainViewModel.cs → 루트 이동 + namespace 정렬 (규칙 예외 해소)
  ② Collector/Monitor SignalR 코드의 lssLib.SignalR 공통화 검토
+    (HMI의 CollectorConnection 이식도 이 공통화 검토에 포함하여 함께 판단)
  ③ 이벤트 이력 DB(manager.db) 조회 UI (MG-EX-07 통합 검토)
 [보류]
  MG-EX-11 웹 상태 페이지 / MG-EX-12 원격 관리 (HMI/Sequence 이후)
  C-EX-11 (Collector 후속) / Studio 보류 4건 (가상Tag·N포트·Function·프로토콜편집)
+ HM-EX (히스토리 트렌드 오버레이 / 캡처·리포트 / 다중 모니터 지원 — HMI 1차 마감 후)
 ```
 
 ---
@@ -163,19 +278,14 @@ Demo: 1 셀프테스트(외부서버 불필요) / 2 서버만(트래픽 표시) 
 ## 🔜 다음 세션 진행 순서
 
 ### ① Manager + lssLib.SignalR 통합 빌드 확인 — ✅ 완료 (2026-07-16, 사용자 직접 빌드·런타임 검토)
-```
-Manager 5탭 표시·카드·제어 / 트레이 상주·경고 알림 / manager.json AutoStart·스케줄·배포 /
-로그탭 / SignalR Demo 셀프테스트 — 전체 정상 동작 확인됨.
-```
 
-### ② IIoT.HMI 착수 (생산현황판 — 신규 프로그램) ← 다음 시작점
+### ② IIoT.HMI Step 맵 설계 — ✅ 완료 (2026-07-16, 위 "IIoT.HMI — Step 맵 설계" 절 참조)
+
+### ③ C-EX-13 — ✅ 코드 완료, 빌드 확인 대기 (2026-07-16)
 ```
-요구사항: 모터·컨베이어 등 장비가 Tag/SignalR/DB 연동으로 애니메이션 표시,
-         화면에서 직접 제어(ForceWrite — Collector C-15 연동)
-착수 방식: Manager 때와 동일 — HMI\IIoT.HMI.sln 신규 생성(개별 sln 패턴),
-         HM-Base-0(빈 WPF+테마)부터 증분 개발, 착수 시 세부 Step 맵 설계 먼저
-기반 재사용: Tag 구독 = lssLib.SignalR 클라이언트 (Monitor MN-01B 패턴 단순화)
-남은 작업: HM 세부 Step 맵(HM-Base-0 ~ HM-N) 설계 → 사용자 확인 → HM-Base-0 착수
+IIoTHub.cs / SignalRHostService.cs / SignalRPushService.cs 3개 파일 전체 최종본 반영 완료.
+사용자 Collector 빌드·런타임 확인 필요 (위 "C-EX-13" 절 체크리스트 참조).
+완료 확인 후 → HM-Base-0 (빈 WPF + 테마, HMI\IIoT.HMI.sln 신규 생성) 착수. ← 다음 시작점
 ```
 
 ---
@@ -189,10 +299,17 @@ Manager 5탭 표시·카드·제어 / 트레이 상주·경고 알림 / manager.
 | v9.4~v10.3 | MG-EX-01~10 완료 (A·B·C그룹 — 상주·알림·자동기동·이력DB·리소스·추세·로그검색·롤백·diff·배포후재시작) |
 | v10.4 | lssLib.SignalR 모듈 신설 (Base\BCL\SignalR — 라이브러리+Demo+sln) + TrafficLogged 훅 |
 | v11.0 | 새 세션용 핸드오프 전면 재작성 (이력 압축) — 시작점: 통합 빌드 확인 → HMI |
-| **v11.1** | **Manager + lssLib.SignalR 통합 빌드·런타임 확인 완료 (사용자 직접 검증, 2026-07-16)** |
-| | | **IIoT.Manager 상태 🔄 → ✅ 100% / MG-04~07·MG-EX 12건 전부 ✅ 전환** |
-| | | **다음 세션 시작점: ② IIoT.HMI HM-Base-0 (세부 Step 맵 설계 먼저)** |
+| v11.1 | Manager + lssLib.SignalR 통합 빌드·런타임 확인 완료 (사용자 직접 검증, 2026-07-16) |
+| v11.2 | IIoT.HMI Step 맵 설계 확정 (2026-07-16) — 확정 사항: ① Collector에 ForceWrite |
+| | | Hub 메서드 추가(C-EX-13 선행) ② Studio 캔버스 인프라 재사용(프리폼 배치) |
+| | | ③ Monitor와 동일 다중 Collector 지원. HM-Base-0~HM-12 + C-EX-13 Step 맵 확정 |
+| **v11.3** | **C-EX-13 코드 완료 (2026-07-16, 빌드 확인 대기)** |
+| | | **IIoTHub.cs: ForceWrite(plcId,tagId,value,apiKey) 원격 메서드 추가** |
+| | | **(ForceWriteService 위임) + IIoTHubPusher.PushForceWriteResultAsync 추가** |
+| | | **SignalRHostService.cs: ForceWriteService DI 컨테이너 등록 추가** |
+| | | **SignalRPushService.cs: TagForceWriteEvent 구독 → "ForceWriteResult" 전체 Push** |
+| | | **다음 세션 시작점: C-EX-13 빌드 확인 → HM-Base-0** |
 
 ---
 
-*다음 세션: 이 파일을 먼저 읽고 → IIoT.HMI 세부 Step 맵 설계 → HM-Base-0 착수*
+*다음 세션: 이 파일을 먼저 읽고 → C-EX-13 빌드·런타임 확인 → HM-Base-0 진행*

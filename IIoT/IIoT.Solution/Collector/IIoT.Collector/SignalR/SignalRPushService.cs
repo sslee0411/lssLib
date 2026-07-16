@@ -3,7 +3,12 @@
 //  역할: EventBus 구독 → IIoTHubPusher 를 통해 웹 클라이언트에 Push
 //        SignalRHostService 가 시작된 후 Initialize() 호출
 //  C-11: 신규
-//  생성: 2026-06-29
+//  C-EX-13: TagForceWriteEvent 구독 추가 — "ForceWrite" 원격 호출로 값이
+//           바뀌었을 때, 호출한 클라이언트뿐 아니라 연결된 모든 클라이언트
+//           (다른 HMI 화면·Monitor 등)에도 발생 사실을 Push 하여 실시간으로
+//           인지할 수 있게 함 (TagValue 는 그 다음 폴링 주기에 갱신되지만,
+//           강제쓰기 발생 자체는 즉시 알리는 것이 운영상 유용함).
+//  생성: 2026-06-29 / 수정: 2026-07-16 (C-EX-13)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Events;
@@ -23,6 +28,7 @@ public sealed class SignalRPushService : IDisposable
 
     private IDisposable? _tagValueSub;
     private IDisposable? _alarmSub;
+    private IDisposable? _forceWriteSub;   // ★ C-EX-13 신규
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
@@ -46,8 +52,9 @@ public sealed class SignalRPushService : IDisposable
             return;
         }
 
-        _tagValueSub = EventBus.Instance.Subscribe<TagValueUpdatedEvent>(_OnTagValue);
-        _alarmSub    = EventBus.Instance.Subscribe<AlarmChangedEvent>(_OnAlarmChanged);
+        _tagValueSub   = EventBus.Instance.Subscribe<TagValueUpdatedEvent>(_OnTagValue);
+        _alarmSub      = EventBus.Instance.Subscribe<AlarmChangedEvent>(_OnAlarmChanged);
+        _forceWriteSub = EventBus.Instance.Subscribe<TagForceWriteEvent>(_OnForceWrite);   // ★ C-EX-13
 
         LogManager.Instance.Info("SignalR", "SignalR Push 서비스 구독 시작");
     }
@@ -93,11 +100,35 @@ public sealed class SignalRPushService : IDisposable
         _ = _hostService.Pusher.PushAlarmAsync(payload);
     }
 
+    /// <summary>
+    /// ★ C-EX-13 신규: Tag 강제쓰기(Force Write) 실행 결과를 모든 클라이언트에 Push.
+    /// 클라이언트 JS: connection.on("ForceWriteResult", (data) => { ... })
+    /// </summary>
+    private void _OnForceWrite(TagForceWriteEvent e)
+    {
+        if (_hostService.Pusher is null) return;
+
+        var payload = new
+        {
+            plcId     = e.PlcId,
+            tagId     = e.TagId,
+            tagName   = e.TagName,
+            address   = e.Address,
+            value     = e.Value,
+            isSuccess = e.IsSuccess,
+            error     = e.Error,
+            ts        = e.OccurredAt.ToString("O")
+        };
+
+        _ = _hostService.Pusher.PushForceWriteResultAsync(payload);
+    }
+
     // §5 ─ 정리 ────────────────────────────────────────────
 
     public void Dispose()
     {
         _tagValueSub?.Dispose();
         _alarmSub?.Dispose();
+        _forceWriteSub?.Dispose();   // ★ C-EX-13
     }
 }

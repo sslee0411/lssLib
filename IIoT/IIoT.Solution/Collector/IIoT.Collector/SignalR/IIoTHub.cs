@@ -15,7 +15,17 @@
 //             SignalRHostService.StartAsync() 에서 ASP.NET Core 빌더의
 //             Services 에도 동일 인스턴스를 등록해 Hub 생성자에서 주입받는다
 //             (기존 DeviceInstanceService 클로저 재사용 패턴과 동일 원칙).
-//  생성: 2026-06-29 / 수정: 2026-07-07 (C-EX-12)
+//  C-EX-13: ForceWrite(plcId,tagId,value,apiKey) 서버 메서드 추가
+//           IIoT.HMI(및 웹 클라이언트)가
+//           conn.invoke("ForceWrite", plcId, tagId, value, apiKey) 로 호출
+//           → ForceWriteService.WriteAsync() 위임 (C-15 에서 이미 구현된
+//           Enabled/ApiKey/Tag존재/활성/형식 검증 + AuditLogService 기록을
+//           그대로 재사용 — Hub 는 위임만 하고 별도 검증 로직을 두지 않는다).
+//           AcknowledgeAlarm 과 동일 원칙: ForceWriteService 는 WPF DI 컨테이너의
+//           싱글턴이며, SignalRHostService.StartAsync() 에서 ASP.NET Core
+//           빌더의 Services 에도 동일 인스턴스를 등록해 Hub 생성자에서
+//           주입받는다.
+//  생성: 2026-06-29 / 수정: 2026-07-07 (C-EX-12) / 2026-07-16 (C-EX-13)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Engine;
@@ -28,7 +38,7 @@ namespace IIoT.Collector.SignalR;
 /// <para>
 /// 웹 브라우저/외부 클라이언트가 연결하는 진입점.
 /// 서버→클라이언트 Push 는 <see cref="IIoTHubPusher"/> 를 통해 별도로 수행하고,
-/// 클라이언트→서버 명령은 이 클래스의 public 메서드로 노출한다(C-EX-12).
+/// 클라이언트→서버 명령은 이 클래스의 public 메서드로 노출한다(C-EX-12, C-EX-13).
 /// </para>
 /// <para>
 /// Hub 는 인스턴스가 요청(호출)마다 생성·소멸됩니다 — 필드에 상태를 두지 말 것.
@@ -39,18 +49,20 @@ public sealed class IIoTHub : Hub
     // §1 ─ 필드 ────────────────────────────────────────────
 
     private readonly AlarmStateManager _alarmManager;
+    private readonly ForceWriteService _forceWriteService;   // ★ C-EX-13 신규
 
     // §2 ─ 생성자 ──────────────────────────────────────────
 
     /// <summary>
     /// ASP.NET Core DI 가 Hub 인스턴스 생성 시 자동 주입.
-    /// AlarmStateManager 는 SignalRHostService.StartAsync() 에서
-    /// builder.Services.AddSingleton(_alarmStateManager) 로 등록된
-    /// WPF DI 싱글턴 인스턴스가 그대로 전달된다.
+    /// AlarmStateManager / ForceWriteService 는 SignalRHostService.StartAsync() 에서
+    /// builder.Services.AddSingleton(...) 로 등록된 WPF DI 싱글턴 인스턴스가
+    /// 그대로 전달된다.
     /// </summary>
-    public IIoTHub(AlarmStateManager alarmManager)
+    public IIoTHub(AlarmStateManager alarmManager, ForceWriteService forceWriteService)
     {
-        _alarmManager = alarmManager;
+        _alarmManager       = alarmManager;
+        _forceWriteService  = forceWriteService;
     }
 
     // §3 ─ 연결 ────────────────────────────────────────────
@@ -64,7 +76,7 @@ public sealed class IIoTHub : Hub
         await base.OnConnectedAsync();
     }
 
-    // §4 ─ 클라이언트 → 서버 명령 (C-EX-12) ────────────────
+    // §4 ─ 클라이언트 → 서버 명령 (C-EX-12, C-EX-13) ───────
 
     /// <summary>
     /// 알람 ACK 요청.
@@ -82,6 +94,29 @@ public sealed class IIoTHub : Hub
         _alarmManager.Acknowledge(alarmKey);
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// ★ C-EX-13 신규: Tag 강제값 쓰기(Force Write) 요청.
+    /// <para>
+    /// 클라이언트 호출 예:
+    /// <c>var result = await conn.InvokeAsync&lt;ForceWriteResult&gt;(
+    ///     "ForceWrite", plcId, tagId, value, apiKey);</c>
+    /// </para>
+    /// <para>
+    /// 검증(기능 활성화·API Key·Tag 존재·활성 상태·값 형식)과 실제 통신,
+    /// 감사 로그 기록까지 모두 ForceWriteService.WriteAsync() (C-15) 에 위임한다.
+    /// Hub 는 원격 호출 진입점 역할만 수행하며 별도 검증 로직을 두지 않는다.
+    /// </para>
+    /// </summary>
+    /// <param name="plcId">대상 PLC/Device ID</param>
+    /// <param name="tagId">대상 Tag ID</param>
+    /// <param name="value">쓸 값 (문자열, Raw 값 기준)</param>
+    /// <param name="apiKey">
+    /// settings.json Security.ForceWriteApiKey 가 설정된 경우 일치해야 함.
+    /// 미설정 시 빈 문자열("")로 호출 가능(검증 생략).
+    /// </param>
+    public Task<ForceWriteResult> ForceWrite(string plcId, string tagId, string value, string apiKey = "")
+        => _forceWriteService.WriteAsync(plcId, tagId, value, apiKey);
 }
 
 /// <summary>
@@ -113,4 +148,11 @@ public sealed class IIoTHubPusher
     /// </summary>
     public Task PushAlarmAsync(object payload)
         => _hub.Clients.All.SendAsync("AlarmChanged", payload);
+
+    /// <summary>
+    /// ★ C-EX-13 신규: Tag 강제쓰기(Force Write) 실행 결과를 모든 클라이언트에 Push합니다.
+    /// 클라이언트 JS: connection.on("ForceWriteResult", (data) => { ... })
+    /// </summary>
+    public Task PushForceWriteResultAsync(object payload)
+        => _hub.Clients.All.SendAsync("ForceWriteResult", payload);
 }

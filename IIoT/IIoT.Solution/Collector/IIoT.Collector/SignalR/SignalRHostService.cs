@@ -33,7 +33,11 @@
 //           AlarmStateManager 싱글턴 인스턴스를 그대로 등록해 Hub 활성화 시
 //           주입되도록 함 (기존 DeviceInstanceService 클로저 재사용 원칙과
 //           동일 맥락 — 새 컨테이너를 만들지 않고 기존 인스턴스를 공유).
-//  생성: 2026-06-29 / 수정: 2026-07-07 (C-EX-12)
+//  C-EX-13: IIoTHub 가 ForceWriteService 도 생성자로 요구하게 되어(Tag 강제쓰기),
+//           동일 원칙으로 ASP.NET Core 자체 DI 컨테이너에 ForceWriteService
+//           싱글턴 인스턴스도 함께 등록. IIoT.HMI(및 웹 클라이언트)가
+//           conn.invoke("ForceWrite", ...) 로 Tag 를 원격 제어할 수 있게 됨.
+//  생성: 2026-06-29 / 수정: 2026-07-07 (C-EX-12) / 2026-07-16 (C-EX-13)
 // ══════════════════════════════════════════════════════════
 
 using System.IO;
@@ -62,6 +66,7 @@ public sealed class SignalRHostService : IAsyncDisposable
     private readonly CollectorSettingsLoader _settingsLoader;
     private readonly DeviceInstanceService _deviceInstanceService;   // ★ C-EX-01-7 신규
     private readonly AlarmStateManager     _alarmStateManager;       // ★ C-EX-12 신규
+    private readonly ForceWriteService     _forceWriteService;       // ★ C-EX-13 신규
 
     private WebApplication? _app;
     private Thread?         _serverThread;
@@ -75,11 +80,13 @@ public sealed class SignalRHostService : IAsyncDisposable
     public SignalRHostService(
         CollectorSettingsLoader settingsLoader,
         DeviceInstanceService deviceInstanceService,   // ★ C-EX-01-7 신규
-        AlarmStateManager alarmStateManager)            // ★ C-EX-12 신규
+        AlarmStateManager alarmStateManager,            // ★ C-EX-12 신규
+        ForceWriteService forceWriteService)            // ★ C-EX-13 신규
     {
         _settingsLoader = settingsLoader;
         _deviceInstanceService = deviceInstanceService;
         _alarmStateManager = alarmStateManager;
+        _forceWriteService = forceWriteService;
     }
 
     // §3 ─ 시작 ────────────────────────────────────────────
@@ -131,6 +138,10 @@ public sealed class SignalRHostService : IAsyncDisposable
         //    ASP.NET Core 자체 DI 컨테이너에도 등록 (WPF 쪽 싱글턴 인스턴스 그대로 공유).
         //    이렇게 하지 않으면 Hub 활성화 시 "서비스를 찾을 수 없음" 예외 발생.
         builder.Services.AddSingleton(_alarmStateManager);
+
+        // ── ★ C-EX-13 신규: IIoTHub 생성자가 요구하는 ForceWriteService 도
+        //    동일한 이유로 ASP.NET Core 자체 DI 컨테이너에 등록.
+        builder.Services.AddSingleton(_forceWriteService);
 
         // ── 포트 설정
         builder.WebHost.UseUrls($"http://0.0.0.0:{s.Port}");
