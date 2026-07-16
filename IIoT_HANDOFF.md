@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v9.5 | 현재 위치: IIoT.Manager MG-EX-02 (빌드 확인 대기) — 실무강화 진행 중**
+**작성일: 2026-07-09 | 버전: v9.8 | 현재 위치: IIoT.Manager MG-EX-05 (빌드 확인 대기) — B그룹 진행 중**
 
 ---
 
@@ -293,11 +293,30 @@ async 커맨드/동기화 메서드는 반드시 try/catch로 감싸고 오류�
                 ("실행 중→정지/응답없음" 이 IsBusy(수동조작) 없이 발생), 스케줄·배포 실패
            수정: EventHistoryService / TrayService(NotifyEvent+System.Media)
                 / ProcessCardViewModel / ScheduleService / DeployViewModel / App.xaml.cs
- MG-EX-03  Windows 시작 시 자동 실행 + AutoStart 프로그램 순차 자동 기동 (지연 옵션)
- MG-EX-04  이벤트 이력 SQLite 영구 저장 (MN-EX-02 AlarmHistoryService 패턴)
+ MG-EX-03  Windows 자동 실행 + AutoStart 순차 기동  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           신규: Core\StartupRegistrationService.cs (HKCU Run 레지스트리 — 관리자 권한 불필요)
+           수정: ManagedProcessInfo — AutoStart(기본 false)·AutoStartDelaySec(기본 3) 추가
+                ManagerMainViewModel — RunAtWindowsStartup 토글 + _AutoStartProgramsAsync
+                (배열 순서 순차 시작, 이미 실행 중이면 건너뜀, fire-and-forget+자체 try/catch)
+                ProcessStatusView.xaml — 타이틀 우측 자동 실행 체크박스 / App.xaml.cs — DI
+ MG-EX-04  이벤트 이력 SQLite 영구 저장  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           신규: Core\Storage\EventHistoryDbService.cs (MN-EX-02 패턴 —
+                Data\manager.db, event_history 테이블, WAL, 보존 90일)
+           수정: csproj·sln — lssLib.DB + lssLib.DB.Sqlite 참조 추가
+                ManagerMainViewModel — InitializeAsync 에서 DB 오픈 (설정 로드 전)
+                App.xaml.cs — Recorded 구독(모든 이벤트 DB 기록, fire-and-forget)
+                + _WaitWithTimeout 헬퍼 도입(버그 #11 패턴) + OnExit DisposeAsync
+           ※ 조회 UI 는 미포함 — 필요 시 후속 (DB 툴 또는 MG-EX-07 과 통합 검토)
 
 [B. 진단·가시성]
- MG-EX-05  프로세스별 CPU/메모리 리소스 모니터링 + 임계 초과 이벤트
+ MG-EX-05  CPU/메모리 리소스 모니터링  ← 🔄 코드 생성 완료 (빌드 확인 대기)
+           구조: RefreshAsync ① 단계에서 핸들 살아있을 때 샘플 채집 —
+                CPU% = TotalProcessorTime 증분/(경과×코어수), 메모리 = WorkingSet64
+                PID 변경(재시작) 시 샘플 리셋 / 접근거부 등은 표시만 생략
+           경고: manager.json Resource { CpuWarnPercent=80, MemoryWarnMb=1024 }
+                초과 시 Warning 이벤트 (항목별 5분 쿨다운 — 반복 알림 방지)
+           수정: ManagerSettings(Resource 섹션) / ProcessCardViewModel(_SampleResources)
+                / ManagerMainViewModel(설정 전달) / ProcessStatusView.xaml(리소스 줄)
  MG-EX-06  헬스체크 응답시간(ms) 미니 추세 차트 (OxyPlot 스파크라인)
  MG-EX-07  로그 검색 강화 — 과거 일자 로그 파일 열기 + CSV 내보내기
 
@@ -496,6 +515,17 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
               EventSeverity 도입, Warning 판정 규칙: 수동 조작(IsBusy) 없는
               "실행 중→정지/응답없음" 전이 + 자동복구·스케줄·배포 실패.
               다음: MG-EX-03 (Windows 자동 실행 + AutoStart 순차 기동) |
+| v9.6 (2026-07-09) | MG-EX-03 코드 생성 완료 — Windows 자동 실행(HKCU Run) +
+              AutoStart 순차 기동(배열 순서·프로그램별 지연·중복 방지).
+              재부팅 → Manager 자동 실행 → 프로그램 자동 복원 체계 완성.
+              다음: MG-EX-04 (이벤트 이력 SQLite 영구 저장 — A그룹 마지막) |
+| v9.7 (2026-07-09) | MG-EX-04 코드 생성 완료 — 이벤트 이력 SQLite 영구 저장.
+              ★ A그룹(안정 운영 4건) 코드 전체 완료. Manager: lssLib.DB 참조
+              추가, _WaitWithTimeout 종료 정리 세트 도입. 다음: B·C그룹 선별
+              또는 IIoT.HMI 착수 |
+| v9.8 (2026-07-09) | MG-EX-05 코드 생성 완료 — CPU/메모리 리소스 모니터링 +
+              임계 초과 경고(5분 쿨다운). 카드에 "CPU n% · 메모리 n MB" 표시.
+              다음: MG-EX-06 (응답시간 추세 차트) 또는 선별 진행 |
 
 ---
 

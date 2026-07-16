@@ -10,12 +10,16 @@
 //         AutoRestart=true 인 프로그램은 연속 3회 실패 시 자동 재시작.
 //  MG-05: EventHistoryService 연동 — 수동 시작/정지/재시작, 자동 재시작,
 //         상태 변경(감지)을 대시보드 이벤트 이력에 기록.
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-05)
+//  MG-EX-02: 상태 변경 심각도 판정 (비정상 종료·행 → Warning 트레이 알림)
+//  MG-EX-05: CPU/메모리 리소스 샘플링 + 임계 초과 경고 (5분 쿨다운).
+//         CPU% = TotalProcessorTime 증분 / (경과시간 × 코어수) — 2초 주기 샘플
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-05)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IIoT.Manager.Core;
+using IIoT.Manager.Core.Config;
 using IIoT.Manager.Models;
 using System.Diagnostics;
 
@@ -36,12 +40,22 @@ public partial class ProcessCardViewModel : ObservableObject
     private readonly ProcessManager      _processManager;
     private readonly HealthCheckService  _healthCheck;
     private readonly EventHistoryService _events;
+    private readonly ResourceSettings    _resource;
 
     /// <summary>★ MG-03: 헬스체크 연속 실패 횟수 (자동복구 판정용, 성공 시 리셋)</summary>
     private int _healthFailCount;
 
     /// <summary>★ MG-03: 자동 재시작 발동 임계 (연속 실패 3회 = 약 6초)</summary>
     private const int _autoRestartThreshold = 3;
+
+    // ★ MG-EX-05: CPU 샘플링 상태 (이전 샘플과의 증분으로 % 계산)
+    private TimeSpan _prevCpuTime;
+    private DateTime _prevSampleAt;
+    private int      _prevSamplePid = -1;
+
+    /// <summary>★ MG-EX-05: 리소스 경고 쿨다운 (항목별 마지막 경고 시각 — 5분)</summary>
+    private DateTime _lastCpuWarnAt, _lastMemWarnAt;
+    private static readonly TimeSpan _resourceWarnCooldown = TimeSpan.FromMinutes(5);
 
     /// <summary>이 카드가 표시하는 프로그램 정의 (읽기 전용)</summary>
     public ManagedProcessInfo Info { get; }
@@ -82,7 +96,73 @@ public partial class ProcessCardViewModel : ObservableObject
     [ObservableProperty]
     private string _healthStatus = "";
 
+    /// <summary>★ MG-EX-05: CPU 사용률 % (첫 샘플·정지 시 null)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ResourceText))]
+    private double? _cpuPercent;
+
+    /// <summary>★ MG-EX-05: 메모리(WorkingSet) MB (정지 시 null)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ResourceText))]
+    private double? _memoryMb;
+
     // §3 ─ 파생 속성 ─────────────────────────────────────────
+
+    // ★ MG-EX-05: 리소스 샘플링 + 임계 초과 경고 (Refresh ① 단계에서 호출)
+    private void _SampleResources(Process p)
+    {
+        try
+        {
+            var now     = DateTime.Now;
+            var cpuTime = p.TotalProcessorTime;
+            var memMb   = p.WorkingSet64 / 1024.0 / 1024.0;
+
+            // CPU%: 이전 샘플과의 증분 (같은 PID 일 때만 — 재시작 시 리셋)
+            double? cpuPct = null;
+            if (_prevSamplePid == p.Id)
+            {
+                var elapsed = (now - _prevSampleAt).TotalSeconds;
+                if (elapsed > 0.5)
+                    cpuPct = (cpuTime - _prevCpuTime).TotalSeconds
+                             / (elapsed * Environment.ProcessorCount) * 100.0;
+            }
+
+            _prevCpuTime   = cpuTime;
+            _prevSampleAt  = now;
+            _prevSamplePid = p.Id;
+
+            CpuPercent = cpuPct is double c ? Math.Clamp(c, 0, 100) : null;
+            MemoryMb   = memMb;
+
+            // ── 임계 초과 경고 (항목별 5분 쿨다운 — 반복 알림 방지) ──
+            if (_resource.CpuWarnPercent > 0 && CpuPercent is double cpu &&
+                cpu >= _resource.CpuWarnPercent &&
+                now - _lastCpuWarnAt >= _resourceWarnCooldown)
+            {
+                _lastCpuWarnAt = now;
+                _events.Record(Info.Name,
+                    $"CPU 사용률 임계 초과: {cpu:F1}% (임계 {_resource.CpuWarnPercent}%)",
+                    EventSeverity.Warning);
+            }
+
+            if (_resource.MemoryWarnMb > 0 && memMb >= _resource.MemoryWarnMb &&
+                now - _lastMemWarnAt >= _resourceWarnCooldown)
+            {
+                _lastMemWarnAt = now;
+                _events.Record(Info.Name,
+                    $"메모리 사용량 임계 초과: {memMb:F0} MB (임계 {_resource.MemoryWarnMb} MB)",
+                    EventSeverity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            // 접근 거부(권한) 등 — 리소스 표시만 생략, 상태 감지는 계속
+            lssLib.Log.LogManager.Instance.Debug("ProcessCard",
+                $"{Info.Name} 리소스 샘플 실패: {ex.Message}");
+            CpuPercent = null;
+            MemoryMb   = null;
+        }
+    }
 
     /// <summary>카드에 표시할 상태 문구</summary>
     public string StatusText => State switch
@@ -101,17 +181,30 @@ public partial class ProcessCardViewModel : ObservableObject
     /// <summary>★ MG-03: 응답시간 표시 문구</summary>
     public string PingText => PingMs is long ms ? $"{ms} ms" : "—";
 
+    /// <summary>★ MG-EX-05: 리소스 표시 문구 (예: "CPU 3.2%  ·  메모리 145 MB")</summary>
+    public string ResourceText
+    {
+        get
+        {
+            if (MemoryMb is not double mem) return "";
+            var cpu = CpuPercent is double c ? $"CPU {c:F1}%" : "CPU —";
+            return $"{cpu}  ·  메모리 {mem:F0} MB";
+        }
+    }
+
     // §4 ─ 생성자 ─────────────────────────────────────────────
 
     public ProcessCardViewModel(ManagedProcessInfo  info,
                                 ProcessManager      processManager,
                                 HealthCheckService  healthCheck,
-                                EventHistoryService events)
+                                EventHistoryService events,
+                                ResourceSettings    resource)
     {
         Info            = info;
         _processManager = processManager;
         _healthCheck    = healthCheck;
         _events         = events;
+        _resource       = resource;
     }
 
     // ★ MG-05: 상태 변경 감지 → 이벤트 이력 기록
@@ -205,7 +298,7 @@ public partial class ProcessCardViewModel : ObservableObject
     /// </summary>
     public async Task RefreshAsync()
     {
-        // ── ① 프로세스 존재 검사 ──────────────────────────────
+        // ── ① 프로세스 존재 검사 + 리소스 샘플 채집 (MG-EX-05) ──
         bool running;
         Process[] found = [];
         try
@@ -213,6 +306,10 @@ public partial class ProcessCardViewModel : ObservableObject
             found = Process.GetProcessesByName(Info.ProcessName);
             running = found.Length > 0;
             Pid     = running ? found[0].Id : null;
+
+            // ★ MG-EX-05: 핸들이 살아있는 여기서 리소스 값 채집 (Dispose 전)
+            if (running)
+                _SampleResources(found[0]);
         }
         catch (Exception ex)
         {
@@ -235,6 +332,11 @@ public partial class ProcessCardViewModel : ObservableObject
             PingMs           = null;
             HealthStatus     = "";
             _healthFailCount = 0;
+
+            // ★ MG-EX-05: 리소스 표시 초기화
+            CpuPercent     = null;
+            MemoryMb       = null;
+            _prevSamplePid = -1;
             return;
         }
 

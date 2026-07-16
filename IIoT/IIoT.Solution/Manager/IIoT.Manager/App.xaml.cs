@@ -24,12 +24,17 @@
 //            (미정리 시 유령 트레이 아이콘 잔류 — Monitor 교훈)
 //  MG-EX-02: EventHistoryService.Recorded → TrayService.NotifyEvent 연결
 //            (Warning 이벤트만 알림 — Info 는 이력/로그만)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-02)
+//  MG-EX-03: StartupRegistrationService DI 등록 (Windows 자동 실행 —
+//            레지스트리만 조작, 핸들 미보관 → OnExit 정리 불필요)
+//  MG-EX-04: EventHistoryDbService DI 등록 + Recorded 구독(DB 기록) +
+//            OnExit _WaitWithTimeout 정리 세트 도입 (Monitor 버그 #10/#11 패턴)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-04)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Core;
 using IIoT.Manager.Core.Config;
 using IIoT.Manager.Core.Notification;
+using IIoT.Manager.Core.Storage;
 // ★ 이동(2026-07-09): ManagerMainViewModel 이 루트 namespace(IIoT.Manager)로
 //   이동해 ViewModels using 불필요 (Studio·Collector 컨벤션 정렬)
 // ★ MG-04: LogViewerViewModel 은 ViewModels 하위 (메인 VM 아님 — 규칙 준수)
@@ -88,10 +93,17 @@ public partial class App : Application
         // ★ MG-EX-02: 경고 이벤트 → 트레이 풍선+사운드 알림 연결
         //   (자동복구 발동/실패, 비정상 종료·행 감지, 스케줄·배포 실패)
         //   Info 이벤트는 알림 제외 — 과다 알림 방지 (이력·로그에만 기록)
-        _services.GetRequiredService<EventHistoryService>().Recorded += (row, severity) =>
+        var events  = _services.GetRequiredService<EventHistoryService>();
+        var eventDb = _services.GetRequiredService<EventHistoryDbService>();
+
+        events.Recorded += (row, severity) =>
         {
             if (severity == EventSeverity.Warning)
                 tray.NotifyEvent($"IIoT.Manager — {row.Program}", row.Text, warning: true);
+
+            // ★ MG-EX-04: 모든 이벤트를 SQLite 영구 저장 (fire-and-forget —
+            //   RecordAsync 내부 try/catch. DB 초기화 전 이벤트는 자동 건너뜀)
+            _ = eventDb.RecordAsync(row, severity);
         };
 
         // ④ 창 생성 및 표시
@@ -115,9 +127,32 @@ public partial class App : Application
         // ★ MG-EX-01: 트레이 아이콘 정리 (미정리 시 유령 아이콘 잔류)
         _services?.GetService<TrayService>()?.Dispose();
 
+        // ★ MG-EX-04: 이벤트 이력 DB 연결 정리 (5초 타임아웃 — 버그 #11 패턴)
+        _WaitWithTimeout(_services?.GetService<EventHistoryDbService>()?.DisposeAsync().AsTask());
+
         _themeSettings?.Dispose();   // 이벤트 구독 해제 필수
         LogManager.Instance.Info("App", "IIoT.Manager 종료");
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// ★ MG-EX-04 (Monitor 버그 #11 패턴): 종료 정리 Task 를 최대 5초까지만
+    /// 기다린다. 그 안에 끝나지 않으면 로그만 남기고 포기 — 앱 종료 자체가
+    /// 무한정 멈추는 것을 방지하는 안전장치.
+    /// </summary>
+    private static void _WaitWithTimeout(Task? task)
+    {
+        if (task is null) return;
+
+        try
+        {
+            if (!task.Wait(TimeSpan.FromSeconds(5)))
+                LogManager.Instance.Warn("App", "종료 정리 작업이 5초 내 완료되지 않아 건너뜁니다.");
+        }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Warn("App", $"종료 정리 중 예외(무시하고 계속 종료): {ex.Message}");
+        }
     }
 
     // §4 ─ DI 구성 ────────────────────────────────────────────
@@ -137,6 +172,12 @@ public partial class App : Application
 
         // ★ MG-EX-01 신규: 트레이 상주 (MainWindow 의존성 — 먼저 등록)
         services.AddSingleton<TrayService>();
+
+        // ★ MG-EX-03 신규: Windows 자동 실행 등록 (ManagerMainViewModel 의존성)
+        services.AddSingleton<StartupRegistrationService>();
+
+        // ★ MG-EX-04 신규: 이벤트 이력 SQLite 저장 (ManagerMainViewModel 의존성)
+        services.AddSingleton<EventHistoryDbService>();
 
         // ★ MG-04 신규: 로그 테일링 + 로그 뷰어 (LogTailService 가 VM 의존성 — 먼저 등록)
         services.AddSingleton<LogTailService>();

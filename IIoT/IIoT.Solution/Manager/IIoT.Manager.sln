@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.UI.Themes", "..\UI\The
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IIoT.Contracts", "..\Contracts\IIoT.Contracts.csproj", "{5B8C1D64-9F27-4E3A-B1C8-2D7A4F0E6C95}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB", "..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj", "{8D3F5A21-6C94-4B7E-9A2D-1E5C8F0B3D46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lssLib.DB.Sqlite", "..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj", "{4A7B2E90-3D18-4F6C-B5E9-7C0A9D2F1B58}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{5B8C1D64-9F27-4E3A-B1C8-2D7A4F0E6C95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B8C1D64-9F27-4E3A-B1C8-2D7A4F0E6C95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B8C1D64-9F27-4E3A-B1C8-2D7A4F0E6C95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D3F5A21-6C94-4B7E-9A2D-1E5C8F0B3D46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D3F5A21-6C94-4B7E-9A2D-1E5C8F0B3D46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D3F5A21-6C94-4B7E-9A2D-1E5C8F0B3D46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D3F5A21-6C94-4B7E-9A2D-1E5C8F0B3D46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A7B2E90-3D18-4F6C-B5E9-7C0A9D2F1B58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A7B2E90-3D18-4F6C-B5E9-7C0A9D2F1B58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A7B2E90-3D18-4F6C-B5E9-7C0A9D2F1B58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A7B2E90-3D18-4F6C-B5E9-7C0A9D2F1B58}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -61,6 +61,19 @@ public sealed class ManagedProcessInfo
     /// </summary>
     public bool AutoRestart { get; set; } = false;
 
+    /// <summary>
+    /// ★ MG-EX-03: 자동 기동 — Manager 시작 시 이 프로그램을 자동 시작.
+    /// 기본 false — manager.json 에서 프로그램별로 활성화 (Collector·Monitor 권장).
+    /// 시작 순서 = Processes[] 배열 순서.
+    /// </summary>
+    public bool AutoStart { get; set; } = false;
+
+    /// <summary>
+    /// ★ MG-EX-03: 자동 기동 후 다음 프로그램 시작까지 대기 초.
+    /// (예: Collector 가 Hub 를 먼저 열도록 5초 뒤 Monitor 시작)
+    /// </summary>
+    public int AutoStartDelaySec { get; set; } = 3;
+
     // §2 ─ 기본 정의 ─────────────────────────────────────────
 
     /// <summary>

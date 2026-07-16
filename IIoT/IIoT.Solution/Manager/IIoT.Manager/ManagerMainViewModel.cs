@@ -16,7 +16,11 @@
 //  MG-06: 배포 탭(인덱스 3) 추가 + DeployViewModel.Initialize() 연동
 //  MG-07: 스케줄 탭(인덱스 4) 추가 + ScheduleViewModel.Initialize()
 //         + ScheduleService.Start() 연동
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-07)
+//  MG-EX-03: Windows 시작 시 자동 실행 토글(RunAtWindowsStartup — 레지스트리)
+//            + AutoStart 프로그램 순차 자동 기동 (배열 순서, 프로그램별 지연)
+//  MG-EX-04: EventHistoryDbService.InitializeAsync() 호출 추가
+//            (설정 로드 직후 — 이후 발생 이벤트부터 DB 기록)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-04)
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -25,6 +29,7 @@ using IIoT.Manager.Core;
 using IIoT.Manager.Core.Config;
 using IIoT.Manager.ViewModels;
 using System.Collections.ObjectModel;
+using System.Linq;   // ★ 규칙: ImplicitUsings 미의존 (CS0246 재발 방지)
 using System.Windows.Threading;
 
 namespace IIoT.Manager;
@@ -49,6 +54,8 @@ public partial class ManagerMainViewModel : ObservableObject
     private readonly ViewModels.DeployViewModel   _deployVm;
     private readonly ViewModels.ScheduleViewModel _scheduleVm;
     private readonly ScheduleService              _scheduleService;
+    private readonly StartupRegistrationService   _startupReg;
+    private readonly Core.Storage.EventHistoryDbService _eventDb;
     private readonly DispatcherTimer       _refreshTimer;
     private bool                           _initialized;
 
@@ -81,6 +88,25 @@ public partial class ManagerMainViewModel : ObservableObject
     public bool IsDeployTab    => ActiveTabIndex == 3;
     public bool IsScheduleTab  => ActiveTabIndex == 4;
 
+    /// <summary>★ MG-EX-03: Windows 시작 시 Manager 자동 실행 (레지스트리 HKCU Run)</summary>
+    [ObservableProperty]
+    private bool _runAtWindowsStartup;
+
+    // ★ MG-EX-03: 체크 토글 → 즉시 레지스트리 반영 (실패 시 상태바 노출)
+    partial void OnRunAtWindowsStartupChanged(bool value)
+    {
+        var ok = value ? _startupReg.Register() : _startupReg.Unregister();
+        if (ok)
+        {
+            _events.Record("IIoT.Manager",
+                value ? "Windows 시작 시 자동 실행 등록" : "Windows 시작 시 자동 실행 해제");
+        }
+        else
+        {
+            StatusText = "Windows 자동 실행 설정 실패 — 로그 확인";
+        }
+    }
+
     // §4 ─ 생성자 ─────────────────────────────────────────────
 
     public ManagerMainViewModel(ManagerSettingsLoader settingsLoader,
@@ -90,7 +116,9 @@ public partial class ManagerMainViewModel : ObservableObject
                                 EventHistoryService   events,
                                 ViewModels.DeployViewModel   deployVm,
                                 ViewModels.ScheduleViewModel scheduleVm,
-                                ScheduleService              scheduleService)
+                                ScheduleService              scheduleService,
+                                StartupRegistrationService   startupReg,
+                                Core.Storage.EventHistoryDbService eventDb)
     {
         _settingsLoader  = settingsLoader;
         _processManager  = processManager;
@@ -100,6 +128,12 @@ public partial class ManagerMainViewModel : ObservableObject
         _deployVm        = deployVm;
         _scheduleVm      = scheduleVm;
         _scheduleService = scheduleService;
+        _startupReg      = startupReg;
+        _eventDb         = eventDb;
+
+        // ★ MG-EX-03: 현재 레지스트리 등록 상태로 초기화
+        //   (백킹 필드 직접 대입 — OnChanged 핸들러의 불필요한 재등록 방지)
+        _runAtWindowsStartup = startupReg.IsRegistered();
 
         // ★ 2초 주기 상태 갱신 (UI 스레드 — MN-EX-04 와 동일 패턴)
         //   카드가 채워지기 전(초기화 전)에는 빈 컬렉션 순회 — 무해
@@ -132,11 +166,16 @@ public partial class ManagerMainViewModel : ObservableObject
 
         try
         {
+            // ★ MG-EX-04: 이벤트 이력 DB 초기화 (SQLite 오픈 — 파일 I/O 이므로
+            //   창 표시 후 시점인 여기서 수행. 이후 발생 이벤트부터 DB 기록됨)
+            await _eventDb.InitializeAsync();
+
             await _settingsLoader.LoadAsync();
 
             Processes.Clear();
             foreach (var info in _settingsLoader.Settings.Processes)
-                Processes.Add(new ProcessCardViewModel(info, _processManager, _healthCheck, _events));
+                Processes.Add(new ProcessCardViewModel(info, _processManager, _healthCheck, _events,
+                                                       _settingsLoader.Settings.Resource));   // ★ MG-EX-05
 
             // ★ MG-04: 로그 테일링 시작 (manager.json 로드 후 — 대상 경로 확정)
             _logTail.Start();
@@ -149,6 +188,11 @@ public partial class ManagerMainViewModel : ObservableObject
             _scheduleService.Start();
 
             await _RefreshAllAsync();   // 첫 화면부터 상태가 보이도록 즉시 1회 갱신
+
+            // ★ MG-EX-03: AutoStart 프로그램 순차 자동 기동
+            //   (fire-and-forget — 지연 대기가 초기화 완료를 막지 않도록.
+            //    내부에서 try/catch — 규칙: async void/미대기 Task 는 이중 방어)
+            _ = _AutoStartProgramsAsync();
         }
         catch (Exception ex)
         {
@@ -167,6 +211,45 @@ public partial class ManagerMainViewModel : ObservableObject
     }
 
     // §6 ─ 내부 메서드 ────────────────────────────────────────
+
+    /// <summary>
+    /// ★ MG-EX-03: AutoStart=true 프로그램을 배열 순서대로 자동 시작한다.
+    /// 각 프로그램 시작 후 AutoStartDelaySec 만큼 대기 (기동 순서 보장 —
+    /// 예: Collector 가 Hub 를 연 뒤 Monitor 접속).
+    /// 이미 실행 중이면 건너뜀 (Manager 재시작 시 중복 실행 방지).
+    /// </summary>
+    private async Task _AutoStartProgramsAsync()
+    {
+        try
+        {
+            var targets = Processes.Where(c => c.Info.AutoStart).ToList();
+            if (targets.Count == 0) return;
+
+            _events.Record("자동 기동", $"대상 {targets.Count}개 프로그램 순차 시작");
+
+            foreach (var card in targets)
+            {
+                if (card.IsRunning)
+                {
+                    _events.Record(card.Info.Name, "자동 기동 건너뜀 (이미 실행 중)");
+                    continue;
+                }
+
+                var result = _processManager.Start(card.Info);
+                _events.Record(card.Info.Name,
+                    result.Ok ? "자동 기동 시작" : $"자동 기동 실패 — {result.Error}",
+                    result.Ok ? EventSeverity.Info : EventSeverity.Warning);
+
+                // 다음 프로그램 시작 전 대기 (음수 방어)
+                await Task.Delay(TimeSpan.FromSeconds(Math.Max(0, card.Info.AutoStartDelaySec)));
+            }
+        }
+        catch (Exception ex)
+        {
+            // ★ 규칙: 미대기(fire-and-forget) Task 는 반드시 자체 try/catch
+            lssLib.Log.LogManager.Instance.Error("ManagerMain", $"자동 기동 오류: {ex.Message}");
+        }
+    }
 
     /// <summary>모든 카드의 프로세스 상태를 갱신한다 (MG-03: 헬스체크 핑 포함 비동기).</summary>
     private async Task _RefreshAllAsync()

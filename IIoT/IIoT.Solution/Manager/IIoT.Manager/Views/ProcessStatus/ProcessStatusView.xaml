@@ -6,7 +6,9 @@
             (버그 #9 교훈: 버튼은 반드시 테마 정식 스타일 사용 —
              SuccessBtn/DangerBtn/SecondaryBtn, 비활성 시각 처리 포함)
      MG-03: 헬스체크 응답시간(ms) + 내부 상태 문구 표시 추가
-     생성: 2026-07-09 / 수정: 2026-07-09 (MG-03)
+     MG-EX-03: 타이틀 우측 "Windows 시작 시 자동 실행" 체크박스 추가
+     MG-EX-05: 카드에 CPU/메모리 리소스 표시 줄 추가
+     생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-05)
      규칙:
        ① DynamicResource 필수 (Trigger Setter 포함)
        ② UserControl.Resources 는 UserControl 직계 자식
@@ -36,11 +38,20 @@
                       HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
 
-                <!-- § 섹션 타이틀 -->
-                <TextBlock Text="프로세스 상태"
-                           FontSize="16" FontWeight="Bold"
-                           Foreground="{DynamicResource TextBrush}"
-                           Margin="0,0,0,16"/>
+                <!-- § 섹션 타이틀 + Windows 자동 실행 토글 (MG-EX-03) -->
+                <DockPanel Margin="0,0,0,16">
+                    <CheckBox DockPanel.Dock="Right"
+                              Content="Windows 시작 시 Manager 자동 실행"
+                              IsChecked="{Binding RunAtWindowsStartup}"
+                              FontSize="12"
+                              Foreground="{DynamicResource Text2Brush}"
+                              VerticalAlignment="Center"
+                              ToolTip="체크 시 현재 사용자 로그인 때 Manager가 자동 실행됩니다 (레지스트리 HKCU Run). 프로그램별 자동 기동은 manager.json 의 AutoStart 로 설정합니다."/>
+                    <TextBlock Text="프로세스 상태"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
 
                 <!-- § 상태 카드 목록 -->
                 <ItemsControl ItemsSource="{Binding Processes}">
@@ -112,6 +123,12 @@
                                                FontSize="11"
                                                Foreground="{DynamicResource Text3Brush}"
                                                TextWrapping="Wrap"
+                                               Margin="18,4,0,0"/>
+
+                                    <!-- ★ MG-EX-05: CPU/메모리 리소스 (정지 시 빈 문자열 → 자동 축소) -->
+                                    <TextBlock Text="{Binding ResourceText}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource Text2Brush}"
                                                Margin="18,4,0,0"/>
 
                                     <!-- ★ MG-02: 제어 버튼 (테마 정식 스타일 — 비활성 시각 처리 포함) -->

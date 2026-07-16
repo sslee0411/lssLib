@@ -46,6 +46,10 @@
 		<!-- lssLib BCL — 로그 -->
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 
+		<!-- ★ MG-EX-04: lssLib BCL — SQLite (이벤트 이력 영구 저장, Monitor MN-EX-02 패턴) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj" />
+
 		<!-- WPF 테마 (v1.5) -->
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
 

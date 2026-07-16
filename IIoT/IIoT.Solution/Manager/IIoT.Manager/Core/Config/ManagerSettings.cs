@@ -6,7 +6,8 @@
 //         MonitorSettingsLoader(monitor.json) 와 동일한 패턴
 //  MG-06: Deploy 섹션 추가 — 설정 배포 (소스 Config 폴더 + 배포 파일 목록)
 //  MG-07: Schedules[] 추가 — 스케줄 관리 (지정 시각 자동 시작/정지/재시작)
-//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-07)
+//  MG-EX-05: Resource 섹션 추가 — CPU/메모리 임계값 (초과 시 경고 이벤트)
+//  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-05)
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Manager.Models;
@@ -30,6 +31,22 @@ public sealed class ManagerSettings
 
     /// <summary>★ MG-07: 스케줄 목록 (구버전 manager.json 에 없으면 빈 목록)</summary>
     public List<ScheduleEntry> Schedules { get; set; } = new();
+
+    /// <summary>★ MG-EX-05: 리소스 임계값 (구버전 manager.json 에 없으면 기본값)</summary>
+    public ResourceSettings Resource { get; set; } = new();
+}
+
+/// <summary>
+/// ★ MG-EX-05: 리소스 모니터링 임계값 — 초과 시 경고 이벤트(트레이 알림 대상).
+/// 전 프로그램 공통 적용. 경고는 프로그램·항목별 5분 쿨다운 (반복 알림 방지).
+/// </summary>
+public sealed class ResourceSettings
+{
+    /// <summary>CPU 사용률 경고 임계 (%). 0 이하 = 검사 안 함.</summary>
+    public double CpuWarnPercent { get; set; } = 80;
+
+    /// <summary>메모리(WorkingSet) 경고 임계 (MB). 0 이하 = 검사 안 함.</summary>
+    public double MemoryWarnMb { get; set; } = 1024;
 }
 
 /// <summary>
