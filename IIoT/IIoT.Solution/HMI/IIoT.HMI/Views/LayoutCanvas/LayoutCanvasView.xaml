@@ -1,0 +1,350 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.HMI · Views/LayoutCanvas/LayoutCanvasView.xaml
+     역할: [레이아웃 편집] 탭 화면 — 장비 아이콘 프리폼 배치 캔버스
+           (IIoT.Studio Views/Canvas/CanvasView.xaml 중 Layer3 NodesLayer +
+            줌/팬 툴바만 이식 — Layer1 ConnectionsLayer/Layer2 DragPreviewPath/
+            Layer4 PortsLayer 는 전부 제외. HMI 캔버스는 흐름 연결이 아니라
+            프리폼 배치 용도이기 때문)
+     HM-03: 신규
+     HM-04: 아이콘 카드 렌더링을 Views/DeviceControls/DeviceControlBase 상속
+            구조로 교체 — 노드 모델 타입(DataType) ↔ 컨트롤 타입을 아래
+            DataTemplate 로 매핑한다(명시적 ItemTemplate 대신 암시적 해석).
+            ★ 신규 장비 추가 시: Core/Layout/LayoutNode.cs 에 모델 추가 +
+              Views/DeviceControls/ 에 컨트롤 추가 후, 아래에 DataTemplate
+              1개만 추가하면 된다(NodesLayer·드래그·줌/팬 로직은 무수정).
+     HM-05: 우측 속성 패널 추가 (노드 선택 시에만 표시) — Collector→Device→Tag
+            3단 콤보박스로 실시간 Tag 를 카드에 바인딩한다.
+     HM-07: ① 툴바에 Z-레벨 버튼 4개 추가(맨앞/앞으로/뒤로/맨뒤) + NodesLayer
+              ItemContainerStyle 에 Panel.ZIndex 바인딩 추가(카드 겹침 순서 반영)
+            ② 캔버스 위에 "화면(페이지)" 관리 바 신설(Row 0 추가, 툴바~상태바 한 칸씩
+              밀림) — 화면 선택 콤보 + 이름 편집 + 새 화면/삭제/저장 버튼
+     생성: 2026-07-16
+     규칙:
+       ① UserControl.Resources 는 <UserControl> 직계 자식만 허용
+       ② DynamicResource 필수 (테마 전환 대응)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.HMI.Views.LayoutCanvas.LayoutCanvasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:layout="clr-namespace:IIoT.HMI.Core.Layout"
+             xmlns:dc="clr-namespace:IIoT.HMI.Views.DeviceControls"
+             Background="{DynamicResource BgBrush}">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <layout:HexColorConverter     x:Key="HexColor"/>
+
+        <!-- ── HM-04: 노드 모델 타입 ↔ 장비 컨트롤 매핑 (암시적 DataTemplate) ──
+             카드 프레임(선택 강조·색상 바·글리프·라벨)은 각 컨트롤이 상속하는
+             DeviceControlBase 가 공통 처리 — 여기서는 "어떤 모델에 어떤 컨트롤을
+             쓸지"만 연결한다. -->
+        <DataTemplate DataType="{x:Type layout:GenericIconNode}">
+            <dc:GenericIconControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:MotorNode}">
+            <dc:MotorControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:ConveyorNode}">
+            <dc:ConveyorControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:TankNode}">
+            <dc:TankControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:ValveNode}">
+            <dc:ValveControl/>
+        </DataTemplate>
+
+        <!-- ── 팔레트 버튼 템플릿 ── -->
+        <DataTemplate x:Key="PaletteItemTemplate">
+            <Button Command="{Binding DataContext.AddNodeCommand,
+                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding NodeType}"
+                    Style="{DynamicResource ToolbarBtn}"
+                    HorizontalContentAlignment="Left"
+                    Margin="0,0,0,3" Padding="10,6">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Icon}" FontSize="13"
+                               Margin="0,0,6,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding Label}" FontSize="12"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextBrush}"/>
+                </StackPanel>
+            </Button>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ══════════════════════════════════════════
+             § 좌측 팔레트
+             ══════════════════════════════════════════ -->
+        <Grid Grid.Column="0" Background="{DynamicResource SurfaceBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Padding="12,10"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TextBlock Text="아이콘 팔레트"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"/>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="8,6">
+                    <ItemsControl ItemsSource="{Binding PaletteItems}"
+                                  ItemTemplate="{StaticResource PaletteItemTemplate}"/>
+                    <TextBlock Text="※ 카드를 선택하면 우측 속성 패널에서 Tag를 바인딩할 수 있습니다."
+                               FontSize="10" FontStyle="Italic" TextWrapping="Wrap"
+                               Foreground="{DynamicResource Text2Brush}"
+                               Margin="4,10,4,0"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Border Grid.Column="1" Background="{DynamicResource BorderBrush}"/>
+
+        <!-- ══════════════════════════════════════════
+             § 우측 캔버스
+             ══════════════════════════════════════════ -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36"/>
+                <RowDefinition Height="36"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="24"/>
+            </Grid.RowDefinitions>
+
+            <!-- ★ HM-07: 화면(페이지) 관리 바 -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Margin="8,0"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="화면:" FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox ItemsSource="{Binding Pages}"
+                              SelectedItem="{Binding ActivePage}"
+                              DisplayMemberPath="Name"
+                              Style="{DynamicResource PropCombo}"
+                              Width="130" Margin="0,0,6,0"/>
+                    <TextBox Text="{Binding ActivePage.Name, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}"
+                             Width="110" Margin="0,0,6,0"
+                             ToolTip="현재 화면 이름 편집"/>
+                    <Button Content="➕ 새 화면" Command="{Binding AddPageCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,2,0"/>
+                    <Button Content="🗑 화면 삭제" Command="{Binding DeletePageCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,8,0"/>
+                    <Button Content="💾 레이아웃 저장" Command="{Binding SaveLayoutCommand}"
+                            Style="{DynamicResource PrimaryBtn}"
+                            Padding="8,4"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 툴바 -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Margin="8,0"
+                            VerticalAlignment="Center">
+                    <Button Content="🔍＋" Command="{Binding ZoomInCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,2,0"/>
+                    <Button Content="🔍－" Command="{Binding ZoomOutCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,2,0"/>
+                    <Button Content="⟳ 초기화" Command="{Binding ZoomResetCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding ScalePercent}"
+                               FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                    <!-- ★ HM-07: Z-레벨(겹침 순서) 우선순위 — 선택된 카드에만 표시 -->
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                        <Button Content="⬆ 맨앞" Command="{Binding BringToFrontCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="8,4" Margin="0,0,2,0"
+                                ToolTip="선택한 카드를 맨 앞으로"/>
+                        <Button Content="▲ 앞으로" Command="{Binding BringForwardCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="8,4" Margin="0,0,2,0"
+                                ToolTip="선택한 카드를 한 단계 앞으로"/>
+                        <Button Content="▼ 뒤로" Command="{Binding SendBackwardCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="8,4" Margin="0,0,2,0"
+                                ToolTip="선택한 카드를 한 단계 뒤로"/>
+                        <Button Content="⬇ 맨뒤" Command="{Binding SendToBackCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="8,4" Margin="0,0,8,0"
+                                ToolTip="선택한 카드를 맨 뒤로"/>
+                    </StackPanel>
+
+                    <Button Content="🗑 선택 삭제"
+                            Command="{Binding DeleteSelectedCommand}"
+                            Style="{DynamicResource DangerBtn}"
+                            Padding="8,4"
+                            Visibility="{Binding HasSelection,
+                                Converter={StaticResource BoolToVisibility}}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 캔버스 영역 -->
+            <Border x:Name="CanvasBorder"
+                    Grid.Row="2"
+                    Background="#0D1117"
+                    ClipToBounds="True">
+
+                <Canvas x:Name="RootCanvas">
+                    <Canvas.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="ScaleXY"
+                                            ScaleX="{Binding Scale}"
+                                            ScaleY="{Binding Scale}"/>
+                            <TranslateTransform x:Name="PanXY"
+                                                X="{Binding OffsetX}"
+                                                Y="{Binding OffsetY}"/>
+                        </TransformGroup>
+                    </Canvas.RenderTransform>
+
+                    <!-- 노드 카드 레이어 (프리폼 배치 — 포트/연결선 없음)
+                         ★ HM-04: ItemTemplate 명시 대신 위 Resources 의 DataType
+                         DataTemplate 을 암시적으로 사용 — 노드 모델의 실제 타입
+                         (MotorNode/ConveyorNode 등)에 따라 자동으로 알맞은
+                         DeviceControlBase 파생 컨트롤이 선택된다.
+                         ★ HM-07: Panel.ZIndex 를 노드의 ZIndex 에 바인딩 — 값이
+                         클수록 위에 그려진다(Z-레벨 우선순위 기능). -->
+                    <ItemsControl x:Name="NodesLayer"
+                                  ItemsSource="{Binding Nodes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><Canvas/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                <Setter Property="Canvas.Top"  Value="{Binding Y}"/>
+                                <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                    </ItemsControl>
+
+                </Canvas>
+            </Border>
+
+            <!-- 상태바 -->
+            <Border Grid.Row="3"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    Padding="12,0">
+                <TextBlock FontSize="10" VerticalAlignment="Center"
+                           Foreground="{DynamicResource Text2Brush}">
+                    <Run Text="아이콘: "/>
+                    <Run Text="{Binding Nodes.Count, Mode=OneWay}"/>
+                    <Run Text="개  |  휠: 줌  |  Space+드래그: 패닝  |  카드 드래그: 이동  |  Z-레벨: 선택 후 툴바 버튼"/>
+                </TextBlock>
+            </Border>
+        </Grid>
+
+        <!-- ══════════════════════════════════════════
+             § HM-05: 우측 속성 패널 (노드 선택 시에만 표시)
+             Collector → Device → Tag 3단 계단식 선택으로 실시간 Tag 값을
+             카드에 바인딩한다.
+             ══════════════════════════════════════════ -->
+        <Border Grid.Column="3" Background="{DynamicResource BorderBrush}"
+                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}"/>
+
+        <Grid Grid.Column="4" Width="240"
+              Background="{DynamicResource SurfaceBrush}"
+              Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Padding="12,10"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TextBlock Text="속성 — Tag 바인딩"
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"/>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="12,10">
+                    <TextBlock Text="{Binding SelectedNode.Label}"
+                               FontSize="13" FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Collector" FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,3"/>
+                    <ComboBox ItemsSource="{Binding AvailableCollectors}"
+                              SelectedItem="{Binding PickedCollector}"
+                              DisplayMemberPath="Name"
+                              Style="{DynamicResource PropCombo}"
+                              Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Device / PLC" FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,3"/>
+                    <ComboBox ItemsSource="{Binding AvailableDevices}"
+                              SelectedItem="{Binding PickedDevice}"
+                              DisplayMemberPath="Name"
+                              Style="{DynamicResource PropCombo}"
+                              Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Tag" FontSize="11"
+                               Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,3"/>
+                    <ComboBox ItemsSource="{Binding AvailableTags}"
+                              SelectedItem="{Binding PickedTag}"
+                              DisplayMemberPath="Name"
+                              Style="{DynamicResource PropCombo}"
+                              Margin="0,0,0,14"/>
+
+                    <Button Content="🔗 바인딩 적용"
+                            Command="{Binding ApplyBindingCommand}"
+                            Style="{DynamicResource PrimaryBtn}"
+                            HorizontalAlignment="Stretch"
+                            Margin="0,0,0,6"/>
+                    <Button Content="🔓 바인딩 해제"
+                            Command="{Binding ClearBindingCommand}"
+                            Style="{DynamicResource DangerBtn}"
+                            HorizontalAlignment="Stretch"
+                            Margin="0,0,0,14"/>
+
+                    <Border BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="현재 값" FontSize="11"
+                                       Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,3"/>
+                            <TextBlock Text="{Binding SelectedNode.ValueText}"
+                                       FontSize="15" FontWeight="Bold"
+                                       Foreground="{DynamicResource AccBrush}"/>
+                            <TextBlock Text="{Binding SelectedNode.BoundTagName}"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

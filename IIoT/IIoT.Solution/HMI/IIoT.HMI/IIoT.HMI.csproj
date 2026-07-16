@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!--
+      ★ RootNamespace 명시: 파일명(IIoT.HMI)의 . 이 네임스페이스 분리자로
+        인식되는 것을 방지. App.xaml x:Class="IIoT.HMI.App" 와 일치.
+        (Manager/Monitor Base-0 과 동일 패턴)
+    -->
+		<RootNamespace>IIoT.HMI</RootNamespace>
+		<AssemblyName>IIoT.HMI</AssemblyName>
+	</PropertyGroup>
+
+	<!--
+    ★ HM-Base-0 (2026-07-16): 최소 구성 원칙.
+      Monitor 버그 #1 교훈 — FrameworkReference(ASP.NET Core) 선반영이
+      SignalR.Client 와 버전 충돌을 일으켰음. HMI 는 자체 웹 Hub 호스팅이
+      필요한 Step(HM-11)이 오기 전까지 FrameworkReference 를 추가하지 않는다.
+      ★ HM-01: Microsoft.AspNetCore.SignalR.Client 는 순수 클라이언트 라이브러리로
+        FrameworkReference 없이도 동작한다(Collector 접속 전용, 자체 Hub 호스팅 아님).
+      ※ FrameworkReference 가 없으므로 Microsoft.Extensions.DependencyInjection
+        은 PackageReference 로 명시 추가 (Manager MG-Base-0 과 동일 이유 —
+        8.0.0 고정은 낮아서 다운그레이드 오류 유발 → 8.0.1 이상 사용)
+  -->
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+		<!-- ★ HM-01: Collector SignalR Hub 접속용 클라이언트 (다중 HubConnection, Monitor MN-01B 패턴) -->
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.*" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- lssLib BCL — 로그 -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
+
+		<!-- WPF 테마 (v1.5) -->
+		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
+
+		<!-- ★ HM-Base-0: Manager 헬스체크 응답 서버 (HealthPipeServer) 공유 계약 레이어 -->
+		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
+	</ItemGroup>
+
+</Project>

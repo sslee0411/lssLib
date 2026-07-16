@@ -1,0 +1,219 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.HMI · MainWindow.xaml
+     역할: 메인 창
+     HM-Base-0: 빈 창 + 테마 (헤더 56px: 타이틀 + ThemePickerButton)
+     HM-Base-1: 탭바(40px) + 본문 레이아웃 뼈대 추가
+     HM-Base-2: 탭 전환 5개 — [현황판][레이아웃 편집][Collector 관리][알람][로그]
+                (Manager MG-04 DataTrigger 필(pill) 스타일 패턴 재사용)
+     HM-02: [Collector 관리] 탭 실제 화면 연결 (ContentControl + 코드 주입)
+     HM-03: [레이아웃 편집] 탭 실제 화면 연결 (캔버스 기반 구조만 — 아이콘 종류는 HM-04 이후)
+            남은 2개 탭(현황판/알람)은 아직 placeholder (이후 Step에서 실제 View로 교체)
+     생성: 2026-07-16
+     규칙:
+       ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
+       ② BoolToVisibility: App.xaml 전역 등록 사용
+       ③ xmlns:uc assembly="IIoT.UI.Themes" (크로스-프로젝트 xmlns)
+       ④ DI 필요 View → ContentControl + 코드 주입 패턴
+       ⑤ 탭 버튼 CommandParameter 는 string → ViewModel int.TryParse 처리
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.HMI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:uc="clr-namespace:IIoT.UI.Themes.Controls;assembly=IIoT.UI.Themes"
+        Title="IIoT HMI — 생산현황판"
+        Width="1400" Height="860"
+        MinWidth="1100" MinHeight="650"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BgBrush}">
+
+    <Window.Resources>
+        <!-- ★ 규칙: BoolToVisibility 는 App.xaml 전역 등록에만 의존하지 않고
+             Window.Resources 에도 직접 등록 (오류 빠른 참조표 "XamlParseException
+             BoolToVisibility" 항목 — Manager MainWindow.xaml 과 동일한 방어적 패턴) -->
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+        <!-- ★ HM-Base-2: 탭 버튼 필(pill) 스타일 — 선택 여부는 각 버튼의 DataTrigger 로 처리 -->
+        <Style x:Key="TabBtnBase" TargetType="Button">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,7"/>
+            <Setter Property="Margin" Value="4,4,0,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 탭 0 (현황판) 선택 시 강조 -->
+        <Style x:Key="TabBtn0" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDashboardTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 탭 1 (레이아웃 편집) 선택 시 강조 -->
+        <Style x:Key="TabBtn1" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsLayoutTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 탭 2 (Collector 관리) 선택 시 강조 -->
+        <Style x:Key="TabBtn2" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsCollectorTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 탭 3 (알람) 선택 시 강조 -->
+        <Style x:Key="TabBtn3" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAlarmTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 탭 4 (로그) 선택 시 강조 -->
+        <Style x:Key="TabBtn4" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsLogTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- § 헤더 (56px) -->
+        <Border DockPanel.Dock="Top"
+                Height="56"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel Margin="16,0">
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="IIoT.HMI"
+                               FontSize="18" FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="  생산현황판"
+                               FontSize="12"
+                               Foreground="{DynamicResource Text2Brush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- 테마 선택 버튼 (우측) -->
+                <uc:ThemePickerButton DockPanel.Dock="Right"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- § HM-Base-2: 탭바 (40px) -->
+        <Border DockPanel.Dock="Top"
+                Height="40"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Margin="12,0">
+                <Button Content="🗂 현황판"
+                        Style="{StaticResource TabBtn0}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="0"/>
+                <Button Content="🎨 레이아웃 편집"
+                        Style="{StaticResource TabBtn1}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="1"/>
+                <Button Content="🔌 Collector 관리"
+                        Style="{StaticResource TabBtn2}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="2"/>
+                <Button Content="🔔 알람"
+                        Style="{StaticResource TabBtn3}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="3"/>
+                <Button Content="📋 로그"
+                        Style="{StaticResource TabBtn4}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="4"/>
+            </StackPanel>
+        </Border>
+
+        <!-- § 하단 상태바 (24px) -->
+        <Border DockPanel.Dock="Bottom"
+                Height="24"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <TextBlock Text="{Binding StatusText}"
+                       FontSize="11"
+                       Foreground="{DynamicResource Text3Brush}"
+                       VerticalAlignment="Center"
+                       Margin="16,0"/>
+        </Border>
+
+        <!-- § 본문 — 탭별 콘텐츠 (Visibility 토글: 숨김 탭도 콘텐츠 유지) -->
+        <Grid>
+            <!-- 탭 0: 현황판 — ⭕ placeholder (HM-03~07 이후 실제 캔버스로 교체) -->
+            <Grid Visibility="{Binding IsDashboardTab, Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="{DynamicResource AccFaintBrush}" Opacity="0.35"/>
+                <TextBlock Text="현황판 — 준비 중 (HM-03~07 이후 구현 예정)"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="20" Foreground="{DynamicResource TextBrush}"/>
+            </Grid>
+
+            <!-- 탭 1: 레이아웃 편집 — ✅ HM-03 실제 화면 (캔버스 기반 구조만, 아이콘 종류는 HM-04 이후) -->
+            <ContentControl x:Name="LayoutCanvasHost"
+                            Visibility="{Binding IsLayoutTab, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- 탭 2: Collector 관리 — ✅ HM-02 실제 화면 -->
+            <ContentControl x:Name="CollectorManageHost"
+                            Visibility="{Binding IsCollectorTab, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- 탭 3: 알람 — ⭕ placeholder (HM-08 이후 구현 예정) -->
+            <Grid Visibility="{Binding IsAlarmTab, Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="{DynamicResource RedBrush}" Opacity="0.12"/>
+                <TextBlock Text="알람 — 준비 중 (HM-08 이후 구현 예정)"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="20" Foreground="{DynamicResource TextBrush}"/>
+            </Grid>
+
+            <!-- 탭 4: 로그 — ⭕ placeholder (후속 Step에서 lssLib.Log LogViewerControl 연결 예정) -->
+            <Grid Visibility="{Binding IsLogTab, Converter={StaticResource BoolToVisibility}}">
+                <Rectangle Fill="{DynamicResource Text3Brush}" Opacity="0.10"/>
+                <TextBlock Text="로그 — 준비 중 (후속 Step에서 LogViewerControl 연결 예정)"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="20" Foreground="{DynamicResource TextBrush}"/>
+            </Grid>
+        </Grid>
+
+    </DockPanel>
+
+</Window>
