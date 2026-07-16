@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-09 | 버전: v10.3 | 현재 위치: IIoT.Manager MG-EX-10 (빌드 확인 대기) — A·B·C그룹 코드 전체 완료 (MG-EX 10/12)**
+**작성일: 2026-07-09 | 버전: v10.4 | 현재 위치: IIoT.Manager MG-EX 완료(빌드 대기) + lssLib.SignalR 모듈 신설**
 
 ---
 
@@ -573,6 +573,19 @@ Manager 완료 후 → **IIoT.HMI**(생산현황판, 별도 프로그램) →
               HMI/Sequence 이후 보류 방침대로 유지.
               ★ IIoT.Manager 사실상 전체 완료 (전 Step 빌드 확인만 남음).
               다음: 전체 빌드 확인 → IIoT.HMI 착수 |
+| v10.4 (2026-07-09) | ★ lssLib.SignalR 모듈 신설 (Base\BCL\SignalR\ —
+              Net_Ver5 구조 준용: 라이브러리 + Demo + sln).
+              구성: SignalRHostConfig/ClientConfig · SignalRHostService<THub>
+              (Kestrel+MapHub, IHubContext 노출) · SignalRClientConnection
+              (자동재연결 0/2/10/30초, 상태이벤트, On/Invoke 헬퍼) ·
+              BroadcastHub (범용 토픽 Pub/Sub + Ping, 수신메서드 "Receive").
+              Demo: 1 셀프테스트(호스트+클라2, 외부서버 불필요) / 2 서버만
+              / 3 클라이언트만. TFM net8.0 + FrameworkReference(전이됨).
+              보완: BroadcastHub.TrafficLogged 정적 이벤트 신설 (허브는
+              호출마다 새 인스턴스 → 정적 훅) — 서버 콘솔에 접속/해제/
+              구독/발행/핑 표시, 미구독 시 무부하 (사용자 요청).
+              용도: IIoT.HMI Tag 구독(예정) · Collector/Monitor Hub 코드의
+              공통화 후보(2차 정리 검토), MG-EX-11 웹 상태 페이지 기반 |
 
 ---
 

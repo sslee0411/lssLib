@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>lssLib.SignalR</RootNamespace>
+	</PropertyGroup>
+
+	<!--
+    ★ SignalR Hub 호스팅(서버)용 — ASP.NET Core 공유 프레임워크.
+      (IIoT.Monitor 버그 #1/#2 교훈: Microsoft.Extensions.* 는 명시 버전을
+       지정하지 말 것 — FrameworkReference 제공 버전을 그대로 사용해야
+       NU1605 다운그레이드 충돌이 없다)
+  -->
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- SignalR 클라이언트 (허브 접속용) -->
+		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.*" />
+	</ItemGroup>
+
+</Project>
