@@ -5,10 +5,12 @@
 //        ② SignalR HubConnection 생명주기 관리 (연결/재연결/종료)
 //        ③ "TagValue" 이벤트 구독 → onTagValue 콜백으로 전달
 //        ④ "AlarmChanged" 이벤트 구독 → onAlarmChanged 콜백으로 전달
-//        ⑤ AcknowledgeAsync() — 이 Collector 로만 ACK 요청 전송 (HM-08 대비)
+//        ⑤ AcknowledgeAsync() — 이 Collector 로만 ACK 요청 전송 (HM-08)
 //        ⑥ 연결 끊김/복구 디바운스 알림
 //        ⑦ FetchSnapshotAsync() — [레이아웃 편집] 탭의 Tag 바인딩 선택기(HM-05)가
 //           Collector/Device/Tag 트리를 조회할 때 사용하는 공개 스냅샷 조회 메서드
+//        ⑧ ForceWriteAsync() — 아이콘 더블클릭 → 값 입력 다이얼로그(HM-09)가
+//           SignalR Invoke("ForceWrite")로 원격 강제쓰기를 요청할 때 사용
 //        (IIoT.Monitor Core/Connection/CollectorConnection.cs — MN-01B/MN-02/
 //         MN-03/MN-EX-08 이식. 단, "MN-01B 패턴 단순화" 결정에 따라 콜백을
 //         LiveTagAggregator/AlarmAggregator 같은 전용 집계 클래스가 아니라
@@ -18,6 +20,10 @@
 //  HM-01: 신규
 //  HM-05: FetchSnapshotAsync() 공개 메서드 추가 — 기존 _TrySyncCollectorIdAsync()
 //         내부 로직을 재사용하도록 리팩터링(동작 변경 없음, 호출 경로만 추가)
+//  HM-09: ForceWriteAsync(plcId,tagId,value,apiKey) 추가 — Collector C-EX-13의
+//         IIoTHub.ForceWrite 원격 메서드를 그대로 호출(InvokeAsync<ForceWriteResult>).
+//         검증(Enabled/ApiKey/Tag존재/활성/형식)은 전부 Collector 측 위임 —
+//         이 메서드는 Hub 미연결 시에만 자체적으로 실패를 반환한다.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -243,7 +249,7 @@ public sealed class CollectorConnection : IAsyncDisposable
         }
     }
 
-    // §7 ─ 알람 ACK 요청 (HM-08 대비 — 지금은 미사용) ──────
+    // §7 ─ 알람 ACK 요청 (HM-08) ────────────────────────────
 
     /// <summary>
     /// 이 Collector 로만 ACK 요청을 전송한다("발생 출처로만 전송" 원칙, Monitor MN-03 설계 준용).
@@ -266,6 +272,36 @@ public sealed class CollectorConnection : IAsyncDisposable
         {
             LogManager.Instance.Warn("CollectorConnection",
                 $"[{_endpoint.Name}] AcknowledgeAlarm 호출 실패: {ex.Message}");
+        }
+    }
+
+    // §7-1 ─ HM-09: ForceWrite 원격 호출 ─────────────────────
+
+    /// <summary>
+    /// 이 Collector 로 ForceWrite 원격 호출을 전송한다(Collector C-EX-13,
+    /// IIoTHub.ForceWrite → ForceWriteService.WriteAsync 위임).
+    /// 검증(기능 활성화·API Key·Tag 존재/활성·값 형식)은 전부 Collector 측에서
+    /// 수행하며, 이 메서드는 결과를 그대로 반환한다(호출 실패 시에도 예외를
+    /// 던지지 않고 ForceWriteResult.Fail 형태로 반환 — 다이얼로그가 조용히 처리).
+    /// </summary>
+    public async Task<ForceWriteResult> ForceWriteAsync(string plcId, string tagId, string value, string apiKey)
+    {
+        if (_hub is not { State: HubConnectionState.Connected })
+        {
+            const string msg = "Hub 미연결 상태 — 강제쓰기를 전송할 수 없습니다.";
+            LogManager.Instance.Warn("CollectorConnection", $"[{_endpoint.Name}] ForceWrite 전송 불가 — {msg}");
+            return new ForceWriteResult(false, msg);
+        }
+
+        try
+        {
+            return await _hub.InvokeAsync<ForceWriteResult>("ForceWrite", plcId, tagId, value, apiKey);
+        }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Warn("CollectorConnection",
+                $"[{_endpoint.Name}] ForceWrite 호출 실패: {ex.Message}");
+            return new ForceWriteResult(false, ex.Message);
         }
     }
 

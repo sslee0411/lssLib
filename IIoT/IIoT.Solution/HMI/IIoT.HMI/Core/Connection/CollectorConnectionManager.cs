@@ -19,6 +19,9 @@
 //  HM-05: GetConnectedEndpoints()/GetSnapshotAsync() 추가 — [레이아웃 편집] 탭의
 //         Tag 바인딩 선택기(LayoutCanvasViewModel)가 "현재 연결된 Collector 목록"과
 //         "선택한 Collector 의 Device/Tag 트리"를 조회할 때 사용한다.
+//  HM-09: ForceWriteAsync(collectorId,plcId,tagId,value,apiKey) 추가 — AcknowledgeAlarmAsync와
+//         동일하게 "발생 출처로만 전송" 원칙을 따르며, CollectorConnection.ForceWriteAsync()로
+//         위임한다(아이콘 더블클릭 → 값 입력 다이얼로그가 사용).
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -189,7 +192,7 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
         return new();
     }
 
-    // §5 ─ 알람 ACK (HM-08 대비 — 지금은 미사용) ───────────
+    // §5 ─ 알람 ACK (HM-08) ─────────────────────────────────
 
     /// <summary>
     /// 지정된 CollectorId 의 연결로만 ACK 요청을 전송한다("발생 출처로만 전송" 원칙).
@@ -202,6 +205,23 @@ public sealed class CollectorConnectionManager : IAsyncDisposable
         else
             LogManager.Instance.Warn("CollectorConnectionManager",
                 $"ACK 전송 실패 — Collector[{collectorId}] 연결 없음 (alarmKey={alarmKey})");
+    }
+
+    // §5-1 ─ HM-09: ForceWrite 원격 호출 ────────────────────
+
+    /// <summary>
+    /// 지정된 CollectorId 의 연결로만 ForceWrite 요청을 전송한다("발생 출처로만
+    /// 전송" 원칙 — ACK 와 동일). 해당 Collector 가 현재 연결되어 있지 않으면
+    /// 즉시 실패 결과(ForceWriteResult.Fail 상당)를 반환한다(예외 없음).
+    /// </summary>
+    public async Task<ForceWriteResult> ForceWriteAsync(string collectorId, string plcId, string tagId, string value, string apiKey)
+    {
+        if (_connections.TryGetValue(collectorId, out var conn))
+            return await conn.ForceWriteAsync(plcId, tagId, value, apiKey);
+
+        var msg = $"ForceWrite 전송 실패 — Collector[{collectorId}] 연결 없음";
+        LogManager.Instance.Warn("CollectorConnectionManager", msg);
+        return new ForceWriteResult(false, msg);
     }
 
     // §6 ─ 정리 ────────────────────────────────────────────

@@ -1,0 +1,21 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.HMI · Views/LayoutCanvas/SecondaryDisplayWindow.xaml
+     역할: [레이아웃 편집] 탭을 별도 창으로 띄우는 보조 화면 컨테이너.
+           내부 콘텐츠는 코드비하인드에서 주입되는 두 번째 LayoutCanvasView
+           인스턴스(메인 창과 동일한 LayoutCanvasViewModel 을 공유 — 같은
+           레이아웃이 두 창에 동시에 실시간 반영됨).
+           Owner 를 지정하지 않는 독립 최상위 창이라 자유롭게 다른 모니터로
+           옮기고 그 모니터에서 최대화할 수 있다.
+     HM-19: 신규
+     생성: 2026-07-19
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.HMI.Views.LayoutCanvas.SecondaryDisplayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IIoT HMI — 보조 화면"
+        Width="1200" Height="800"
+        MinWidth="640" MinHeight="480"
+        Background="{DynamicResource BgBrush}">
+
+    <ContentControl x:Name="Host"/>
+</Window>

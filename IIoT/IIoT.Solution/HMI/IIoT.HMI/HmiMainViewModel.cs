@@ -5,6 +5,12 @@
 //  HM-Base-2: 탭 상태(ActiveTabIndex/SwitchTab) 추가
 //        탭 인덱스: 0=현황판 1=레이아웃 편집 2=Collector 관리 3=알람 4=로그
 //        (Manager MG-04 패턴과 동일 — 메인 VM 은 프로젝트 루트에 고정)
+//  HM-13(정리): 별도 "현황판" 탭 제거 — HM-03~12 가 전부 [레이아웃 편집] 탭
+//        (카드 배치·실시간 값·Z순서·다중 화면·알람 배지·ForceWrite)에 구현되어
+//        레이아웃 편집 탭이 이미 사실상 생산현황판 역할을 하고 있었음. 별도로
+//        비워둔 "현황판" placeholder 탭은 중복이라 사용자 확인 후 제거함.
+//        탭 인덱스 재정렬: 0=레이아웃 편집 1=Collector 관리 2=알람 3=로그
+//        (IsDashboardTab 제거, 나머지 Is*Tab 은 번호만 1씩 당김)
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -31,21 +37,20 @@ public partial class HmiMainViewModel : ObservableObject
 
     /// <summary>
     /// ★ HM-Base-2: 현재 선택된 탭 인덱스.
-    /// 0=현황판 1=레이아웃 편집 2=Collector 관리 3=알람 4=로그
+    /// ★ HM-13(정리): "현황판" 탭 제거로 재정렬 — 0=레이아웃 편집 1=Collector 관리
+    /// 2=알람 3=로그 (레이아웃 편집 탭이 이미 생산현황판 역할을 겸함)
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDashboardTab))]
     [NotifyPropertyChangedFor(nameof(IsLayoutTab))]
     [NotifyPropertyChangedFor(nameof(IsCollectorTab))]
     [NotifyPropertyChangedFor(nameof(IsAlarmTab))]
     [NotifyPropertyChangedFor(nameof(IsLogTab))]
     private int _activeTabIndex;
 
-    public bool IsDashboardTab => ActiveTabIndex == 0;
-    public bool IsLayoutTab    => ActiveTabIndex == 1;
-    public bool IsCollectorTab => ActiveTabIndex == 2;
-    public bool IsAlarmTab     => ActiveTabIndex == 3;
-    public bool IsLogTab       => ActiveTabIndex == 4;
+    public bool IsLayoutTab    => ActiveTabIndex == 0;
+    public bool IsCollectorTab => ActiveTabIndex == 1;
+    public bool IsAlarmTab     => ActiveTabIndex == 2;
+    public bool IsLogTab       => ActiveTabIndex == 3;
 
     // §2 ─ 명령 ──────────────────────────────────────────────
 

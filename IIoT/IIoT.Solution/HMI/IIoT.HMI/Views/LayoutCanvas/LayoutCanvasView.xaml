@@ -18,6 +18,21 @@
               ItemContainerStyle 에 Panel.ZIndex 바인딩 추가(카드 겹침 순서 반영)
             ② 캔버스 위에 "화면(페이지)" 관리 바 신설(Row 0 추가, 툴바~상태바 한 칸씩
               밀림) — 화면 선택 콤보 + 이름 편집 + 새 화면/삭제/저장 버튼
+     HM-10: Row 0 의 화면 선택 콤보박스+이름편집 텍스트박스를 탭 바(PageTabTemplate)로
+            교체(사용자 요청 — 화면이 여러 개일 때 한눈에 보고 바로 전환 가능하도록).
+            탭 클릭=화면 전환(SelectPage), 더블클릭=이름 편집 모드(인라인 TextBox,
+            LayoutPageViewModel.IsEditingName). 활성 탭은 IsActive 로 강조 표시.
+            새 화면/삭제/저장 버튼은 기존 커맨드 그대로 유지, 우측에 고정 배치.
+     HM-12: 툴바(Row 1)에 화면 잠금 토글 버튼 추가(LockButtonLabel/
+            ToggleForceWriteLockCommand) — 잠금 상태에서는 카드 더블클릭 시
+            ForceWriteDialog 가 열리지 않는다(코드비하인드에서 체크).
+     HM-18: 툴바(Row 1)에 "📷 캡처" 버튼 추가 — 현재 캔버스 화면(CanvasBorder)을
+            PNG 이미지로 저장한다(RenderTargetBitmap, WPF 내장 기능만 사용 —
+            새 NuGet 의존성 없음). 사용자 확인: PDF 리포트는 범위 밖(PNG만).
+     HM-19: 툴바(Row 1)에 "🖥 보조 화면" 버튼 추가 — 같은 LayoutCanvasViewModel 을
+            공유하는 두 번째 LayoutCanvasView 를 독립 창(SecondaryDisplayWindow)
+            으로 띄운다. 다른 모니터로 옮겨 놓으면 두 창에 동일한 레이아웃이
+            실시간으로 함께 반영된다(다중 모니터 지원).
      생성: 2026-07-16
      규칙:
        ① UserControl.Resources 는 <UserControl> 직계 자식만 허용
@@ -70,6 +85,54 @@
                                Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Button>
+        </DataTemplate>
+
+        <!-- ── HM-10: 화면(페이지) 탭 템플릿 — HM-07의 콤보박스+이름편집 UI를
+             탭 바로 교체(사용자 요청). 단일 클릭=화면 전환, 더블클릭=이름 편집
+             (인라인 TextBox 전환). 코드비하인드(LayoutCanvasView.xaml.cs)의
+             PageTab_MouseLeftButtonDown/PageTabNameBox_LostFocus/KeyDown 참조. ── -->
+        <DataTemplate x:Key="PageTabTemplate">
+            <Border x:Name="TabRoot"
+                    Margin="0,4,4,0" Padding="10,5"
+                    CornerRadius="6,6,0,0"
+                    Cursor="Hand"
+                    ToolTip="클릭: 화면 전환 · 더블클릭: 이름 편집"
+                    MouseLeftButtonDown="PageTab_MouseLeftButtonDown">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <TextBlock Text="{Binding Name}" FontSize="12" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource Text2Brush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsEditingName}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBox x:Name="NameBox"
+                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{DynamicResource PropInput}"
+                             FontSize="12" Width="90"
+                             Visibility="{Binding IsEditingName, Converter={StaticResource BoolToVisibility}}"
+                             LostFocus="PageTabNameBox_LostFocus"
+                             KeyDown="PageTabNameBox_KeyDown"/>
+                </Grid>
+            </Border>
         </DataTemplate>
     </UserControl.Resources>
 
@@ -124,35 +187,47 @@
                 <RowDefinition Height="24"/>
             </Grid.RowDefinitions>
 
-            <!-- ★ HM-07: 화면(페이지) 관리 바 -->
+            <!-- ★ HM-10: 화면(페이지) 탭 바 (HM-07의 콤보박스+이름편집 UI를 교체) -->
             <Border Grid.Row="0"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,0,1">
-                <StackPanel Orientation="Horizontal" Margin="8,0"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="화면:" FontSize="11"
-                               Foreground="{DynamicResource Text2Brush}"
-                               VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <ComboBox ItemsSource="{Binding Pages}"
-                              SelectedItem="{Binding ActivePage}"
-                              DisplayMemberPath="Name"
-                              Style="{DynamicResource PropCombo}"
-                              Width="130" Margin="0,0,6,0"/>
-                    <TextBox Text="{Binding ActivePage.Name, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{DynamicResource PropInput}"
-                             Width="110" Margin="0,0,6,0"
-                             ToolTip="현재 화면 이름 편집"/>
-                    <Button Content="➕ 새 화면" Command="{Binding AddPageCommand}"
-                            Style="{DynamicResource GhostBtn}"
-                            Padding="8,4" Margin="0,0,2,0"/>
-                    <Button Content="🗑 화면 삭제" Command="{Binding DeletePageCommand}"
-                            Style="{DynamicResource GhostBtn}"
-                            Padding="8,4" Margin="0,0,8,0"/>
-                    <Button Content="💾 레이아웃 저장" Command="{Binding SaveLayoutCommand}"
-                            Style="{DynamicResource PrimaryBtn}"
-                            Padding="8,4"/>
-                </StackPanel>
+                <Grid Margin="8,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 화면이 많아져도 좌우 스크롤로 탭에 모두 접근 가능(우측 버튼은 항상 고정 표시) -->
+                    <ScrollViewer Grid.Column="0"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  VerticalAlignment="Center">
+                        <ItemsControl ItemsSource="{Binding Pages}"
+                                      ItemTemplate="{StaticResource PageTabTemplate}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                VerticalAlignment="Center" Margin="8,0,0,0">
+                        <Button Content="➕ 새 화면" Command="{Binding AddPageCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="8,4" Margin="0,0,2,0"
+                                ToolTip="새 화면 추가"/>
+                        <Button Content="🗑 화면 삭제" Command="{Binding DeletePageCommand}"
+                                Style="{DynamicResource GhostBtn}"
+                                Padding="8,4" Margin="0,0,8,0"
+                                ToolTip="현재 화면 삭제 (최소 1개는 유지)"/>
+                        <Button Content="💾 레이아웃 저장" Command="{Binding SaveLayoutCommand}"
+                                Style="{DynamicResource PrimaryBtn}"
+                                Padding="8,4"/>
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <!-- 툴바 -->
@@ -175,6 +250,29 @@
                                FontSize="11"
                                Foreground="{DynamicResource Text2Brush}"
                                VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                    <!-- ★ HM-12: 화면 잠금 모드 — 잠금 상태에서는 카드 더블클릭으로
+                         ForceWriteDialog 가 열리지 않는다(운영자 실수 방지).
+                         기본값은 hmi.json ForceWriteSecurity.DefaultLocked. -->
+                    <Button Content="{Binding LockButtonLabel}"
+                            Command="{Binding ToggleForceWriteLockCommand}"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,12,0"
+                            ToolTip="잠금 상태에서는 카드 더블클릭 시 강제쓰기 다이얼로그가 열리지 않습니다"/>
+
+                    <!-- ★ HM-18: 현재 캔버스 화면을 PNG 이미지로 저장 -->
+                    <Button Content="📷 캡처"
+                            Click="CaptureButton_Click"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,2,0"
+                            ToolTip="현재 화면을 PNG 이미지로 저장"/>
+
+                    <!-- ★ HM-19: 같은 레이아웃을 다른 모니터에도 띄우는 보조 창 -->
+                    <Button Content="🖥 보조 화면"
+                            Click="SecondaryWindowButton_Click"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,4" Margin="0,0,12,0"
+                            ToolTip="같은 레이아웃을 새 창으로 열어 다른 모니터에 띄웁니다"/>
 
                     <!-- ★ HM-07: Z-레벨(겹침 순서) 우선순위 — 선택된 카드에만 표시 -->
                     <StackPanel Orientation="Horizontal"

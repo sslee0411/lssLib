@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-16 | 버전: v11.12 | 다음 세션 시작점: ① HM-07 빌드·런타임 확인 → ② HM-08 착수**
+**작성일: 2026-07-19 | 버전: v11.24 | 다음 세션 시작점: ① HM-Base-0~HM-19 전체 빌드·런타임 확인(★특히 HM-19 ShutdownMode 변경 후 정상 종료 여부 확인) → ② HM-20(장비 아이콘 실형상화) 착수**
 
 > 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
 > SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
@@ -18,7 +18,7 @@ IIoT.Studio         ✅ 100% (설정 편집기 — 보류 4건은 Sequence 이�
 IIoT.Collector      ✅ 100% (수집+감지+저장, SignalR Hub 7878 — C-EX-13 빌드 확인 완료, C-EX-11 후속 보류)
 IIoT.Monitor        ✅ 100% (실시간 모니터링, 자체 Hub 7879, MN-EX 8건 전부)
 IIoT.Manager        ✅ 100% (코드+통합 빌드+런타임 확인 완료 — 2026-07-16)
-IIoT.HMI            🔄 Base-0~2 + HM-01~06 빌드 확인 완료, HM-07 코드완료(빌드대기) (생산현황판)
+IIoT.HMI            🔄 Base-0~2 + HM-01~07 빌드 확인 완료, HM-08~12 코드완료(빌드대기) (생산현황판)
 IIoT.Sequence       ⭕ HMI 이후
 공통: Contracts(플러그인 계약+Health) · Plugins(ModbusTcp/Mitsubishi/Virtual)
      · UI.Themes(7테마) · UI.Controls
@@ -188,22 +188,60 @@ HM-03   레이아웃 캔버스 기반 구조 (Studio NodesLayer 이식 — 포�
 HM-04   장비 아이콘 팔레트 + 베이스 컨트롤 상속 구조 (모터/컨베이어/탱크/밸브)  ✅ 빌드 확인 완료
 HM-05   아이콘 ↔ Tag 바인딩 (DeviceInstance/TagInstance 실시간 값 연결)      ✅ 빌드 확인 완료
 HM-06   애니메이션 엔진 (회전=RawValue 비례, 색상=알람/연결상태, 흐름효과)    ✅ 빌드 확인 완료
-HM-07   레이아웃 저장·불러오기 (hmi-layout.json, 다중 화면 페이지)          ✅ 코드완료(빌드대기)
+HM-07   레이아웃 저장·불러오기 (hmi-layout.json, 다중 화면 페이지)          ✅ 빌드 확인 완료
         + Z-레벨 우선순위 지정(카드 겹침 순서, 사용자 요청 추가) 포함
 
 ━━━ 알람·제어 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HM-08   알람 오버레이 (아이콘 배지 + 상세 팝업 + ACK — AcknowledgeAlarm 재사용) ⏳
-HM-09   ForceWrite 제어 다이얼로그 (아이콘 더블클릭 → 값 입력 →              ⏳
+HM-08   알람 오버레이 (아이콘 배지 + 상세 팝업 + ACK — AcknowledgeAlarm 재사용) ✅ 코드완료(빌드대기)
+HM-09   ForceWrite 제어 다이얼로그 (아이콘 더블클릭 → 값 입력 →              ✅ 코드완료(빌드대기)
         SignalR Invoke("ForceWrite") — C-EX-13 선행 필수)
-HM-10   다중 화면 관리 (레이아웃 페이지 탭/트리)                             ⏳
+HM-10   다중 화면 관리 (HM-07의 콤보박스+이름편집 UI → 탭 바로 교체,          ✅ 코드완료(빌드대기)
+        사용자 확인 완료 — "탭 바 형태로 교체" 옵션 선택)
 
 ━━━ 확장성 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HM-11   웹 브라우저 표시 확장 (자체 SignalR Hub + wwwroot —                 ⏳
-        Collector C-11/wwwroot 패턴 재사용, 로컬(C#)+웹 동시 지원 요구사항)
-HM-12   보안 (ForceWrite API Key 입력 확인 — Collector Security.ForceWriteApiKey 재사용) ⏳
+HM-11   웹 브라우저 표시 확장 (자체 SignalR Hub + wwwroot —                 ✅ 코드완료(빌드대기)
+        Collector C-11/wwwroot 패턴 재사용, 1차 범위=읽기 전용 표시)
+HM-12   보안 (화면 잠금 모드 + 활성 알람 중 강제쓰기 경고 + 세션 API Key 캐시,     ✅ 코드완료(빌드대기)
+        사용자가 3가지 항목 모두 확인·선택)
 
-━━━ 후속 (HMI 1차 마감 후 검토) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-HM-EX   히스토리 트렌드 오버레이 / 화면 캡처·PDF 리포트 / 다중 모니터 지원  ⭕ 보류
+━━━ 정리 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HM-13   현황판 탭 제거·통합 (HM-03~12 가 전부 [레이아웃 편집] 탭에 구현되어         ✅ 코드완료(빌드대기)
+        이미 생산현황판 역할을 겸함 — 별도 placeholder 탭 중복 제거, 사용자 확인 완료)
+        탭 4개로 재정렬: [레이아웃 편집(=현황판)][Collector 관리][알람][로그]
+        ※ "알람 탭 전체 목록/이력" 옵션은 이번엔 미선택 — 후속 요청 시 별도 Step
+HM-14   알람 탭 실시간 목록 구현 (Monitor MN-03/MN-EX-06 이식 — AlarmAggregator+   ✅ 코드완료(빌드대기)
+        필터/검색 툴바+ACK, Collector별 그룹핑, 최신순) — 사용자가 "실시간 목록만"
+        범위 선택(SQLite 이력 저장은 미포함)
+HM-15   로그 탭 실제 화면 구현 (Studio/Collector/Monitor 공통 LogPanelView 패턴  ✅ 코드완료(빌드대기)
+        이식 — LogManager.Instance.LogAdded 구독, 레벨/Source 필터, 지우기)
+        ★ 이 Step으로 4개 탭(레이아웃 편집·Collector 관리·알람·로그) 전부 placeholder
+        없이 실제 화면으로 채워짐
+
+━━━ 확장 (2026-07-19, 사용자 확정 — "1차 마감 보류, 후보 전체 착수") ━━━━━━
+★ HMI 1차 마감(HM-EX 검토) 시점에 후보 7건을 모두 제시했고, 사용자가 전부
+  착수를 선택 — "1차 마감 확정" 대신 아래 순서로 확장 Step을 이어서 진행한다.
+  (작은/독립적 항목 → 큰/의존성 있는 항목 순서로 배치, 매 Step 완료 후
+  사용자 확인 거쳐 다음으로 진행하는 기존 진행 방식 그대로 적용)
+HM-16   알람 이력 SQLite 영구 저장 (Monitor AlarmHistoryService 패턴 이식 —      ✅ 코드완료(빌드대기)
+        재시작해도 과거 알람 유지, 90일 보존. ★ Monitor 도 저장 전용이며 조회
+        UI가 없음 — 동일 범위로 이식, 조회 UI는 별도 요청 시 추가 검토)
+HM-17   실시간 트렌드 창 (레이아웃 편집 탭에서 Tag 바인딩 카드 우클릭 → OxyPlot  ✅ 코드완료(빌드대기)
+        라인차트 창, Monitor MN-06 패턴 이식. ★ 조사 결과 Collector의 시계열
+        저장소는 조회(읽기) API가 전혀 없어 "과거 이력 조회"는 범위 밖으로
+        확정 — 사용자가 "실시간 트렌드만(권장)" 선택, 창을 연 시점부터만 표시)
+HM-18   화면 캡처 PNG (현재 레이아웃 캔버스를 PNG 이미지로 저장 — WPF 내장       ✅ 코드완료(빌드대기)
+        RenderTargetBitmap 만 사용, 새 의존성 없음). ★ PDF 리포트는 어느 프로그램
+        에도 선례가 없어 사용자가 "PNG만(권장)" 선택, PDF는 범위 밖으로 확정)
+HM-19   다중 모니터 지원 (같은 LayoutCanvasViewModel 을 공유하는 두 번째        ✅ 코드완료(빌드대기)
+        LayoutCanvasView 를 독립 창(SecondaryDisplayWindow)으로 띄워 다른
+        모니터로 옮길 수 있음 — 두 창에 동일 레이아웃이 실시간 동기화됨)
+HM-20   장비 아이콘 실형상 UI 컨트롤화 (HM-04-EX — 모터/컨베이어/탱크/밸브       ⭕ 예정
+        컨트롤을 이모지 텍스트 대신 벡터 도형으로 교체, 4개 컨트롤 전면 재작업)
+HM-21   웹에서 ACK/ForceWrite 지원 (HM-11-EX — HmiWebHub 클라이언트 호출 메서드  ⭕ 예정
+        추가, HM-12 보안 정책 재검토 선행 필요)
+HM-22   설정(Settings) UI 편집 화면 (task #5 — Collector/Manager/Monitor/HMI    ⭕ 예정
+        각 프로그램 설정 탭 신설 + Manager 원격 통합 설정 화면, 4개 솔루션에
+        걸친 최대 범위 과제라 마지막 순서)
 ```
 
 ### 착수 순서
@@ -215,9 +253,22 @@ HM-EX   히스토리 트렌드 오버레이 / 화면 캡처·PDF 리포트 / 다
 ④-1 HM-04 (장비 아이콘 팔레트 + DeviceControlBase 상속 구조) — ✅ 빌드 확인 완료
 ④-2 HM-05 (아이콘 ↔ Tag 바인딩) — ✅ 빌드 확인 완료
 ④-3 HM-06 (애니메이션 엔진) — ✅ 빌드 확인 완료
-④-4 HM-07 (레이아웃 저장·불러오기 + Z-레벨 우선순위) — ✅ 코드 완료(빌드 대기)
-⑤ HM-08~10 (알람+제어+다중화면) — 다음 착수 대상
-⑥ HM-11~12 (웹 확장+보안) — Manager MG-EX-11(보류)과 함께 검토 가능
+④-4 HM-07 (레이아웃 저장·불러오기 + Z-레벨 우선순위) — ✅ 빌드 확인 완료
+④-5 HM-08 (알람 오버레이) — ✅ 코드 완료(빌드 대기)
+④-6 HM-09 (ForceWrite 제어 다이얼로그) — ✅ 코드 완료(빌드 대기)
+④-7 HM-10 (다중 화면 관리 — 탭 바 UI 교체) — ✅ 코드 완료(빌드 대기)
+④-8 HM-11 (웹 브라우저 표시 확장) — ✅ 코드 완료(빌드 대기)
+④-9 HM-12 (보안 — 화면 잠금+알람 경고+세션 API Key 캐시) — ✅ 코드 완료(빌드 대기)
+④-10 HM-13 (정리 — 현황판 탭 제거·통합, 탭 4개로 재정렬) — ✅ 코드 완료(빌드 대기)
+④-11 HM-14 (알람 탭 실시간 목록 — Monitor MN-03/MN-EX-06 이식) — ✅ 코드 완료(빌드 대기)
+④-12 HM-15 (로그 탭 — Studio/Collector/Monitor 공통 LogPanelView 이식) — ✅ 코드 완료(빌드 대기)
+⑤ HM-Base-0~HM-15 전체 빌드 확인(사용자 진행 중) → HMI 1차 마감 여부 검토
+   → 사용자 결정: "1차 마감 보류, HM-EX 후보 7건 전체 착수" (2026-07-19)
+⑥ HM-16 (알람 이력 SQLite) — ✅ 코드 완료(빌드 대기) → HM-17 (실시간 트렌드 창) —
+   ✅ 코드 완료(빌드 대기) → HM-18 (화면 캡처 PNG) — ✅ 코드 완료(빌드 대기) →
+   HM-19 (다중 모니터) — ✅ 코드 완료(빌드 대기) → HM-20 (장비 아이콘 실형상화) →
+   HM-21 (웹 ACK/ForceWrite) → HM-22 (설정 UI 편집 화면) 순서로 진행 —
+   위 "확장" 절 참조
 ```
 
 ### HM-03 구현 내역 (코드 완료 — 2026-07-16, 빌드 확인 대기)
@@ -600,6 +651,503 @@ x:Class 보유) 이 요소들에 안전하게 접근 가능 — IComponentConnec
   HM-08에서는 알람 오버레이(아이콘 배지+상세 팝업+ACK)를 구현하여, 지금까지
   "1차 시각 신호"였던 상태 점을 실제 알람 확인/처리 기능으로 확장합니다.
 
+### HM-08 구현 내역 (코드 완료 — 2026-07-19, 빌드 확인 대기)
+
+```
+설계 원칙: 알람 배지·팝업도 HM-06 애니메이션과 동일하게 "모든 장비 타입 공통"
+기능이므로 DeviceControlBase(공통 카드 프레임)에서 1번만 구현 — 5개 장비 컨트롤
+전부에 자동 반영된다. Collector의 AlarmChanged 이벤트/AcknowledgeAlarm 메서드는
+HM-01부터 이미 존재했으나(CollectorConnectionManager) 이번 Step에서 처음 실제
+소비된다.
+
+★ WPF 제약 대응(설계 결정): Popup(AlarmPopup)은 별도의 시각 트리 루트로
+  렌더링되어 RelativeSource(AncestorType=UserControl) 바인딩과 DataContext
+  자동 상속이 Popup 내부 요소에는 신뢰성 있게 동작하지 않는다(WPF 공통 제약).
+  → Popup 자체의 DataContext 는 ElementName 바인딩(Popup 바깥 요소 참조,
+    Popup 경계 문제 없음)으로 명시 지정.
+  → Popup 내부 ACK 버튼은 Command 바인딩 대신 코드비하인드 Click 핸들러+
+    VisualTreeHelper 기반 상위 탐색(this 기준, 정상 시각 트리에 있음)으로 대체.
+
+변경/신규 파일 (전체 최종본 반영 완료):
+  Core/Layout/LayoutNode.cs
+    ← AbstractLayoutNode 에 HasActiveAlarm/AlarmKey/AlarmLevel/AlarmStatusText/
+      AlarmMessage/AlarmTimeText 6개 필드 추가 — 모든 장비 타입 공통이므로 베이스에
+      위치(레이아웃 저장 대상 아님 — 실시간 상태이므로 HmiLayoutSettings 직렬화 제외)
+  Core/Converters/UiConverters.cs
+    ← AlarmLevelColorConverter 추가 — AlarmLevel 문자열("HH"/"LL"→Red,
+      "H"/"L"→Yellow, 그 외→Text2) → 배지 색상
+  ViewModels/LayoutCanvasViewModel.cs
+    ← 생성자에서 _connectionManager.AlarmChanged 구독 추가
+    ← _OnAlarmChanged(collectorId, payload): SignalR 콜백(비 UI 스레드) →
+      Dispatcher.BeginInvoke 마샬링 → BoundCollectorId/PlcId/TagId 일치 노드 탐색 →
+      status="Recovered" 면 알람 필드 전부 초기화, 그 외에는 HasActiveAlarm=true +
+      Key/Level/Status/Message/Time 갱신
+    ← _CanAcknowledgeAlarm/[RelayCommand] AcknowledgeAlarmAsync(node) 추가
+      (AcknowledgeAlarmCommand 로 생성됨 — Async 접미사는 소스 생성기가 제거) →
+      _connectionManager.AcknowledgeAlarmAsync(node.BoundCollectorId, node.AlarmKey)
+      호출("발생 출처로만 전송" 원칙 — Monitor MN-03/Collector C-EX-12 재사용)
+  Views/DeviceControls/DeviceControlBase.xaml
+    ← AlarmColor 컨버터 리소스 등록
+    ← AlarmBadge(Button, 카드 좌상단, "⚠" 글리프, AlarmLevel 색상, Acked 시 반투명,
+      HasActiveAlarm 일 때만 표시, Click="_OnAlarmBadgeClick")
+    ← AlarmPopup(Popup, DataContext=ElementName 바인딩으로 명시 지정, Bottom 배치,
+      StaysOpen=False) — TagName/메시지/레벨+상태/시각 표시 + AckButton
+      (Click="_OnAckButtonClick", AlarmStatusText="Active" 일 때만 표시)
+  Views/DeviceControls/DeviceControlBase.xaml.cs
+    ← _OnAlarmBadgeClick: AlarmPopup.IsOpen 토글
+    ← _OnAckButtonClick: VisualTreeHelper 로 상위 UserControl(LayoutCanvasView)
+      탐색 → DataContext(LayoutCanvasViewModel).AcknowledgeAlarmCommand 실행
+    ← _FindAncestorUserControl: 범용 상위 UserControl 탐색 헬퍼(특정 View 타입
+      하드코딩 없음 — DeviceControlBase 재사용성 유지)
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+
+### 2단계: 런타임 (Collector 에서 임의 Tag 에 알람 발생 필요 — 알람 설정된 Tag의
+    임계값을 넘는 값을 Force Write 하거나 실제 값 변화로 트리거)
+  [ ] Tag 바인딩된 카드에 알람 발생 시 카드 좌상단에 "⚠" 배지가 나타나는지 확인
+      (레벨에 따라 HH/LL=빨강, H/L=노랑)
+  [ ] 배지 클릭 → 상세 팝업(Tag명/메시지/레벨+상태/발생 시각) 표시 확인
+  [ ] 팝업의 [✓ 확인(ACK)] 버튼 클릭 → 알람 상태가 "Acked" 로 전환되고 배지가
+      반투명해지는지 확인, ACK 버튼이 사라지는지 확인
+  [ ] 알람이 해소(Recovered)되면 배지가 사라지는지 확인
+  [ ] 팝업 바깥을 클릭하면 팝업이 자동으로 닫히는지 확인(StaysOpen=False)
+  [ ] 여러 카드에 동시에 알람이 발생해도 각자 독립적으로 배지/팝업이 동작하는지 확인
+  [ ] ACK 요청이 알람을 발생시킨 Collector 로만 전송되는지 확인(다중 Collector
+      환경에서 회귀 없음 — "발생 출처로만 전송" 원칙)
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Tag 바인딩된 카드에 알람이 발생하면 좌상단에 "⚠" 배지가 자동으로 나타남
+  2. 배지 클릭 → 알람 상세 정보(메시지·레벨·상태·발생 시각) 팝업 표시
+  3. 미확인(Active) 상태면 팝업에 [✓ 확인(ACK)] 버튼이 표시됨 → 클릭하여 확인 처리
+  4. 확인(Acked) 후에는 배지가 반투명하게 표시되어 "확인됨"을 구분할 수 있음
+  5. 알람이 해소되면 배지가 자동으로 사라짐
+
+확인 포인트:
+  - 배지·팝업은 DeviceControlBase 공통 구현이라 모터/컨베이어/탱크/밸브/아이콘
+    카드 전부에서 동일하게 동작함(장비별 추가 작업 불필요)
+  - 알람 상태는 레이아웃 저장 대상이 아님(hmi-layout.json 에 포함 안 됨) —
+    실시간 알람 스트림으로만 반영되는 값이기 때문
+
+다음 Step 예고:
+  HM-09에서는 아이콘 더블클릭 시 값 입력 다이얼로그를 띄워 SignalR
+  Invoke("ForceWrite")로 원격 강제쓰기를 수행하는 제어 기능을 구현합니다.
+
+### HM-09 구현 내역 (코드 완료 — 2026-07-19, 빌드 확인 대기)
+
+```
+설계 원칙: Collector 는 이미 C-EX-13(2026-07-16 빌드 확인 완료)에서 IIoTHub.
+ForceWrite(plcId,tagId,value,apiKey) 원격 메서드를 제공하고 있으므로, HMI 쪽은
+① 이 Hub 메서드를 호출하는 얇은 래퍼(CollectorConnection/Manager) ②
+Collector 자체 UI(ForceWriteDialog+StatusView 패턴)를 그대로 이식한 입력
+다이얼로그 ③ 캔버스에서 카드를 더블클릭하면 ②를 여는 트리거, 3단으로만
+구성하면 된다 — 검증(기능 활성화·API Key·Tag 존재/활성·값 형식)은 전부
+Collector 측 ForceWriteService(C-15)에 위임되어 HMI 쪽에는 별도 검증 로직이
+없다("Hub 는 위임만 한다" 원칙 그대로 클라이언트에도 적용).
+
+신규 파일:
+  Models/ForceWriteResult.cs
+    ← Collector Core/Engine/ForceWriteService.cs 의
+      "record ForceWriteResult(bool IsSuccess, string? Error)" 와 동일한 필드
+      구조의 클라이언트측 DTO. SignalR JsonHubProtocol 기본 직렬화(camelCase)를
+      그대로 왕복하므로 별도 JsonPropertyName 지정 없이 매핑된다.
+  Views/LayoutCanvas/ForceWriteDialog.xaml(.cs)
+    ← IIoT.Collector Views/Status/ForceWriteDialog.xaml(.cs) 이식(네임스페이스만
+      변경, 동일 UI/동작) — Tag명·PLC정보 표시 + 값 입력 + API Key(PasswordBox,
+      설정된 경우에만 필요) + 경고문 + 취소/쓰기 버튼. [쓰기] 클릭 시
+      ResultValue/ResultApiKey 를 채우고 DialogResult=true 반환.
+
+변경 파일 (전체 최종본 반영 완료):
+  Core/Connection/CollectorConnection.cs
+    ← ForceWriteAsync(plcId,tagId,value,apiKey) 추가 — Hub 미연결 시 자체적으로
+      실패 반환, 그 외에는 _hub.InvokeAsync<ForceWriteResult>("ForceWrite", ...)
+      결과를 그대로 반환(AcknowledgeAsync 와 동일한 예외 처리 패턴)
+  Core/Connection/CollectorConnectionManager.cs
+    ← ForceWriteAsync(collectorId,plcId,tagId,value,apiKey) 추가 — "발생 출처로만
+      전송" 원칙 그대로 적용(AcknowledgeAlarmAsync 와 동일 패턴), 연결 없으면
+      즉시 ForceWriteResult(false, 사유) 반환
+  ViewModels/LayoutCanvasViewModel.cs
+    ← ForceWriteAsync(node,value,apiKey) 공개 메서드 추가 — 커맨드가 아니라 일반
+      메서드인 이유: 다이얼로그 표시/결과 MessageBox 는 View(코드비하인드) 책임,
+      ViewModel은 Collector 위임만 담당(관심사 분리)
+  Views/LayoutCanvas/LayoutCanvasView.xaml.cs
+    ← OnCanvasMouseDown 에 더블클릭(e.ClickCount==2) 분기 추가 — 드래그 시작
+      로직보다 먼저 검사해 더블클릭 시 드래그가 시작되지 않도록 분리
+    ← _OpenForceWriteDialogAsync(node) 추가 — 미바인딩 카드는 안내 메시지만
+      표시하고 종료, 바인딩된 카드는 ForceWriteDialog 표시 → 확인 시 ViewModel.
+      ForceWriteAsync() 호출 → 결과를 MessageBox 로 표시(Collector StatusView.
+      xaml.cs ForceWriteButton_Click 과 동일 패턴)
+
+★ 범위 결정: API Key 입력은 Collector 자체 UI와 동일하게 "매 강제쓰기마다
+  다이얼로그에서 직접 입력" 방식을 그대로 재사용한다 — HMI 자체에 API Key를
+  저장/기억하는 기능은 두지 않는다(평문 저장 회피). Security 정책 전반(예:
+  Key 재사용성 개선, 화면별 권한 등)은 HM-12에서 별도 검토 예정.
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+
+### 2단계: 런타임 (Collector 의 settings.json ForceWrite.Enabled=true 필요,
+    Security.ForceWriteApiKey 설정 시 해당 값도 미리 확인해 둘 것)
+  [ ] Tag 바인딩되지 않은 카드를 더블클릭 → "Tag가 바인딩되어 있지 않습니다" 안내
+      메시지만 표시되고 다이얼로그는 뜨지 않는지 확인
+  [ ] Tag 바인딩된 카드를 더블클릭 → ForceWriteDialog 표시(Tag명·PLC정보 확인)
+  [ ] 값 입력 후 [쓰기] 클릭(API Key 미설정 시 빈 칸으로 두어도 통과되는지 확인)
+      → "쓰기 성공" MessageBox 표시 확인
+  [ ] 실제 PLC(또는 Virtual 드라이버) 값이 반영되는지 Collector 쪽에서 확인
+  [ ] Security.ForceWriteApiKey 가 설정된 경우: API Key 를 틀리게 입력하면
+      "API Key 가 올바르지 않습니다" 형태의 실패 메시지가 표시되는지 확인
+  [ ] 비활성 Tag/존재하지 않는 Tag 등 Collector 측 검증 실패 케이스에서도
+      다이얼로그가 죽지 않고 실패 메시지가 정상 표시되는지 확인
+  [ ] [취소] 클릭 시 아무 요청도 전송되지 않는지 확인
+  [ ] 더블클릭 후에도 카드가 드래그되어 이동하지 않는지 확인(더블클릭이 드래그로
+      오인되지 않는지 회귀 확인)
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Tag 바인딩된 카드를 더블클릭
+  2. 표시된 다이얼로그에서 쓸 값(Raw 값 기준) 입력
+  3. Collector 에 API Key 가 설정되어 있다면 API Key 도 함께 입력
+  4. [쓰기] 클릭 → 결과(성공/실패)가 즉시 안내됨
+
+확인 포인트:
+  - 값은 Raw 값 기준으로 입력(스케일 역변환 없음 — Collector 다이얼로그와 동일 안내문)
+  - API Key 는 HMI 에 저장되지 않으며 매번 직접 입력해야 함
+  - 강제쓰기 발생은 Collector 에서 다른 연결 클라이언트(다른 HMI 화면·Monitor 등)
+    에도 "ForceWriteResult" Push 로 즉시 알려지지만(C-EX-13), 이번 Step에서는
+    이 Push 를 구독해 화면에 반영하는 기능은 포함하지 않음(필요 시 후속 검토)
+
+다음 Step 예고:
+  HM-10에서는 다중 화면(페이지) 관리를 탭/트리 형태로 개선할 필요가 있는지
+  검토합니다 — HM-07의 화면 관리 바(콤보박스+이름 편집)로 이미 상당 부분
+  충족되어 있어, 착수 시 추가 개선 필요성부터 재확인할 예정입니다.
+
+### HM-10 구현 내역 (코드 완료 — 2026-07-19, 빌드 확인 대기)
+
+```
+★ 사용자 확인: HM-10 착수 전 "HM-07 콤보박스로 기능적으로 충분 vs 탭 바로 교체
+  vs 트리 패널 신설" 3안을 제시했고, 사용자가 "탭 바 형태로 교체(권장)"를 선택함
+  (화면이 여러 개일 때 한눈에 보고 클릭 한 번으로 전환 가능하도록).
+
+설계 원칙: 완전히 새로운 컨트롤을 만들지 않고 Pages/ActivePage(HM-07)의 기존
+데이터 구조와 커맨드(AddPage/DeletePage/SaveLayout)는 그대로 유지한 채, "화면을
+어떻게 선택/이름 편집하는가"의 UI 부분만 콤보박스+텍스트박스 → 탭 바로 교체했다.
+탭 클릭(단일)=화면 전환, 탭 더블클릭=이름 편집 모드(인라인 TextBox) — MainWindow
+의 5탭 필(pill) 스타일(AccFaintBrush/AccBrush, HM-Base-2)과 동일한 강조색을
+재사용해 앱 전체의 탭 시각 언어를 통일했다.
+
+변경 파일 (전체 최종본 반영 완료):
+  ViewModels/LayoutCanvasViewModel.cs
+    ← LayoutPageViewModel 에 IsActive(bool, 탭 강조 표시)/IsEditingName(bool,
+      더블클릭 시 인라인 이름 편집 전환) 2개 필드 추가
+    ← OnActivePageChanged 에서 Pages 전체를 순회하며 IsActive 갱신(정확히 1개만
+      true) 하는 로직 추가
+    ← SelectPage(LayoutPageViewModel? page) 공개 메서드 추가 — SelectNode(node)
+      와 동일한 패턴(커맨드가 아닌 일반 메서드)으로 View 의 탭 클릭 핸들러가 호출
+  Views/LayoutCanvas/LayoutCanvasView.xaml
+    ← Row 0 의 ComboBox+TextBox 를 ItemsControl(ItemsSource=Pages,
+      ItemTemplate=PageTabTemplate) 기반 가로 탭 바로 교체, ScrollViewer 로 감싸
+      화면이 많아져도 좌우 스크롤로 전부 접근 가능(➕/🗑/💾 버튼은 우측에 고정)
+    ← PageTabTemplate(신규, UserControl.Resources) — Border(활성 시
+      AccFaintBrush 배경)+TextBlock(활성 시 AccBrush 글자색, 편집 모드 시 숨김)+
+      TextBox(편집 모드 시에만 표시, BoolToVisibility 컨버터로 토글)
+  Views/LayoutCanvas/LayoutCanvasView.xaml.cs
+    ← PageTab_MouseLeftButtonDown — ClickCount==2 면 IsEditingName=true 설정 후
+      Dispatcher.BeginInvoke 로 지연시켜 인라인 TextBox 에 포커스(레이아웃 갱신
+      후 Visibility 가 Visible 로 바뀐 다음에 포커스를 줘야 하므로), 단일 클릭이면
+      _vm.SelectPage(page) 호출
+    ← PageTabNameBox_LostFocus — 포커스 잃으면 IsEditingName=false(편집 확정)
+    ← PageTabNameBox_KeyDown — Enter=포커스 해제(LostFocus 유도), Esc=편집 취소
+
+★ 범위 결정: 화면 삭제는 여전히 "현재 활성 화면 삭제"(🗑 화면 삭제 버튼) 방식을
+  유지한다 — 탭마다 개별 ✕ 닫기 버튼은 추가하지 않음(간결함 우선, 과도한 확장
+  자제). 트리 패널(라인별/구역별 그룹핑)은 이번 Step 범위에 포함하지 않음 —
+  필요성이 실제로 대두되면 별도 후속 항목으로 검토.
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+
+### 2단계: 런타임
+  [ ] [🎨 레이아웃 편집] 탭 → 화면 관리 바가 콤보박스가 아닌 탭 바 형태로
+      표시되는지 확인(기본 화면 1개가 탭으로 보임)
+  [ ] [➕ 새 화면] 클릭 → 새 탭이 추가되고 자동으로 활성화(강조색)되는지 확인
+  [ ] 탭 클릭(단일) → 해당 화면으로 전환되고 강조색이 클릭한 탭으로 이동하는지 확인
+  [ ] 탭 더블클릭 → 이름이 인라인 TextBox 로 바뀌고 포커스+전체 선택되는지 확인
+  [ ] 이름 수정 후 Enter → 편집 모드 종료 + 탭에 새 이름이 반영되는지 확인
+  [ ] 이름 수정 중 Esc → 편집 모드만 종료(입력 중이던 값은 Text 바인딩상 이미
+      반영되었을 수 있음 — 되돌리기 기능은 없음, 필요 시 후속 검토)
+  [ ] 탭 이름 편집 후 다른 곳 클릭(포커스 아웃) → 자동으로 편집 모드 종료되는지 확인
+  [ ] 화면을 5개 이상 추가 → 탭 바에 가로 스크롤이 생기고 ➕/🗑/💾 버튼은 계속
+      우측에 고정 표시되는지 확인
+  [ ] [🗑 화면 삭제] → 현재 활성 탭이 삭제되고 다른 탭으로 자동 전환되는지 확인
+      (마지막 1개 남으면 버튼 비활성화 — HM-07과 동일)
+  [ ] [💾 레이아웃 저장] 후 재시작 → 탭 이름·순서·활성 화면이 그대로 복원되는지 확인
+  [ ] 테마 전환(7종) 시 탭 강조색(AccFaintBrush/AccBrush)이 모든 테마에서 깨지지
+      않고 정상 반영되는지 확인(DynamicResource 사용 확인)
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. 화면 관리 바의 탭을 클릭하면 해당 화면으로 즉시 전환됨
+  2. 탭을 더블클릭하면 이름을 바로 수정할 수 있음(Enter=확정, Esc=취소, 포커스
+     아웃 시 자동 확정)
+  3. [➕ 새 화면]/[🗑 화면 삭제]/[💾 레이아웃 저장] 버튼은 이전과 동일하게 동작
+
+확인 포인트:
+  - 데이터 구조·저장 파일(hmi-layout.json)·커맨드는 HM-07과 완전히 동일 —
+    이번 Step은 화면 전환/이름편집 "UI 표현 방식"만 바꾼 것
+  - 탭 강조 스타일은 MainWindow 상단 5탭(HM-Base-2)과 동일한 색상 키를 재사용해
+    시각적으로 통일됨
+
+다음 Step 예고:
+  HM-11에서는 자체 SignalR Hub + wwwroot 를 호스팅하여 웹 브라우저에서도
+  동일한 화면을 볼 수 있도록 확장합니다(Collector C-11/wwwroot 패턴 재사용).
+
+### HM-11 구현 내역 (코드 완료 — 2026-07-19, 빌드 확인 대기)
+
+```
+★ 리서치 기반 구현: Collector C-11(SignalRHostService.cs+wwwroot/index.html)과
+  Monitor MN-05(MonitorHostService.cs, FrameworkReference 재도입 FIX)의 실제
+  코드를 먼저 조사한 뒤, 두 프로그램의 검증된 패턴을 그대로 조합해 구현했다
+  (새 접근 방식을 고안하지 않음 — 이미 두 번 검증된 패턴 재사용).
+
+① FrameworkReference 재도입 (HM-Base-0 에서 의도적으로 미뤄뒀던 부분)
+  IIoT.HMI.csproj
+    ← <FrameworkReference Include="Microsoft.AspNetCore.App" /> 추가
+    ← ★ Monitor MN-05 FIX 그대로 적용: Microsoft.Extensions.DependencyInjection
+      의 "8.0.1 명시 버전 고정" PackageReference 를 완전히 제거 — HMI 는 이제
+      ①Collector 접속 클라이언트(SignalR.Client) + ②웹 브라우저용 자체 Hub
+      호스팅을 동시에 수행하므로, Monitor 가 겪었던 것과 동일한 NU1605
+      다운그레이드 충돌 위험이 있다. 8.0.1 고정을 유지한 채 FrameworkReference
+      를 추가하면 재발 가능 — 반드시 함께 제거해야 한다(Monitor Ver History
+      MN-05 참조).
+    ← <Content Include="wwwroot\**\*"> 복사 항목 추가(Collector C-11 패턴)
+
+② 설정 — Core/Config/HmiSettings.cs
+    ← HmiSettings.Web(WebHostSettings) 추가 — Enabled(기본 true)/Port(기본 7880,
+      Collector 7878·Monitor 7879 와 겹치지 않게 선택). Monitor MonitorSettings
+      의 WebHostSettings 와 동일 구조.
+
+③ 신규 파일 (Core/Web/)
+  Core/Web/WebNodeDto.cs
+    ← 웹 페이지가 카드 1개를 그리는 데 필요한 경량 DTO(구조+실시간 상태 결합).
+      AbstractLayoutNode(WPF ObservableObject)를 직접 직렬화하지 않고 이 DTO 로
+      변환 — REST(/api/layout)와 SignalR("NodesChanged" Push) 양쪽에서 동일하게 사용.
+  Core/Web/HmiWebHub.cs
+    ← 읽기 전용 표시 전용 Hub(빈 클래스, 클라이언트 호출 메서드 없음). ACK/
+      ForceWrite 는 이번 Step 범위 밖(아래 "★ 범위 결정" 참조).
+  Core/Web/HmiWebHostService.cs (DI 싱글턴)
+    ← Collector SignalRHostService.cs 패턴 그대로 준용: WebApplication 빌드→
+      CORS(allow-all)+AddSignalR→UseUrls(포트)+UseWebRoot(wwwroot)→UseCors+
+      UseDefaultFiles+UseStaticFiles→MapHub("/hmi-hub")+MapGet("/health")+
+      MapGet("/api/layout")→별도 non-pool Thread("HMI-WebHost")에서 블로킹
+      _app.Run() 실행(Task.Run 아님 — ASP.NET Core 는 전용 스레드 필요)
+    ← StartAsync() 시작 시 _settingsLoader.LoadAsync() 를 자체적으로 먼저
+      호출 — hmi.json 로드가 [Collector 관리] 탭 Loaded 시점(HM-01)에 이루어
+      지므로 이 서비스가 그보다 먼저 시작되어도 최신 설정을 보장한다
+    ← _WireRelay(): LayoutCanvasViewModel.Nodes.CollectionChanged + 개별 노드의
+      PropertyChanged 를 구독해 "dirty 플래그"만 세운다(Monitor MonitorHostService
+      의 _WireRelay relay 패턴과 동일 원칙)
+    ← 500ms 주기 브로드캐스트 루프 — dirty 일 때만 전체 노드 스냅샷을
+      "NodesChanged" 로 Push(코일레싱 — 폴링 사이클마다 직렬화/Push 반복 방지)
+    ← _BuildSnapshotAsync(): Dispatcher.InvokeAsync 로 UI 스레드에서 스냅샷을
+      만든다(Nodes 는 WPF ObservableCollection — 비 UI 스레드에서 직접 열거하면
+      스레드 안전성 문제 위험. 프로젝트의 ".Invoke 금지" 규칙은 블로킹 .Invoke()
+      에 대한 것이므로 비-블로킹 await 가능한 InvokeAsync() 를 사용해 규칙의
+      취지를 지키면서 안전하게 마샬링)
+
+④ 신규 wwwroot/index.html
+    ← Collector wwwroot/index.html 과 동일 스타일(다크 테마, 순수 CSS/JS,
+      SignalR CDN 1개만 의존, 별도 프레임워크 없음)
+    ← 최초 GET /api/layout 로 스냅샷 조회 후 render(), 이후 "NodesChanged" 수신
+      시마다 전체 재렌더(증분 갱신 대신 — 카드 수가 많지 않은 HMI 특성상 충분히
+      가볍고 구현이 단순함)
+    ← 카드 렌더링: 카테고리 색상 바 + 아이콘 글리프 + 라벨 + 값 텍스트(바인딩
+      시) + Quality 상태 점 + 알람 배지(⚠, 레벨별 색상) — WPF DeviceControlBase
+      카드와 동일한 시각 요소를 웹에서도 재현(단, 애니메이션·팝업·ACK 는 없음)
+
+⑤ 변경 파일
+  App.xaml.cs
+    ← HmiWebHostService DI 등록(LayoutCanvasViewModel 뒤)
+    ← MainWindow.Show() 이후 win.Loaded 에서 HmiWebHostService.StartAsync() 호출
+      (★ HMI 최초로 "win.Loaded 오케스트레이션" 패턴 도입 — 이전까지는 각 View
+      가 각자 Loaded 에서 독립 초기화했으나, 웹 서버 시작은 특정 View 에 속하지
+      않으므로 App 레벨에서 직접 기동. Collector App.xaml.cs 의 win.Loaded 패턴 참고)
+    ← OnExit 에 HmiWebHostService.DisposeAsync() 5초 타임아웃 정리 추가
+      (CollectorConnectionManager 와 동일 방식)
+
+★ 범위 결정(1차 — 읽기 전용):
+  - ACK/ForceWrite 는 웹에서 제공하지 않는다(HmiWebHub 는 클라이언트 호출
+    메서드가 없는 빈 Hub). 필요해지면 별도 후속 Step 으로 검토(아래 "🔧 후속·
+    보류 항목"에 등록).
+  - 웹은 WPF 의 "현재 활성 화면(ActivePage) 1개"만 미러링한다 — 웹에서 독립적
+    으로 화면(페이지)을 선택하는 기능은 없다. 필요해지면 Pages 목록도 함께
+    REST/Push 로 노출하는 방식으로 후속 확장 가능.
+  - 카드 애니메이션(회전/흐름/수위/개폐, HM-06)과 알람 상세 팝업/ACK(HM-08),
+    ForceWrite 다이얼로그(HM-09)는 웹에 없다 — 값/상태를 "보여주기"만 한다.
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드 (★ 이번 Step은 FrameworkReference 추가로 인한 위험이 가장 큼)
+  [ ] Clean → Rebuild → 오류 0개
+  [ ] NU1605(다운그레이드 오류) 발생 시: 오류 메시지가 요구하는 최소 버전을
+      확인해 해당 패키지를 PackageReference 로 그 버전 이상 명시 재고정
+      (Monitor MN-05 FIX 사례와 동일 — 이번에는 애초에 명시 고정을 제거했으므로
+      발생 가능성은 낮지만, 만약 발생하면 이 절차를 따를 것)
+  [ ] CS0246 'WebApplication'/'Results' 등 찾을 수 없음 → FrameworkReference
+      누락 여부 재확인
+  [ ] wwwroot\index.html 이 빌드 출력 폴더(bin\Debug\net8.0-windows\wwwroot\)에
+      복사되었는지 확인(Content Include 누락 시 웹 접속 404)
+
+### 2단계: 런타임
+  [ ] IIoT.HMI 실행 → 로그에 "웹 표시 서버 시작 — http://localhost:7880" 출력 확인
+  [ ] 브라우저에서 http://localhost:7880 접속 → 다크 테마 페이지 로드, 헤더에
+      "연결됨"(녹색 점) 표시 확인
+  [ ] WPF [🎨 레이아웃 편집] 탭의 현재 활성 화면 카드가 웹 페이지에도 동일한
+      위치·아이콘·라벨로 표시되는지 확인
+  [ ] WPF 에서 카드를 드래그해 위치를 옮기면 약 0.5초 이내에 웹 페이지에도
+      반영되는지 확인(500ms 코일레싱 브로드캐스트)
+  [ ] WPF 에서 Tag 바인딩된 카드의 값이 갱신되면 웹 페이지의 값 텍스트/상태
+      점도 함께 갱신되는지 확인
+  [ ] WPF 에서 알람이 발생하면 웹 페이지의 카드에도 ⚠ 배지가 나타나는지 확인
+      (배지에 마우스 올리면 메시지 툴팁 표시)
+  [ ] WPF 에서 화면(페이지) 탭을 전환하면 웹 페이지도 그 화면의 카드로
+      바뀌는지 확인(웹은 항상 WPF 의 현재 활성 화면만 미러링)
+  [ ] 브라우저 새로고침 → 최초 스냅샷(GET /api/layout)이 즉시 반영되는지 확인
+  [ ] WPF 프로그램 종료 → 5초 이내에 프로세스가 정상 종료되는지 확인(Kestrel
+      graceful shutdown 대기 포함)
+  [ ] hmi.json 에서 Web.Enabled=false 로 설정 후 재시작 → 웹 서버가 시작되지
+      않고 로그에 "웹 표시 기능 비활성화" 만 출력되는지 확인(WPF 앱 자체는
+      정상 동작)
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. IIoT.HMI 실행 시 자동으로 웹 표시 서버가 함께 시작됨(기본 포트 7880)
+  2. 같은 네트워크의 다른 PC/모바일 브라우저에서 http://{HMI PC IP}:7880 접속
+  3. WPF 쪽에서 조작하는 화면(카드 배치·값·알람)이 자동으로 웹에도 반영됨
+  4. 웹 페이지는 읽기 전용 — 클릭/드래그로 조작되지 않음(추후 확장 여지)
+
+확인 포인트:
+  - 포트/활성화 여부는 {HMI 실행파일}\Config\hmi.json 의 Web.Enabled/Web.Port
+    로 조정(직접 편집 — 아직 UI 편집 화면 없음, "설정 UI" 후속 항목 참조)
+  - 웹 화면은 WPF 의 현재 활성 화면 1개만 미러링하며, 애니메이션·팝업·ACK·
+    ForceWrite 는 제공하지 않음(1차 범위 — 위 "★ 범위 결정" 참조)
+
+다음 Step 예고:
+  HM-12에서는 ForceWrite API Key 입력 확인 등 보안 강화를 검토합니다
+  (Collector Security.ForceWriteApiKey 재사용).
+
+### HM-12 구현 내역 (코드 완료 — 2026-07-19, 빌드 확인 대기)
+
+```
+★ 사용자 확인: HM-12 범위가 핸드오프상 "Security 정책 전반"으로만 열려 있어
+  구체 항목을 물었고, 사용자가 3가지 모두 선택함 — ① 화면 잠금 모드(권장)
+  ② 활성 알람 중 강제쓰기 경고 ③ 세션 내 API Key 임시 기억.
+
+① 화면 잠금 모드
+  Core/Config/HmiSettings.cs
+    ← ForceWriteSecuritySettings(DefaultLocked, 기본 true) 추가 — 앱 시작 시
+      잠금 기본 상태만 설정(토글 자체는 파일에 저장 안 함)
+  ViewModels/LayoutCanvasViewModel.cs
+    ← HmiSettingsLoader 생성자 주입 추가(화면 잠금 기본값 조회용)
+    ← IsForceWriteLocked(기본 true) + LockButtonLabel(계산 프로퍼티, 🔒/🔓 텍스트) +
+      ToggleForceWriteLockCommand 추가. InitializeAsync() 에서 hmi.json 의
+      ForceWriteSecurity.DefaultLocked 를 초기값으로 적용(다른 View 의 Loaded
+      순서와 무관하도록 자체적으로 LoadAsync 재호출 — HmiWebHostService 와 동일 패턴)
+  Views/LayoutCanvas/LayoutCanvasView.xaml
+    ← 툴바(Row 1)에 잠금 토글 버튼 추가(선택 여부와 무관하게 항상 표시)
+  Views/LayoutCanvas/LayoutCanvasView.xaml.cs
+    ← _OpenForceWriteDialogAsync() 최상단에 IsForceWriteLocked 체크 추가 —
+      잠금 상태면 안내 메시지만 표시하고 다이얼로그를 열지 않음
+  ★ 범위 결정: 잠금은 ForceWriteDialog 오픈만 차단한다(드래그/삭제/바인딩 등
+    다른 편집 동작은 잠금과 무관 — 사용자가 승인한 옵션 설명 그대로).
+
+② 활성 알람 중 강제쓰기 경고
+  Views/LayoutCanvas/ForceWriteDialog.xaml
+    ← AlarmWarningPanel(Grid.Row=4, 신규, 기본 Collapsed) 추가 — 경고 문구
+      TextBlock + "위험을 인지했으며 계속 진행합니다" CheckBox
+    ← [쓰기] 버튼에 x:Name="OkButton" 부여(코드비하인드에서 IsEnabled 제어 위해)
+    ← Window Height 320→380(경고 패널 표시 시에도 여유 있게)
+  Views/LayoutCanvas/ForceWriteDialog.xaml.cs
+    ← 생성자에 hasActiveAlarm/alarmMessage 매개변수(기본값 false/"") 추가 —
+      true 면 AlarmWarningPanel 표시 + OkButton.IsEnabled=false(체크박스 체크 전까지)
+    ← ChkAlarmAck_CheckedChanged 핸들러 추가 — 체크 상태에 따라 OkButton.IsEnabled 갱신
+  Views/LayoutCanvas/LayoutCanvasView.xaml.cs
+    ← ForceWriteDialog 생성 시 node.HasActiveAlarm/node.AlarmMessage 전달
+
+③ 세션 내 API Key 임시 기억
+  ViewModels/LayoutCanvasViewModel.cs
+    ← _apiKeyCache(Dictionary<string,string>, 메모리 전용 — hmi.json/디스크에는
+      절대 저장 안 함) 추가. ForceWriteAsync() 가 성공한 호출의 apiKey 만
+      CollectorId 기준으로 캐싱(실패한 값은 캐싱 안 함 — 다음 시도를 방해하지
+      않도록). GetCachedApiKey(collectorId) 공개 메서드로 조회
+  Views/LayoutCanvas/ForceWriteDialog.xaml.cs
+    ← PrefillApiKey(apiKey) 공개 메서드 추가 — PasswordBox.Password 는 보안상
+      XAML Binding 불가(WPF 표준 제약)라 코드비하인드에서만 설정 가능
+  Views/LayoutCanvas/LayoutCanvasView.xaml.cs
+    ← dialog.PrefillApiKey(_vm.GetCachedApiKey(node.BoundCollectorId)) 호출 —
+      다이얼로그 표시 직전에 캐시된 값이 있으면 미리 채워 넣음
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+
+### 2단계: 런타임 — 화면 잠금
+  [ ] [🎨 레이아웃 편집] 탭 → 툴바에 "🔒 잠금(더블클릭 차단)" 버튼이 기본 표시되는지 확인
+  [ ] 잠금 상태에서 Tag 바인딩된 카드 더블클릭 → 안내 메시지만 뜨고 ForceWriteDialog
+      가 열리지 않는지 확인
+  [ ] 잠금 버튼 클릭 → "🔓 해제(강제쓰기 가능)"로 바뀌는지 확인, 이후 더블클릭 시
+      다이얼로그가 정상적으로 열리는지 확인
+  [ ] hmi.json 에서 ForceWriteSecurity.DefaultLocked=false 로 설정 후 재시작 →
+      시작 시 해제 상태로 시작하는지 확인
+
+### 3단계: 런타임 — 활성 알람 중 강제쓰기 경고
+  [ ] 알람 없는 정상 Tag 카드 더블클릭 → 기존과 동일하게 경고 패널 없이 [쓰기]
+      버튼이 바로 활성화되어 있는지 확인(회귀 없음)
+  [ ] 알람이 걸려 있는 Tag 카드 더블클릭(잠금 해제 상태) → 빨간 경고 문구 +
+      체크박스가 표시되고 [쓰기] 버튼이 비활성화 상태인지 확인
+  [ ] 체크박스 체크 → [쓰기] 버튼이 활성화되는지 확인, 체크 해제 시 다시
+      비활성화되는지 확인
+
+### 4단계: 런타임 — 세션 내 API Key 임시 기억
+  [ ] Security.ForceWriteApiKey 가 설정된 Collector 대상 카드에 API Key 입력 후
+      강제쓰기 성공 → 같은 Collector 의 다른 카드를 더블클릭했을 때 API Key
+      입력란에 이전 값이 자동으로 채워져 있는지 확인
+  [ ] API Key 를 틀리게 입력해 강제쓰기 실패 → 그 값은 캐싱되지 않았는지 확인
+      (다음에 다시 열었을 때 빈 칸이거나 이전 성공값이 유지되는지)
+  [ ] 프로그램 재시작 → 캐시가 초기화되어 API Key 입력란이 다시 비어 있는지 확인
+      (디스크에 저장되지 않음 확인)
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. [🎨 레이아웃 편집] 탭 툴바의 잠금 버튼으로 강제쓰기 다이얼로그 오픈을
+     허용/차단할 수 있음(기본은 잠김 — 안전 우선)
+  2. 알람이 걸린 Tag 를 강제쓰기하려 하면 위험 경고와 함께 추가 확인이 필요함
+  3. 같은 Collector 에 여러 번 강제쓰기할 때는 최초 성공 이후 API Key 를
+     다시 입력하지 않아도 됨(이번 실행 세션에서만 유지, 재시작 시 초기화)
+
+확인 포인트:
+  - 잠금 기본값은 {HMI 실행파일}\Config\hmi.json 의 ForceWriteSecurity.DefaultLocked
+    로 조정(직접 편집 — 아직 UI 편집 화면 없음)
+  - API Key 세션 캐시는 메모리에만 존재하며 어떤 파일에도 저장되지 않음
+
+다음 Step 예고:
+  HM-Base-0~HM-12 전체를 사용자가 빌드·런타임 확인하면 IIoT.HMI 의 1차
+  기본구조가 완성됩니다. 이후 HM-EX(히스토리 트렌드/캡처·리포트/다중 모니터)
+  후속 검토 여부를 판단하거나, 전체 개발 순서(2단계 확정)에 따라 IIoT.Sequence
+  로 넘어갈 수 있습니다.
+
 ### HM-Base-0~2 + HM-01~02 구현 내역 (코드 완료 — 2026-07-16, 빌드 확인 대기)
 
 ```
@@ -744,6 +1292,9 @@ x:Class 보유) 이 요소들에 안전하게 접근 가능 — IComponentConnec
  C-EX-11 (Collector 후속) / Studio 보류 4건 (가상Tag·N포트·Function·프로토콜편집)
  HM-EX (히스토리 트렌드 오버레이 / 캡처·리포트 / 다중 모니터 지원 — HMI 1차 마감 후)
  HM-04-EX 장비 아이콘 실제 형상화 (아래 "⭐ 신규 후속 기능: 장비 아이콘 실형상 UI 컨트롤화" 참조)
+ HM-11-EX 웹에서 ACK/ForceWrite 지원 + 웹 자체 화면(페이지) 선택 기능
+   (2026-07-19, HM-11 1차 범위를 읽기 전용으로 한정하며 등록 — 착수 시
+    HmiWebHub 에 클라이언트 호출 메서드 추가 + 보안(HM-12) 검토 선행 필요)
 ```
 
 ### ⭐ 신규 후속 기능 (기록만, 착수 안 함): 설정(Settings) UI 편집 화면
@@ -847,7 +1398,7 @@ TankControl/ValveControl.cs(각 장비 전용 애니메이션 구현) — 전체
 신규/수정 완료, 사용자 빌드·런타임 확인 완료.
 ```
 
-### ⑥ HM-07 (레이아웃 저장·불러오기 + Z-레벨 우선순위) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-16)
+### ⑥ HM-07 (레이아웃 저장·불러오기 + Z-레벨 우선순위) — ✅ 빌드·런타임 확인 완료 (2026-07-19, 사용자 직접 검증)
 ```
 ★ 사용자 요청 추가: Z-레벨(카드 겹침 순서) 우선순위 지정 기능을 HM-07과 함께 구현.
 Core/Layout/LayoutNode.cs(ZIndex 추가) · Core/Config/HmiLayoutSettings.cs(신규 —
@@ -856,9 +1407,239 @@ ViewModels/LayoutCanvasViewModel.cs(Z-레벨 커맨드 4개 + Pages/ActivePage/
 InitializeAsync/AddPage/DeletePage/SaveLayout + LayoutPageViewModel) ·
 Views/LayoutCanvas/LayoutCanvasView.xaml(Z-레벨 툴바 버튼 4개 + 화면 관리 바 신설) ·
 LayoutCanvasView.xaml.cs(InitializeAsync 호출 추가) · App.xaml.cs(HmiLayoutLoader
-DI 등록) — 전체 6개 파일 신규/수정 완료. 사용자 빌드·런타임 확인 필요
-(위 "HM-07 구현 내역" 절 체크리스트 참조).
-완료 확인 후 → HM-08 (알람 오버레이) 착수. ← 다음 시작점
+DI 등록) — 전체 6개 파일 신규/수정 완료, 사용자 빌드·런타임 확인 완료.
+```
+
+### ⑦ HM-08 (알람 오버레이) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+Core/Layout/LayoutNode.cs(알람 상태 필드 6개 추가) · Core/Converters/UiConverters.cs
+(AlarmLevelColorConverter) · ViewModels/LayoutCanvasViewModel.cs(AlarmChanged 구독
++ _OnAlarmChanged + AcknowledgeAlarmCommand) · Views/DeviceControls/
+DeviceControlBase.xaml(알람 배지+상세 팝업) · DeviceControlBase.xaml.cs(배지/ACK
+Click 핸들러 + VisualTreeHelper 상위 탐색 헬퍼) — 전체 5개 파일 신규/수정 완료.
+Popup의 DataContext/RelativeSource 제약을 ElementName 바인딩 + 코드비하인드
+Click 핸들러로 우회하는 설계 결정 포함(위 "HM-08 구현 내역" 절 참조).
+사용자 빌드·런타임 확인 필요(위 체크리스트 참조).
+```
+
+### ⑧ HM-09 (ForceWrite 제어 다이얼로그) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+Models/ForceWriteResult.cs(신규) · Views/LayoutCanvas/ForceWriteDialog.xaml(.cs)
+(신규 — Collector 자체 다이얼로그 이식) · Core/Connection/CollectorConnection.cs
+(ForceWriteAsync 추가) · CollectorConnectionManager.cs(ForceWriteAsync 추가) ·
+ViewModels/LayoutCanvasViewModel.cs(ForceWriteAsync 공개 메서드 추가) ·
+Views/LayoutCanvas/LayoutCanvasView.xaml.cs(더블클릭 분기 + 다이얼로그 호출) —
+전체 6개 파일 신규/수정 완료. Collector C-EX-13(ForceWrite Hub 메서드)이
+선행 완료되어 있어 검증 로직은 전부 Collector 측에 위임(위 "HM-09 구현 내역"
+절 참조). 사용자 빌드·런타임 확인 필요(위 체크리스트 참조).
+```
+
+### ⑨ HM-10 (다중 화면 관리 — 탭 바 UI 교체) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 사용자 확인: "HM-07 콤보박스로 충분/탭 바로 교체/트리 패널 신설" 3안 중
+"탭 바로 교체(권장)"를 선택.
+ViewModels/LayoutCanvasViewModel.cs(LayoutPageViewModel.IsActive/IsEditingName +
+SelectPage 공개 메서드 + OnActivePageChanged 의 IsActive 갱신) ·
+Views/LayoutCanvas/LayoutCanvasView.xaml(PageTabTemplate 신규 + Row 0 을 탭 바로
+교체, ➕/🗑/💾 버튼은 우측 고정) · LayoutCanvasView.xaml.cs(PageTab_
+MouseLeftButtonDown/PageTabNameBox_LostFocus/KeyDown) — 전체 3개 파일 수정 완료.
+데이터 구조·저장 파일·커맨드는 HM-07과 완전히 동일, UI 표현 방식만 교체(위
+"HM-10 구현 내역" 절 참조). 사용자 빌드·런타임 확인 필요(위 체크리스트 참조).
+```
+
+### ⑩ HM-11 (웹 브라우저 표시 확장) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 사전 리서치: Collector C-11(SignalRHostService.cs+wwwroot)·Monitor MN-05
+(FrameworkReference 재도입 FIX)의 실제 코드를 조사 후 두 검증된 패턴을 조합.
+IIoT.HMI.csproj(FrameworkReference Microsoft.AspNetCore.App 추가 + Microsoft.
+Extensions.DependencyInjection 명시버전 제거 — Monitor MN-05 FIX 동일 적용 +
+wwwroot Content Include) · Core/Config/HmiSettings.cs(Web/WebHostSettings 추가,
+기본 포트 7880) · Core/Web/WebNodeDto.cs(신규) · Core/Web/HmiWebHub.cs(신규,
+읽기 전용 빈 Hub) · Core/Web/HmiWebHostService.cs(신규 — Kestrel+SignalR+
+wwwroot 호스팅, dirty플래그+500ms 코일레싱 브로드캐스트, Dispatcher.InvokeAsync
+로 스레드 안전 스냅샷) · wwwroot/index.html(신규, Collector 페이지와 동일
+스타일) · App.xaml.cs(DI 등록+win.Loaded 오케스트레이션 최초 도입+OnExit 정리)
+— 전체 7개 파일 신규/수정 완료.
+1차 범위=읽기 전용 표시(ACK/ForceWrite/애니메이션/팝업 웹 미제공, WPF 활성
+화면 1개만 미러링 — 위 "HM-11 구현 내역" 절 "★ 범위 결정" 참조).
+★★ 이번 Step은 FrameworkReference 추가로 인한 NU1605 위험이 있으므로 반드시
+빌드부터 꼼꼼히 확인할 것(체크리스트 1단계 참조).
+```
+
+### ⑪ HM-12 (보안 — 화면 잠금+알람 경고+세션 API Key 캐시) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 사용자 확인: HM-12 범위(핸드오프상 "Security 정책 전반"으로만 열려 있었음)를
+3가지 후보로 물었고, 사용자가 전부 선택 — 화면 잠금 모드(권장)/활성 알람 중
+강제쓰기 경고/세션 내 API Key 임시 기억.
+Core/Config/HmiSettings.cs(ForceWriteSecuritySettings 추가) ·
+ViewModels/LayoutCanvasViewModel.cs(IsForceWriteLocked+LockButtonLabel+
+ToggleForceWriteLockCommand, _apiKeyCache+GetCachedApiKey, HmiSettingsLoader
+주입) · Views/LayoutCanvas/ForceWriteDialog.xaml(.cs)(AlarmWarningPanel+
+ChkAlarmAck+OkButton 활성화 제어+PrefillApiKey) · LayoutCanvasView.xaml(잠금
+토글 버튼) · LayoutCanvasView.xaml.cs(잠금 체크+다이얼로그 생성 시 알람/API Key
+정보 전달) — 전체 5개 파일 신규/수정 완료(위 "HM-12 구현 내역" 절 참조).
+사용자 빌드·런타임 확인 필요(위 체크리스트 참조).
+완료 확인 후 → HM-Base-0~HM-12 전체 회귀 확인 → HMI 1차 마감 판단 또는
+Sequence 착수. ← 다음 시작점
+```
+
+### ⑫ HM-13 (정리 — 현황판 탭 제거·통합) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 사용자 질문 계기: "현황판, 알림 탭의 화면 변경은 없는가??" — 확인해보니 HM-03~12
+가 전부 [레이아웃 편집] 탭 안에 구현되어(카드 배치·실시간 값·Z순서·다중 화면·
+알람 배지·ForceWrite) 이미 사실상 생산현황판 역할을 겸하고 있었고, 원래 Step
+맵에서 별도로 남겨뒀던 "현황판" placeholder 탭은 그대로 미구현 상태로 방치되어
+있었음(설계 당시 계획 vs 실제 구현이 어긋난 케이스).
+★ 사용자 확인: 4가지 해결 옵션(현황판 탭 제거·통합/현황판에 요약 대시보드 구현/
+알람 탭에 전체 목록 구현/보류) 중 "현황판 탭 제거(레이아웃편집으로 통합, 권장)"
+단독 선택 — 알람 탭 전체 목록 구현은 하지 않음, 보류도 아님(즉시 제거 확정).
+HmiMainViewModel.cs(IsDashboardTab 제거, IsLayoutTab/IsCollectorTab/IsAlarmTab/
+IsLogTab 인덱스 0~3으로 재정렬) · MainWindow.xaml("🗂 현황판" 버튼 및 TabBtn0
+현황판 placeholder Grid 완전 삭제, 나머지 3개 버튼 CommandParameter "1,2,3"→
+"0,1,2,3", 스타일 키 TabBtn1~4 → TabBtn0~3 로 재번호, 레이아웃 편집 탭 라벨을
+"🗂 현황판(레이아웃 편집)"으로 변경해 통합 사실을 명시) — 전체 2개 파일 수정 완료.
+탭 4개로 재정렬: [레이아웃 편집(=현황판)][Collector 관리][알람][로그].
+※ 미선택 항목(참고용 기록): "알람 탭에 전체 알람 목록/이력 구현"은 이번엔 하지
+않음 — HM-EX 후속 후보로 등록, 사용자가 이후 요청 시 별도 Step으로 진행.
+사용자 빌드·런타임 확인 필요(위 체크리스트 참조).
+완료 확인 후 → HM-Base-0~HM-13 전체 회귀 확인 → HMI 1차 마감 판단 또는
+Sequence 착수. ← 다음 시작점
+```
+
+### ⑬ HM-14 (알람 탭 실시간 목록) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 계기: HM-13 정리 시 "알람 탭에 전체 알람 목록/이력 구현" 옵션은 미선택 상태로
+남겨뒀었는데, 사용자가 "알림탭 옵션의 화면 업데이트 해줘"로 착수 요청.
+★ 사용자 확인: 범위를 "실시간 목록만(권장)" vs "실시간 목록+SQLite 이력 영구
+저장" 중에 물었고, "실시간 목록만" 선택 — SQLite 이력 저장은 HM-EX 후보로 보류.
+Monitor MN-03(AlarmAggregator/AlarmViewModel/AlarmView 기본 구조)+MN-EX-06
+(Collector/레벨/상태 필터 + Tag/메시지 검색 툴바)를 그대로 이식(필드/동작 동일).
+Models/AlarmRow.cs(신규) · Core/Aggregation/AlarmAggregator.cs(신규 — ★
+CollectorConnectionManager 와의 결합은 HM-01 "MN-01B 패턴 단순화" 결정을 존중해
+Monitor 와 반대 방향으로 구독: Aggregator 가 CollectorConnectionManager.AlarmChanged
+를 직접 구독. CollectorName 은 RegisterCollectorName() 훅 없이 GetConnectedEndpoints()
+1회 조회로 단순화) · Core/Converters/UiConverters.cs(AlarmStatusColorConverter 추가)
+· ViewModels/AlarmViewModel.cs(신규) · Views/Alarm/AlarmView.xaml(.cs)(신규) ·
+MainWindow.xaml(알람 placeholder Grid → ContentControl AlarmHost) ·
+MainWindow.xaml.cs/App.xaml.cs(AlarmView DI 주입) — 전체 8개 파일 신규/수정 완료.
+사용자 빌드·런타임 확인 필요(위 체크리스트 참조).
+완료 확인 후 → HM-Base-0~HM-14 전체 회귀 확인 → HMI 1차 마감 판단 또는
+Sequence 착수. ← 다음 시작점
+```
+
+### ⑭ HM-15 (로그 탭) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 계기: 사용자가 HM-14(알람 탭)와 "같이" 로그 탭도 진행해 달라고 요청 — 남은
+마지막 placeholder 탭 정리.
+★ 조사 결과: MainWindow.xaml 주석은 "lssLib.Log 의 LogViewerControl 연결 예정"
+이라 적혀 있었으나, 실제로 lssLib.Log 의 LogViewerControl 은 demo 프로젝트
+전용이라 다른 프로젝트에서 직접 참조 불가하다는 사실을 Studio/Collector/Monitor
+세 프로그램의 LogPanelView.xaml 주석에서 확인 — 세 프로그램 모두 자체 제작한
+"LogPanelView"(LogManager.Instance.LogAdded 구독 + ListView) 패턴을 대신 쓰고
+있었으므로, HMI 도 동일 패턴을 그대로 이식(신규 설계 없음).
+Views/Log/LogPanelView.xaml(.cs)(신규 — Monitor 버전 그대로 포팅, 타이틀만
+"📋 HMI 로그"로 변경) · MainWindow.xaml(로그 placeholder Grid → ContentControl
+LogHost) · MainWindow.xaml.cs/App.xaml.cs(LogPanelView DI 등록+주입, ViewModel
+없이 자체 완결형 View라 매개변수 없는 AddSingleton) — 전체 4개 파일 신규/수정 완료.
+★ 이 Step으로 HMI의 4개 탭(레이아웃 편집·Collector 관리·알람·로그) 전부 실제
+화면으로 채워짐 — 남은 placeholder 없음.
+사용자 빌드·런타임 확인 필요(위 체크리스트 참조).
+완료 확인 후 → HM-Base-0~HM-15 전체 회귀 확인 → HMI 1차 마감 판단 또는
+Sequence 착수. ← 다음 시작점
+```
+
+### ⑮ HM-16 (알람 이력 SQLite 영구 저장) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 계기: "빌드 확인 다음으로 HMI 1차 마감 여부(HM-EX 검토) 부분 진행해줘" 요청에
+사용자에게 HM-EX 후보 7건(히스토리 트렌드/캡처·PDF/다중모니터/알람이력SQLite/
+장비아이콘실형상화/웹ACK·ForceWrite/설정UI)을 전부 제시했고, "1차 마감 확정"이
+아니라 "후보 중 일부를 지금 착수"를 선택 → 이어서 두 번째 질문에서 7건 전체를
+선택(부분 선택 아님) — 위 "확장" 절 Step 순서(HM-16~22)로 등록하고 그 중 가장
+작고 독립적인 HM-16부터 착수.
+Monitor MN-EX-02(AlarmHistoryService) 를 그대로 이식 — 필드/테이블/보존기간(90일)
+동일, DB 파일만 monitor.db → hmi.db 로 변경.
+IIoT.HMI.csproj(lssLib.DB/lssLib.DB.Sqlite ProjectReference 추가, Monitor MN-EX-02
+와 동일 참조) · Core/Aggregation/AlarmAggregator.cs(AlarmRecorded 이벤트 추가 —
+생성+상태전이마다 발행) · Core/Storage/AlarmHistoryService.cs(신규) ·
+App.xaml.cs(DI 등록, AlarmRecorded→RecordAsync 구독은 DI 빌드 직후, DB 초기화는
+HM-11과 동일한 win.Loaded 오케스트레이션, OnExit 5초 타임아웃 정리) — 전체 4개
+파일 신규/수정 완료.
+★ Monitor 원본과 동일하게 "저장 전용" 범위 — 이력을 앱 안에서 조회/검색하는
+화면은 없음(외부 SQLite 툴로 hmi.db 를 열어 확인). 조회 UI가 필요하면 별도 요청.
+사용자 빌드·런타임 확인 필요(★ 신규 ProjectReference 2건 추가로 인한 참조
+해석 오류 여부 우선 확인 — HM-11 FrameworkReference 때처럼 첫 빌드가 중요).
+완료 확인 후 → HM-17(히스토리 트렌드 오버레이) 착수. ← 다음 시작점
+```
+
+### ⑯ HM-17 (실시간 트렌드 창) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 조사: Collector 의 ITimeSeriesStore 인터페이스는 Write*Async 메서드만 있고
+조회(읽기) 메서드가 전혀 없음을 확인. Collector 자체 [트렌드] 탭이 사용하는
+TrendQueryService 도 Collector 프로세스 내부에서 자신의 SQLite DB 파일을 직접
+여는 방식이라(원격 API 아님) HMI/Monitor 같은 별도 프로세스는 접근 불가.
+Monitor 의 기존 [차트] 탭(MN-06)도 마찬가지로 실시간값만 그리고 과거 이력은
+조회하지 않는다는 사실도 함께 확인.
+★ 사용자 확인: "진짜 과거 이력 조회(Collector 신규 API 필요, 범위 큼)" 대신
+"실시간 트렌드만(권장, 바로 구현 가능)" 선택 — Monitor MN-06 과 동일 범위.
+Monitor 의 필터형 [차트] 탭과 달리, HMI 는 레이아웃 편집 탭에서 이미 특정
+Tag 에 바인딩된 카드가 있으므로 별도 Collector/PLC/Tag 선택기 없이 "카드
+우클릭 → 그 카드의 트렌드 창"으로 단순화.
+IIoT.HMI.csproj(OxyPlot.Wpf 2.2.0 PackageReference 추가, Collector C-13/
+Monitor MN-06 과 동일 버전) · Views/LayoutCanvas/TrendWindow.xaml(.cs)(신규 —
+Monitor ChartViewModel 의 롤링 윈도우(300포인트)/PropertyChanged 구독 로직만
+이식, DI 없이 코드비하인드에서 직접 PlotModel 구성 — ForceWriteDialog 와 동일
+패턴) · LayoutCanvasView.xaml.cs(OnCanvasMouseDown 에 우클릭 분기 추가,
+Tag 바인딩된 카드만 대상) — 전체 3개 파일 신규/수정 완료.
+★ 여러 트렌드 창을 동시에 열 수 있다(비모달, 노드별 독립 창). 과거(창 열기
+이전) 값은 표시되지 않는다 — 창을 연 시점부터만 누적.
+사용자 빌드·런타임 확인 필요(★ OxyPlot.Wpf 패키지 복원 확인).
+완료 확인 후 → HM-18(화면 캡처/PDF 리포트) 착수. ← 다음 시작점
+```
+
+### ⑰ HM-18 (화면 캡처 PNG) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 조사: 5개 프로그램 어디에도 PDF 생성 라이브러리(PdfSharp/QuestPDF/iText 등)
+참조가 전혀 없음을 확인 — 이식할 선례가 없어 새로 추가해야 하는 상황.
+★ 사용자 확인: PNG 캡처만(권장, 새 의존성 없음) / PNG+간단 PDF(PdfSharp) /
+정식 리포트 PDF(QuestPDF, 제목·타임스탬프·요약 포함) 3가지 중 "PNG 캡처만"
+선택 — PDF 리포트는 전체가 범위 밖으로 확정.
+Views/LayoutCanvas/LayoutCanvasView.xaml(툴바에 "📷 캡처" 버튼 추가) ·
+LayoutCanvasView.xaml.cs(CaptureButton_Click 추가 — CanvasBorder 를
+RenderTargetBitmap 으로 렌더링 후 PngBitmapEncoder 로 저장, SaveFileDialog로
+경로 선택, 기본 파일명 "hmi-capture-{화면이름}-{타임스탬프}.png") — 전체 2개
+파일 수정 완료. WPF 내장 기능만 사용해 csproj 변경 없음(새 NuGet 의존성 없음).
+사용자 빌드·런타임 확인 필요.
+완료 확인 후 → HM-19(다중 모니터 지원) 착수. ← 다음 시작점
+```
+
+### ⑱ HM-19 (다중 모니터 지원) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+설계: Monitor/Studio/Manager 등 어디에도 다중 모니터 선례가 없어 새로 설계.
+"레이아웃 편집 탭을 새 창으로 분리해 다른 모니터에 띄우기" 요구를, 보조 창이
+메인 창과 완전히 독립된 편집 상태를 갖게 하는 대신 "같은 LayoutCanvasViewModel
+을 공유하는 두 번째 View 인스턴스"로 구현 — 두 창에 동일한 레이아웃(카드 배치·
+값·페이지 전환)이 항상 실시간으로 함께 반영된다(둘 중 어느 창에서 편집해도
+다른 창에 즉시 보임). 완전히 독립된 편집 상태를 원한다면 별도 확장 필요.
+★ 구현 중 심각한 잠재 버그 발견·수정: LayoutCanvasView 생성자의 Loaded
+핸들러가 무조건 _vm.InitializeAsync() 를 호출하는데, 그 메서드는 매번
+Pages.Clear()+파일 재로드를 하고 있었다. 같은 ViewModel 을 공유하는 두 번째
+View(보조 창)가 뜨면 그 Loaded 도 InitializeAsync() 를 또 호출하게 되어,
+아직 "💾 레이아웃 저장"을 누르지 않은 편집 내용이 보조 창을 여는 순간
+통째로 파일 재로드본으로 덮어써지는 데이터 손실 버그가 될 뻔했음 — 착수
+전 조사 단계에서 발견해 InitializeAsync() 에 멱등 가드(Pages.Count>0 이면
+즉시 반환)를 추가해 원천 차단.
+Views/LayoutCanvas/SecondaryDisplayWindow.xaml(.cs)(신규 — 코드비하인드에서
+주입받은 View 를 담기만 하는 빈 창) · LayoutCanvasView.xaml(툴바에 "🖥 보조
+화면" 버튼 추가) · LayoutCanvasView.xaml.cs(SecondaryWindowButton_Click —
+new LayoutCanvasView(_vm) 로 두 번째 인스턴스 생성 후 SecondaryDisplayWindow
+로 표시, Owner 없음 — 다른 모니터로 자유롭게 이동 가능) ·
+LayoutCanvasViewModel.cs(InitializeAsync() 멱등 가드 추가) ·
+App.xaml.cs(ShutdownMode=OnMainWindowClose 명시 — 메인 창을 닫으면 Owner
+없는 보조 창도 함께 정리되도록. WPF 기본값(OnLastWindowClose)이면 보조 창이
+열려 있는 한 프로세스가 종료되지 않았을 것) — 전체 5개 파일 신규/수정 완료.
+사용자 빌드·런타임 확인 필요(★ 보조 창을 열고 메인 창을 닫았을 때 프로세스가
+정상 종료되는지, 두 창의 편집이 실시간 동기화되는지 확인 우선).
+완료 확인 후 → HM-20(장비 아이콘 실형상화) 착수. ← 다음 시작점
 ```
 
 ---
@@ -944,7 +1725,122 @@ DI 등록) — 전체 6개 파일 신규/수정 완료. 사용자 빌드·런타
 | | | **LayoutCanvasViewModel Pages/ActivePage/InitializeAsync/AddPage/DeletePage/** |
 | | | **SaveLayout + 화면 관리 바 UI. 실시간 값은 저장 대상에서 제외(배치+바인딩만)** |
 | | | **다음 세션 시작점: HM-07 빌드 확인 → HM-08(알람 오버레이) 착수** |
+| **v11.13** | **HM-07 빌드·런타임 확인 완료(사용자 직접 검증) + HM-08(알람 오버레이)** |
+| | | **코드 완료(빌드 확인 대기)** |
+| | | **AbstractLayoutNode: HasActiveAlarm/AlarmKey/AlarmLevel/AlarmStatusText/** |
+| | | **AlarmMessage/AlarmTimeText 추가 · AlarmLevelColorConverter 신규** |
+| | | **LayoutCanvasViewModel: AlarmChanged 구독 + _OnAlarmChanged(Recovered 시** |
+| | | **필드 초기화, 그 외 배지 갱신) + AcknowledgeAlarmCommand(발생 출처로만 전송)** |
+| | | **DeviceControlBase: 알람 배지(Button)+상세 팝업(Popup)+ACK 버튼 추가 —** |
+| | | **★ WPF Popup 은 별도 시각 트리 루트라 RelativeSource/DataContext 자동** |
+| | | **상속이 신뢰 불가 → Popup.DataContext 는 ElementName 바인딩, ACK 버튼은** |
+| | | **코드비하인드 Click+VisualTreeHelper 상위 탐색으로 우회(설계 결정 기록)** |
+| | | **다음 세션 시작점: HM-08 빌드 확인 → HM-09(ForceWrite 제어 다이얼로그) 착수** |
+| **v11.14** | **HM-09(ForceWrite 제어 다이얼로그) 코드 완료(빌드 확인 대기) — 아이콘** |
+| | | **더블클릭 → 값 입력 → SignalR Invoke("ForceWrite") 원격 강제쓰기** |
+| | | **Models/ForceWriteResult.cs(신규) · Views/LayoutCanvas/ForceWriteDialog.** |
+| | | **xaml(.cs)(신규 — Collector 자체 다이얼로그 이식) · CollectorConnection/** |
+| | | **ConnectionManager.ForceWriteAsync 추가("발생 출처로만 전송" 원칙) ·** |
+| | | **LayoutCanvasViewModel.ForceWriteAsync(공개 메서드, 커맨드 아님) ·** |
+| | | **LayoutCanvasView.xaml.cs(더블클릭 분기, 드래그와 분리)** |
+| | | **검증(Enabled/ApiKey/Tag존재/활성/형식)은 전부 Collector 측(C-15) 위임 —** |
+| | | **HMI 는 얇은 호출 래퍼+다이얼로그만 담당** |
+| | | **다음 세션 시작점: HM-08~09 빌드 확인 → HM-10(다중 화면 관리) 착수** |
+| **v11.15** | **HM-10(다중 화면 관리) 코드 완료(빌드 확인 대기) — HM-07 콤보박스+** |
+| | | **이름편집 UI를 탭 바로 교체(사용자가 3안 중 "탭 바로 교체" 선택)** |
+| | | **LayoutPageViewModel.IsActive(탭 강조)/IsEditingName(더블클릭 시 인라인** |
+| | | **이름편집) 추가 · LayoutCanvasViewModel.SelectPage(공개 메서드, SelectNode와** |
+| | | **동일 패턴) · LayoutCanvasView.xaml PageTabTemplate(신규, MainWindow 5탭과** |
+| | | **동일한 AccFaintBrush/AccBrush 강조색 재사용) · LayoutCanvasView.xaml.cs** |
+| | | **탭 클릭/더블클릭/이름편집 확정·취소 핸들러 3개 추가**|
+| | | **데이터 구조·저장 파일·커맨드는 HM-07과 동일 — UI 표현 방식만 교체** |
+| | | **다음 세션 시작점: HM-08~10 빌드 확인 → HM-11(웹 브라우저 표시 확장) 착수** |
+| **v11.16** | **HM-11(웹 브라우저 표시 확장) 코드 완료(빌드 확인 대기) — Collector** |
+| | | **C-11·Monitor MN-05 실제 코드 조사 후 검증된 패턴 조합** |
+| | | **IIoT.HMI.csproj: FrameworkReference Microsoft.AspNetCore.App 재도입 +** |
+| | | **Microsoft.Extensions.DependencyInjection 명시버전 제거(Monitor MN-05** |
+| | | **FIX 동일 적용 — NU1605 재발 방지) + wwwroot Content Include** |
+| | | **HmiSettings.Web(Enabled/Port=7880) · Core/Web/(WebNodeDto·HmiWebHub·** |
+| | | **HmiWebHostService 신규) · wwwroot/index.html(신규, Collector 페이지와** |
+| | | **동일 다크 테마+SignalR CDN 스타일) · App.xaml.cs(win.Loaded 오케스트레이션** |
+| | | **최초 도입+OnExit 정리)** |
+| | | **1차 범위=읽기 전용(ACK/ForceWrite/애니메이션 웹 미제공, WPF 활성화면** |
+| | | **1개만 미러링) — HM-11-EX 로 후속·보류 항목에 등록** |
+| | | **★ FrameworkReference 추가로 NU1605 위험 있음 — 빌드 확인 최우선** |
+| | | **다음 세션 시작점: HM-08~11 빌드 확인 → HM-12(보안) 착수** |
+| **v11.17** | **HM-12(보안) 코드 완료(빌드 확인 대기) — 사용자가 3가지 항목** |
+| | | **모두 선택: 화면 잠금 모드(권장)+활성 알람 중 강제쓰기 경고+세션 내** |
+| | | **API Key 임시 기억**|
+| | | **HmiSettings.ForceWriteSecurity(DefaultLocked) 추가 ·** |
+| | | **LayoutCanvasViewModel: IsForceWriteLocked/LockButtonLabel/** |
+| | | **ToggleForceWriteLockCommand + _apiKeyCache(메모리 전용)/GetCachedApiKey** |
+| | | **ForceWriteDialog: AlarmWarningPanel(체크박스 확인 전 [쓰기] 비활성화)+** |
+| | | **PrefillApiKey · LayoutCanvasView: 잠금 토글 버튼+더블클릭 시 잠금/알람/** |
+| | | **API Key 캐시 반영**|
+| | | **API Key 는 디스크에 저장되지 않음(세션 중 메모리 캐시만)**|
+| | | **다음 세션 시작점: HM-Base-0~HM-12 전체 빌드·런타임 확인 → HMI 1차** |
+| | | **마감 판단 또는 Sequence 착수** |
+| **v11.18** | **HM-13(정리) 코드 완료(빌드 확인 대기) — 사용자 질문("현황판, 알림** |
+| | | **탭의 화면 변경은 없는가??") 계기로 확인한 결과, HM-03~12 가 전부** |
+| | | **[레이아웃 편집] 탭에 구현되어 이미 생산현황판 역할을 겸하고 있었음** |
+| | | **사용자가 "현황판 탭 제거(레이아웃편집으로 통합, 권장)" 단독 선택** |
+| | | **HmiMainViewModel.cs(IsDashboardTab 제거, 나머지 Is*Tab 인덱스 0~3** |
+| | | **재정렬) · MainWindow.xaml(현황판 버튼/placeholder Grid 삭제,** |
+| | | **CommandParameter·TabBtn 스타일 키 재번호, 탭 4개로 재정렬)**|
+| | | **미선택 항목(기록용): "알람 탭 전체 목록/이력 구현" — HM-EX 후속 후보 등록**|
+| | | **다음 세션 시작점: HM-Base-0~HM-13 전체 빌드·런타임 확인 → HMI 1차** |
+| | | **마감 판단 또는 Sequence 착수** |
+| **v11.19** | **HM-14(알람 탭 실시간 목록) 코드 완료(빌드 확인 대기) — 사용자가** |
+| | | **"실시간 목록만(권장)" 범위 선택(SQLite 이력 저장은 HM-EX 보류)** |
+| | | **Monitor MN-03+MN-EX-06 이식: AlarmRow · AlarmAggregator(Collector** |
+| | | **ConnectionManager.AlarmChanged 직접 구독) · AlarmStatusColorConverter** |
+| | | **· AlarmViewModel(Collector/레벨/상태 필터+검색+ACK) · AlarmView(그리드,** |
+| | | **Collector별 그룹핑·최신순) · MainWindow(알람 placeholder→ContentControl)**|
+| | | **다음 세션 시작점: HM-Base-0~HM-14 전체 빌드·런타임 확인 → HMI 1차** |
+| | | **마감 판단 또는 Sequence 착수** |
+| **v11.20** | **HM-15(로그 탭) 코드 완료(빌드 확인 대기) — 사용자가 HM-14와 "같이"** |
+| | | **로그 탭도 요청. lssLib.Log LogViewerControl 은 demo 전용이라 직접** |
+| | | **참조 불가함을 재확인 → Studio/Collector/Monitor 공통 LogPanelView 패턴** |
+| | | **(LogManager.Instance.LogAdded 구독+레벨/Source 필터+지우기) 그대로 이식**|
+| | | **Views/Log/LogPanelView.xaml(.cs)(신규) · MainWindow(로그 placeholder→** |
+| | | **ContentControl LogHost) · App.xaml.cs(ViewModel 없는 완결형 View 등록)**|
+| | | **★ 이 Step으로 4개 탭 전부 실제 화면으로 채워짐 — 남은 placeholder 없음**|
+| | | **다음 세션 시작점: HM-Base-0~HM-15 전체 빌드·런타임 확인 → HMI 1차** |
+| | | **마감 판단 또는 Sequence 착수** |
+| **v11.21** | **HMI 1차 마감 여부 검토 결과 — 사용자가 "1차 마감 보류, HM-EX 후보** |
+| | | **7건 전체 착수"를 선택. HM-16~22 확장 로드맵으로 등록(작은/독립 항목→** |
+| | | **큰/의존 항목 순): 알람이력SQLite→히스토리트렌드→캡처·PDF→다중모니터→** |
+| | | **장비아이콘실형상화→웹ACK/ForceWrite→설정UI편집화면**|
+| | | **HM-16(알람 이력 SQLite) 코드 완료(빌드 확인 대기) — Monitor MN-EX-02** |
+| | | **AlarmHistoryService 이식(90일 보존, 저장 전용·조회 UI 없음)**|
+| | | **AlarmAggregator.AlarmRecorded 이벤트 추가 · csproj에 lssLib.DB/** |
+| | | **lssLib.DB.Sqlite ProjectReference 신규 추가**|
+| | | **다음 세션 시작점: HM-Base-0~HM-16 빌드 확인(★신규 참조 2건 우선 확인)** |
+| | | **→ HM-17(히스토리 트렌드 오버레이) 착수** |
+| **v11.22** | **HM-17(실시간 트렌드 창) 코드 완료(빌드 확인 대기) — 조사 결과** |
+| | | **Collector 시계열 저장소에 조회 API가 전혀 없어(TrendQueryService 도** |
+| | | **프로세스 내부 전용) "과거 이력 조회"는 불가 확인 → 사용자가 "실시간** |
+| | | **트렌드만(권장)" 선택, Monitor MN-06 과 동일 범위**|
+| | | **레이아웃 편집 탭 카드 우클릭 → TrendWindow(OxyPlot, 롤링 300포인트)**|
+| | | **비모달 다중 오픈 가능. OxyPlot.Wpf 2.2.0 패키지 신규 추가**|
+| | | **다음 세션 시작점: HM-Base-0~HM-17 빌드 확인 → HM-18(캡처/PDF) 착수** |
+| **v11.23** | **HM-18(화면 캡처 PNG) 코드 완료(빌드 확인 대기) — 조사 결과 5개** |
+| | | **프로그램 전부 PDF 라이브러리 선례 없음 확인 → 사용자가 "PNG 캡처만** |
+| | | **(권장)" 선택, PDF 리포트는 범위 밖으로 확정**|
+| | | **레이아웃 편집 탭 툴바에 "📷 캡처" 버튼 추가 — RenderTargetBitmap+** |
+| | | **PngBitmapEncoder(WPF 내장) 로 현재 화면을 PNG 저장. 새 의존성 없음**|
+| | | **다음 세션 시작점: HM-Base-0~HM-18 빌드 확인 → HM-19(다중 모니터) 착수** |
+| **v11.24** | **HM-19(다중 모니터 지원) 코드 완료(빌드 확인 대기) — 같은** |
+| | | **LayoutCanvasViewModel 을 공유하는 두 번째 View 를 독립 창(Owner 없음)** |
+| | | **으로 띄우는 방식으로 구현, 두 창이 실시간 동기화됨**|
+| | | **★ 착수 전 조사에서 심각한 잠재 버그 발견·차단: InitializeAsync() 가** |
+| | | **매번 Pages.Clear()+파일 재로드를 해서, 보조 창을 열 때마다 미저장** |
+| | | **편집 내용이 사라질 뻔함 — 멱등 가드(Pages.Count>0 이면 즉시 반환) 추가**|
+| | | **App.xaml.cs 에 ShutdownMode=OnMainWindowClose 명시(메인 창 닫으면** |
+| | | **보조 창도 함께 종료)**|
+| | | **다음 세션 시작점: HM-Base-0~HM-19 빌드 확인(★특히 정상 종료 여부)** |
+| | | **→ HM-20(장비 아이콘 실형상화) 착수** |
 
 ---
 
-*다음 세션: 이 파일을 먼저 읽고 → HM-07 빌드·런타임 확인 → HM-08 진행*
+*다음 세션: 이 파일을 먼저 읽고 → HM-Base-0~HM-19 전체 빌드·런타임 확인(★HM-19 ShutdownMode 변경 후 정상 종료 여부 우선 확인) → HM-20(장비 아이콘 실형상화) 착수*

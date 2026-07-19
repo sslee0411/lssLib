@@ -16,15 +16,36 @@
 //  HM-03: LayoutCanvasViewModel / LayoutCanvasView DI 등록 추가 (레이아웃 편집 탭)
 //  HM-07: HmiLayoutLoader DI 등록 추가 (LayoutCanvasViewModel 보다 먼저 —
 //         생성자 의존성. hmi-layout.json 로드는 LayoutCanvasView.Loaded 에서 수행)
+//  HM-11: HmiWebHostService DI 등록 추가 — MainWindow.Show() 후 win.Loaded 에서
+//         시작(Collector App.xaml.cs 의 "win.Loaded 오케스트레이션" 패턴 최초 도입 —
+//         이전까지 HMI 는 각 View 가 각자 Loaded 에서 독립적으로 초기화했으나,
+//         웹 서버 시작은 특정 View 에 속하지 않으므로 App 레벨에서 직접 기동한다).
+//         OnExit 에도 CollectorConnectionManager 와 동일한 5초 타임아웃 정리 추가.
+//  HM-14: AlarmAggregator / AlarmViewModel / AlarmView DI 등록 추가 (알람 탭)
+//  HM-15: LogPanelView DI 등록 추가 (로그 탭 — ViewModel 없음, 자체 완결형 View)
+//  HM-16: AlarmHistoryService DI 등록 추가 — win.Loaded 에서 SQLite 이력 DB
+//         초기화(HM-11 웹 서버와 동일한 "win.Loaded 오케스트레이션" 패턴),
+//         AlarmAggregator.AlarmRecorded 구독은 DI 빌드 직후(Show 전)에 연결.
+//         OnExit 에도 동일한 5초 타임아웃 정리 추가.
+//  HM-19: ShutdownMode = OnMainWindowClose 명시 추가 — 다중 모니터 지원으로
+//         Owner 없는 독립 보조 창(SecondaryDisplayWindow)이 열릴 수 있게 됐는데,
+//         WPF 기본값(OnLastWindowClose)을 그대로 두면 메인 창을 닫아도 보조
+//         창이 남아있는 한 프로세스가 종료되지 않는다. 메인 창이 닫히면 보조
+//         창도 함께 정리되도록 명시적으로 고정.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts.Health;
+using IIoT.HMI.Core.Aggregation;
 using IIoT.HMI.Core.Config;
 using IIoT.HMI.Core.Connection;
+using IIoT.HMI.Core.Storage;
+using IIoT.HMI.Core.Web;
 using IIoT.HMI.ViewModels;
+using IIoT.HMI.Views.Alarm;
 using IIoT.HMI.Views.CollectorManage;
 using IIoT.HMI.Views.LayoutCanvas;
+using IIoT.HMI.Views.Log;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +69,11 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // ★ HM-19: 메인 창이 닫히면 다중 모니터 보조 창(Owner 없음)도 함께
+        //   닫히도록 명시 고정 — WPF 기본값(OnLastWindowClose)이면 보조 창이
+        //   열려 있는 한 프로세스가 종료되지 않는다.
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
 
         // ① 테마 (가장 먼저 — 창 표시 전 색상 준비)
         _themeSettings = new ThemeSettingsService();
@@ -76,8 +102,29 @@ public partial class App : Application
         // ④ DI 빌드
         _services = _ConfigureServices();
 
+        // ★ HM-16: 알람 생성/상태전이 시마다 SQLite 이력 저장 (fire-and-forget) —
+        //   AlarmHistoryService.InitializeAsync() 가 아직 끝나지 않은 시점에 호출돼도
+        //   RecordAsync() 내부에서 _ctx null 가드로 조용히 무시되므로 안전하다.
+        var alarmAggregator = _services.GetRequiredService<AlarmAggregator>();
+        var alarmHistory    = _services.GetRequiredService<AlarmHistoryService>();
+        alarmAggregator.AlarmRecorded += row => _ = alarmHistory.RecordAsync(row);
+
         // ⑤ 창 생성 및 표시
-        _services.GetRequiredService<MainWindow>().Show();
+        var win = _services.GetRequiredService<MainWindow>();
+        win.Show();
+
+        // ★ HM-11: 웹 표시 서버(자체 Kestrel+SignalR Hub+wwwroot) 시작.
+        //   hmi.json 로드는 서비스 내부에서 자체적으로 재확인하므로 [Collector 관리]
+        //   탭의 Loaded 순서와 무관하게 안전하다(Collector App.xaml.cs 의 win.Loaded
+        //   오케스트레이션 패턴 참고).
+        win.Loaded += async (_, _) =>
+        {
+            await _services.GetRequiredService<HmiWebHostService>().StartAsync();
+
+            // ★ HM-16: 알람 이력 SQLite DB 초기화 (Monitor MainWindow.Loaded 와
+            //   동일 시점 — 창이 뜬 뒤 1회)
+            await _services.GetRequiredService<AlarmHistoryService>().InitializeAsync();
+        };
     }
 
     // §3 ─ 종료 ───────────────────────────────────────────────
@@ -88,6 +135,12 @@ public partial class App : Application
         //   HubConnection/HttpClient 를 순서대로 종료) — Monitor OnExit FIX 교훈과
         //   동일하게 5초 타임아웃으로 무한 대기를 방어한다.
         _WaitWithTimeout(_services?.GetService<CollectorConnectionManager>()?.DisposeAsync().AsTask());
+
+        // ★ HM-11: 웹 표시 서버(Kestrel) 정리 — 동일하게 5초 타임아웃으로 방어.
+        _WaitWithTimeout(_services?.GetService<HmiWebHostService>()?.DisposeAsync().AsTask());
+
+        // ★ HM-16: 알람 이력 DB 연결 정리
+        _WaitWithTimeout(_services?.GetService<AlarmHistoryService>()?.DisposeAsync().AsTask());
 
         // ★ 헬스체크 파이프 정리 (내부 2초 타임아웃 + 외부 5초 이중 방어)
         _WaitWithTimeout(_healthServer?.DisposeAsync().AsTask());
@@ -134,9 +187,29 @@ public partial class App : Application
 
         // ★ HM-03 신규: [레이아웃 편집] 탭
         // ★ HM-07 신규: hmi-layout.json 로더 — LayoutCanvasViewModel 보다 먼저 등록
+        // ★ HM-12: LayoutCanvasViewModel 이 HmiSettingsLoader 도 생성자로 요구함
+        //   (화면 잠금 기본값 조회) — 이미 위에서 등록되어 있으므로 추가 등록 불필요
         services.AddSingleton<HmiLayoutLoader>();
         services.AddSingleton<LayoutCanvasViewModel>();
         services.AddSingleton<LayoutCanvasView>();
+
+        // ★ HM-11 신규: 웹 브라우저 표시 확장 (LayoutCanvasViewModel 보다 뒤에 등록 —
+        //   생성자 의존성. HmiSettingsLoader 는 이미 위에서 등록됨)
+        services.AddSingleton<HmiWebHostService>();
+
+        // ★ HM-14 신규: [알람] 탭 — AlarmAggregator 가 CollectorConnectionManager
+        //   (이미 위에서 등록됨)를 생성자로 요구하므로 그 뒤에 등록
+        services.AddSingleton<AlarmAggregator>();
+        services.AddSingleton<AlarmViewModel>();
+        services.AddSingleton<AlarmView>();
+
+        // ★ HM-15 신규: [로그] 탭 — ViewModel 없이 자체적으로 LogManager.Instance
+        //   구독을 처리하는 완결형 View (Studio/Collector/Monitor 와 동일 패턴)
+        services.AddSingleton<LogPanelView>();
+
+        // ★ HM-16 신규: 알람 이력 SQLite 영구 저장 (AlarmAggregator 보다 뒤에 등록 —
+        //   실제 의존은 없지만 등록 순서를 기능 도입 순서와 맞춤)
+        services.AddSingleton<AlarmHistoryService>();
 
         // ★ HM-Base-1: MainWindow DataContext
         services.AddSingleton<HmiMainViewModel>();
@@ -146,7 +219,9 @@ public partial class App : Application
             new MainWindow(
                 sp.GetRequiredService<HmiMainViewModel>(),
                 sp.GetRequiredService<CollectorManageView>(),
-                sp.GetRequiredService<LayoutCanvasView>()));
+                sp.GetRequiredService<LayoutCanvasView>(),
+                sp.GetRequiredService<AlarmView>(),
+                sp.GetRequiredService<LogPanelView>()));
 
         return services.BuildServiceProvider();
     }

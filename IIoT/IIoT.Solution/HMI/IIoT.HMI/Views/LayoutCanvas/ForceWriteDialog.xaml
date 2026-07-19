@@ -1,0 +1,123 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.HMI · Views/LayoutCanvas/ForceWriteDialog.xaml
+     역할: Tag 강제값 쓰기(Force Write) 입력 모달 다이얼로그
+           캔버스에서 Tag 바인딩된 장비 카드를 더블클릭하면 표시된다.
+           (IIoT.Collector Views/Status/ForceWriteDialog.xaml 이식 — 동일 UI/동작,
+            네임스페이스만 IIoT.HMI 로 변경. 값/ApiKey 검증은 전부 Collector 측
+            ForceWriteService 가 원격으로 수행하므로 이 다이얼로그는 입력만 담당)
+     HM-09: 신규
+     HM-12: ① 활성 알람 중 강제쓰기 경고 — AlarmWarningPanel(Grid.Row=4, 신규,
+            대상 Tag 에 HasActiveAlarm=true 일 때만 표시)에 경고 문구 + "위험을
+            인지했으며 계속 진행합니다" 체크박스를 두고, 체크 전에는 OkButton
+            (x:Name 신규 부여)이 비활성화된다(강제 확인 절차).
+            ② 세션 내 API Key 임시 기억 — PwdApiKey 는 그대로 두되, 코드비하인드
+            PrefillApiKey() 가 호출되면 캐시된 값으로 미리 채워진다(XAML 변경 없음
+            — PasswordBox.Password 는 보안상 Binding 불가라 코드비하인드에서만 처리).
+     생성: 2026-07-19
+     ══════════════════════════════════════════════════════════ -->
+<Window x:Class="IIoT.HMI.Views.LayoutCanvas.ForceWriteDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Tag 강제값 쓰기"
+        Width="380" Height="380"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="ToolWindow"
+        Background="{DynamicResource BgBrush}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   x:Name="TxtTagName"
+                   FontSize="15" FontWeight="Bold"
+                   Foreground="{DynamicResource TextBrush}"
+                   Margin="0,0,0,4" />
+
+        <TextBlock Grid.Row="1"
+                   x:Name="TxtTagInfo"
+                   FontSize="11"
+                   Foreground="{DynamicResource Text2Brush}"
+                   Margin="0,0,0,16" />
+
+        <TextBlock Grid.Row="2"
+                   Text="쓸 값 (Raw 값 기준)"
+                   FontSize="11" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Text2Brush}"
+                   Margin="0,0,0,6" />
+
+        <TextBox Grid.Row="3"
+                 x:Name="TxtValue"
+                 Style="{DynamicResource PropInput}"
+                 Margin="0,0,0,12" />
+
+        <!-- ★ HM-12: 대상 Tag 에 활성 알람이 있을 때만 표시 — 기본 Collapsed -->
+        <StackPanel Grid.Row="4"
+                    x:Name="AlarmWarningPanel"
+                    Visibility="Collapsed"
+                    Margin="0,0,0,12">
+            <TextBlock x:Name="TxtAlarmWarning"
+                       FontSize="11" FontWeight="Bold"
+                       Foreground="{DynamicResource RedBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,6" />
+            <CheckBox x:Name="ChkAlarmAck"
+                      Content="위험을 인지했으며 계속 진행합니다"
+                      FontSize="11"
+                      Foreground="{DynamicResource TextBrush}"
+                      Checked="ChkAlarmAck_CheckedChanged"
+                      Unchecked="ChkAlarmAck_CheckedChanged" />
+        </StackPanel>
+
+        <!-- API Key (Collector settings.json Security.ForceWriteApiKey 가 설정된
+             경우에만 필요 — 비어있으면 그냥 빈 값으로 전달해도 통과됨.
+             ★ HM-12: 이번 세션에서 같은 Collector 에 성공했던 값이 있으면
+             PrefillApiKey() 로 미리 채워짐) -->
+        <TextBlock Grid.Row="5"
+                   Text="API Key (설정된 경우에만 입력)"
+                   FontSize="11" FontWeight="SemiBold"
+                   Foreground="{DynamicResource Text2Brush}"
+                   Margin="0,0,0,6" />
+
+        <PasswordBox Grid.Row="6"
+                     x:Name="PwdApiKey"
+                     Background="{DynamicResource CardBrush}"
+                     Foreground="{DynamicResource TextBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}"
+                     BorderThickness="1"
+                     Padding="8,6"
+                     Margin="0,0,0,8" />
+
+        <TextBlock Grid.Row="7"
+                   x:Name="TxtWarning"
+                   FontSize="11"
+                   Foreground="{DynamicResource RedBrush}"
+                   TextWrapping="Wrap"
+                   VerticalAlignment="Top" />
+
+        <StackPanel Grid.Row="8"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+            <Button Content="취소"
+                    Width="70"
+                    Margin="0,0,8,0"
+                    Style="{DynamicResource GhostBtn}"
+                    Click="CancelButton_Click" />
+            <Button x:Name="OkButton"
+                    Content="쓰기"
+                    Width="70"
+                    Style="{DynamicResource PrimaryBtn}"
+                    Click="OkButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

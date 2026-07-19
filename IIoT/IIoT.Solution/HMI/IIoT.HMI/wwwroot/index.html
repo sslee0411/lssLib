@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.HMI · wwwroot/index.html
+     역할: 웹 브라우저 표시 확장(HM-11) — WPF [레이아웃 편집] 탭의 현재 활성
+           화면을 그대로 미러링하는 읽기 전용 웹 페이지.
+           (IIoT.Collector wwwroot/index.html 패턴 준용 — 다크 테마 + 순수
+            CSS/JS, SignalR CDN 1개만 의존, 별도 프레임워크 없음)
+     동작: ① GET /api/layout 로 최초 스냅샷 1회 조회 → render()
+           ② SignalR "/hmi-hub" 연결 → "NodesChanged" 수신 시마다 전체 재렌더
+           (증분 갱신 대신 매번 전체 재렌더 — 카드 수가 많지 않은 HMI 특성상
+            충분히 가볍고, 구현이 단순해 유지보수가 쉽다)
+     HM-11: 신규
+     생성: 2026-07-19
+     ══════════════════════════════════════════════════════════ -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IIoT HMI — 생산현황판 (웹)</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text2: #8b949e;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --acc: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Consolas, "Malgun Gothic", monospace;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  #statusDot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+  }
+  #statusText { font-size: 11px; color: var(--text2); }
+  #nodeCount { margin-left: auto; font-size: 11px; color: var(--text2); }
+  #canvas {
+    position: relative;
+    min-width: 1200px;
+    min-height: 800px;
+  }
+  .card {
+    position: absolute;
+    width: 120px;
+    min-height: 90px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    padding: 10px 8px 8px;
+    text-align: center;
+  }
+  .card .bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .card .icon { font-size: 26px; margin-top: 6px; }
+  .card .label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .card .value { font-size: 12px; font-weight: bold; margin-top: 2px; color: var(--acc); }
+  .card .dot {
+    position: absolute; top: 6px; right: 6px;
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .card .alarm {
+    position: absolute; top: 4px; left: 4px;
+    font-size: 12px;
+    cursor: default;
+  }
+  #empty {
+    padding: 40px; text-align: center; color: var(--text2); font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div id="statusDot"></div>
+  <div id="statusText">연결 대기 중...</div>
+  <h1>IIoT HMI — 생산현황판 (웹, 읽기 전용)</h1>
+  <div id="nodeCount">0 개</div>
+</header>
+<div id="canvas"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script>
+  const canvas     = document.getElementById("canvas");
+  const statusDot  = document.getElementById("statusDot");
+  const statusText = document.getElementById("statusText");
+  const nodeCount  = document.getElementById("nodeCount");
+
+  function qualityColor(q) {
+    switch (q) {
+      case "Good": return "var(--green)";
+      case "Bad":
+      case "Timeout": return "var(--yellow)";
+      case "Disconnected": return "var(--red)";
+      default: return "transparent";
+    }
+  }
+
+  function alarmColor(level) {
+    if (level === "HH" || level === "LL") return "var(--red)";
+    if (level === "H"  || level === "L")  return "var(--yellow)";
+    return "var(--text2)";
+  }
+
+  // ★ 노드 구조(구조/실시간 상태)는 항상 "NodesChanged" 전체 스냅샷으로만 반영된다
+  //   (HmiWebHostService 의 dirty 플래그 + 500ms 주기 브로드캐스트 설계 참조).
+  function render(nodes) {
+    canvas.innerHTML = "";
+    nodeCount.textContent = nodes.length + " 개";
+
+    if (nodes.length === 0) {
+      const empty = document.createElement("div");
+      empty.id = "empty";
+      empty.textContent = "표시할 카드가 없습니다 (WPF 쪽 활성 화면이 비어 있음)";
+      canvas.appendChild(empty);
+      return;
+    }
+
+    let maxX = 1200, maxY = 800;
+
+    for (const n of nodes) {
+      maxX = Math.max(maxX, n.x + 160);
+      maxY = Math.max(maxY, n.y + 140);
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.left = n.x + "px";
+      card.style.top  = n.y + "px";
+      card.style.zIndex = n.zIndex;
+
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      bar.style.background = n.categoryColor || "#666";
+      card.appendChild(bar);
+
+      if (n.hasActiveAlarm) {
+        const badge = document.createElement("div");
+        badge.className = "alarm";
+        badge.textContent = "⚠";
+        badge.style.color = alarmColor(n.alarmLevel);
+        badge.title = n.alarmMessage || "";
+        card.appendChild(badge);
+      }
+
+      if (n.isBound) {
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        dot.style.background = qualityColor(n.valueQuality);
+        card.appendChild(dot);
+      }
+
+      const icon = document.createElement("div");
+      icon.className = "icon";
+      icon.textContent = n.iconGlyph;
+      card.appendChild(icon);
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = n.label;
+      card.appendChild(label);
+
+      if (n.isBound) {
+        const value = document.createElement("div");
+        value.className = "value";
+        value.textContent = n.valueText;
+        card.appendChild(value);
+      }
+
+      canvas.appendChild(card);
+    }
+
+    canvas.style.minWidth  = maxX + "px";
+    canvas.style.minHeight = maxY + "px";
+  }
+
+  async function loadInitial() {
+    try {
+      const res = await fetch("/api/layout");
+      render(await res.json());
+    } catch (err) {
+      console.error("초기 레이아웃 조회 실패", err);
+    }
+  }
+
+  const conn = new signalR.HubConnectionBuilder()
+    .withUrl("/hmi-hub")
+    .withAutomaticReconnect([1000, 3000, 5000, 10000])
+    .build();
+
+  conn.on("NodesChanged", (nodes) => render(nodes));
+
+  conn.onreconnecting(() => {
+    statusDot.style.background = "var(--yellow)";
+    statusText.textContent = "재연결 중...";
+  });
+  conn.onreconnected(() => {
+    statusDot.style.background = "var(--green)";
+    statusText.textContent = "연결됨";
+    loadInitial(); // 재연결 사이 놓친 변경분을 스냅샷으로 다시 맞춘다
+  });
+  conn.onclose(() => {
+    statusDot.style.background = "var(--red)";
+    statusText.textContent = "연결 끊김";
+  });
+
+  async function start() {
+    try {
+      await conn.start();
+      statusDot.style.background = "var(--green)";
+      statusText.textContent = "연결됨";
+    } catch (err) {
+      statusDot.style.background = "var(--red)";
+      statusText.textContent = "연결 실패 — 3초 후 재시도";
+      setTimeout(start, 3000);
+    }
+  }
+
+  loadInitial();
+  start();
+</script>
+</body>
+</html>

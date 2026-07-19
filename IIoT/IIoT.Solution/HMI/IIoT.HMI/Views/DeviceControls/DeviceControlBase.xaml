@@ -20,6 +20,15 @@
      HM-04: 신규
      HM-05: 실시간 Tag 값 표시줄 추가 (모델의 ValueText, IsBound=True 일 때만
             표시 — 모든 장비 타입 공통이므로 베이스에서 1번만 처리)
+     HM-08: 알람 배지(AlarmBadge, 좌상단) + 상세 팝업(AlarmPopup) 추가.
+            ★ Popup 은 별도의 시각 트리 루트로 렌더링되어 RelativeSource/
+            상위 DataContext 상속이 불안정하므로(WPF의 잘 알려진 제약), 안전하게:
+              ① Popup.DataContext 를 ElementName 바인딩으로 명시적으로 지정
+              ② 배지·ACK 버튼 Click 은 코드비하인드에서 처리하고, ACK 는
+                VisualTreeHelper 로 상위 UserControl(LayoutCanvasView)을 직접
+                찾아 그 DataContext(LayoutCanvasViewModel)의 AcknowledgeAlarmCommand
+                를 호출한다(DeviceControlBase.xaml.cs 참조).
+            모든 장비 타입 공통이라 베이스에서 1번만 처리.
      HM-06: 애니메이션 엔진 지원 요소 추가 (모든 장비 타입 공통 뼈대만 베이스에
             두고, 실제 애니메이션 동작은 파생 클래스 코드비하인드가 담당)
             ① IconText 에 x:Name 부여 — 파생 클래스가 RenderTransform(회전/흔들림
@@ -47,6 +56,7 @@
     <UserControl.Resources>
         <layout:HexColorConverter x:Key="HexColor"/>
         <conv:TagQualityColorConverter x:Key="QualityColor"/>
+        <conv:AlarmLevelColorConverter x:Key="AlarmColor"/>
         <!-- ★ 규칙: BoolToVisibility 는 App.xaml 전역 등록에 의존하지 않고 여기서도
              방어적으로 재등록 (MainWindow.xaml/LayoutCanvasView.xaml과 동일 패턴) -->
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
@@ -114,8 +124,8 @@
                 </Grid>
             </StackPanel>
 
-            <!-- ★ HM-06: 상태 점 — Tag Quality 기반 색상(연결/알람 상태의 1차 시각화,
-                 상세 배지·ACK 는 HM-08에서 추가). 모든 장비 타입 공통이라 베이스에서 처리 -->
+            <!-- ★ HM-06: 상태 점 — Tag Quality 기반 색상(연결 상태의 1차 시각화).
+                 모든 장비 타입 공통이라 베이스에서 처리 -->
             <Ellipse Grid.Row="0" Grid.RowSpan="2"
                      Width="9" Height="9"
                      HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -123,6 +133,89 @@
                      Stroke="{DynamicResource CardBrush}" StrokeThickness="1.5"
                      Fill="{Binding ValueQuality, Converter={StaticResource QualityColor}}"
                      Visibility="{Binding IsBound, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- ★ HM-08: 알람 배지 — 좌상단, HasActiveAlarm=True 일 때만 표시.
+                 Acked 상태면 반투명 처리(확인은 됐지만 아직 복귀 전임을 구분). -->
+            <Button x:Name="AlarmBadge"
+                    Grid.Row="0" Grid.RowSpan="2"
+                    Width="16" Height="16"
+                    HorizontalAlignment="Left" VerticalAlignment="Top"
+                    Margin="4,3,0,0"
+                    Padding="0"
+                    Cursor="Hand"
+                    Click="_OnAlarmBadgeClick"
+                    Visibility="{Binding HasActiveAlarm, Converter={StaticResource BoolToVisibility}}">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Opacity" Value="1.0"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding AlarmStatusText}" Value="Acked">
+                                <Setter Property="Opacity" Value="0.55"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="8"
+                                Background="{Binding AlarmLevel, Converter={StaticResource AlarmColor}}">
+                            <TextBlock Text="⚠" FontSize="10"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="White"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- ★ HM-08: 알람 상세 팝업 — AlarmBadge 클릭 시 토글(코드비하인드)
+                 DataContext 를 ElementName 바인딩으로 명시(Popup 은 상위 DataContext
+                 를 자동 상속하지 않음 — WPF 잘 알려진 제약) -->
+            <Popup x:Name="AlarmPopup"
+                   DataContext="{Binding ElementName=AlarmBadge, Path=DataContext}"
+                   PlacementTarget="{Binding ElementName=AlarmBadge}"
+                   Placement="Bottom"
+                   StaysOpen="False"
+                   AllowsTransparency="True">
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="6"
+                        Padding="10" MinWidth="180">
+                    <StackPanel>
+                        <TextBlock Text="{Binding BoundTagName}"
+                                   FontWeight="Bold" FontSize="12"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="{Binding AlarmMessage}"
+                                   FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   Margin="0,4,0,0"/>
+                        <TextBlock FontSize="10" Foreground="{DynamicResource Text2Brush}" Margin="0,4,0,0">
+                            <Run Text="레벨: "/><Run Text="{Binding AlarmLevel, Mode=OneWay}"/>
+                            <Run Text="   상태: "/><Run Text="{Binding AlarmStatusText, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock Text="{Binding AlarmTimeText}"
+                                   FontSize="10" Foreground="{DynamicResource Text2Brush}"/>
+                        <!-- ★ Command 대신 Click 코드비하인드 사용 — Popup 내부에서는
+                             RelativeSource(AncestorType=UserControl) 로 상위 ViewModel을
+                             안정적으로 찾을 수 없다(Popup 이 별도 시각 트리 루트이기 때문).
+                             DeviceControlBase.xaml.cs 의 _OnAckButtonClick() 참조. -->
+                        <Button x:Name="AckButton"
+                                Content="✓ 확인(ACK)"
+                                Margin="0,8,0,0"
+                                Click="_OnAckButtonClick">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AlarmStatusText}" Value="Active">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Popup>
         </Grid>
     </Border>
 </UserControl>

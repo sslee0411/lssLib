@@ -28,6 +28,11 @@
 //         Panel.ZIndex 로 바인딩되며, LayoutCanvasViewModel 의 BringToFront/
 //         SendToBack/BringForward/SendBackward 커맨드가 이 값을 조정한다.
 //         레이아웃 저장(hmi-layout.json)에도 그대로 포함된다.
+//  HM-08: 알람 상태 필드 추가(HasActiveAlarm/AlarmKey/AlarmLevel/AlarmStatusText/
+//         AlarmMessage/AlarmTimeText) — Collector의 AlarmChanged 이벤트를 구독한
+//         LayoutCanvasViewModel 이 갱신한다. 모든 장비 타입 공통이므로 베이스에
+//         둔다. Views/DeviceControls/DeviceControlBase 의 알람 배지+팝업이 이
+//         값을 바인딩해 표시하고, ACK 버튼은 AlarmKey 를 커맨드 파라미터로 사용한다.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -100,6 +105,26 @@ public abstract partial class AbstractLayoutNode : ObservableObject
 
     /// <summary>Tag 가 바인딩되어 있는지 여부 — 카드에 값 표시줄을 보여줄지 결정</summary>
     public bool IsBound => !string.IsNullOrEmpty(BoundTagId);
+
+    // §2-2 ─ HM-08: 알람 오버레이 ─────────────────────────
+
+    /// <summary>현재 이 노드에 활성 알람(Active/Acked)이 있는지 — 배지 표시 여부</summary>
+    [ObservableProperty] private bool _hasActiveAlarm;
+
+    /// <summary>Collector 측 알람 고유 키 — ACK 요청 시 그대로 전달</summary>
+    [ObservableProperty] private string _alarmKey = string.Empty;
+
+    /// <summary>알람 레벨("HH"/"H"/"L"/"LL", 알람 없으면 "")</summary>
+    [ObservableProperty] private string _alarmLevel = string.Empty;
+
+    /// <summary>알람 상태("Active"=미확인/"Acked"=확인됨, 알람 없으면 "")</summary>
+    [ObservableProperty] private string _alarmStatusText = string.Empty;
+
+    /// <summary>알람 메시지 (팝업 표시용)</summary>
+    [ObservableProperty] private string _alarmMessage = string.Empty;
+
+    /// <summary>알람 발생 시각 텍스트 (팝업 표시용, "HH:mm:ss")</summary>
+    [ObservableProperty] private string _alarmTimeText = string.Empty;
 
     protected AbstractLayoutNode() => Label = DisplayLabel;
 }

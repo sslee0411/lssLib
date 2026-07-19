@@ -11,6 +11,10 @@
 //  HM-02: 신규
 //  HM-06: TagQualityColorConverter 추가 — 카드 우상단 상태 점(StatusDot)의 색상을
 //         Tag Quality("Good"/"Bad"/"Timeout"/"Disconnected")에 따라 결정한다.
+//  HM-08: AlarmLevelColorConverter 추가 — 카드 좌상단 알람 배지 색상을
+//         AlarmLevel("HH"/"H"/"L"/"LL")에 따라 결정한다.
+//  HM-14: AlarmStatusColorConverter 추가 — [알람] 탭 그리드의 상태(Active/Acked/
+//         Recovered) 색상 점/텍스트 색상을 결정한다(Monitor MN-03 이식).
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -48,6 +52,48 @@ public sealed class ConnectionStatusColorConverter : IValueConverter
 
         return ThemeResource.Find("Text2Brush"); // 미연결/연결 종료 등
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// ★ HM-08: 알람 레벨 문자열(AbstractLayoutNode.AlarmLevel) → 카드 알람 배지 색상.
+/// "HH"/"LL"(위험)=Red, "H"/"L"(경고)=Yellow, 그 외(알람 없음 등)=Text2.
+/// </summary>
+public sealed class AlarmLevelColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var level = value as string ?? "";
+
+        return level switch
+        {
+            "HH" or "LL" => ThemeResource.Find("RedBrush"),
+            "H"  or "L"  => ThemeResource.Find("YellowBrush"),
+            _            => ThemeResource.Find("Text2Brush")
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// ★ HM-14: 알람 상태 문자열([알람] 탭 AlarmRow.Status) → 그리드 상태 점/텍스트 색상.
+/// "Active"(미확인)=Red, "Acked"(확인됨)=Yellow, "Recovered"(해제됨)=Green,
+/// 그 외=Text2(회색). (Monitor MN-03 AlarmStatusColorConverter 이식)
+/// </summary>
+public sealed class AlarmStatusColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value as string) switch
+        {
+            "Active"    => ThemeResource.Find("RedBrush"),
+            "Acked"     => ThemeResource.Find("YellowBrush"),
+            "Recovered" => ThemeResource.Find("GreenBrush"),
+            _           => ThemeResource.Find("Text2Brush")
+        };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();

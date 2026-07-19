@@ -25,23 +25,61 @@
       ※ FrameworkReference 가 없으므로 Microsoft.Extensions.DependencyInjection
         은 PackageReference 로 명시 추가 (Manager MG-Base-0 과 동일 이유 —
         8.0.0 고정은 낮아서 다운그레이드 오류 유발 → 8.0.1 이상 사용)
+      ★ HM-11 (2026-07-19): FrameworkReference 재도입 — Monitor MN-05 와 동일 상황
+        (①Collector 접속 클라이언트 + ②웹 브라우저용 자체 Hub 호스팅을 동시에
+        수행). Monitor MN-05 FIX 를 그대로 적용: Microsoft.Extensions.
+        DependencyInjection 의 "명시 버전 고정"을 완전히 제거하고
+        FrameworkReference 가 제공하는 공유 프레임워크 버전을 그대로 사용해
+        재충돌을 피한다(Ver History MN-05 참조).
+      ★ HM-16 (2026-07-19): lssLib.DB/lssLib.DB.Sqlite ProjectReference 추가 —
+        알람 이력 SQLite 영구 저장(AlarmHistoryService, Monitor MN-EX-02 이식).
+      ★ HM-17 (2026-07-19): OxyPlot.Wpf PackageReference 추가 — 레이아웃 편집
+        탭에서 노드 우클릭 시 실시간 트렌드 창(TrendWindow) 표시. 버전은
+        Collector C-13/Monitor MN-06 과 동일하게 2.2.0 고정(오류 참조표
+        "NU1701 SkiaSharp" 패턴 — LiveChartsCore 대신 이 버전 사용).
   -->
 	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+		<!-- Microsoft.Extensions.DependencyInjection: 명시 버전 지정 안 함 —
+		     FrameworkReference(Microsoft.AspNetCore.App)가 제공하는 버전을 그대로 사용
+		     (Monitor MN-05 FIX 와 동일 원칙 — 8.0.1 명시 고정을 유지하면 NU1605
+		     다운그레이드 오류 재발 위험) -->
 		<!-- ★ HM-01: Collector SignalR Hub 접속용 클라이언트 (다중 HubConnection, Monitor MN-01B 패턴) -->
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.*" />
+		<!-- ★ HM-17: 실시간 트렌드 창. Collector C-13/Monitor MN-06 과 동일 버전 고정 -->
+		<PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
+	</ItemGroup>
+
+	<!-- ★ HM-11: 웹 표시용 wwwroot 빌드 출력 폴더 복사 (index.html 포함,
+	     Collector C-11 패턴 준용) -->
+	<ItemGroup>
+		<Content Include="wwwroot\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
 		<!-- lssLib BCL — 로그 -->
 		<ProjectReference Include="..\..\..\..\Base\BCL\log\lssLib.Log\lssLib.Log.csproj" />
 
+		<!-- ★ HM-16: lssLib BCL — SQLite (알람 이력 저장, Monitor MN-EX-02 와 동일 참조) -->
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB.Sqlite\lssLib.DB.Sqlite.csproj" />
+		<ProjectReference Include="..\..\..\..\Base\BCL\DB\lssLib.DB\lssLib.DB.csproj" />
+
 		<!-- WPF 테마 (v1.5) -->
 		<ProjectReference Include="..\..\UI\Themes\IIoT.UI.Themes\IIoT.UI.Themes.csproj" />
 
 		<!-- ★ HM-Base-0: Manager 헬스체크 응답 서버 (HealthPipeServer) 공유 계약 레이어 -->
 		<ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="wwwroot\" />
+		<Folder Include="Core\Web\" />
 	</ItemGroup>
 
 </Project>

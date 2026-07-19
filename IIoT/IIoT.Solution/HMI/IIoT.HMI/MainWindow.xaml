@@ -8,6 +8,19 @@
      HM-02: [Collector 관리] 탭 실제 화면 연결 (ContentControl + 코드 주입)
      HM-03: [레이아웃 편집] 탭 실제 화면 연결 (캔버스 기반 구조만 — 아이콘 종류는 HM-04 이후)
             남은 2개 탭(현황판/알람)은 아직 placeholder (이후 Step에서 실제 View로 교체)
+     HM-13(정리, 사용자 확인): HM-03~12 가 전부 [레이아웃 편집] 탭에 구현되어
+            (카드 배치·실시간 값·Z순서·다중 화면·알람 배지·ForceWrite) 이미 사실상
+            생산현황판 역할을 하고 있었음 — 별도로 비워둔 "현황판" placeholder 탭은
+            중복이라 판단해 제거. 탭 4개로 재정렬: [레이아웃 편집][Collector 관리]
+            [알람][로그] (인덱스 0~3, 스타일 키도 TabBtn0~3 로 재번호). [알람]/[로그]
+            탭은 여전히 placeholder — 착수 시점 미정(사용자 요청 시 별도 Step으로 진행).
+     HM-14: [알람] 탭 placeholder → 실제 화면(AlarmView, ContentControl 주입)으로
+            교체 — Collector 통합 실시간 알람 그리드(필터+검색+ACK, Monitor MN-03/
+            MN-EX-06 이식). [로그] 탭은 여전히 placeholder.
+     HM-15: [로그] 탭 placeholder → 실제 화면(LogPanelView, ContentControl 주입)으로
+            교체 — LogManager.Instance.LogAdded 구독 실시간 로그 뷰어(레벨/Source
+            필터+지우기, Studio/Collector/Monitor 와 동일한 LogPanelView 패턴 이식).
+            이로써 4개 탭 전부 placeholder 없이 실제 화면으로 채워짐.
      생성: 2026-07-16
      규칙:
        ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
@@ -56,18 +69,8 @@
             </Setter>
         </Style>
 
-        <!-- 탭 0 (현황판) 선택 시 강조 -->
+        <!-- ★ HM-13(정리): 탭 0 (레이아웃 편집 — 사실상 현황판 겸용) 선택 시 강조 -->
         <Style x:Key="TabBtn0" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsDashboardTab}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
-                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- 탭 1 (레이아웃 편집) 선택 시 강조 -->
-        <Style x:Key="TabBtn1" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsLayoutTab}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
@@ -76,8 +79,8 @@
             </Style.Triggers>
         </Style>
 
-        <!-- 탭 2 (Collector 관리) 선택 시 강조 -->
-        <Style x:Key="TabBtn2" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+        <!-- 탭 1 (Collector 관리) 선택 시 강조 -->
+        <Style x:Key="TabBtn1" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsCollectorTab}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
@@ -86,8 +89,8 @@
             </Style.Triggers>
         </Style>
 
-        <!-- 탭 3 (알람) 선택 시 강조 -->
-        <Style x:Key="TabBtn3" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+        <!-- 탭 2 (알람) 선택 시 강조 -->
+        <Style x:Key="TabBtn2" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsAlarmTab}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
@@ -96,8 +99,8 @@
             </Style.Triggers>
         </Style>
 
-        <!-- 탭 4 (로그) 선택 시 강조 -->
-        <Style x:Key="TabBtn4" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+        <!-- 탭 3 (로그) 선택 시 강조 -->
+        <Style x:Key="TabBtn3" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsLogTab}" Value="True">
                     <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
@@ -136,33 +139,29 @@
             </DockPanel>
         </Border>
 
-        <!-- § HM-Base-2: 탭바 (40px) -->
+        <!-- § HM-Base-2: 탭바 (40px) — ★ HM-13(정리): 4탭으로 재정렬(현황판 제거) -->
         <Border DockPanel.Dock="Top"
                 Height="40"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Margin="12,0">
-                <Button Content="🗂 현황판"
+                <Button Content="🗂 현황판(레이아웃 편집)"
                         Style="{StaticResource TabBtn0}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="0"/>
-                <Button Content="🎨 레이아웃 편집"
+                <Button Content="🔌 Collector 관리"
                         Style="{StaticResource TabBtn1}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="1"/>
-                <Button Content="🔌 Collector 관리"
+                <Button Content="🔔 알람"
                         Style="{StaticResource TabBtn2}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="2"/>
-                <Button Content="🔔 알람"
+                <Button Content="📋 로그"
                         Style="{StaticResource TabBtn3}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="3"/>
-                <Button Content="📋 로그"
-                        Style="{StaticResource TabBtn4}"
-                        Command="{Binding SwitchTabCommand}"
-                        CommandParameter="4"/>
             </StackPanel>
         </Border>
 
@@ -179,39 +178,26 @@
                        Margin="16,0"/>
         </Border>
 
-        <!-- § 본문 — 탭별 콘텐츠 (Visibility 토글: 숨김 탭도 콘텐츠 유지) -->
+        <!-- § 본문 — 탭별 콘텐츠 (Visibility 토글: 숨김 탭도 콘텐츠 유지)
+             ★ HM-13(정리): 별도 "현황판" Grid placeholder 제거 — 레이아웃 편집
+             탭(LayoutCanvasHost)이 이미 생산현황판 역할을 겸함. -->
         <Grid>
-            <!-- 탭 0: 현황판 — ⭕ placeholder (HM-03~07 이후 실제 캔버스로 교체) -->
-            <Grid Visibility="{Binding IsDashboardTab, Converter={StaticResource BoolToVisibility}}">
-                <Rectangle Fill="{DynamicResource AccFaintBrush}" Opacity="0.35"/>
-                <TextBlock Text="현황판 — 준비 중 (HM-03~07 이후 구현 예정)"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="20" Foreground="{DynamicResource TextBrush}"/>
-            </Grid>
-
-            <!-- 탭 1: 레이아웃 편집 — ✅ HM-03 실제 화면 (캔버스 기반 구조만, 아이콘 종류는 HM-04 이후) -->
+            <!-- 탭 0: 현황판 겸 레이아웃 편집 — ✅ HM-03~12 실제 화면 -->
             <ContentControl x:Name="LayoutCanvasHost"
                             Visibility="{Binding IsLayoutTab, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- 탭 2: Collector 관리 — ✅ HM-02 실제 화면 -->
+            <!-- 탭 1: Collector 관리 — ✅ HM-02 실제 화면 -->
             <ContentControl x:Name="CollectorManageHost"
                             Visibility="{Binding IsCollectorTab, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- 탭 3: 알람 — ⭕ placeholder (HM-08 이후 구현 예정) -->
-            <Grid Visibility="{Binding IsAlarmTab, Converter={StaticResource BoolToVisibility}}">
-                <Rectangle Fill="{DynamicResource RedBrush}" Opacity="0.12"/>
-                <TextBlock Text="알람 — 준비 중 (HM-08 이후 구현 예정)"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="20" Foreground="{DynamicResource TextBrush}"/>
-            </Grid>
+            <!-- 탭 2: 알람 — ✅ HM-14 실제 화면 (Collector 통합 실시간 알람 그리드,
+                 카드별 알람 배지/팝업/ACK 는 이미 [레이아웃 편집] 탭에 HM-08 로 구현됨) -->
+            <ContentControl x:Name="AlarmHost"
+                            Visibility="{Binding IsAlarmTab, Converter={StaticResource BoolToVisibility}}"/>
 
-            <!-- 탭 4: 로그 — ⭕ placeholder (후속 Step에서 lssLib.Log LogViewerControl 연결 예정) -->
-            <Grid Visibility="{Binding IsLogTab, Converter={StaticResource BoolToVisibility}}">
-                <Rectangle Fill="{DynamicResource Text3Brush}" Opacity="0.10"/>
-                <TextBlock Text="로그 — 준비 중 (후속 Step에서 LogViewerControl 연결 예정)"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="20" Foreground="{DynamicResource TextBrush}"/>
-            </Grid>
+            <!-- 탭 3: 로그 — ✅ HM-15 실제 화면 (LogManager.Instance.LogAdded 구독 실시간 뷰어) -->
+            <ContentControl x:Name="LogHost"
+                            Visibility="{Binding IsLogTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

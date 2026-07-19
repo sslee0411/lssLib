@@ -31,6 +31,40 @@
 //           ★ 저장 대상은 배치 좌표·Z순서·Tag 바인딩 식별자뿐이며, 실시간 값
 //           (ValueText/EngValue/ValueQuality)은 저장하지 않는다(재실행 시 Collector
 //           재연결 후 다시 채워짐).
+//  HM-08: 알람 오버레이 — CollectorConnectionManager.AlarmChanged 구독(HM-01에서
+//         이미 재발행되고 있었으나 이때까지 구독자가 없었음). _OnAlarmChanged() 가
+//         일치하는 노드(BoundCollectorId/PlcId/TagId)의 알람 필드(HasActiveAlarm/
+//         AlarmKey/AlarmLevel/AlarmStatusText/AlarmMessage/AlarmTimeText)를 갱신.
+//         AcknowledgeAlarmCommand — CollectorConnectionManager.AcknowledgeAlarmAsync()
+//         (HM-01에서 이미 구현되어 있었으나 미사용이던 메서드)를 그대로 재사용해
+//         ACK 요청을 전송한다("발생 출처로만 전송" 원칙 그대로 적용).
+//  HM-09: ForceWriteAsync(node,value,apiKey) 추가 — 아이콘 더블클릭 시 View(코드
+//         비하인드)가 ForceWriteDialog 입력을 받아 호출하는 공개 메서드. 커맨드가
+//         아니라 일반 메서드인 이유: 다이얼로그 표시/결과 MessageBox 는 순수 View
+//         관심사이므로 코드비하인드가 직접 소유하고, ViewModel은 Collector 위임
+//         (CollectorConnectionManager.ForceWriteAsync)만 담당한다.
+//  HM-10: 화면(페이지) 콤보박스+텍스트박스 UI를 탭 바로 교체(사용자 요청) —
+//         LayoutPageViewModel에 IsActive(탭 강조)/IsEditingName(더블클릭 시
+//         인라인 이름 편집) 2개 필드 추가. OnActivePageChanged 에서 Pages 전체를
+//         순회하며 IsActive 를 갱신하고, SelectPage(page) 공개 메서드(SelectNode
+//         와 동일 패턴)를 View 의 탭 클릭 핸들러가 호출해 ActivePage 를 전환한다.
+//  HM-12: 보안 3종(사용자 확인 완료) — ① HmiSettingsLoader 주입 추가 +
+//         IsForceWriteLocked(기본값=hmi.json ForceWriteSecurity.DefaultLocked,
+//         세션 중 토글만 가능·파일 저장 없음) + ToggleForceWriteLockCommand —
+//         View 의 더블클릭 핸들러가 잠금 여부를 확인해 ForceWriteDialog 오픈을
+//         차단한다. ② _apiKeyCache(Dictionary, 메모리 전용) — ForceWriteAsync
+//         성공 시에만 Collector 별 API Key 를 캐싱, GetCachedApiKey() 로 조회해
+//         다이얼로그를 열 때 미리 채워 넣는다(디스크 저장 없음). ③ 활성 알람 중
+//         강제쓰기 경고는 ForceWriteDialog(View) 쪽에서 처리 — ViewModel 변경 없음.
+//  HM-19: InitializeAsync() 에 멱등(idempotent) 가드 추가(Pages.Count>0 이면 즉시
+//         반환) — 다중 모니터 지원으로 같은 ViewModel 을 공유하는 두 번째
+//         LayoutCanvasView(보조 창)가 생성되면 그 Loaded 핸들러도
+//         InitializeAsync() 를 호출하는데, 기존 로직은 매번 Pages.Clear()+
+//         파일 재로드를 했었다 — 그대로 두면 보조 창을 열 때마다 아직 저장하지
+//         않은 편집 내용(레이아웃 저장 전 상태)이 통째로 사라지는 심각한
+//         데이터 손실 버그가 발생했을 것. HmiSettingsLoader 등에 이미 있는
+//         "여러 호출부가 각자 방어적으로 재확인" 패턴과 달리, 여기는 재확인이
+//         아니라 완전 무시가 맞다(호출부가 이미 채운 상태를 덮어써서는 안 됨).
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -53,6 +87,7 @@ public partial class LayoutCanvasViewModel : ObservableObject
 
     private readonly CollectorConnectionManager _connectionManager;
     private readonly HmiLayoutLoader            _layoutLoader;
+    private readonly HmiSettingsLoader          _settingsLoader;
 
     // ★ HM-05: 노드 선택 시 기존 바인딩을 선택기에 복원하기 위한 1회성 타깃값
     //   (AvailableDevices/AvailableTags 가 비동기로 채워진 뒤 일치 항목을 찾아 적용)
@@ -65,18 +100,37 @@ public partial class LayoutCanvasViewModel : ObservableObject
     //   이 캐시 전체를 hmi-layout.json 으로 직렬화한다.
     private readonly Dictionary<string, List<LayoutNodeDto>> _pageNodeCache = new();
 
-    public LayoutCanvasViewModel(CollectorConnectionManager connectionManager, HmiLayoutLoader layoutLoader)
+    // ★ HM-12: Collector 별 ForceWrite API Key 세션 캐시(메모리 전용, 디스크
+    //   저장 없음) — 강제쓰기 성공 시에만 채워지며, 앱 재시작 시 초기화된다.
+    private readonly Dictionary<string, string> _apiKeyCache = new();
+
+    public LayoutCanvasViewModel(
+        CollectorConnectionManager connectionManager,
+        HmiLayoutLoader layoutLoader,
+        HmiSettingsLoader settingsLoader)
     {
         _connectionManager = connectionManager;
         _connectionManager.TagValueReceived += _OnTagValueReceived;
-        _layoutLoader = layoutLoader;
+        _connectionManager.AlarmChanged     += _OnAlarmChanged;   // ★ HM-08
+        _layoutLoader   = layoutLoader;
+        _settingsLoader = settingsLoader;
     }
 
     /// <summary>View.Loaded 에서 1회 호출 — hmi-layout.json 을 읽어 화면 목록을
-    /// 구성하고 마지막 활성 화면을 복원한다.</summary>
+    /// 구성하고 마지막 활성 화면을 복원한다. ★ HM-12: hmi.json 의 ForceWrite
+    /// 잠금 기본값도 함께 적용한다(다른 View 의 Loaded 순서와 무관하게 안전하도록
+    /// 여기서도 자체적으로 LoadAsync 호출 — HmiWebHostService 와 동일 방어 패턴).</summary>
     public async Task InitializeAsync()
     {
+        // ★ HM-19: 멱등 가드 — 이미 초기화됨(보조 창 등 두 번째 호출)이면 무시.
+        //   Layout.Pages 는 HmiLayoutLoader 가 항상 최소 1개를 보장하므로, 최초
+        //   1회 InitializeAsync() 가 끝나면 Pages.Count 는 절대 0이 될 수 없다.
+        if (Pages.Count > 0) return;
+
         await _layoutLoader.LoadAsync();
+        await _settingsLoader.LoadAsync();
+
+        IsForceWriteLocked = _settingsLoader.Settings.ForceWriteSecurity.DefaultLocked;
 
         Pages.Clear();
         _pageNodeCache.Clear();
@@ -382,6 +436,119 @@ public partial class LayoutCanvasViewModel : ObservableObject
         });
     }
 
+    // §9-1 ─ HM-08: 실시간 AlarmChanged 반영 + ACK ────────────
+
+    /// <summary>
+    /// CollectorConnectionManager 로부터 "AlarmChanged" 수신 시 호출됨.
+    /// ★ TagValueReceived 와 동일하게 SignalR 콜백(비 UI 스레드)이므로
+    /// Dispatcher.BeginInvoke 로 마샬링한다.
+    /// </summary>
+    private void _OnAlarmChanged(string collectorId, JsonElement payload)
+    {
+        Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            if (!payload.TryGetProperty("tagId", out var tagIdProp)) return;
+            var tagId = tagIdProp.GetString() ?? string.Empty;
+            var plcId = payload.TryGetProperty("plcId", out var plcProp) ? plcProp.GetString() ?? string.Empty : string.Empty;
+
+            var target = Nodes.FirstOrDefault(n =>
+                n.IsBound &&
+                n.BoundCollectorId == collectorId &&
+                n.BoundPlcId       == plcId &&
+                n.BoundTagId       == tagId);
+
+            if (target is null) return;
+
+            var status = payload.TryGetProperty("status", out var s) ? s.GetString() ?? string.Empty : string.Empty;
+
+            // "Recovered" — 알람 해제, 배지/팝업 숨김
+            if (status == "Recovered")
+            {
+                target.HasActiveAlarm  = false;
+                target.AlarmKey        = string.Empty;
+                target.AlarmLevel      = string.Empty;
+                target.AlarmStatusText = string.Empty;
+                target.AlarmMessage    = string.Empty;
+                target.AlarmTimeText   = string.Empty;
+                AcknowledgeAlarmCommand.NotifyCanExecuteChanged();
+                return;
+            }
+
+            var alarmKey = payload.TryGetProperty("alarmKey", out var k) ? k.GetString() ?? string.Empty : string.Empty;
+            var level    = payload.TryGetProperty("level",    out var l) ? l.GetString() ?? string.Empty : string.Empty;
+            var message  = payload.TryGetProperty("message",  out var m) ? m.GetString() ?? string.Empty : string.Empty;
+            var timeText = payload.TryGetProperty("ts", out var t)
+                && DateTimeOffset.TryParse(t.GetString(), out var dto)
+                    ? dto.LocalDateTime.ToString("HH:mm:ss")
+                    : string.Empty;
+
+            // "Active"(미확인) 또는 "Acked"(확인됨) — 배지 계속 표시(ACK 여부만 다름)
+            target.HasActiveAlarm  = true;
+            target.AlarmKey        = alarmKey;
+            target.AlarmLevel      = level;
+            target.AlarmStatusText = status;
+            target.AlarmMessage    = message;
+            target.AlarmTimeText   = timeText;
+
+            AcknowledgeAlarmCommand.NotifyCanExecuteChanged();
+        });
+    }
+
+    private bool _CanAcknowledgeAlarm(AbstractLayoutNode? node) =>
+        node is { HasActiveAlarm: true, AlarmStatusText: "Active" } && !string.IsNullOrEmpty(node.AlarmKey);
+
+    /// <summary>
+    /// 알람 팝업의 [✓ 확인(ACK)] 버튼 커맨드. 발생 출처(BoundCollectorId)로만
+    /// ACK 를 전송한다("발생 출처로만 전송" 원칙 — Monitor MN-03/Collector C-EX-12 준용).
+    /// CollectorConnectionManager.AcknowledgeAlarmAsync() 는 HM-01에서 이미 구현되어
+    /// 있었으나 이 Step 전까지 호출부가 없었다(HM-08에서 처음 사용).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(_CanAcknowledgeAlarm))]
+    private async Task AcknowledgeAlarmAsync(AbstractLayoutNode? node)
+    {
+        if (node is null || string.IsNullOrEmpty(node.AlarmKey)) return;
+        await _connectionManager.AcknowledgeAlarmAsync(node.BoundCollectorId, node.AlarmKey);
+    }
+
+    // §9-2 ─ HM-09: ForceWrite 원격 제어 ──────────────────────
+
+    /// <summary>
+    /// 아이콘 더블클릭 → ForceWriteDialog 입력 확인 후 View(코드비하인드)가 호출한다.
+    /// CollectorConnectionManager.ForceWriteAsync() 로 위임하며, 검증(기능 활성화·
+    /// API Key·Tag 존재/활성·값 형식)은 전부 Collector 측(ForceWriteService)이 수행한다.
+    /// "발생 출처로만 전송" 원칙 그대로 — node.BoundCollectorId 로만 전송된다.
+    /// </summary>
+    public async Task<ForceWriteResult> ForceWriteAsync(AbstractLayoutNode node, string value, string apiKey)
+    {
+        var result = await _connectionManager.ForceWriteAsync(node.BoundCollectorId, node.BoundPlcId, node.BoundTagId, value, apiKey);
+
+        // ★ HM-12: 성공한 API Key만 세션 캐시에 저장(실패한 값을 캐싱해 다음 시도까지
+        //   방해하지 않도록). 빈 값은 캐싱하지 않는다(API Key 미사용 Collector 구분 불필요).
+        if (result.IsSuccess && !string.IsNullOrEmpty(apiKey))
+            _apiKeyCache[node.BoundCollectorId] = apiKey;
+
+        return result;
+    }
+
+    /// <summary>★ HM-12: 지정된 Collector 에 대해 이번 세션 중 성공했던 API Key
+    /// 를 반환한다(없으면 빈 문자열). ForceWriteDialog 를 열 때 미리 채워 넣어
+    /// 매번 재입력하지 않아도 되게 한다 — 디스크에는 저장하지 않는다.</summary>
+    public string GetCachedApiKey(string collectorId) =>
+        _apiKeyCache.TryGetValue(collectorId, out var key) ? key : string.Empty;
+
+    // §9-3 ─ HM-12: 화면 잠금 모드 ─────────────────────────────
+
+    /// <summary>true(기본값=hmi.json ForceWriteSecurity.DefaultLocked) 인 동안은
+    /// 아이콘 더블클릭 시 ForceWriteDialog 가 열리지 않는다(운영자 실수 방지).
+    /// 세션 중 툴바 버튼으로만 토글되며, 토글 자체는 파일에 저장되지 않는다.</summary>
+    [NotifyPropertyChangedFor(nameof(LockButtonLabel))]
+    [ObservableProperty] private bool _isForceWriteLocked = true;
+
+    public string LockButtonLabel => IsForceWriteLocked ? "🔒 잠금(더블클릭 차단)" : "🔓 해제(강제쓰기 가능)";
+
+    [RelayCommand]
+    private void ToggleForceWriteLock() => IsForceWriteLocked = !IsForceWriteLocked;
+
     // §10 ─ HM-07: 화면(페이지) 관리 + 저장/불러오기 ──────────
 
     public ObservableCollection<LayoutPageViewModel> Pages { get; } = new();
@@ -400,6 +567,10 @@ public partial class LayoutCanvasViewModel : ObservableObject
     /// <summary>화면 전환 직후 — 새 화면의 캐시된 스냅샷을 Nodes 에 복원.</summary>
     partial void OnActivePageChanged(LayoutPageViewModel? value)
     {
+        // ★ HM-10: 탭 바의 활성 강조 표시(IsActive)를 여기서 함께 갱신 — Pages 목록의
+        //   다른 항목들과 비교해 정확히 1개만 true 가 되도록 매번 전체 재설정한다.
+        foreach (var p in Pages) p.IsActive = ReferenceEquals(p, value);
+
         SelectNode(null);
         Nodes.Clear();
 
@@ -413,6 +584,15 @@ public partial class LayoutCanvasViewModel : ObservableObject
             var node = _FromDto(dto);
             if (node is not null) Nodes.Add(node);
         }
+    }
+
+    /// <summary>
+    /// ★ HM-10: 화면 탭 클릭 시 View(코드비하인드)가 호출 — SelectNode(node) 와
+    /// 동일한 패턴(커맨드가 아닌 공개 메서드)으로 ActivePage 를 전환한다.
+    /// </summary>
+    public void SelectPage(LayoutPageViewModel? page)
+    {
+        if (page is not null) ActivePage = page;
     }
 
     private bool _CanDeletePage() => Pages.Count > 1 && ActivePage is not null;
@@ -500,12 +680,22 @@ public partial class LayoutCanvasViewModel : ObservableObject
 /// <summary>
 /// ★ HM-07: [레이아웃 편집] 화면(페이지) 선택기 항목 — Pages 콤보박스/이름 편집에 바인딩.
 /// LayoutPageDto(직렬화 전용, 비-Observable)와 별도로 두어 이름 편집 시 UI가 즉시 갱신되게 한다.
+/// ★ HM-10: 콤보박스+텍스트박스를 탭 바로 교체하며 IsActive(탭 강조 표시)/
+/// IsEditingName(더블클릭 시 인라인 이름 편집 전환) 2개 필드 추가.
 /// </summary>
 public sealed partial class LayoutPageViewModel : ObservableObject
 {
     public string Id { get; }
 
     [ObservableProperty] private string _name;
+
+    /// <summary>이 화면이 현재 활성 화면인지 — 탭 바 강조 표시용(LayoutCanvasViewModel
+    /// .OnActivePageChanged 가 ActivePage 전환 시마다 전체 Pages 를 순회하며 갱신).</summary>
+    [ObservableProperty] private bool _isActive;
+
+    /// <summary>탭을 더블클릭해 이름 편집 모드로 전환했는지 — true 인 동안 탭에
+    /// TextBlock 대신 인라인 TextBox 가 표시된다(LayoutCanvasView.xaml PageTabTemplate).</summary>
+    [ObservableProperty] private bool _isEditingName;
 
     public LayoutPageViewModel(string id, string name)
     {
