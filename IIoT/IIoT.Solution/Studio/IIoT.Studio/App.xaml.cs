@@ -66,10 +66,25 @@ public partial class App : Application
         LogManager.Instance.Info("App", "IIoT.Studio 시작");
 
         // ★ MG-03: 헬스체크 응답 서버 시작 (Manager 가 핑을 보냄)
+        // ★ HM-22: 원격 설정 조회/저장 콜백 추가 — studio-settings.json 원문을
+        //   그대로 읽고 쓴다(로더의 인메모리 Settings 는 건드리지 않음 — 다른
+        //   프로그램의 원격 저장과 동일하게 "재시작해야 반영" 원칙 유지).
         _healthServer = new HealthPipeServer(
             "IIoT.Studio",
             statusProvider: () => "설정 편집기 정상",
-            onLog: m => LogManager.Instance.Debug("Health", m));
+            onLog: m => LogManager.Instance.Debug("Health", m),
+            settingsProvider: () => File.Exists(StudioSettingsLoader.SettingsPath)
+                ? File.ReadAllText(StudioSettingsLoader.SettingsPath, System.Text.Encoding.UTF8)
+                : "{}",
+            settingsSaver: json =>
+            {
+                try
+                {
+                    File.WriteAllText(StudioSettingsLoader.SettingsPath, json, System.Text.Encoding.UTF8);
+                    return "";
+                }
+                catch (Exception ex) { return ex.Message; }
+            });
         _healthServer.Start();
 
         // ③ DI 빌드

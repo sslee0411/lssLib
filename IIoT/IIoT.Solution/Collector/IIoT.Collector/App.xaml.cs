@@ -103,7 +103,20 @@ public partial class App : Application
                 }
                 catch { return "상태 조회 불가"; }
             },
-            onLog: m => LogManager.Instance.Debug("Health", m));
+            onLog: m => LogManager.Instance.Debug("Health", m),
+            // ★ HM-22: 원격 설정 조회/저장 — settings.json 원문을 그대로 읽고 쓴다
+            settingsProvider: () => File.Exists(CollectorSettingsLoader.SettingsPath)
+                ? File.ReadAllText(CollectorSettingsLoader.SettingsPath, System.Text.Encoding.UTF8)
+                : "{}",
+            settingsSaver: json =>
+            {
+                try
+                {
+                    File.WriteAllText(CollectorSettingsLoader.SettingsPath, json, System.Text.Encoding.UTF8);
+                    return "";
+                }
+                catch (Exception ex) { return ex.Message; }
+            });
         _healthServer.Start();
 
         // ④ 창 생성

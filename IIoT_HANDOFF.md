@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-20 | 버전: v11.33 | 다음 세션 시작점: ① HM-Base-0~HM-21 + HMI 환경설정 탭 사용자 로컬 Windows 빌드·런타임 확인(정적 DI/생성자 감사는 완료 — 불일치 0건, 아래 "🔍 HM-Base-0~HM-21 정적 사전 점검" 절의 통합 체크리스트로 진행, ★특히 웹 ACK/ForceWrite 는 물리 PLC에 영향을 주는 기능이므로 반드시 테스트 환경에서 먼저 확인) → ② 설정(Settings) UI 편집 화면 트랙 — Collector·Manager·Studio·Monitor·HMI 5개 프로그램 전부 코드 완료(전부 빌드 확인 대기) → ③ HM-22(Manager 원격 통합 설정관리 화면) 착수**
+**작성일: 2026-07-20 | 버전: v11.35 | 다음 세션 시작점: ① HM-Base-0~HM-21 + HMI 환경설정 탭 + HM-23(신규 장비 5종) + HM-22(Manager 원격 설정) 전부 사용자 로컬 Windows 빌드·런타임 확인(정적 검증은 전부 완료 — 불일치 0건) → ② 설정(Settings) UI 트랙 전체 완료(로컬 5개 프로그램 + Manager 원격 통합) → ③ 다음 신규 기능은 사용자 지시 대기**
 
 > 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
 > SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
@@ -1812,6 +1812,193 @@ App.xaml.cs —
 
 ---
 
+## ✅ HM-23: 실사용 장비 컨트롤 5종 추가 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: 사용자 요청 — "HMI 솔루션의 컨트롤러를 실제 HMI 에서 사용하는 컨트롤러를
+만들어서 추가해줘". 기존 Motor/Valve/Tank/Conveyor 4종에 이어, 실제 현장 HMI
+화면에서 흔히 쓰이는 장비/표시기 5종을 추가로 선정(사용자 확인: 펌프·신호등·
+게이지는 필수 지정, 나머지는 "그외 필요한 컨트롤러 리스트업 후 추가" 요청에
+따라 스위치·히터를 제안해 함께 진행).
+
+확장 절차는 HM-04(최초 4종) 때 확정된 3단계 그대로 재사용(무수정):
+  1) Core/Layout/LayoutNode.cs 에 AbstractLayoutNode 파생 모델 추가
+  2) Views/DeviceControls/ 에 DeviceControlBase 상속 컨트롤 추가(벡터 아이콘 +
+     OnDeviceControlLoaded() 애니메이션)
+  3) LayoutCanvasView.xaml Resources 에 DataTemplate 1개 추가(모델↔컨트롤 매핑)
+  + LayoutNodeFactory.Create()/PaletteItems 등록(신규 장비 팔레트 노출)
+
+신규 장비 5종:
+  · PumpNode/PumpControl(펌프) — Motor 와 동일하게 EngValue 절대값 비례 회전이지만,
+    볼류트 케이싱(원형 하우징)+토출배관 스텁+4엽 임펠러로 형태를 구분. 정지/회전
+    판정(EngValue abs>0.01, Quality Good)은 MotorControl 과 동일 관례.
+  · SignalTowerNode/SignalTowerControl(신호등) — 설비 자체가 아닌 "상태 표시기".
+    EngValue 를 상태 코드로 해석: 0=전체소등, 1=녹색 점등(정상), 2=황색 점멸(경고),
+    3 이상=적색 점멸(고장). 3색 적층 램프 + 받침대 폴 벡터 도형, 점멸은 Opacity
+    AutoReverse 애니메이션(450ms).
+  · GaugeNode/GaugeControl(게이지) — TankControl 다이얼(수위 전용 단색 아치)과
+    달리 압력·온도·유량 등 범용 계측값(0~100)을 위한 것으로, 다이얼 배경에
+    녹색(0~70%)/황색(70~90%)/적색(90~100%) 위험구간 밴드 3개 호를 그려 바늘이
+    어느 구간에 있는지 한눈에 보이게 함. 바늘 회전은 TankControl 과 동일 원리
+    (400ms QuadraticEase 애니메이션).
+  · SwitchNode/SwitchControl(스위치) — 수동 스위치·리밋 스위치·도어 인터록 등
+    디지털 On/Off 신호 표시. 알약형 트랙 + 슬라이딩 원(Thumb)으로 구성,
+    EngValue>0 → On(녹색, 원이 우측) / 그 외 Off(회색, 원이 좌측). ValveControl 의
+    개폐 판정 관례(EngValue>0)를 그대로 재사용.
+  · HeaterNode/HeaterControl(히터) — EngValue(온도로 해석) 절대값에 따라 발열선
+    (지그재그 Path) 색상 3단계 전환: <1=회색(꺼짐), 1~60=황색(가열중),
+    60 이상=적색+발광 펄스(Opacity 0.5~1.0 AutoReverse 600ms, "고온 강조").
+
+파일 목록:
+  · Core/Layout/LayoutNode.cs — PumpNode/SignalTowerNode/GaugeNode/SwitchNode/
+    HeaterNode 5개 클래스 추가(기존 5종 클래스는 무수정), LayoutNodeFactory.Create()
+    switch 5줄 추가, PaletteItems 5개 항목 추가
+  · Views/DeviceControls/PumpControl.cs (신규)
+  · Views/DeviceControls/SignalTowerControl.cs (신규)
+  · Views/DeviceControls/GaugeControl.cs (신규)
+  · Views/DeviceControls/SwitchControl.cs (신규)
+  · Views/DeviceControls/HeaterControl.cs (신규)
+  · Views/LayoutCanvas/LayoutCanvasView.xaml — DataTemplate 5개 추가(기존 5개는
+    무수정)
+```
+
+## ✅ 컴파일 확인 체크리스트
+
+```
+□ LayoutNode.cs: 기존 GenericIconNode/MotorNode/ConveyorNode/TankNode/ValveNode
+  클래스·LayoutNodeLayout·AbstractLayoutNode 는 시그니처 변경 없음(신규 5개
+  클래스만 추가)
+□ 5개 신규 XxxControl.cs 모두 DeviceControlBase 상속 + OnDeviceControlLoaded()
+  재정의 패턴 준수(직접 XAML 없음 — DeviceControlBase 만 x:Class 보유)
+□ LayoutCanvasView.xaml: DataTemplate DataType 매핑이 LayoutNode.cs 의 실제
+  클래스명(PumpNode 등)과 정확히 일치하는지 확인
+□ 팔레트에 5개 신규 버튼("💧 펌프","🚦 신호등","📊 게이지","🔘 스위치","🔥 히터")
+  노출 확인(LayoutNodeFactory.PaletteItems)
+□ F5 실행 → [레이아웃 편집] 탭 → 팔레트에서 5개 신규 장비 더블클릭 →
+  캔버스에 카드 추가 → 속성 패널에서 Tag 바인딩 → 값 변화에 따른 애니메이션/
+  상태 전환(회전·점멸·바늘·슬라이드·발광) 육안 확인
+□ 미바인딩 상태(IsBound=false)에서 5종 모두 기본(정지/소등/0%/Off/꺼짐) 상태로
+  안전하게 렌더링되는지 확인(NullReferenceException 없음)
+```
+
+## 📖 사용 설명
+
+```
+화면 조작 방법:
+  1. HMI 실행 → [레이아웃 편집] 탭 → 좌측 팔레트에서 "💧 펌프"/"🚦 신호등"/
+     "📊 게이지"/"🔘 스위치"/"🔥 히터" 중 하나 더블클릭 → 캔버스에 카드 추가
+  2. 카드 선택 → 우측 속성 패널에서 Collector→Device→Tag 3단 선택으로 실시간
+     Tag 바인딩
+  3. Tag 값 변화에 따라:
+     - 펌프: 값이 클수록 임펠러가 빠르게 회전
+     - 신호등: 0/1/2/3 이상 값에 따라 소등/녹색/황색 점멸/적색 점멸
+     - 게이지: 0~100 값에 비례해 바늘이 회전(70%/90% 지점에 위험구간 밴드 표시)
+     - 스위치: 0 이하=Off(회색, 좌측) / 0 초과=On(녹색, 우측)
+     - 히터: 값이 60 이상이면 발열선이 적색으로 바뀌며 은은하게 발광 펄스
+
+다음 진행: HM-22(Manager 원격 통합 설정관리 화면) 착수.
+```
+
+---
+
+## ✅ HM-22: Manager 원격 통합 설정관리 화면 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: HM-22 는 v11.4(2026-07-16)부터 "아이디어만 기록"된 미착수 신규 기능이었음.
+사용자 확인(2026-07-20)으로 방식 확정: "기존 NamedPipe 헬스체크 채널 확장" —
+Manager 가 이미 각 프로그램(Studio/Collector/Monitor/HMI)과 열어 둔 헬스체크
+파이프(ping/pong, MG-03)를 그대로 재사용해 settings.json 원문을 원격 조회·저장.
+신규 파이프를 별도로 열지 않는다.
+
+프로토콜 확장(Contracts/Health/HealthPipeServer.cs, 기존 ping/pong 무수정):
+  · get-settings              → "settings|{Base64(UTF8 JSON)}" 또는 "error|{메시지}"
+  · save-settings|{Base64 JSON} → "ok" 또는 "error|{메시지}"
+  · 페이로드가 개행을 포함할 수 있는 JSON 원문이라 Base64 로 감싸 기존 프로토콜의
+    "줄 단위(ReadLine/WriteLine)" 특성을 유지. settingsProvider/settingsSaver 콜백이
+    둘 다 null 이면 해당 프로그램은 "not-supported" 로 응답(하위 호환 — 구버전
+    빌드와 통신해도 깨지지 않음).
+  · 저장 전 서버 측에서 JsonDocument.Parse() 로 최소 문법 검증만 수행(필드별
+    유효성 검사는 각 프로그램 로컬 [환경설정] 탭의 책임 그대로 유지).
+
+서버 측 콜백 연결(Studio/Collector/Monitor/HMI 4개 프로그램 App.xaml.cs,
+기존 HealthPipeServer 생성 호출에 인자만 추가):
+  · Studio  → StudioSettingsLoader.SettingsPath (studio-settings.json)
+  · Collector → CollectorSettingsLoader.SettingsPath (settings.json)
+  · Monitor → MonitorSettingsLoader.SettingsPath (monitor 설정 파일)
+  · HMI     → HmiSettingsLoader.SettingsPath (hmi.json)
+  · 구현은 File.ReadAllText/WriteAllText 로 원문을 그대로 읽고 쓰는 것뿐 —
+    각 프로그램의 로더 인메모리 Settings 객체는 건드리지 않는다(다른 프로그램의
+    로컬 저장과 동일하게 "재시작해야 반영" 원칙 유지, cross-thread 부작용 없음 —
+    파이프 백그라운드 스레드에서 안전하게 호출 가능).
+
+클라이언트 측(Manager Core/HealthCheckService.cs, 기존 PingAsync 무수정):
+  · GetSettingsAsync(processName) → RemoteSettingsResult(Ok, Json, Error)
+  · SaveSettingsAsync(processName, json) → RemoteSettingsResult
+  · PingAsync 와 동일한 "연결→요청 1줄→응답 1줄→종료" 패턴, 1초 타임아웃 재사용.
+
+Manager 신규 [🌐 원격 설정] 탭(인덱스 6):
+  · ViewModels/RemoteSettingsViewModel.cs(신규) — Targets(Studio/Collector/
+    Monitor/HMI 4개 고정 목록, Manager 자신은 로컬 [환경설정] 탭이 있으므로 제외),
+    SelectedTarget/JsonText/StatusMessage/HasError/IsBusy, LoadCommand(조회)/
+    SaveCommand(저장)는 [RelayCommand(CanExecute=...)] 로 대상 미선택·진행중
+    자동 비활성화(S-17A 확립 패턴). 저장 전 클라이언트 측에서도 JSON 문법 1차
+    검증(서버 재검증과 이중 방어).
+  · Views/RemoteSettings/RemoteSettingsView.xaml(.cs)(신규) — 대상 콤보박스 +
+    Consolas 폰트 다중행 JSON 편집기(PropInput+AcceptsReturn 관례) + 조회/저장
+    버튼 + 상태 메시지. Manager 기존 SettingsView 와 동일하게 좌측 네비 없음.
+  · ManagerMainViewModel.cs — IsRemoteSettingsTab(인덱스 6) 추가(파일 I/O 가
+    없어 InitializeAsync() 에 별도 초기화 호출 불필요).
+  · MainWindow.xaml/.xaml.cs — "🌐 원격 설정" 탭 버튼(TabBtn6) + RemoteSettingsHost
+    ContentControl + 생성자 9번째 인자로 RemoteSettingsView 추가.
+  · App.xaml.cs — RemoteSettingsViewModel/View DI 등록(HealthCheckService 는
+    이미 MG-03 에서 등록됨), MainWindow 팩토리 인자 추가.
+```
+
+## ✅ 컴파일 확인 체크리스트
+
+```
+□ HealthPipeServer.cs: 기존 4개 프로그램의 HealthPipeServer 생성 호출이 새
+  선택 인자(settingsProvider/settingsSaver)를 추가했을 뿐 기존 statusProvider/
+  onLog 인자 순서·값은 무수정인지 확인
+□ Studio/Collector/Monitor/HMI App.xaml.cs: using System.IO; 가 이미 있어
+  File.Exists/ReadAllText/WriteAllText 사용에 추가 using 불필요한지 확인
+  (Encoding 은 System.Text.Encoding.UTF8 로 완전정규화해 별도 using 없음)
+□ HealthCheckService.cs: PingAsync 시그니처·동작 무수정(GetSettingsAsync/
+  SaveSettingsAsync 만 추가)
+□ RemoteSettingsViewModel.cs: [RelayCommand(CanExecute = nameof(_CanLoadOrSave))]
+  두 커맨드 모두 SelectedTarget/IsBusy 변경 시 [NotifyCanExecuteChangedFor] 로
+  버튼 활성상태 자동 갱신되는지 확인(S-17A 동일 패턴)
+□ MainWindow.xaml.cs: 생성자 9번째 매개변수(RemoteSettingsView) ↔ App.xaml.cs
+  MainWindow 팩토리 9번째 인자 순서·타입 일치 확인
+□ ManagerMainViewModel.cs: ActiveTabIndex 의
+  [NotifyPropertyChangedFor(nameof(IsRemoteSettingsTab))] 추가 확인
+□ F5 실행(Manager + 대상 프로그램 최소 1개 함께 실행) → [🌐 원격 설정] 탭 →
+  대상 선택 → [↻ 조회] → JSON 표시 확인 → 값 수정 → [💾 원격 저장] → "ok"
+  응답 확인 → 대상 프로그램 재시작 후 값 반영 확인
+□ 대상 프로그램이 실행 중이 아닐 때 [↻ 조회] → "연결 실패" 오류 메시지 확인
+  (예외로 앱이 죽지 않아야 함)
+□ 저장 시 JSON 문법을 일부러 깨뜨려 봄 → 파이프 전송 전 클라이언트 측에서
+  "JSON 문법 오류" 로 즉시 차단되는지 확인(서버까지 가지 않음)
+```
+
+## 📖 사용 설명
+
+```
+화면 조작 방법:
+  1. Manager 와 원격 조회할 프로그램(예: Collector)을 함께 실행
+  2. Manager [🌐 원격 설정] 탭 클릭 → 콤보박스에서 "Collector" 선택
+  3. [↻ 조회] → Collector 의 settings.json 원문이 편집기에 표시됨
+  4. 편집기에서 값을 직접 수정(들여쓰기 형태로 재포맷되어 표시됨)
+  5. [💾 원격 저장] → 저장 완료 메시지 확인 — 이 시점에는 파일만 갱신되며,
+     Collector 를 재시작해야 실제로 반영됨
+  6. 대상 프로그램이 꺼져 있으면 조회/저장 모두 "연결 실패" 메시지로 안내됨
+
+이로써 HM-22 착수 완료 — Manager 에서 Studio·Collector·Monitor·HMI 4개
+프로그램의 환경설정을 창을 전환하지 않고 한 화면에서 원격으로 조회·수정 가능.
+```
+
+---
+
 ## 🔜 다음 세션 진행 순서
 
 ### ① Manager + lssLib.SignalR 통합 빌드 확인 — ✅ 완료 (2026-07-16, 사용자 직접 빌드·런타임 검토)
@@ -2293,6 +2480,26 @@ wwwroot/index.html.
 | | | **시그니처 변경. MainWindow/HmiMainViewModel 에 환경설정 탭(인덱스 4) 추가.** |
 | | | **이로써 Collector·Manager·Studio·Monitor·HMI 5개 프로그램 전부 로컬** |
 | | | **환경설정 탭 코드 완료 — 다음: HM-22(Manager 원격 통합 설정관리 화면)** |
+| **v11.34** | **HM-23 코드 완료 (2026-07-20, 빌드 확인 대기) — 사용자 요청("실제 HMI** |
+| | | **에서 쓰는 컨트롤러 추가")으로 장비 노드 5종 신규: Pump(펌프)/SignalTower** |
+| | | **(신호등)/Gauge(게이지)/Switch(스위치)/Heater(히터). HM-04 확립 3단계** |
+| | | **(모델 추가 → DeviceControlBase 상속 컨트롤 추가 → DataTemplate 매핑)** |
+| | | **무수정 재사용. SignalTower: EngValue 상태코드(0~3+)로 소등/녹색/황색점멸/** |
+| | | **적색점멸. Gauge: TankControl 다이얼에 녹/황/적 위험구간 밴드 추가한 범용** |
+| | | **계기판. Switch: 알약형 트랙+슬라이딩 원 On/Off. Heater: 온도 3단계** |
+| | | **색상(회색/황색/적색+발광펄스). 기존 Motor/Valve/Tank/Conveyor 4종 및** |
+| | | **LayoutNode.cs/LayoutCanvasView.xaml 기존 코드는 무수정(추가만)** |
+| **v11.35** | **HM-22 코드 완료 (2026-07-20, 빌드 확인 대기) — Manager 원격 통합** |
+| | | **설정관리 화면. 사용자 확인: 기존 NamedPipe 헬스체크 채널 확장 방식(신규** |
+| | | **파이프 없음). HealthPipeServer(Contracts) 에 get-settings/save-settings** |
+| | | **커맨드 추가(Base64 페이로드, 기존 ping/pong 무수정) + Studio/Collector/** |
+| | | **Monitor/HMI App.xaml.cs 에 File.ReadAllText/WriteAllText 콜백 연결.** |
+| | | **Manager HealthCheckService 에 GetSettingsAsync/SaveSettingsAsync 클라** |
+| | | **이언트 메서드 추가. 신규 [🌐 원격 설정] 탭(인덱스 6): RemoteSettingsViewModel** |
+| | | **(대상 4개 고정 목록 + CanExecute 자동 비활성화) + RemoteSettingsView(콤보+** |
+| | | **Consolas JSON 편집기). 저장은 파일만 갱신 — 대상 재시작 필요 원칙 유지.** |
+| | | **이로써 설정(Settings) UI 트랙 전체 완료 — 로컬 5개 프로그램 환경설정 탭 +** |
+| | | **Manager 원격 통합 조회·저장까지 코드 완료** |
 | **v11.5** | **HM-Base-0~2 + HM-01~02 코드 완료 (2026-07-16, 빌드 확인 대기)** |
 | | | **HMI\IIoT.HMI.sln 신규 생성 (Contracts·UI.Themes·lssLib.Log 참조)** |
 | | | **App/MainWindow/HmiMainViewModel: 테마+탭바 5개(현황판·레이아웃 편집·** |

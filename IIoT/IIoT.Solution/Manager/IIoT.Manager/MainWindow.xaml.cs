@@ -25,6 +25,7 @@ using IIoT.Manager.Views.Schedule;
 using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
 using IIoT.Manager.Views.Settings;   // ★ C-SET-01 후속
+using IIoT.Manager.Views.RemoteSettings;   // ★ HM-22
 using System.Windows;
 
 namespace IIoT.Manager;
@@ -44,7 +45,8 @@ public partial class MainWindow : Window
                       DeployView           deployView,
                       ScheduleView         scheduleView,
                       TrayService          trayService,
-                      SettingsView         settingsView)
+                      SettingsView         settingsView,
+                      RemoteSettingsView   remoteSettingsView)   // ★ HM-22
     {
         InitializeComponent();
 
@@ -70,6 +72,9 @@ public partial class MainWindow : Window
 
         // ★ C-SET-01 후속: 환경설정 주입
         SettingsHost.Content = settingsView;
+
+        // ★ HM-22: 원격 설정 주입
+        RemoteSettingsHost.Content = remoteSettingsView;
 
         // ★ MG-02: manager.json 로드 (창 표시 후 — 파일 I/O 블로킹 방지)
         Loaded += _OnLoaded;

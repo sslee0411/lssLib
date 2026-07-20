@@ -33,6 +33,9 @@
             공유하는 두 번째 LayoutCanvasView 를 독립 창(SecondaryDisplayWindow)
             으로 띄운다. 다른 모니터로 옮겨 놓으면 두 창에 동일한 레이아웃이
             실시간으로 함께 반영된다(다중 모니터 지원).
+     HM-23: 실사용 요청 장비 노드 5종(Pump/SignalTower/Gauge/Switch/Heater)
+            DataTemplate 추가 — Core/Layout/LayoutNode.cs 모델 + Views/
+            DeviceControls/ 컨트롤은 이미 준비됨, 여기서는 매핑만 추가.
      생성: 2026-07-16
      규칙:
        ① UserControl.Resources 는 <UserControl> 직계 자식만 허용
@@ -67,6 +70,23 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type layout:ValveNode}">
             <dc:ValveControl/>
+        </DataTemplate>
+
+        <!-- ── HM-23: 실사용 요청 장비 노드 5종 매핑 ── -->
+        <DataTemplate DataType="{x:Type layout:PumpNode}">
+            <dc:PumpControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:SignalTowerNode}">
+            <dc:SignalTowerControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:GaugeNode}">
+            <dc:GaugeControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:SwitchNode}">
+            <dc:SwitchControl/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type layout:HeaterNode}">
+            <dc:HeaterControl/>
         </DataTemplate>
 
         <!-- ── 팔레트 버튼 템플릿 ── -->

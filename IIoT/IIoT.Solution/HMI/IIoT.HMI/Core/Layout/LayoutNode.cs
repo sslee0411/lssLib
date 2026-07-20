@@ -33,6 +33,11 @@
 //         LayoutCanvasViewModel 이 갱신한다. 모든 장비 타입 공통이므로 베이스에
 //         둔다. Views/DeviceControls/DeviceControlBase 의 알람 배지+팝업이 이
 //         값을 바인딩해 표시하고, ACK 버튼은 AlarmKey 를 커맨드 파라미터로 사용한다.
+//  HM-23: 실제 HMI 현장에서 자주 쓰이는 장비 노드 5종 추가 — PumpNode(펌프)/
+//         SignalTowerNode(적층 신호등)/GaugeNode(계기 게이지)/SwitchNode(스위치·
+//         디지털 상태 표시)/HeaterNode(히터). 확장 절차는 HM-04 때 확정된 3단계
+//         (모델 추가 → Views/DeviceControls 컨트롤 추가 → LayoutCanvasView.xaml
+//         DataTemplate 추가)를 그대로 반복(사용자 요청, 2026-07-20).
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -181,6 +186,66 @@ public sealed partial class ValveNode : AbstractLayoutNode
     public override string CategoryColor => "#9b59d0";
 }
 
+// §3-2 ─ HM-23: 장비 노드 5종 (실사용 요청) ────────────────
+
+/// <summary>펌프 노드 — Views/DeviceControls/PumpControl 과 1:1 대응.
+/// Motor 와 마찬가지로 EngValue 절대값에 비례해 회전하지만, 하우징+토출배관
+/// 형태로 시각적으로 구분한다(펌프는 회전기기지만 유체를 미는 설비라는 점을
+/// 형태로 표현).</summary>
+public sealed partial class PumpNode : AbstractLayoutNode
+{
+    public override string NodeType      => "Pump";
+    public override string DisplayLabel  => "펌프";
+    public override string IconGlyph     => "💧";
+    public override string CategoryColor => "#1f8ad1";
+}
+
+/// <summary>적층 신호등 노드 — Views/DeviceControls/SignalTowerControl 과 1:1 대응.
+/// 설비 자체가 아니라 "설비 상태를 알리는 표시기"로, 실제 HMI에서 가장 흔히 쓰이는
+/// 요소 중 하나. EngValue 를 상태 코드로 해석: 0=전체소등, 1=녹색(정상운전),
+/// 2=황색(경고, 점멸), 3 이상=적색(고장, 점멸).</summary>
+public sealed partial class SignalTowerNode : AbstractLayoutNode
+{
+    public override string NodeType      => "SignalTower";
+    public override string DisplayLabel  => "신호등";
+    public override string IconGlyph     => "🚦";
+    public override string CategoryColor => "#6b7280";
+}
+
+/// <summary>계기 게이지 노드 — Views/DeviceControls/GaugeControl 과 1:1 대응.
+/// TankControl 의 다이얼(수위 전용, 단색 아치)과 달리 압력·온도·유량 등 범용
+/// 계측값을 0~100 스케일로 표시하며, 다이얼에 녹색/황색/적색 위험구간 밴드를
+/// 그려 값이 위험구간에 들어갔는지 한눈에 보이게 한다.</summary>
+public sealed partial class GaugeNode : AbstractLayoutNode
+{
+    public override string NodeType      => "Gauge";
+    public override string DisplayLabel  => "게이지";
+    public override string IconGlyph     => "📊";
+    public override string CategoryColor => "#3b82c4";
+}
+
+/// <summary>스위치 노드 — Views/DeviceControls/SwitchControl 과 1:1 대응.
+/// 디지털 I/O 상태(수동 스위치, 리밋 스위치, 도어 인터록 등)를 On/Off 토글 형태로
+/// 표시. EngValue&gt;0 이면 On(강조색 슬라이더 우측), 그 외에는 Off(회색 좌측).</summary>
+public sealed partial class SwitchNode : AbstractLayoutNode
+{
+    public override string NodeType      => "Switch";
+    public override string DisplayLabel  => "스위치";
+    public override string IconGlyph     => "🔘";
+    public override string CategoryColor => "#5a6b7a";
+}
+
+/// <summary>히터 노드 — Views/DeviceControls/HeaterControl 과 1:1 대응.
+/// EngValue(온도로 해석)가 커질수록 발열선 색상이 청색→주황→적색으로 전환되고,
+/// 값이 임계치 이상이면 은은한 발광 펄스 애니메이션으로 "가열 중"임을 표현한다.</summary>
+public sealed partial class HeaterNode : AbstractLayoutNode
+{
+    public override string NodeType      => "Heater";
+    public override string DisplayLabel  => "히터";
+    public override string IconGlyph     => "🔥";
+    public override string CategoryColor => "#c0392b";
+}
+
 // §4 ─ 팩토리 ─────────────────────────────────────────────
 
 public static class LayoutNodeFactory
@@ -191,22 +256,32 @@ public static class LayoutNodeFactory
     /// </summary>
     public static AbstractLayoutNode? Create(string nodeType) => nodeType switch
     {
-        "GenericIcon" => new GenericIconNode(),
-        "Motor"       => new MotorNode(),
-        "Conveyor"    => new ConveyorNode(),
-        "Tank"        => new TankNode(),
-        "Valve"       => new ValveNode(),
-        _             => null
+        "GenericIcon"  => new GenericIconNode(),
+        "Motor"        => new MotorNode(),
+        "Conveyor"     => new ConveyorNode(),
+        "Tank"         => new TankNode(),
+        "Valve"        => new ValveNode(),
+        "Pump"         => new PumpNode(),
+        "SignalTower"  => new SignalTowerNode(),
+        "Gauge"        => new GaugeNode(),
+        "Switch"       => new SwitchNode(),
+        "Heater"       => new HeaterNode(),
+        _              => null
     };
 
-    /// <summary>팔레트 항목 — HM-04: 모터/컨베이어/탱크/밸브 추가</summary>
+    /// <summary>팔레트 항목 — HM-04: 모터/컨베이어/탱크/밸브, HM-23: 펌프/신호등/게이지/스위치/히터 추가</summary>
     public static IReadOnlyList<LayoutPaletteItem> PaletteItems =>
     [
-        new("GenericIcon", "아이콘",    "🔷", "#4a7fd4"),
-        new("Motor",       "모터",      "⚙", "#e08a3c"),
-        new("Conveyor",    "컨베이어",  "➡", "#2ea8a8"),
-        new("Tank",        "탱크",      "🛢", "#4caf6d"),
-        new("Valve",       "밸브",      "🚰", "#9b59d0"),
+        new("GenericIcon",  "아이콘",    "🔷", "#4a7fd4"),
+        new("Motor",        "모터",      "⚙", "#e08a3c"),
+        new("Conveyor",     "컨베이어",  "➡", "#2ea8a8"),
+        new("Tank",         "탱크",      "🛢", "#4caf6d"),
+        new("Valve",        "밸브",      "🚰", "#9b59d0"),
+        new("Pump",         "펌프",      "💧", "#1f8ad1"),
+        new("SignalTower",  "신호등",    "🚦", "#6b7280"),
+        new("Gauge",        "게이지",    "📊", "#3b82c4"),
+        new("Switch",       "스위치",    "🔘", "#5a6b7a"),
+        new("Heater",       "히터",      "🔥", "#c0392b"),
     ];
 }
 

@@ -110,6 +110,16 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- ★ HM-22: 탭 6 (원격 설정) 선택 시 강조 -->
+        <Style x:Key="TabBtn6" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRemoteSettingsTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
@@ -176,6 +186,11 @@
                         Style="{StaticResource TabBtn5}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="5"/>
+                <!-- ★ HM-22 -->
+                <Button Content="🌐 원격 설정"
+                        Style="{StaticResource TabBtn6}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="6"/>
             </StackPanel>
         </Border>
 
@@ -210,6 +225,9 @@
             <!-- ★ C-SET-01 후속 -->
             <ContentControl x:Name="SettingsHost"
                             Visibility="{Binding IsSettingsTab, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- ★ HM-22 -->
+            <ContentControl x:Name="RemoteSettingsHost"
+                            Visibility="{Binding IsRemoteSettingsTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

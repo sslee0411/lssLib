@@ -45,6 +45,7 @@ using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
 using IIoT.Manager.Views.Schedule;
 using IIoT.Manager.Views.Settings;   // ★ C-SET-01 후속
+using IIoT.Manager.Views.RemoteSettings;   // ★ HM-22
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -206,6 +207,12 @@ public partial class App : Application
         services.AddSingleton<SettingsView>(sp =>
             new SettingsView(sp.GetRequiredService<SettingsViewModel>()));
 
+        // ★ HM-22 신규: 원격 설정 (HealthCheckService 는 이미 위에서 등록됨,
+        //   ManagerMainViewModel 의존성 아님 — MainWindow 가 직접 주입)
+        services.AddSingleton<RemoteSettingsViewModel>();
+        services.AddSingleton<RemoteSettingsView>(sp =>
+            new RemoteSettingsView(sp.GetRequiredService<RemoteSettingsViewModel>()));
+
         // ★ MG-01 신규: MainWindow DataContext (카드 목록 + 2초 갱신 타이머)
         services.AddSingleton<ManagerMainViewModel>();
 
@@ -227,7 +234,8 @@ public partial class App : Application
                 sp.GetRequiredService<DeployView>(),
                 sp.GetRequiredService<ScheduleView>(),
                 sp.GetRequiredService<TrayService>(),
-                sp.GetRequiredService<SettingsView>()));
+                sp.GetRequiredService<SettingsView>(),
+                sp.GetRequiredService<RemoteSettingsView>()));   // ★ HM-22
 
         return services.BuildServiceProvider();
     }

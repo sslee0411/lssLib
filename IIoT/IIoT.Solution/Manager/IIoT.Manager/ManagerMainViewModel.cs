@@ -20,6 +20,10 @@
 //            + AutoStart 프로그램 순차 자동 기동 (배열 순서, 프로그램별 지연)
 //  MG-EX-04: EventHistoryDbService.InitializeAsync() 호출 추가
 //            (설정 로드 직후 — 이후 발생 이벤트부터 DB 기록)
+//  HM-22: 원격 설정 탭(인덱스 6) 추가 — Studio/Collector/Monitor/HMI 의
+//         settings.json 을 NamedPipe 로 원격 조회·저장(RemoteSettingsViewModel).
+//         파일 I/O 를 하지 않으므로(사용자가 버튼을 눌렀을 때만 파이프 통신)
+//         InitializeAsync() 에서 별도 초기화 호출은 필요 없다.
 //  생성: 2026-07-09 / 수정: 2026-07-09 (MG-EX-04)
 // ══════════════════════════════════════════════════════════
 
@@ -82,6 +86,7 @@ public partial class ManagerMainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsDeployTab))]
     [NotifyPropertyChangedFor(nameof(IsScheduleTab))]
     [NotifyPropertyChangedFor(nameof(IsSettingsTab))]   // ★ C-SET-01 후속
+    [NotifyPropertyChangedFor(nameof(IsRemoteSettingsTab))]   // ★ HM-22
     private int _activeTabIndex;
 
     public bool IsProcessTab   => ActiveTabIndex == 0;
@@ -92,6 +97,9 @@ public partial class ManagerMainViewModel : ObservableObject
 
     /// <summary>환경설정 탭 (5) — C-SET-01 후속</summary>
     public bool IsSettingsTab  => ActiveTabIndex == 5;
+
+    /// <summary>원격 설정 탭 (6) — HM-22</summary>
+    public bool IsRemoteSettingsTab => ActiveTabIndex == 6;
 
     /// <summary>★ MG-EX-03: Windows 시작 시 Manager 자동 실행 (레지스트리 HKCU Run)</summary>
     [ObservableProperty]

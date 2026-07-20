@@ -105,10 +105,23 @@ public partial class App : Application
         LogManager.Instance.Info("App", "IIoT.Monitor 시작");
 
         // ★ MG-03: 헬스체크 응답 서버 시작 (Manager 가 핑을 보냄)
+        // ★ HM-22: 원격 설정 조회/저장 — settings.json 원문을 그대로 읽고 쓴다
         _healthServer = new HealthPipeServer(
             "IIoT.Monitor",
             statusProvider: () => "모니터링 정상",
-            onLog: m => LogManager.Instance.Debug("Health", m));
+            onLog: m => LogManager.Instance.Debug("Health", m),
+            settingsProvider: () => File.Exists(MonitorSettingsLoader.SettingsPath)
+                ? File.ReadAllText(MonitorSettingsLoader.SettingsPath, System.Text.Encoding.UTF8)
+                : "{}",
+            settingsSaver: json =>
+            {
+                try
+                {
+                    File.WriteAllText(MonitorSettingsLoader.SettingsPath, json, System.Text.Encoding.UTF8);
+                    return "";
+                }
+                catch (Exception ex) { return ex.Message; }
+            });
         _healthServer.Start();
 
         // ③ DI 빌드
