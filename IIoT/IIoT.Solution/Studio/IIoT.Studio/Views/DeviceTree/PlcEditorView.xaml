@@ -6,7 +6,8 @@
      S-21A B-1: PlcVendor ComboBox
      S-28: 통신 라이브러리 참조 ComboBox
      Studio-P03: 드라이버 선택 ComboBox + 동적 파라미터 폼 영역 추가
-     생성: 2026-06-15 / 수정: 2026-06-27
+     S-프로토콜01: 프로토콜 라이브러리 참조 ComboBox 추가
+     생성: 2026-06-15 / 수정: 2026-07-20
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.DeviceTree.PlcEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -229,6 +230,34 @@
                             Style="{DynamicResource GhostBtn}"
                             Padding="8,3" FontSize="11"
                             Click="OnCommEntryDetach" />
+                </StackPanel>
+
+                <!-- 프로토콜 라이브러리 참조 (S-프로토콜01) -->
+                <TextBlock Text="프로토콜 라이브러리 참조"
+                           FontSize="11" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text2Brush}"
+                           Margin="0,0,0,6" />
+                <ComboBox x:Name="ProtocolEntryCombo"
+                          Style="{DynamicResource PropCombo}"
+                          SelectedValuePath="Id"
+                          SelectedValue="{Binding ProtocolEntryId}"
+                          Margin="0,0,0,4">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock FontSize="12"
+                                       Foreground="{DynamicResource TextBrush}">
+                                <Run Text="{Binding Name}" />
+                                <Run Text=" — " Foreground="{DynamicResource Text2Brush}" />
+                                <Run Text="{Binding PreviewSummary}" Foreground="{DynamicResource Text2Brush}" />
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,20">
+                    <Button Content="참조 해제"
+                            Style="{DynamicResource GhostBtn}"
+                            Padding="8,3" FontSize="11"
+                            Click="OnProtocolEntryDetach" />
                 </StackPanel>
 
                 <!-- 설명 -->

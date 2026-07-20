@@ -4,7 +4,11 @@
 //  S-15: 신규
 //  S-15 fix: Id 재생성 방식 (AbstractTreeNode.Id는 { get; } — 외부 설정 불가)
 //  Studio-P02: _BuildNode PLC 케이스에 CommTypeMigrator + DriverParams 적용
-//  생성: 2026-06-19 / 수정: 2026-06-27
+//  S-Virtual01: _BuildNode Tag 케이스에 IsVirtual/Expression 복원 추가
+//  S-Virtual02: _BuildNode Tag 케이스에 UseRoslynScript/ScriptCode 복원 추가
+//  S-프로토콜01: ProtocolLibraryViewModel 주입 + _RestoreProtocolLibrary 추가,
+//               _BuildPlcNode/_BuildDeviceNode 에 ProtocolEntryId 복원 추가
+//  생성: 2026-06-19 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts.Migration;
@@ -22,10 +26,12 @@ public sealed class DeviceConfigLoader
 {
     // §1 ─ 필드 ────────────────────────────────────────────
 
-    private readonly DeviceTreeViewModel   _treeVm;
-    private readonly ScaleLibraryViewModel _scaleVm;
-    private readonly AlarmLibraryViewModel _alarmVm;
-    private readonly CommLibraryViewModel  _commVm;
+    private readonly DeviceTreeViewModel     _treeVm;
+    private readonly ScaleLibraryViewModel   _scaleVm;
+    private readonly AlarmLibraryViewModel   _alarmVm;
+    private readonly CommLibraryViewModel    _commVm;
+    // ★ S-프로토콜01
+    private readonly ProtocolLibraryViewModel _protocolVm;
 
     private static readonly JsonSerializerOptions _opts = new()
     {
@@ -37,15 +43,17 @@ public sealed class DeviceConfigLoader
     // §2 ─ 생성자 ──────────────────────────────────────────
 
     public DeviceConfigLoader(
-        DeviceTreeViewModel   treeVm,
-        ScaleLibraryViewModel scaleVm,
-        AlarmLibraryViewModel alarmVm,
-        CommLibraryViewModel  commVm)
+        DeviceTreeViewModel      treeVm,
+        ScaleLibraryViewModel    scaleVm,
+        AlarmLibraryViewModel    alarmVm,
+        CommLibraryViewModel     commVm,
+        ProtocolLibraryViewModel protocolVm)   // ★ S-프로토콜01
     {
-        _treeVm  = treeVm;
-        _scaleVm = scaleVm;
-        _alarmVm = alarmVm;
-        _commVm  = commVm;
+        _treeVm     = treeVm;
+        _scaleVm    = scaleVm;
+        _alarmVm    = alarmVm;
+        _commVm     = commVm;
+        _protocolVm = protocolVm;
     }
 
     // §3 ─ 로드 진입점 ─────────────────────────────────────
@@ -62,6 +70,7 @@ public sealed class DeviceConfigLoader
         _RestoreScaleLibrary(root.ScaleLibrary);
         _RestoreAlarmLibrary(root.AlarmLibrary);
         _RestoreCommLibrary(root.CommLibrary);
+        _RestoreProtocolLibrary(root.ProtocolLibrary);   // ★ S-프로토콜01
         _RestoreTree(root.Tree);
     }
 
@@ -149,6 +158,64 @@ public sealed class DeviceConfigLoader
         }
     }
 
+    // §6-1 ─ ★ S-프로토콜01: 프로토콜 라이브러리 복원 ────────
+
+    private void _RestoreProtocolLibrary(List<ProtocolEntryDto> dtos)
+    {
+        _protocolVm.Entries.Clear();
+        foreach (var dto in dtos)
+        {
+            var entry = new ProtocolEntry
+            {
+                Name           = dto.Name,
+                Description    = dto.Description,
+                UseFraming     = dto.UseFraming,
+                StxHex         = dto.StxHex,
+                HasLengthField = dto.HasLengthField,
+                CrcType        = dto.CrcType
+            };
+
+            foreach (var b in dto.ReadBlocks)
+                entry.ReadBlocks.Add(_BuildProtocolBlock(b));
+            foreach (var b in dto.WriteBlocks)
+                entry.WriteBlocks.Add(_BuildProtocolBlock(b));
+
+            _protocolVm.Entries.Add(entry);
+        }
+    }
+
+    private static ProtocolBlock _BuildProtocolBlock(ProtocolBlockDto dto)
+    {
+        var block = new ProtocolBlock
+        {
+            Name         = dto.Name,
+            Description  = dto.Description,
+            StartAddress = dto.StartAddress,
+            Length       = dto.Length,
+            CmdCode      = dto.CmdCode
+        };
+
+        foreach (var f in dto.Fields)
+        {
+            var field = new ProtocolField
+            {
+                Name       = f.Name,
+                ByteOffset = f.ByteOffset,
+                BufType    = f.BufType,
+                Unit       = f.Unit,
+                ScaleMin   = f.ScaleMin,
+                ScaleMax   = f.ScaleMax
+            };
+            // ★ S-프로토콜01 Step B 후속: ScaleEntryId 복원
+            if (Guid.TryParse(f.ScaleEntryId, out var scaleId))
+                field.ScaleEntryId = scaleId;
+
+            block.Fields.Add(field);
+        }
+
+        return block;
+    }
+
     // §7 ─ 장비 트리 복원 ─────────────────────────────────
 
     private void _RestoreTree(List<DeviceNodeDto> dtos)
@@ -179,7 +246,13 @@ public sealed class DeviceConfigLoader
                 DataType    = dto.DataType ?? "UInt16",
                 Unit        = dto.Unit     ?? string.Empty,
                 Memo        = dto.Memo     ?? string.Empty,
-                IsEnabled   = dto.IsEnabled ?? true
+                IsEnabled   = dto.IsEnabled ?? true,
+                // ★ S-Virtual01: 가상(계산) Tag 복원
+                IsVirtual   = dto.IsVirtual ?? false,
+                Expression  = dto.Expression ?? string.Empty,
+                // ★ S-Virtual02: Function 노드 — Roslyn C# 고급 스크립트 모드 복원
+                UseRoslynScript = dto.UseRoslynScript ?? false,
+                ScriptCode      = dto.ScriptCode ?? string.Empty
             },
             _ => null
         };
@@ -226,6 +299,10 @@ public sealed class DeviceConfigLoader
         if (Guid.TryParse(dto.CommEntryId, out var commId))
             plc.CommEntryId = commId;
 
+        // ★ S-프로토콜01: ProtocolEntryId 복원
+        if (Guid.TryParse(dto.ProtocolEntryId, out var protoId))
+            plc.ProtocolEntryId = protoId;
+
         return plc;
     }
 
@@ -252,6 +329,10 @@ public sealed class DeviceConfigLoader
 
         if (Guid.TryParse(dto.CommEntryId, out var commId))
             dev.CommEntryId = commId;
+
+        // ★ S-프로토콜01: ProtocolEntryId 복원
+        if (Guid.TryParse(dto.ProtocolEntryId, out var protoId))
+            dev.ProtocolEntryId = protoId;
 
         return dev;
     }

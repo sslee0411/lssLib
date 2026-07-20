@@ -3,7 +3,10 @@
 //  역할: device.json PLC/Device 노드 → 수집 런타임용 평탄화 모델
 //        DriverId/DriverParams → IProtocolDriver.ConnectAsync(DriverConfig) 변환 원천
 //  C-01: 신규
-//  생성: 2026-06-29
+//  S-프로토콜01 Step B: ProtocolBlocks(읽기 블록 실행 스펙 목록) 추가 —
+//               CollectorConfigLoader 가 device.json ProtocolLibrary 를 참조해
+//               채우고, FlowEngine 이 폴링 시 IBlockProtocolDriver 로 실행
+//  생성: 2026-06-29 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts;
@@ -53,6 +56,16 @@ public sealed class PlcRuntimeConfig
 
     /// <summary>이 PLC 하위 수집 대상 Tag 목록</summary>
     public List<TagRuntimeConfig> Tags { get; init; } = new();
+
+    /// <summary>
+    /// ★ S-프로토콜01 Step B: 이 PLC 에 연결된 프로토콜 라이브러리의 읽기 블록
+    /// 실행 스펙 목록 (ProtocolEntryId 미설정 시 빈 목록).
+    /// FlowEngine 이 매 폴링마다 IBlockProtocolDriver 로 이 블록들을 읽어
+    /// 필드 값을 발행한다. 표준 블록(CmdCode 없음)/커스텀 프레임 블록(CmdCode
+    /// 있음) 모두 포함 — 실제 실행 가능 여부는 연결된 드라이버가
+    /// IBlockProtocolDriver 를 구현하는지에 따라 갈린다.
+    /// </summary>
+    public List<ProtocolBlockSpec> ProtocolBlocks { get; init; } = new();
 
     /// <summary>
     /// DriverConfig 로 변환합니다.

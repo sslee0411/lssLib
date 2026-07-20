@@ -5,7 +5,11 @@
 //  S-12: 연결 드래그 상태 + RefreshConnections
 //  S-12B: DeviceTreeViewModel 주입 + DevicePaletteItems + AddDeviceNodeCommand
 //  S-13B: ApplyTemplate() 추가 (템플릿 → Tag + BufferParser 자동생성)
-//  생성: 2026-06-17
+//  S-20 (N포트 노드): IsSplitterSelected/IsCompositeCalcSelected 계산 프로퍼티 +
+//               AddSelectedNodeInputPort/OutputPort·RemoveSelectedNodeInputPort/
+//               OutputPort 커맨드(포트 삭제 시 연결된 Connections 정리 포함) +
+//               NodePortsChanged 이벤트(코드비하인드가 PortsLayer 재구성 트리거용)
+//  생성: 2026-06-17 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -57,9 +61,19 @@ public partial class CanvasViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelection))]
+    [NotifyPropertyChangedFor(nameof(IsSplitterSelected))]
+    [NotifyPropertyChangedFor(nameof(IsCompositeCalcSelected))]
     private AbstractCanvasNode? _selectedNode;
 
     public bool HasSelection => SelectedNode is not null;
+
+    // ★ S-20: N포트 노드 속성 패널 표시 여부
+    public bool IsSplitterSelected      => SelectedNode is SplitterNode;
+    public bool IsCompositeCalcSelected => SelectedNode is CompositeCalcNode;
+
+    /// <summary>포트 개수 변경(추가/삭제) 시 발생 — CanvasView 코드비하인드가
+    /// PortsLayer(수동 Ellipse 배치)를 재구성하도록 알림.</summary>
+    public event Action? NodePortsChanged;
 
     // §6 ─ 줌·패닝 ────────────────────────────────────────────
 
@@ -131,6 +145,50 @@ public partial class CanvasViewModel : ObservableObject
         foreach (var c in toRemove) Connections.Remove(c);
         Nodes.Remove(SelectedNode);
         SelectedNode = null;
+    }
+
+    // §9-1 ─ ★ S-20: N포트 노드 포트 추가/삭제 ────────────────
+
+    [RelayCommand]
+    private void AddSelectedNodeInputPort()
+    {
+        if (SelectedNode is null) return;
+        SelectedNode.AddInputPort();
+        NodePortsChanged?.Invoke();
+    }
+
+    [RelayCommand]
+    private void AddSelectedNodeOutputPort()
+    {
+        if (SelectedNode is null) return;
+        SelectedNode.AddOutputPort();
+        NodePortsChanged?.Invoke();
+    }
+
+    [RelayCommand]
+    private void RemoveSelectedNodeInputPort(NodePort port)
+    {
+        if (SelectedNode is null || port is null) return;
+        if (!SelectedNode.RemoveInputPort(port)) return;
+        _RemoveConnectionsForPort(port.PortId);
+        NodePortsChanged?.Invoke();
+    }
+
+    [RelayCommand]
+    private void RemoveSelectedNodeOutputPort(NodePort port)
+    {
+        if (SelectedNode is null || port is null) return;
+        if (!SelectedNode.RemoveOutputPort(port)) return;
+        _RemoveConnectionsForPort(port.PortId);
+        NodePortsChanged?.Invoke();
+    }
+
+    private void _RemoveConnectionsForPort(string portId)
+    {
+        var dangling = Connections
+            .Where(c => c.SourcePortId == portId || c.TargetPortId == portId)
+            .ToList();
+        foreach (var c in dangling) Connections.Remove(c);
     }
 
     // §10 ─ 줌 커맨드 ─────────────────────────────────────────

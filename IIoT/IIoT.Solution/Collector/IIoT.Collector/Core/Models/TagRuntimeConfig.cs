@@ -4,7 +4,13 @@
 //        FlowEngine 폴링 시 IProtocolDriver.ReadTagsAsync(TagReadRequest[])
 //        호출의 원천 데이터로 사용
 //  C-01: 신규
-//  생성: 2026-06-29
+//  C-18: IsVirtual / Expression 추가 (가상/계산 Tag)
+//  S-Virtual02: UseRoslynScript / ScriptCode 추가 (Function 노드)
+//  S-프로토콜01 Step B: IsProtocolBlockField 추가 — 프로토콜 블록 필드에서
+//               합성된 Tag 표시(placeholder). true 인 Tag 는 FlowEngine 의
+//               일반 Tag 주소 폴링에서 제외되고(Address 가 실주소가 아닐 수
+//               있음), 프로토콜 블록 폴링 경로에서만 값이 채워진다.
+//  생성: 2026-06-29 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 namespace IIoT.Collector.Core.Models;
@@ -67,7 +73,29 @@ public sealed class TagRuntimeConfig
     /// <summary>
     /// 계산식 (NCalc). 다른 Tag 값은 <c>[TagId]</c> 형태로 참조한다.
     /// 예: "[T001] + [T002] * 0.5"
-    /// IsVirtual=false 인 Tag 에서는 사용하지 않음.
+    /// IsVirtual=false 인 Tag 에서는 사용하지 않음. UseRoslynScript=true 일 때도 미사용.
     /// </summary>
     public string? Expression { get; init; }
+
+    // ★ S-Virtual02 신규 — Function 노드(Roslyn C# 고급 스크립트 모드)
+    /// <summary>true 면 Expression(NCalc) 대신 ScriptCode(Roslyn C#)로 값을 계산한다.
+    /// IsVirtual=false 인 Tag 에서는 사용하지 않음.</summary>
+    public bool UseRoslynScript { get; init; } = false;
+
+    /// <summary>Roslyn C# 스크립트 코드. UseRoslynScript=true 일 때만 사용.
+    /// 스크립트 안에서 VirtualTagScriptContext 의 public 멤버(Values/Result/Suppress)를
+    /// 한정자 없이 바로 참조할 수 있다.</summary>
+    public string? ScriptCode { get; init; }
+
+    // ★ S-프로토콜01 Step B 신규 — 프로토콜 블록 필드 합성 Tag
+    /// <summary>
+    /// true 면 이 Tag 는 PLC/장비에 연결된 프로토콜 라이브러리 블록의 필드에서
+    /// CollectorConfigLoader 가 자동 합성한 placeholder 이다(Studio 에서 직접
+    /// 만든 Tag 가 아님). Address 는 실제 폴링에 쓰이지 않으므로 비어있을 수
+    /// 있고, FlowEngine 의 일반 Tag 주소 폴링(_PollOnceAsync 의 enabledTags)
+    /// 에서 제외되며, 대신 프로토콜 블록 폴링 경로(_PollProtocolBlocksAsync)
+    /// 에서만 값이 채워진다. DeviceInstance 트리에는 그대로 포함되어 Monitor/
+    /// HMI 화면에서 일반 Tag 와 동일하게 조회·표시된다.
+    /// </summary>
+    public bool IsProtocolBlockField { get; init; } = false;
 }

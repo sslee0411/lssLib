@@ -4,7 +4,10 @@
 //        ViewModel → DTO 변환 → 원자적 파일 쓰기
 //  S-10: 초기 구현
 //  S-14 fix: [한글 깨짐] _jsonOpt에 Encoder 추가
-//  생성: 2026-06-17 / 수정: 2026-06-19
+//  S-Virtual01: TagTreeNode.IsVirtual/Expression → DTO 직렬화 추가
+//  S-Virtual02: TagTreeNode.UseRoslynScript/ScriptCode → DTO 직렬화 추가
+//  S-프로토콜01: ProtocolLibraryViewModel 주입 + ProtocolLibrary 직렬화 추가
+//  생성: 2026-06-17 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Models;
@@ -43,23 +46,26 @@ public sealed class DeviceConfigService
 
     // §1-3 ─ 주입된 ViewModel ─────────────────────────────────
 
-    private readonly DeviceTreeViewModel   _treeVm;
-    private readonly ScaleLibraryViewModel _scaleVm;
-    private readonly AlarmLibraryViewModel _alarmVm;
-    private readonly CommLibraryViewModel  _commVm;
+    private readonly DeviceTreeViewModel      _treeVm;
+    private readonly ScaleLibraryViewModel    _scaleVm;
+    private readonly AlarmLibraryViewModel    _alarmVm;
+    private readonly CommLibraryViewModel     _commVm;
+    private readonly ProtocolLibraryViewModel _protocolVm;   // ★ S-프로토콜01
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public DeviceConfigService(
-        DeviceTreeViewModel   treeVm,
-        ScaleLibraryViewModel scaleVm,
-        AlarmLibraryViewModel alarmVm,
-        CommLibraryViewModel  commVm)
+        DeviceTreeViewModel      treeVm,
+        ScaleLibraryViewModel    scaleVm,
+        AlarmLibraryViewModel    alarmVm,
+        CommLibraryViewModel     commVm,
+        ProtocolLibraryViewModel protocolVm)   // ★ S-프로토콜01
     {
-        _treeVm  = treeVm;
-        _scaleVm = scaleVm;
-        _alarmVm = alarmVm;
-        _commVm  = commVm;
+        _treeVm     = treeVm;
+        _scaleVm    = scaleVm;
+        _alarmVm    = alarmVm;
+        _commVm     = commVm;
+        _protocolVm = protocolVm;
     }
 
     // §3 ─ 공개 메서드 ────────────────────────────────────────
@@ -191,8 +197,46 @@ public sealed class DeviceConfigService
             });
         }
 
+        // ── 프로토콜 라이브러리 (★ S-프로토콜01) ────────────────
+        foreach (var p in _protocolVm.Entries)
+        {
+            root.ProtocolLibrary.Add(new ProtocolEntryDto
+            {
+                Id             = p.Id.ToString(),
+                Name           = p.Name,
+                Description    = p.Description ?? string.Empty,
+                UseFraming     = p.UseFraming,
+                StxHex         = p.StxHex ?? string.Empty,
+                HasLengthField = p.HasLengthField,
+                CrcType        = p.CrcType ?? "None",
+                ReadBlocks     = p.ReadBlocks.Select(_MapBlock).ToList(),
+                WriteBlocks    = p.WriteBlocks.Select(_MapBlock).ToList()
+            });
+        }
+
         return root;
     }
+
+    private static ProtocolBlockDto _MapBlock(ProtocolBlock b) => new()
+    {
+        Id           = b.Id.ToString(),
+        Name         = b.Name,
+        Description  = b.Description ?? string.Empty,
+        StartAddress = b.StartAddress ?? string.Empty,
+        Length       = b.Length,
+        CmdCode      = b.CmdCode ?? string.Empty,
+        Fields       = b.Fields.Select(f => new ProtocolFieldDto
+        {
+            Id         = f.Id.ToString(),
+            Name       = f.Name,
+            ByteOffset = f.ByteOffset,
+            BufType    = f.BufType ?? "UInt16",
+            Unit       = f.Unit ?? string.Empty,
+            ScaleMin   = f.ScaleMin,
+            ScaleMax   = f.ScaleMax,
+            ScaleEntryId = f.ScaleEntryId?.ToString()
+        }).ToList()
+    };
 
     private static DeviceNodeDto _MapNode(AbstractTreeNode node)
     {
@@ -221,6 +265,8 @@ public sealed class DeviceConfigService
                 dto.PollMs = d.PollMs;
                 // ★ Studio-P03b: 통신 라이브러리 참조
                 dto.CommEntryId = d.CommEntryId?.ToString();
+                // ★ S-프로토콜01: 프로토콜 라이브러리 참조
+                dto.ProtocolEntryId = d.ProtocolEntryId?.ToString();
                 // ★ Studio-P03b: 플러그인 드라이버
                 dto.DriverId = string.IsNullOrEmpty(d.DriverId) ? null : d.DriverId;
                 dto.DriverParams = d.DriverParams.Count > 0
@@ -237,6 +283,8 @@ public sealed class DeviceConfigService
                 dto.PollMs = p.PollMs;
                 // ★ S-28: 통신 라이브러리 참조
                 dto.CommEntryId = p.CommEntryId?.ToString();
+                // ★ S-프로토콜01: 프로토콜 라이브러리 참조
+                dto.ProtocolEntryId = p.ProtocolEntryId?.ToString();
                 // ★ Studio-P02: 플러그인 드라이버 ID 직렬화
                 //   빈 문자열이면 null → JSON에서 생략됨
                 dto.DriverId = string.IsNullOrEmpty(p.DriverId)
@@ -259,6 +307,12 @@ public sealed class DeviceConfigService
                 dto.AlarmEntryId = t.AlarmEntryId?.ToString();
                 dto.Memo         = t.Memo;
                 dto.IsEnabled    = t.IsEnabled;
+                // ★ S-Virtual01: 가상(계산) Tag — false/빈 값이면 JSON 생략
+                dto.IsVirtual    = t.IsVirtual ? true : null;
+                dto.Expression   = string.IsNullOrWhiteSpace(t.Expression) ? null : t.Expression;
+                // ★ S-Virtual02: Function 노드 — Roslyn C# 고급 스크립트 모드
+                dto.UseRoslynScript = t.UseRoslynScript ? true : null;
+                dto.ScriptCode      = string.IsNullOrWhiteSpace(t.ScriptCode) ? null : t.ScriptCode;
                 break;
         }
 

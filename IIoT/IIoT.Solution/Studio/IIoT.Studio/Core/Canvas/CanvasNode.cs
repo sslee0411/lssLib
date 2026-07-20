@@ -4,7 +4,16 @@
 //  S-11: 초기 구현
 //  S-12: 포트 위치 계산 프로퍼티 추가
 //  S-12B: DeviceCanvasNode + TagInfo + DevicePaletteItem 추가
-//  생성: 2026-06-17
+//  S-20 (N포트 노드): NodePort.Index/Label을 settable로 변경(포트 삭제 시
+//               재인덱싱 + 사용자 이름변경 지원) · InputPorts/OutputPorts를
+//               List→ObservableCollection으로 전환(포트 UI 자동 갱신) ·
+//               AbstractCanvasNode에 AddInputPort/RemoveInputPort/
+//               AddOutputPort/RemoveOutputPort(공개, 최소 1개 유지) +
+//               CardHeight(포트 개수에 따른 카드 높이) 추가 · 신규 노드 2종:
+//               SplitterNode(1입력 N출력 — 1:N 분기) / CompositeCalcNode
+//               (N입력 1출력 + NCalc 식 — N:1 병합, 가상Tag와 동일 "[라벨]"
+//               참조 문법)
+//  생성: 2026-06-17 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -33,9 +42,11 @@ public sealed class NodePort
 {
     public string        PortId      { get; init; } = Guid.NewGuid().ToString();
     public PortDirection Direction   { get; init; }
-    public string        Label       { get; init; } = string.Empty;
+    // ★ S-20: 사용자 이름변경 지원(Splitter/CompositeCalc 포트 라벨 편집) → settable
+    public string        Label       { get; set;  } = string.Empty;
     public string        OwnerNodeId { get; set;  } = string.Empty;
-    public int           Index       { get; init; }
+    // ★ S-20: 포트 삭제 시 재인덱싱 필요 → settable
+    public int           Index       { get; set;  }
 }
 
 // §4 ─ TagInfo ────────────────────────────────────────────
@@ -80,10 +91,18 @@ public abstract partial class AbstractCanvasNode : ObservableObject
     public double GetPortCanvasY(int index) =>
         Y + NodeLayout.PortOffsetY + index * 24;
 
-    // §5-2 ─ 포트 컬렉션 ──────────────────────────────────────
+    // ★ S-20: 노드 카드 높이 — 입/출력 포트 중 더 많은 쪽 개수에 맞춰 확장
+    //   (포트가 카드 하단으로 삐져나가지 않도록 NodeCardTemplate.Height 바인딩용)
+    public double CardHeight => Math.Max(
+        NodeLayout.HeaderH,
+        NodeLayout.PortOffsetY + Math.Max(InputPorts.Count, OutputPorts.Count) * 24 + 12);
 
-    public List<NodePort> InputPorts  { get; } = new();
-    public List<NodePort> OutputPorts { get; } = new();
+    // §5-2 ─ 포트 컬렉션 ──────────────────────────────────────
+    //   ★ S-20: List → ObservableCollection 전환 — Splitter/CompositeCalc
+    //   포트 편집 UI(ItemsControl)가 Add/Remove 시 별도 Refresh() 없이 자동 갱신
+
+    public ObservableCollection<NodePort> InputPorts  { get; } = new();
+    public ObservableCollection<NodePort> OutputPorts { get; } = new();
 
     protected AbstractCanvasNode() => Label = DisplayLabel;
 
@@ -96,6 +115,61 @@ public abstract partial class AbstractCanvasNode : ObservableObject
         => OutputPorts.Add(new NodePort
             { Direction = PortDirection.Output, Label = label,
               OwnerNodeId = NodeId, Index = OutputPorts.Count });
+
+    // §5-3 ─ ★ S-20: 공개 포트 CRUD (Splitter/CompositeCalc 등 N포트 노드용) ──
+    //   최소 1개 포트는 항상 유지 — 연결이 끊긴 빈 노드가 되지 않도록 보호
+
+    public NodePort AddInputPort(string? label = null)
+    {
+        var port = new NodePort
+        {
+            Direction   = PortDirection.Input,
+            Label       = string.IsNullOrWhiteSpace(label) ? $"입력{InputPorts.Count + 1}" : label!,
+            OwnerNodeId = NodeId,
+            Index       = InputPorts.Count
+        };
+        InputPorts.Add(port);
+        OnPropertyChanged(nameof(CardHeight));
+        return port;
+    }
+
+    public NodePort AddOutputPort(string? label = null)
+    {
+        var port = new NodePort
+        {
+            Direction   = PortDirection.Output,
+            Label       = string.IsNullOrWhiteSpace(label) ? $"출력{OutputPorts.Count + 1}" : label!,
+            OwnerNodeId = NodeId,
+            Index       = OutputPorts.Count
+        };
+        OutputPorts.Add(port);
+        OnPropertyChanged(nameof(CardHeight));
+        return port;
+    }
+
+    public bool RemoveInputPort(NodePort port)
+    {
+        if (InputPorts.Count <= 1) return false;
+        if (!InputPorts.Remove(port)) return false;
+        _Reindex(InputPorts);
+        OnPropertyChanged(nameof(CardHeight));
+        return true;
+    }
+
+    public bool RemoveOutputPort(NodePort port)
+    {
+        if (OutputPorts.Count <= 1) return false;
+        if (!OutputPorts.Remove(port)) return false;
+        _Reindex(OutputPorts);
+        OnPropertyChanged(nameof(CardHeight));
+        return true;
+    }
+
+    private static void _Reindex(ObservableCollection<NodePort> ports)
+    {
+        for (int i = 0; i < ports.Count; i++)
+            ports[i].Index = i;
+    }
 }
 
 // §6 ─ DeviceCanvasNode (★ S-12B) ────────────────────────
@@ -203,6 +277,39 @@ public sealed partial class MqttOutputNode : AbstractCanvasNode
     public MqttOutputNode() { AddInput("값"); }
 }
 
+// §7-1 ─ ★ S-20: N포트 노드 2종 ──────────────────────────
+//   설계: 입력N/출력N 포트 라우팅 (스킬 "N포트 노드 아키텍처(S-20)" 참조)
+//   [1:N 분기] SplitterNode — 입력 1개를 사용자가 추가한 N개 출력으로 그대로 전달
+//   [N:1 병합] CompositeCalcNode — 입력 N개를 NCalc 식으로 계산해 출력 1개 발행
+//   ※ Studio 캔버스(collect.json)는 Collector가 소비하지 않는 별도 트랙이라
+//     실제 수집 동작에는 영향 없음 — 화면 정의 전용(이전 후속·보류 항목 공지와 동일)
+
+public sealed partial class SplitterNode : AbstractCanvasNode
+{
+    public override string NodeType      => "Splitter";
+    public override string DisplayLabel  => "분배기(N출력)";
+    public override string IconGlyph     => "🔱";
+    public override string CategoryColor => "#f59e0b";
+
+    // 기본 2개 출력으로 시작 — 캔버스에서 우측 속성 패널로 자유롭게 추가/삭제
+    public SplitterNode() { AddInput("입력"); AddOutput("출력1"); AddOutput("출력2"); }
+}
+
+public sealed partial class CompositeCalcNode : AbstractCanvasNode
+{
+    public override string NodeType      => "CompositeCalc";
+    public override string DisplayLabel  => "복합계산(N입력)";
+    public override string IconGlyph     => "🧮";
+    public override string CategoryColor => "#0d9488";
+
+    /// <summary>NCalc 식 — 입력 포트 라벨을 [라벨] 형태로 참조 (가상Tag와 동일 문법).
+    /// 예: "[압력1] - [압력2]"</summary>
+    [ObservableProperty] private string _expression = string.Empty;
+
+    // 기본 2개 입력으로 시작
+    public CompositeCalcNode() { AddInput("입력1"); AddInput("입력2"); AddOutput("결과"); }
+}
+
 // §8 ─ 팩토리 ─────────────────────────────────────────────
 
 public static class CanvasNodeFactory
@@ -216,16 +323,20 @@ public static class CanvasNodeFactory
         "ScaleFilter"  => new ScaleFilterNode(),
         "DbOutput"     => new DbOutputNode(),
         "MqttOutput"   => new MqttOutputNode(),
+        "Splitter"     => new SplitterNode(),      // ★ S-20
+        "CompositeCalc"=> new CompositeCalcNode(), // ★ S-20
         _              => null
     };
 
     /// <summary>처리 노드 팔레트 (장비 섹션은 CanvasViewModel이 동적 제공)</summary>
     public static IReadOnlyList<PaletteItem> ProcessItems =>
     [
-        new("BufferParser", "Buffer Parser", "🔧", "#7c3aed"),
-        new("ScaleFilter",  "Scale Filter",  "🔀", "#059669"),
-        new("DbOutput",     "DB Output",     "🗄", "#d97706"),
-        new("MqttOutput",   "MQTT Output",   "📤", "#dc2626"),
+        new("BufferParser",  "Buffer Parser",    "🔧", "#7c3aed"),
+        new("ScaleFilter",   "Scale Filter",     "🔀", "#059669"),
+        new("DbOutput",      "DB Output",        "🗄", "#d97706"),
+        new("MqttOutput",    "MQTT Output",      "📤", "#dc2626"),
+        new("Splitter",      "분배기(N출력)",     "🔱", "#f59e0b"),   // ★ S-20
+        new("CompositeCalc", "복합계산(N입력)",   "🧮", "#0d9488"),   // ★ S-20
     ];
 }
 

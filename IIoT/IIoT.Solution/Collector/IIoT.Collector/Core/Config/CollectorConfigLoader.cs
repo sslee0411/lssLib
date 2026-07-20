@@ -5,11 +5,17 @@
 //        CollectorPluginService.IsKnownDriver() 로 미등록 드라이버 경고
 //  C-01: 신규
 //  C-05: ScaleLibrary 인덱스 보관 추가 (ScaleEngine.Initialize() 연결용)
-//  생성: 2026-06-29 / 수정: 2026-06-29
+//  S-Virtual02: _BuildTagRuntimeConfig 에 UseRoslynScript/ScriptCode 평탄화 추가
+//  S-프로토콜01 Step B: ProtocolLibrary 인덱스 추가 + PLC.ProtocolEntryId 해석 →
+//               ProtocolBlockSpec 목록 구성 + 블록 필드별 placeholder Tag 합성
+//               (FlowEngine 이 IBlockProtocolDriver 로 폴링하고 값을 발행하면
+//               DeviceInstance 트리에 일반 Tag 처럼 표시되도록)
+//  생성: 2026-06-29 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Models;
 using IIoT.Collector.Core.Plugin;
+using IIoT.Contracts;
 using IIoT.Contracts.Migration;
 using lssLib.Log;
 using System.IO;
@@ -71,6 +77,13 @@ public sealed class CollectorConfigLoader
     public IReadOnlyDictionary<string, AlarmEntryDto> AlarmLibrary { get; private set; }
         = new Dictionary<string, AlarmEntryDto>();
 
+    /// <summary>
+    /// ★ S-프로토콜01 Step B: 프로토콜 라이브러리 — ProtocolEntryDto.Id(GUID 문자열)
+    /// → ProtocolEntryDto 인덱스. PLC/장비의 ProtocolEntryId 로 조회한다.
+    /// </summary>
+    public IReadOnlyDictionary<string, ProtocolEntryDto> ProtocolLibrary { get; private set; }
+        = new Dictionary<string, ProtocolEntryDto>();
+
     // §3 ─ 생성자 ──────────────────────────────────────────
 
     public CollectorConfigLoader(CollectorPluginService pluginService)
@@ -95,6 +108,7 @@ public sealed class CollectorConfigLoader
                 $"device.json 없음: {filePath} — Studio 에서 먼저 저장해 주세요.");
             Plcs = Array.Empty<PlcRuntimeConfig>();
             ScaleLibrary = new Dictionary<string, ScaleEntryDto>();
+            ProtocolLibrary = new Dictionary<string, ProtocolEntryDto>();
             return;
         }
 
@@ -110,6 +124,7 @@ public sealed class CollectorConfigLoader
                 $"device.json 파싱 실패: {ex.Message}");
             Plcs = Array.Empty<PlcRuntimeConfig>();
             ScaleLibrary = new Dictionary<string, ScaleEntryDto>();
+            ProtocolLibrary = new Dictionary<string, ProtocolEntryDto>();
             return;
         }
 
@@ -118,8 +133,15 @@ public sealed class CollectorConfigLoader
             LogManager.Instance.Warn("ConfigLoader", "device.json 내용이 비어 있음");
             Plcs = Array.Empty<PlcRuntimeConfig>();
             ScaleLibrary = new Dictionary<string, ScaleEntryDto>();
+            ProtocolLibrary = new Dictionary<string, ProtocolEntryDto>();
             return;
         }
+
+        // ★ S-프로토콜01 Step B: ProtocolLibrary 인덱스 먼저 구성
+        //   (_BuildPlcRuntimeConfig 가 PLC.ProtocolEntryId 조회 시 사용)
+        ProtocolLibrary = root.ProtocolLibrary
+            .Where(p => !string.IsNullOrWhiteSpace(p.Id))
+            .ToDictionary(p => p.Id, p => p);
 
         var plcs = new List<PlcRuntimeConfig>();
         foreach (var node in root.Tree)
@@ -137,9 +159,11 @@ public sealed class CollectorConfigLoader
             .Where(a => !string.IsNullOrWhiteSpace(a.Id))
             .ToDictionary(a => a.Id, a => a);
 
+        var protoBlockCount = plcs.Sum(p => p.ProtocolBlocks.Count);
         LogManager.Instance.Info("ConfigLoader",
             $"device.json 로드 완료 — {plcs.Count}개 PLC/Device, {TotalTagCount}개 Tag, " +
-            $"{ScaleLibrary.Count}개 스케일, {AlarmLibrary.Count}개 알람");
+            $"{ScaleLibrary.Count}개 스케일, {AlarmLibrary.Count}개 알람, " +
+            $"{ProtocolLibrary.Count}개 프로토콜({protoBlockCount}개 블록 연결됨)");
 
         _WarnUnknownDrivers(plcs);
     }
@@ -199,7 +223,71 @@ public sealed class CollectorConfigLoader
             if (child.NodeType == "Tag")
                 plc.Tags.Add(_BuildTagRuntimeConfig(child, plc.PlcId));
 
+        // ★ S-프로토콜01 Step B: 연결된 프로토콜 라이브러리의 읽기 블록을
+        //   ProtocolBlockSpec 목록으로 구성 + 필드별 placeholder Tag 합성
+        if (!string.IsNullOrWhiteSpace(dto.ProtocolEntryId) &&
+            ProtocolLibrary.TryGetValue(dto.ProtocolEntryId, out var protocolEntry))
+        {
+            foreach (var blockDto in protocolEntry.ReadBlocks)
+            {
+                var blockSpec = _BuildProtocolBlockSpec(blockDto, protocolEntry);
+                plc.ProtocolBlocks.Add(blockSpec);
+
+                foreach (var field in blockSpec.Fields)
+                {
+                    plc.Tags.Add(new TagRuntimeConfig
+                    {
+                        Id                   = ProtocolFieldTagId.Make(plc.PlcId, blockSpec.Id, field.Id),
+                        Name                 = $"{blockSpec.Name}.{field.Name}",
+                        Address              = string.Empty,   // 실주소 아님 — 블록 폴링 경로에서만 값 채움
+                        DataType             = field.BufType,
+                        Unit                 = field.Unit,
+                        // ★ S-프로토콜01 Step B 후속: 필드에 연결된 스케일 라이브러리를 그대로
+                        //   전달 — FlowEngine._PollProtocolBlocksAsync 가 일반 Tag 와 동일하게
+                        //   ScaleEngine.Apply(tag, raw) 로 변환한다(라이브러리 참조 없으면 Raw 그대로).
+                        ScaleEntryId         = field.ScaleEntryId,
+                        IsEnabled            = true,
+                        ParentPlcId          = plc.PlcId,
+                        IsProtocolBlockField = true
+                    });
+                }
+            }
+        }
+
         return plc;
+    }
+
+    // §6-1 ─ ★ S-프로토콜01 Step B: ProtocolBlockDto → ProtocolBlockSpec ──
+
+    /// <summary>
+    /// device.json ProtocolBlockDto 를 Contracts.ProtocolBlockSpec 으로 변환한다.
+    /// ProtocolEntry 레벨 프레이밍 설정(UseFraming/StxHex/HasLengthField/CrcType)을
+    /// 블록 단위로 평탄화하여 담는다(드라이버가 매번 상위 Entry 를 조회하지 않도록).
+    /// </summary>
+    private static ProtocolBlockSpec _BuildProtocolBlockSpec(
+        ProtocolBlockDto blockDto, ProtocolEntryDto entry)
+    {
+        var fields = blockDto.Fields
+            .Select(f => new ProtocolFieldSpec(
+                Id:           f.Id,
+                Name:         f.Name,
+                ByteOffset:   f.ByteOffset,
+                BufType:      f.BufType,
+                Unit:         f.Unit,
+                ScaleEntryId: f.ScaleEntryId))
+            .ToList();
+
+        return new ProtocolBlockSpec(
+            Id:             blockDto.Id,
+            Name:           blockDto.Name,
+            StartAddress:   blockDto.StartAddress,
+            Length:         blockDto.Length,
+            CmdCode:        blockDto.CmdCode,
+            Fields:         fields,
+            UseFraming:     entry.UseFraming,
+            StxHex:         entry.StxHex,
+            HasLengthField: entry.HasLengthField,
+            CrcType:        entry.CrcType);
     }
 
     // §7 ─ Tag 노드 → TagRuntimeConfig 변환 ──────────────────
@@ -219,7 +307,10 @@ public sealed class CollectorConfigLoader
             ParentPlcId  = parentPlcId,
             // ★ C-18 신규
             IsVirtual = dto.IsVirtual ?? false,
-            Expression = dto.Expression
+            Expression = dto.Expression,
+            // ★ S-Virtual02 신규
+            UseRoslynScript = dto.UseRoslynScript ?? false,
+            ScriptCode = dto.ScriptCode
         };
 
     // §8 ─ 미등록 드라이버 경고 ───────────────────────────────

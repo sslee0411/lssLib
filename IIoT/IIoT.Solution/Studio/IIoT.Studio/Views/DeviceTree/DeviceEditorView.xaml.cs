@@ -6,7 +6,8 @@
 //  Studio-P03b: OnDriverSelectionChanged + _RenderParameterForm()
 //               OnCommEntryChanged + OnCommEntryDetach
 //               (PLC 노드와 동일 수준 — 단독 통신 장비 지원)
-//  생성: 2026-06-15 / 수정: 2026-06-27
+//  S-프로토콜01: ProtocolEntryCombo 주입 + OnProtocolEntryDetach 추가
+//  생성: 2026-06-15 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts;
@@ -38,6 +39,9 @@ public partial class DeviceEditorView : UserControl
 
         // ★ Studio-P03b: CommEntryCombo ItemsSource 주입
         CommEntryCombo.ItemsSource = mainVm.CommLibrary.Entries;
+
+        // ★ S-프로토콜01: ProtocolEntryCombo ItemsSource 주입
+        ProtocolEntryCombo.ItemsSource = mainVm.ProtocolLibrary.Entries;
 
         // ★ Studio-P03b: 드라이버 드롭다운 채우기
         var pluginSvc = mainVm.PluginRegistry;
@@ -217,6 +221,15 @@ public partial class DeviceEditorView : UserControl
         if (DataContext is not DeviceTreeNode dev) return;
         dev.CommEntryId = null;
         CommEntryCombo.SelectedItem = null;
+    }
+
+    // §3-1 ─ ★ S-프로토콜01: ProtocolEntry 참조 해제 ─────
+
+    private void OnProtocolEntryDetach(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not DeviceTreeNode dev) return;
+        dev.ProtocolEntryId = null;
+        ProtocolEntryCombo.SelectedItem = null;
     }
 
     // §4 ─ S-14: 템플릿 적용 ─────────────────────────────

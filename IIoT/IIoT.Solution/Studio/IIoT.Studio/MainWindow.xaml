@@ -8,7 +8,8 @@
             선택 노드 경로 / PLC수 / Tag수 / 마지막 저장 시각
      Studio-P04: 탭바 "📋 로그" 버튼 추가
                  DockPanel.Dock="Bottom" 로그 패널 (GridSplitter + LogViewerControl)
-     생성: 2026-06-15 / 수정: 2026-06-27
+     S-프로토콜01: 탭바 "📡 프로토콜" 버튼(인덱스 7) + ProtocolLibraryView 추가
+     생성: 2026-06-15 / 수정: 2026-07-20
      ══════════════════════════════════════════════════════════ -->
 <Window x:Class="IIoT.Studio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -20,6 +21,7 @@
         xmlns:vComm="clr-namespace:IIoT.Studio.Views.Comm"
         xmlns:vCanvas="clr-namespace:IIoT.Studio.Views.Canvas"
         xmlns:vSettings="clr-namespace:IIoT.Studio.Views.Settings"
+        xmlns:vProtocol="clr-namespace:IIoT.Studio.Views.Protocol"
         xmlns:local="clr-namespace:IIoT.Studio.Views.Log"
         Title="IIoT Studio — 설정"
         Width="1440" Height="900"
@@ -290,6 +292,13 @@
                         CommandParameter="6"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
+
+                <!-- ★ S-프로토콜01: 프로토콜 편집 탭 (인덱스 7) -->
+                <Button Content="📡  프로토콜"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="7"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40" Padding="16,0" />
             </StackPanel>
         </Border>
 
@@ -354,6 +363,11 @@
             <Grid Visibility="{Binding IsSettingsTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vSettings:SettingsView DataContext="{Binding Settings}" />
+            </Grid>
+            <!-- ★ S-프로토콜01: 프로토콜 편집 탭 -->
+            <Grid Visibility="{Binding IsProtocolTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <vProtocol:ProtocolLibraryView DataContext="{Binding ProtocolLibrary}" />
             </Grid>
         </Grid>
 

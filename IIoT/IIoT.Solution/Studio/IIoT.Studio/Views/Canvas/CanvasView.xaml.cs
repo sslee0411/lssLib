@@ -6,7 +6,9 @@
 //  S-12B: PortsLayer 절대좌표 갱신 (HitTest 완전 해결)
 //  S-13B: ApplyTemplateDialog → Views/DeviceTree/ 로 이동
 //         using 참조 변경
-//  생성: 2026-06-17
+//  S-20 (N포트 노드): NodePortsChanged 이벤트 구독 → 포트 추가/삭제 시
+//               PortsLayer 재구성(_RebuildPortsLayer)
+//  생성: 2026-06-17 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Core.Canvas;
@@ -85,9 +87,18 @@ public partial class CanvasView : UserControl
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        // ★ S-20: 이전 VM 구독 해제 (DataContext 재바인딩 대비 — 현재는 앱 생애주기 동안
+        //   1회만 바인딩되지만, 이중 구독 방지를 위해 안전하게 처리)
+        if (_vm is not null)
+            _vm.NodePortsChanged -= _RebuildPortsLayer;
+
         _vm = DataContext as CanvasViewModel;
         if (_vm is not null)
+        {
             _vm.Nodes.CollectionChanged += (_, _) => _RebuildPortsLayer();
+            // ★ S-20: Splitter/CompositeCalc 포트 추가·삭제 시 PortsLayer 재구성
+            _vm.NodePortsChanged += _RebuildPortsLayer;
+        }
     }
 
     // §4 ─ 마우스 다운 ────────────────────────────────────────

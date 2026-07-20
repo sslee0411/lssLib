@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Contracts\IIoT.Contracts.csproj" />
+  </ItemGroup>
+
+	<!--
+  ══════════════════════════════════════════════════════════
+    빌드 후 자동 복사 — Plugins/ 폴더로 이동 (다른 드라이버 플러그인과 동일 패턴)
+  ══════════════════════════════════════════════════════════
+  -->
+	<PropertyGroup>
+		<SolutionRoot>$(MSBuildProjectDirectory)\..\..</SolutionRoot>
+		<StudioPluginDir>$(SolutionRoot)\Studio\IIoT.Studio\bin\$(Configuration)\net8.0-windows\Plugins</StudioPluginDir>
+		<CollectorPluginDir>$(SolutionRoot)\Collector\IIoT.Collector\bin\$(Configuration)\net8.0-windows\Plugins</CollectorPluginDir>
+	</PropertyGroup>
+
+	<Target Name="CopyToStudioPlugins" AfterTargets="Build">
+		<MakeDir Directories="$(StudioPluginDir)" Condition="!Exists('$(StudioPluginDir)')"/>
+		<Copy
+		  SourceFiles="$(OutputPath)$(AssemblyName).dll"
+		  DestinationFolder="$(StudioPluginDir)"
+		  SkipUnchangedFiles="true"
+		  OverwriteReadOnlyFiles="true"/>
+		<Message
+		  Text="[RawFrame] → Studio Plugins/ 복사: $(StudioPluginDir)"
+		  Importance="High"/>
+	</Target>
+
+	<Target Name="CopyToCollectorPlugins" AfterTargets="Build">
+		<MakeDir Directories="$(CollectorPluginDir)" Condition="!Exists('$(CollectorPluginDir)')"/>
+		<Copy
+		  SourceFiles="$(OutputPath)$(AssemblyName).dll"
+		  DestinationFolder="$(CollectorPluginDir)"
+		  SkipUnchangedFiles="true"
+		  OverwriteReadOnlyFiles="true"/>
+		<Message
+		  Text="[RawFrame] → Collector Plugins/ 복사: $(CollectorPluginDir)"
+		  Importance="High"/>
+	</Target>
+
+</Project>

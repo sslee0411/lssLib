@@ -3,7 +3,11 @@
 //  역할: collect.json 저장 + .signal 발행
 //  S-11: 초기 구현
 //  S-14 fix: [한글 깨짐] _jsonOpt에 Encoder 추가
-//  생성: 2026-06-17 / 수정: 2026-06-19
+//  S-20 (N포트 노드): CanvasConnectionDto에 SourcePortIndex/TargetPortIndex 추가
+//               (다중 포트 노드의 연결선이 어느 포트인지 식별하기 위함 — 기존에는
+//               포트 정보 없이 저장돼 복원 시 항상 첫 포트로만 연결됨) +
+//               Splitter/CompositeCalc 노드의 포트 라벨 목록·Expression 직렬화 추가
+//  생성: 2026-06-17 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Core.Canvas;
@@ -45,6 +49,11 @@ public sealed class CanvasConnectionDto
     public string SourcePortId { get; set; } = string.Empty;
     public string TargetNodeId { get; set; } = string.Empty;
     public string TargetPortId { get; set; } = string.Empty;
+
+    // ★ S-20: 다중 포트 노드 복원 시 정확한 포트를 재매칭하기 위한 인덱스
+    //   (저장/복원 시 NodeId·PortId 는 재생성되므로 Index 로 식별)
+    public int SourcePortIndex { get; set; }
+    public int TargetPortIndex { get; set; }
 }
 
 // §2 ─ 서비스 ─────────────────────────────────────────────
@@ -158,6 +167,15 @@ public sealed class CollectConfigService
                     dto.Properties["LinkedDeviceType"] = dc.LinkedDeviceType;
                     dto.Properties["LinkedDeviceName"] = dc.LinkedDeviceName;
                     break;
+                // ★ S-20: 분배기 — 출력 포트 라벨 목록만 저장(개수·이름 복원용)
+                case SplitterNode sp:
+                    dto.Properties["OutputLabels"] = sp.OutputPorts.Select(p => p.Label).ToList();
+                    break;
+                // ★ S-20: 복합계산 — 입력 포트 라벨 목록 + NCalc 식
+                case CompositeCalcNode cc:
+                    dto.Properties["InputLabels"] = cc.InputPorts.Select(p => p.Label).ToList();
+                    dto.Properties["Expression"]  = cc.Expression;
+                    break;
             }
 
             root.Nodes.Add(dto);
@@ -165,13 +183,21 @@ public sealed class CollectConfigService
 
         foreach (var conn in _canvasVm.Connections)
         {
+            // ★ S-20: 다중 포트 노드 복원용 — 실제 포트의 Index 를 함께 저장
+            var srcNode = _canvasVm.Nodes.FirstOrDefault(n => n.NodeId == conn.SourceNodeId);
+            var tgtNode = _canvasVm.Nodes.FirstOrDefault(n => n.NodeId == conn.TargetNodeId);
+            var srcPort = srcNode?.OutputPorts.FirstOrDefault(p => p.PortId == conn.SourcePortId);
+            var tgtPort = tgtNode?.InputPorts.FirstOrDefault(p => p.PortId == conn.TargetPortId);
+
             root.Connections.Add(new CanvasConnectionDto
             {
-                ConnectionId = conn.ConnectionId,
-                SourceNodeId = conn.SourceNodeId,
-                SourcePortId = conn.SourcePortId,
-                TargetNodeId = conn.TargetNodeId,
-                TargetPortId = conn.TargetPortId
+                ConnectionId    = conn.ConnectionId,
+                SourceNodeId    = conn.SourceNodeId,
+                SourcePortId    = conn.SourcePortId,
+                TargetNodeId    = conn.TargetNodeId,
+                TargetPortId    = conn.TargetPortId,
+                SourcePortIndex = srcPort?.Index ?? 0,
+                TargetPortIndex = tgtPort?.Index ?? 0
             });
         }
 

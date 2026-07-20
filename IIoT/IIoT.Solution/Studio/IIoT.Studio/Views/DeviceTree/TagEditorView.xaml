@@ -7,10 +7,16 @@
      S-25: 수집 활성 CheckBox 추가 (헤더 우측)
                 → 부모 PLC의 PlcVendor 기반 목록 필터링 (코드비하인드에서 처리)
                 → 주소 형식 힌트 표시
+     S-Virtual01: 가상(계산) Tag 섹션 추가 — 체크 시 레지스터 종류/주소/
+                  데이터 타입 입력란 비활성화(IsNotVirtual 바인딩) +
+                  계산식(NCalc) TextBox 표시(Visibility 바인딩)
+     S-Virtual02: NCalc / Roslyn C# 스크립트 모드 선택 RadioButton 2개 추가
+                  (UseNCalcMode/UseRoslynScript — ScaleEntry.IsLinear/IsExpression
+                  과 동일한 "양쪽 bool getter/setter" 패턴, 신규 컨버터 없음)
      규칙:
        ① DataContext = TagTreeNode
        ② 라이브러리 목록: RelativeSource → DeviceTreeView.DataContext
-     생성: 2026-06-15 / 수정: 2026-06-20
+     생성: 2026-06-15 / 수정: 2026-07-20
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Studio.Views.DeviceTree.TagEditorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -83,11 +89,89 @@
             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                      Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
 
-            <!-- ★ S-21A B-1: 레지스터 종류 (코드비하인드에서 부모 PLC 기반 필터링) -->
+            <!-- ★ S-Virtual01: 가상(계산) Tag 토글 -->
+            <Border Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="4"
+                    Padding="10,8" Margin="0,0,0,16">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox IsChecked="{Binding IsVirtual}"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,6,0" />
+                        <TextBlock Text="계산 Tag(가상) — 다른 Tag 값을 수식으로 조합해 값을 계산합니다"
+                                   FontSize="11" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}" />
+                    </StackPanel>
+                    <StackPanel Visibility="{Binding IsVirtual, Converter={StaticResource BoolToVisibility}}"
+                                Margin="0,8,0,0">
+                        <!-- ★ S-Virtual02: 계산 모드 선택 (NCalc 기본 / Roslyn C# 고급) -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <RadioButton GroupName="TagCalcMode"
+                                         IsChecked="{Binding UseNCalcMode}"
+                                         Content="NCalc 수식"
+                                         FontSize="11"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         Margin="0,0,16,0" VerticalAlignment="Center" />
+                            <RadioButton GroupName="TagCalcMode"
+                                         IsChecked="{Binding UseRoslynScript}"
+                                         Content="Roslyn C# 스크립트(고급)"
+                                         FontSize="11"
+                                         Foreground="{DynamicResource TextBrush}"
+                                         VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- NCalc 모드 -->
+                        <StackPanel Visibility="{Binding UseNCalcMode, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="계산식 (NCalc)" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4" />
+                            <TextBlock Text="다른 Tag 값은 [TagId] 형태로 참조 — 예) [T001] + [T002] * 0.5"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,0,0,4" TextWrapping="Wrap" />
+                            <TextBox Text="{Binding Expression, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}"
+                                     FontFamily="Consolas"
+                                     Height="52" TextWrapping="Wrap" AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Auto"
+                                     VerticalContentAlignment="Top" />
+                        </StackPanel>
+
+                        <!-- ★ S-Virtual02: Roslyn C# 고급 스크립트 모드 -->
+                        <StackPanel Visibility="{Binding UseRoslynScript, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Roslyn C# 스크립트" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4" />
+                            <TextBlock Text="Values[&quot;TagId&quot;](Dictionary&lt;string,double&gt;) · Result(double, 출력값) · Suppress(bool, true면 이번 주기 발행 생략)를 한정자 없이 바로 사용 — 예) Result = Values[&quot;T001&quot;] + Values[&quot;T002&quot;] * 0.5;"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,0,0,4" TextWrapping="Wrap" />
+                            <TextBox Text="{Binding ScriptCode, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{DynamicResource PropInput}"
+                                     FontFamily="Consolas"
+                                     Height="110" TextWrapping="Wrap" AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Auto"
+                                     VerticalContentAlignment="Top" />
+                            <TextBlock Text="※ 문법 오류가 있으면 Collector 로그에 컴파일 오류가 기록되고 해당 Tag는 계산이 생략됩니다"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource Text2Brush}"
+                                       Margin="0,4,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <TextBlock Text="※ 계산 Tag는 레지스터 종류/주소/데이터 타입을 사용하지 않습니다(아래 비활성화됨)"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource Text2Brush}"
+                                   Margin="0,6,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ★ S-21A B-1: 레지스터 종류 (코드비하인드에서 부모 PLC 기반 필터링)
+                 ★ S-Virtual01: 계산 Tag(IsVirtual=true)에서는 미사용 → 비활성화 -->
             <TextBlock Text="레지스터 종류" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <ComboBox x:Name="RegisterTypeCombo"
                       SelectedValue="{Binding RegisterType}"
+                      IsEnabled="{Binding IsNotVirtual}"
                       Style="{DynamicResource PropCombo}"
                       Margin="0,0,0,4">
                 <!-- ItemsSource는 TagEditorView.xaml.cs에서 부모 PLC 기반으로 설정 -->
@@ -108,6 +192,7 @@
             <TextBlock Text="레지스터 주소" FontSize="11" FontWeight="SemiBold"
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                     IsEnabled="{Binding IsNotVirtual}"
                      Style="{DynamicResource PropInput}" Margin="0,0,0,16" />
 
             <!-- 데이터 타입 -->
@@ -115,6 +200,7 @@
                        Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,6" />
             <ComboBox SelectedValue="{Binding DataType}"
                       SelectedValuePath="Content"
+                      IsEnabled="{Binding IsNotVirtual}"
                       Style="{DynamicResource PropCombo}" Margin="0,0,0,16">
                 <ComboBoxItem Content="FloatLE" />
                 <ComboBoxItem Content="FloatBE" />

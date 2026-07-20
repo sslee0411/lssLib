@@ -4,7 +4,11 @@
 //  S-15: 신규
 //  S-15 fix: CanvasConnection.ConnectionId는 { get; } getter only
 //            → CanvasViewModel.AddConnection() 메서드 사용으로 변경
-//  생성: 2026-06-19
+//  S-20 (N포트 노드): Splitter/CompositeCalc 포트 라벨·Expression 복원 추가 +
+//               연결선 복원을 FirstOrDefault()(항상 첫 포트) 대신 저장된
+//               SourcePortIndex/TargetPortIndex 매칭으로 수정(다중 포트 노드의
+//               연결선이 정확한 포트로 복원되도록 — 기존 버그 수정)
+//  생성: 2026-06-19 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Studio.Core.Canvas;
@@ -90,9 +94,13 @@ public sealed class CollectConfigLoader
                 var tgtNode = _canvasVm.Nodes.FirstOrDefault(n => n.NodeId == tgtNodeId);
                 if (srcNode is null || tgtNode is null) continue;
 
-                // 출력 포트 인덱스로 매칭 (포트 순서 유지)
-                var srcPort = srcNode.OutputPorts.FirstOrDefault();
-                var tgtPort = tgtNode.InputPorts.FirstOrDefault();
+                // ★ S-20 fix: 저장된 SourcePortIndex/TargetPortIndex 로 매칭
+                //   (다중 포트 노드는 FirstOrDefault() 만으로는 항상 첫 포트에
+                //   연결되는 버그가 있었음 — Index 매칭 후 실패 시 첫 포트로 폴백)
+                var srcPort = srcNode.OutputPorts.FirstOrDefault(p => p.Index == dto.SourcePortIndex)
+                              ?? srcNode.OutputPorts.FirstOrDefault();
+                var tgtPort = tgtNode.InputPorts.FirstOrDefault(p => p.Index == dto.TargetPortIndex)
+                              ?? tgtNode.InputPorts.FirstOrDefault();
                 if (srcPort is null || tgtPort is null) continue;
 
                 // AddConnection 메서드 사용 (ConnectionId 자동 생성)
@@ -151,6 +159,26 @@ public sealed class CollectConfigLoader
                 dc.LinkedDeviceType = _Str(p, "LinkedDeviceType", "PLC");
                 dc.LinkedDeviceName = _Str(p, "LinkedDeviceName", string.Empty);
                 break;
+            // ★ S-20: 분배기 — 저장된 라벨 개수·이름 그대로 출력 포트 재구성
+            //   (팩토리 기본 2개 포트를 지우고 저장값으로 다시 채움)
+            case SplitterNode sp:
+                var outLabels = _StrList(p, "OutputLabels");
+                if (outLabels.Count > 0)
+                {
+                    sp.OutputPorts.Clear();
+                    foreach (var label in outLabels) sp.AddOutputPort(label);
+                }
+                break;
+            // ★ S-20: 복합계산 — 저장된 입력 포트 라벨 + NCalc 식 복원
+            case CompositeCalcNode cc:
+                var inLabels = _StrList(p, "InputLabels");
+                if (inLabels.Count > 0)
+                {
+                    cc.InputPorts.Clear();
+                    foreach (var label in inLabels) cc.AddInputPort(label);
+                }
+                cc.Expression = _Str(p, "Expression", string.Empty);
+                break;
         }
 
         return node;
@@ -178,5 +206,18 @@ public sealed class CollectConfigLoader
         return v is JsonElement je
             ? (je.TryGetDouble(out var d) ? d : def)
             : (double.TryParse(v?.ToString(), out var d2) ? d2 : def);
+    }
+
+    // ★ S-20: 문자열 목록 추출(Splitter.OutputLabels / CompositeCalc.InputLabels) —
+    //   Properties 는 object? 로 저장되므로 역직렬화 시 JsonElement(배열) 형태로 옴
+    private static List<string> _StrList(Dictionary<string, object?> p, string key)
+    {
+        if (!p.TryGetValue(key, out var v)) return new List<string>();
+        if (v is JsonElement je && je.ValueKind == JsonValueKind.Array)
+            return je.EnumerateArray()
+                     .Select(e => e.GetString() ?? string.Empty)
+                     .Where(s => !string.IsNullOrEmpty(s))
+                     .ToList();
+        return new List<string>();
     }
 }

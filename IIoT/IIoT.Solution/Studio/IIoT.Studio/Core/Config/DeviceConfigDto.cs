@@ -7,7 +7,13 @@
 //  S-27: DeviceConfigRoot에 ChangeMemo + SaveHistory 추가
 //  S-28: DeviceNodeDto에 CommEntryId 필드 추가
 //  Studio-P02: DeviceNodeDto에 DriverId / DriverParams 추가
-//  생성: 2026-06-17 / 수정: 2026-06-27
+//  S-Virtual01: DeviceNodeDto에 IsVirtual / Expression 추가 (가상/계산 Tag —
+//               Collector DeviceConfigDto.cs 와 필드 1:1 동일하게 맞춤)
+//  S-Virtual02: DeviceNodeDto에 UseRoslynScript / ScriptCode 추가 (Function 노드)
+//  S-프로토콜01: ProtocolEntryDto/ProtocolBlockDto/ProtocolFieldDto 신규 +
+//               DeviceConfigRoot에 ProtocolLibrary 추가, DeviceNodeDto에
+//               ProtocolEntryId 참조 추가 (읽기/쓰기 블록 N개 프로토콜 편집)
+//  생성: 2026-06-17 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 namespace IIoT.Studio.Core.Config;
@@ -24,10 +30,12 @@ public sealed class DeviceConfigRoot
     public string               ChangeMemo  { get; set; } = string.Empty;
     public List<SaveHistoryDto> SaveHistory { get; set; } = new();
 
-    public List<DeviceNodeDto> Tree         { get; set; } = new();
-    public List<ScaleEntryDto> ScaleLibrary { get; set; } = new();
-    public List<AlarmEntryDto> AlarmLibrary { get; set; } = new();
-    public List<CommEntryDto>  CommLibrary  { get; set; } = new();
+    public List<DeviceNodeDto>     Tree            { get; set; } = new();
+    public List<ScaleEntryDto>     ScaleLibrary     { get; set; } = new();
+    public List<AlarmEntryDto>     AlarmLibrary     { get; set; } = new();
+    public List<CommEntryDto>      CommLibrary      { get; set; } = new();
+    // ★ S-프로토콜01
+    public List<ProtocolEntryDto>  ProtocolLibrary  { get; set; } = new();
 }
 
 // §1-1 ─ 저장 이력 DTO ────────────────────────────────────
@@ -61,6 +69,9 @@ public sealed class DeviceNodeDto
     // ★ S-28: PLC 통신 라이브러리 참조 ID (null = 직접 입력)
     public string? CommEntryId { get; set; }
 
+    // ★ S-프로토콜01: PLC/장비 프로토콜 라이브러리 참조 ID (null = 미사용)
+    public string? ProtocolEntryId { get; set; }
+
     // ★ Studio-P02: 플러그인 드라이버 ID
     //   null / "" = 레거시 CommType 방식 (CommTypeMigrator 변환 대상)
     //   값 있음   = 플러그인 driverId 직접 지정 (신규 방식)
@@ -83,6 +94,14 @@ public sealed class DeviceNodeDto
 
     // ★ S-25: Tag 수집 활성 여부 (null = true 기본값, JSON 생략)
     public bool? IsEnabled { get; set; }
+
+    // ★ S-Virtual01: 가상(계산) Tag — Collector VirtualTagEngine(C-18)이 소비
+    public bool?   IsVirtual  { get; set; }
+    public string? Expression { get; set; }
+
+    // ★ S-Virtual02: Function 노드 — Roslyn C# 고급 스크립트 모드
+    public bool?   UseRoslynScript { get; set; }
+    public string? ScriptCode      { get; set; }
 
     public List<DeviceNodeDto> Children { get; set; } = new();
 }
@@ -172,4 +191,51 @@ public sealed class CommEntryDto
     public int PollMs          { get; set; } = 1000;
     public int TimeoutMs       { get; set; } = 3000;
     public int RetryIntervalMs { get; set; } = 5000;
+}
+
+// §6 ─ 프로토콜 DTO (★ S-프로토콜01) ──────────────────────
+
+/// <summary>프로토콜 라이브러리 항목 1건 — 읽기 블록 N개 + 쓰기 블록 N개.</summary>
+public sealed class ProtocolEntryDto
+{
+    public string Id          { get; set; } = string.Empty;
+    public string Name        { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+
+    public bool   UseFraming     { get; set; }
+    public string StxHex         { get; set; } = "AA";
+    public bool   HasLengthField { get; set; } = true;
+    public string CrcType        { get; set; } = "None";
+
+    public List<ProtocolBlockDto> ReadBlocks  { get; set; } = new();
+    public List<ProtocolBlockDto> WriteBlocks { get; set; } = new();
+}
+
+/// <summary>읽기/쓰기 블록 1건.</summary>
+public sealed class ProtocolBlockDto
+{
+    public string Id           { get; set; } = string.Empty;
+    public string Name         { get; set; } = string.Empty;
+    public string Description  { get; set; } = string.Empty;
+    public string StartAddress { get; set; } = string.Empty;
+    public int    Length       { get; set; }
+    public string CmdCode      { get; set; } = string.Empty;
+
+    public List<ProtocolFieldDto> Fields { get; set; } = new();
+}
+
+/// <summary>블록 안의 개별 필드(값) 1건.</summary>
+public sealed class ProtocolFieldDto
+{
+    public string Id         { get; set; } = string.Empty;
+    public string Name       { get; set; } = string.Empty;
+    public int    ByteOffset { get; set; }
+    public string BufType    { get; set; } = "UInt16";
+    public string Unit       { get; set; } = string.Empty;
+    public double ScaleMin   { get; set; }
+    public double ScaleMax   { get; set; } = 100;
+
+    /// <summary>스케일 라이브러리 참조 ID(문자열, GUID) — null/빈 값이면 Raw 그대로.
+    /// S-프로토콜01 Step B 후속 신규.</summary>
+    public string? ScaleEntryId { get; set; }
 }

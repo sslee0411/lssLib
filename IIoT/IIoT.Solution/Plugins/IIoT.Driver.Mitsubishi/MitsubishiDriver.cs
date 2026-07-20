@@ -21,7 +21,12 @@
 //    X=0x9C Y=0x9D M=0x90 L=0x92 B=0xA0 F=0x93
 //    D=0xA8 W=0xB4 R=0xAF ZR=0xB0 TN=0xC2 CN=0xC5
 //
-//  생성: 2026-06-27
+//  S-프로토콜01 Step B: IBlockProtocolDriver 구현 추가 — Studio 프로토콜
+//    라이브러리의 표준 주소범위 블록(ProtocolBlockSpec.IsStandardBlock=true)을
+//    소자명 접두사(StartAddress, 예: "D100") 기준으로 워드 소자만 지원해 읽고,
+//    Fields(ByteOffset/BufType)로 슬라이싱. 비트 소자 블록은 미지원(Fail 반환).
+//
+//  생성: 2026-06-27 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts;
@@ -29,7 +34,7 @@ using System.Net.Sockets;
 
 namespace IIoT.Driver.Mitsubishi;
 
-public sealed class MitsubishiDriver : IProtocolDriver
+public sealed class MitsubishiDriver : IProtocolDriver, IBlockProtocolDriver
 {
     // §1 ─ 상태 ────────────────────────────────────────────
 
@@ -192,6 +197,89 @@ public sealed class MitsubishiDriver : IProtocolDriver
         {
             OnError?.Invoke(DriverName, $"쓰기 오류 [{tag.Address}]: {ex.Message}");
             return DriverWriteResult.Fail(ex.Message);
+        }
+    }
+
+    // §5-1 ─ ★ S-프로토콜01 Step B: 블록 단위 읽기/쓰기 ───────
+    //   IBlockProtocolDriver 구현 — 표준 주소범위 블록(CmdCode 없음), 워드
+    //   소자만 지원(D/W/R/ZR/TN/CN/SD/SW). 비트 소자(X/Y/M 등) 블록은 미지원.
+
+    public async Task<BlockReadResult> ReadBlockAsync(
+        ProtocolBlockSpec block, CancellationToken ct = default)
+    {
+        if (!IsConnected)
+            return BlockReadResult.Fail("미연결 상태");
+        if (!block.IsStandardBlock)
+            return BlockReadResult.Fail(
+                "미쓰비시 MC 드라이버는 표준 주소범위 블록만 지원합니다 " +
+                "(CmdCode 가 있는 커스텀 프레임 블록은 IIoT.Driver.RawFrame 필요)");
+
+        var deviceCode = _GetDeviceCode(block.StartAddress);
+        if (_IsBitDevice(deviceCode))
+            return BlockReadResult.Fail(
+                $"블록[{block.Name}] 은 비트 소자 주소({block.StartAddress})입니다 — " +
+                "블록 읽기는 워드 소자(D/W/R 등)만 지원합니다");
+
+        try
+        {
+            var startNo = _ParseDeviceNo(block.StartAddress);
+            var words = await _ReadWordsRawAsync(
+                deviceCode, startNo, (ushort)Math.Max(block.Length, 1), ct);
+
+            if (words is null)
+                return BlockReadResult.Fail("블록 읽기 실패(응답 없음/오류 응답)");
+
+            var values = new Dictionary<string, object?>();
+            foreach (var field in block.Fields)
+            {
+                // ByteOffset 은 워드(2바이트) 단위 오프셋으로 취급
+                var wordOffset = field.ByteOffset / 2;
+                values[field.Id] = _ExtractWordValue(words, wordOffset, field.BufType);
+            }
+            return BlockReadResult.Ok(values);
+        }
+        catch (Exception ex)
+        {
+            OnError?.Invoke(DriverName, $"블록[{block.Name}] 읽기 오류: {ex.Message}");
+            return BlockReadResult.Fail(ex.Message);
+        }
+    }
+
+    public async Task<BlockWriteResult> WriteBlockAsync(
+        ProtocolBlockSpec block, IReadOnlyDictionary<string, object> fieldValues,
+        CancellationToken ct = default)
+    {
+        if (!IsConnected)
+            return BlockWriteResult.Fail("미연결 상태");
+        if (!block.IsStandardBlock)
+            return BlockWriteResult.Fail("미쓰비시 MC 드라이버는 표준 주소범위 블록만 지원합니다");
+
+        var deviceCode = _GetDeviceCode(block.StartAddress);
+        if (_IsBitDevice(deviceCode))
+            return BlockWriteResult.Fail(
+                $"블록[{block.Name}] 은 비트 소자 주소입니다 — 블록 쓰기는 워드 소자만 지원합니다");
+
+        try
+        {
+            var startNo = _ParseDeviceNo(block.StartAddress);
+            var words   = new ushort[Math.Max(block.Length, 1)];
+
+            foreach (var field in block.Fields)
+            {
+                if (!fieldValues.TryGetValue(field.Id, out var v)) continue;
+                var encoded    = _EncodeWordValue(v?.ToString() ?? "0", field.BufType);
+                var wordOffset = field.ByteOffset / 2;
+                for (int i = 0; i < encoded.Length && wordOffset + i < words.Length; i++)
+                    words[wordOffset + i] = encoded[i];
+            }
+
+            await _WriteWordsAsync(deviceCode, startNo, words, ct);
+            return BlockWriteResult.Ok();
+        }
+        catch (Exception ex)
+        {
+            OnError?.Invoke(DriverName, $"블록[{block.Name}] 쓰기 오류: {ex.Message}");
+            return BlockWriteResult.Fail(ex.Message);
         }
     }
 

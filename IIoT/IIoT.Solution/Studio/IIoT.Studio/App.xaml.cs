@@ -158,6 +158,8 @@ public partial class App : Application
         services.AddSingleton<ScaleLibraryViewModel>();
         services.AddSingleton<AlarmLibraryViewModel>();
         services.AddSingleton<CommLibraryViewModel>();
+        // ★ S-프로토콜01: 프로토콜 라이브러리(읽기/쓰기 블록 N개)
+        services.AddSingleton<ProtocolLibraryViewModel>();
 
         // ── 태그 템플릿
         services.AddSingleton<TagTemplateService>();
@@ -184,7 +186,8 @@ public partial class App : Application
                 sp.GetRequiredService<DeviceTreeViewModel>(),
                 sp.GetRequiredService<ScaleLibraryViewModel>(),
                 sp.GetRequiredService<AlarmLibraryViewModel>(),
-                sp.GetRequiredService<CommLibraryViewModel>()));
+                sp.GetRequiredService<CommLibraryViewModel>(),
+                sp.GetRequiredService<ProtocolLibraryViewModel>()));   // ★ S-프로토콜01
 
         services.AddSingleton<CollectConfigService>(sp =>
             new CollectConfigService(
@@ -196,7 +199,8 @@ public partial class App : Application
                 sp.GetRequiredService<DeviceTreeViewModel>(),
                 sp.GetRequiredService<ScaleLibraryViewModel>(),
                 sp.GetRequiredService<AlarmLibraryViewModel>(),
-                sp.GetRequiredService<CommLibraryViewModel>()));
+                sp.GetRequiredService<CommLibraryViewModel>(),
+                sp.GetRequiredService<ProtocolLibraryViewModel>()));   // ★ S-프로토콜01
 
         services.AddSingleton<CollectConfigLoader>(sp =>
             new CollectConfigLoader(
@@ -215,7 +219,8 @@ public partial class App : Application
                 sp.GetRequiredService<DeviceConfigLoader>(),
                 sp.GetRequiredService<PluginRegistryService>(),
                 sp.GetRequiredService<StudioSettingsLoader>(),     // ★ C-SET-01 후속
-                sp.GetRequiredService<SettingsViewModel>()));      // ★ C-SET-01 후속
+                sp.GetRequiredService<SettingsViewModel>(),        // ★ C-SET-01 후속
+                sp.GetRequiredService<ProtocolLibraryViewModel>())); // ★ S-프로토콜01
 
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<MainViewModel>()));

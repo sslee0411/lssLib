@@ -10,7 +10,14 @@
 //  Studio-P02: PlcTreeNode → DriverId / IsPluginDriver / DriverParams
 //  Studio-P03b: DeviceTreeNode → DriverId / IsPluginDriver / DriverParams / CommEntryId
 //               (단독 통신 장비 — IoT 게이트웨이, 센서 등 PLC 없이 직접 통신)
-//  생성: 2026-06-15 / 수정: 2026-06-27
+//  S-Virtual01: TagTreeNode → IsVirtual / Expression (가상/계산 Tag —
+//               Collector VirtualTagEngine(C-18)이 이미 소비하는 필드를 Studio에서
+//               편집 가능하게 함. true 면 Address/RegisterType/DataType 은 사용 안 함)
+//  S-Virtual02: TagTreeNode → UseRoslynScript / ScriptCode (Function 노드 —
+//               가상 Tag 계산을 NCalc 대신 Roslyn C# 스크립트로 수행하는 고급 모드)
+//  S-프로토콜01: DeviceTreeNode/PlcTreeNode → ProtocolEntryId (프로토콜
+//               라이브러리 참조, null = 미사용 — CommEntryId 와 동일 패턴)
+//  생성: 2026-06-15 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -83,6 +90,13 @@ public partial class DeviceTreeNode : AbstractTreeNode
     public bool IsCommReferenced => CommEntryId.HasValue;
     public bool IsDirectInput    => !CommEntryId.HasValue;
 
+    // ★ S-프로토콜01: 프로토콜 라이브러리 참조 (null = 미사용)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsProtocolReferenced))]
+    private Guid? _protocolEntryId;
+
+    public bool IsProtocolReferenced => ProtocolEntryId.HasValue;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCommEnabled))]
     [NotifyPropertyChangedFor(nameof(IsModbusTcp))]
@@ -124,6 +138,13 @@ public partial class PlcTreeNode : AbstractTreeNode
 
     public bool IsCommReferenced => CommEntryId.HasValue;
     public bool IsDirectInput    => !CommEntryId.HasValue;
+
+    // ★ S-프로토콜01: 프로토콜 라이브러리 참조 (null = 미사용)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsProtocolReferenced))]
+    private Guid? _protocolEntryId;
+
+    public bool IsProtocolReferenced => ProtocolEntryId.HasValue;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPluginDriver))]
@@ -192,6 +213,40 @@ public partial class TagTreeNode : AbstractTreeNode
     private bool _isEnabled = true;
 
     public bool IsDisabled => !IsEnabled;
+
+    // ★ S-Virtual01: 가상(계산) Tag
+    //   true 면 Collector VirtualTagEngine(C-18)이 Address 폴링 대신 Expression 을
+    //   주기 평가해 값을 계산·발행한다 (레지스터 종류/주소/데이터 타입 미사용).
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotVirtual))]
+    private bool _isVirtual;
+
+    public bool IsNotVirtual => !IsVirtual;
+
+    /// <summary>계산식 (NCalc). 다른 Tag 값은 [TagId] 형태로 참조.
+    /// 예: "[T001] + [T002] * 0.5". IsVirtual=false 이면 미사용.</summary>
+    [ObservableProperty] private string _expression = string.Empty;
+
+    // ★ S-Virtual02: Function 노드 — Roslyn C# 고급 스크립트 모드
+    //   NCalc(Expression)와 Roslyn(ScriptCode)는 서로 독립 보관 — 모드 전환 시
+    //   값이 사라지지 않고 그대로 유지된다(둘 다 IsVirtual=true 일 때만 사용).
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UseNCalcMode))]
+    private bool _useRoslynScript;
+
+    /// <summary>UseRoslynScript 의 반대값 — RadioButton 양방향 바인딩용
+    /// (ScaleEntry.IsLinear/IsExpression 과 동일한 확정 패턴).</summary>
+    public bool UseNCalcMode
+    {
+        get => !UseRoslynScript;
+        set { if (value) UseRoslynScript = false; }
+    }
+
+    /// <summary>Roslyn C# 스크립트 코드. UseRoslynScript=true 일 때만 사용.
+    /// 스크립트 안에서 한정자 없이 Values(Dictionary&lt;string,double&gt;)/
+    /// Result(double)/Suppress(bool) 를 직접 참조할 수 있다.
+    /// 예: "Result = Values[\"T001\"] + Values[\"T002\"] * 0.5;"</summary>
+    [ObservableProperty] private string _scriptCode = string.Empty;
 
     public TagTreeNode(string name = "새 Tag") { Name = name; }
 }

@@ -13,7 +13,12 @@
 //    FC06 — Write Single Register
 //    FC16 — Write Multiple Registers
 //
-//  생성: 2026-06-27
+//  S-프로토콜01 Step B: IBlockProtocolDriver 구현 추가 — Studio 프로토콜
+//    라이브러리의 표준 주소범위 블록(ProtocolBlockSpec.IsStandardBlock=true)을
+//    StartAddress/Length 기준으로 읽고, Fields(ByteOffset/BufType)로 슬라이싱.
+//    기존 _ReadRegistersAsync/_ExtractValue/_EncodeValue 등 내부 로직을 그대로 재사용.
+//
+//  생성: 2026-06-27 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts;
@@ -25,7 +30,7 @@ namespace IIoT.Driver.ModbusTcp;
 /// Modbus TCP 드라이버.
 /// ConnectAsync → ReadTagsAsync (폴링) / WriteTagAsync → DisposeAsync 순서로 사용.
 /// </summary>
-public sealed class ModbusTcpDriver : IProtocolDriver
+public sealed class ModbusTcpDriver : IProtocolDriver, IBlockProtocolDriver
 {
     // §1 ─ 상태 ────────────────────────────────────────────
 
@@ -194,6 +199,78 @@ public sealed class ModbusTcpDriver : IProtocolDriver
         {
             OnError?.Invoke(DriverName, $"쓰기 오류 [{tag.Address}]: {ex.Message}");
             return DriverWriteResult.Fail(ex.Message);
+        }
+    }
+
+    // §5-1 ─ ★ S-프로토콜01 Step B: 블록 단위 읽기/쓰기 ───────
+    //   IBlockProtocolDriver 구현 — 표준 주소범위 블록(CmdCode 없음)만 지원.
+    //   커스텀 프레임 블록(CmdCode 있음)은 IIoT.Driver.RawFrame 전용.
+
+    public async Task<BlockReadResult> ReadBlockAsync(
+        ProtocolBlockSpec block, CancellationToken ct = default)
+    {
+        if (!IsConnected)
+            return BlockReadResult.Fail("미연결 상태");
+        if (!block.IsStandardBlock)
+            return BlockReadResult.Fail(
+                "Modbus TCP 드라이버는 표준 주소범위 블록만 지원합니다 " +
+                "(CmdCode 가 있는 커스텀 프레임 블록은 IIoT.Driver.RawFrame 필요)");
+
+        try
+        {
+            var startAddr = (ushort)_ParseAddress(block.StartAddress);
+            var raw = await _ReadRegistersAsync(
+                0x03, startAddr, (ushort)Math.Max(block.Length, 1), ct);
+
+            if (raw is null)
+                return BlockReadResult.Fail("블록 읽기 실패(응답 없음/오류 응답)");
+
+            var values = new Dictionary<string, object?>();
+            foreach (var field in block.Fields)
+            {
+                // ByteOffset 은 워드(2바이트) 단위 오프셋으로 취급 (TagTemplateItem.CalcAddress 관례와 동일)
+                var wordOffset = field.ByteOffset / 2;
+                values[field.Id] = _ExtractValue(raw, wordOffset, field.BufType);
+            }
+            return BlockReadResult.Ok(values);
+        }
+        catch (Exception ex)
+        {
+            OnError?.Invoke(DriverName, $"블록[{block.Name}] 읽기 오류: {ex.Message}");
+            return BlockReadResult.Fail(ex.Message);
+        }
+    }
+
+    public async Task<BlockWriteResult> WriteBlockAsync(
+        ProtocolBlockSpec block, IReadOnlyDictionary<string, object> fieldValues,
+        CancellationToken ct = default)
+    {
+        if (!IsConnected)
+            return BlockWriteResult.Fail("미연결 상태");
+        if (!block.IsStandardBlock)
+            return BlockWriteResult.Fail("Modbus TCP 드라이버는 표준 주소범위 블록만 지원합니다");
+
+        try
+        {
+            var startAddr = (ushort)_ParseAddress(block.StartAddress);
+            var regs      = new ushort[Math.Max(block.Length, 1)];
+
+            foreach (var field in block.Fields)
+            {
+                if (!fieldValues.TryGetValue(field.Id, out var v)) continue;
+                var encoded    = _EncodeValue(v?.ToString() ?? "0", field.BufType);
+                var wordOffset = field.ByteOffset / 2;
+                for (int i = 0; i < encoded.Length && wordOffset + i < regs.Length; i++)
+                    regs[wordOffset + i] = encoded[i];
+            }
+
+            await _WriteMultipleRegistersAsync(startAddr, regs, ct);
+            return BlockWriteResult.Ok();
+        }
+        catch (Exception ex)
+        {
+            OnError?.Invoke(DriverName, $"블록[{block.Name}] 쓰기 오류: {ex.Message}");
+            return BlockWriteResult.Fail(ex.Message);
         }
     }
 

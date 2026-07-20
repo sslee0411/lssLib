@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-20 | 버전: v11.35 | 다음 세션 시작점: ① HM-Base-0~HM-21 + HMI 환경설정 탭 + HM-23(신규 장비 5종) + HM-22(Manager 원격 설정) 전부 사용자 로컬 Windows 빌드·런타임 확인(정적 검증은 전부 완료 — 불일치 0건) → ② 설정(Settings) UI 트랙 전체 완료(로컬 5개 프로그램 + Manager 원격 통합) → ③ 다음 신규 기능은 사용자 지시 대기**
+**작성일: 2026-07-20 | 버전: v11.41 | 다음 세션 시작점: ① 그동안의 코드(HM-Base-0~HM-23, HM-22, 설정 UI 트랙, S-Virtual01, S-Virtual02, S-프로토콜01 Step A+B+후속, S-20 N포트) 전부 사용자 로컬 Windows 빌드·런타임 확인(정적 검증은 전부 완료, 신규 플러그인 IIoT.Driver.RawFrame 포함 — Plugins/IIoT.Driver.sln 리빌드 필요) → ② 이로써 Studio 보류 4건(가상Tag·Function노드·프로토콜편집 Step A+B·N포트) 전부 코드 완료, S-프로토콜01 Step B 문서화 한계 3건(LEN필드/응답CRC/스케일)도 전부 해소 → ③ IIoT.Sequence 착수(로드맵상 다음 프로그램 — Manager→HMI 순으로 기본구조 확립 완료됨에 따라 다음 차례)**
 
 > 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
 > SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
@@ -14,8 +14,8 @@ C# .NET 8 / WPF / lssLib v5 기반 산업용 IIoT/SCADA 플랫폼.
 
 ```
 프로그램            상태
-IIoT.Studio         ✅ 100% (설정 편집기 — 보류 4건은 Sequence 이후)
-IIoT.Collector      ✅ 100% (수집+감지+저장, SignalR Hub 7878 — C-EX-13 빌드 확인 완료, C-EX-11 후속 보류)
+IIoT.Studio         ✅ 100% (설정 편집기 — 가상Tag(S-Virtual01)·Function노드(S-Virtual02)·프로토콜편집(S-프로토콜01, Step A)·N포트(S-20) 완료, 보류 항목 없음)
+IIoT.Collector      ✅ 100% (수집+감지+저장, SignalR Hub 7878 — C-EX-13 빌드 확인 완료, 프로토콜 블록 실행엔진(S-프로토콜01 Step B + 후속 한계보완) 완료, C-EX-11 후속 보류)
 IIoT.Monitor        ✅ 100% (실시간 모니터링, 자체 Hub 7879, MN-EX 8건 전부)
 IIoT.Manager        ✅ 100% (코드+통합 빌드+런타임 확인 완료 — 2026-07-16)
 IIoT.HMI            🔄 Base-0~2 + HM-01~07 빌드 확인 완료, HM-08~12 코드완료(빌드대기) (생산현황판)
@@ -1293,9 +1293,21 @@ Collector 측 ForceWriteService(C-15)에 위임되어 HMI 쪽에는 별도 검�
  ④ Monitor Models/DeviceSnapshotDto.cs 필드명 점검 (HM-05에서 HMI측 동일 파일에서
     "TagSnapshotDto.Id" 가 실제 Collector 응답 필드 "tagId" 와 불일치해 값이 채워지지
     않는 잠복 버그를 발견·수정함 — Monitor 도 MN-01B 이식본이라 같은 결함일 가능성)
+ ⑤ Studio Tag 의 ScaleEntryId/AlarmEntryId 가 재시작(저장→재로드) 후 끊길 가능성
+    (S-Virtual01 작업 중 발견, 2026-07-20 — DeviceConfigLoader.cs _BuildNode() Tag
+    케이스가 두 필드를 복원하지 않고, ScaleEntry/AlarmEntry.Id 도 { get; }=new Guid
+    고정이라 _RestoreScaleLibrary/_RestoreAlarmLibrary 가 dto.Id 를 못 살림. 수정하려면
+    ScaleEntry/AlarmEntry.Id 를 settable 로 바꾸고 두 Restore 메서드 + Tag 복원부
+    3곳을 함께 고쳐야 해서 가상 Tag 범위를 넘어감 — 별도 확인 후 착수 요망)
 [보류]
  MG-EX-11 웹 상태 페이지 / MG-EX-12 원격 관리 (HMI/Sequence 이후)
- C-EX-11 (Collector 후속) / Studio 보류 4건 (가상Tag·N포트·Function·프로토콜편집)
+ C-EX-11 (Collector 후속) — Studio 보류 4건(가상Tag·Function노드·프로토콜편집
+   Step A+B·N포트)은 모두 코드 완료 (아래 "✅ S-Virtual01"/"✅ S-Virtual02"/
+   "✅ S-프로토콜01"/"✅ S-프로토콜01 Step B"/"✅ S-20" 절 참조). N포트는
+   Studio 의 "수집 흐름 캔버스"(collect.json)가 Collector 에서 전혀 소비되지
+   않는 별도 트랙(S-11~S-14 설계 이후 실제 엔진과 연결된 적 없음)이라, 지금
+   만들어도 화면에만 존재하고 실제 수집 동작에는 영향이 없음 — 이 상태는
+   변하지 않음(사용자 확인 후 착수, 2026-07-20)
  HM-EX (히스토리 트렌드 오버레이 / 캡처·리포트 / 다중 모니터 지원 — HMI 1차 마감 후)
  HM-04-EX 장비 아이콘 실제 형상화 (아래 "⭐ 신규 후속 기능: 장비 아이콘 실형상 UI 컨트롤화" 참조)
  HM-11-EX 웹에서 ACK/ForceWrite 지원 + 웹 자체 화면(페이지) 선택 기능
@@ -1999,6 +2011,705 @@ Manager 신규 [🌐 원격 설정] 탭(인덱스 6):
 
 ---
 
+## ✅ S-Virtual01: IIoT.Studio 가상(계산) Tag 편집 UI (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: "Studio 솔루션으로 회귀하여 보류 4건(가상Tag·N포트·Function노드·프로토콜편집)
+을 강화" 트랙(사용자 확인, 2026-07-20)의 1번째 항목. 착수 전 코드를 확인해 보니
+Collector 쪽은 C-18(VirtualTagEngine.cs)로 가상 Tag 평가 엔진이 이미 완성돼
+있었고(NCalc 수식 평가, [TagId] 참조 치환, TagValueUpdatedEvent 발행,
+AlarmStateManager 연동까지 전부 동작), TagRuntimeConfig/DeviceConfigDto(Collector
+사본) 에도 IsVirtual/Expression 필드가 이미 존재했다. 실제 빠져 있던 것은
+"Studio 에서 Tag 를 가상으로 지정하고 수식을 입력하는 UI + device.json 직렬화"
+뿐이었다 — 즉 엔진 재구현이 아니라 Studio 쪽 마지막 한 구간만 이어붙이는 작업.
+
+경로: Studio\IIoT.Studio\
+변경 파일 (기존 코드는 그대로 두고 신규 부분만 추가):
+  Models/TreeNode.cs
+    ← TagTreeNode 에 IsVirtual(bool, 기본 false) / Expression(string, 기본 "") 추가
+    ← IsNotVirtual(계산 프로퍼티, !IsVirtual) 추가 — 에디터에서 레지스터 종류/주소/
+      데이터 타입 입력란을 IsEnabled 바인딩으로 비활성화하는 데 사용(신규
+      컨버터 발명 없이 기존 bool 프로퍼티 직접 바인딩 — S-17A 계열 관례 재사용)
+  Core/Config/DeviceConfigDto.cs
+    ← DeviceNodeDto 에 IsVirtual(bool?) / Expression(string?) 추가
+      (Collector\IIoT.Collector\Core\Config\DeviceConfigDto.cs 와 필드 1:1 동일화)
+  Core/Config/DeviceConfigService.cs
+    ← _MapNode() Tag 케이스: dto.IsVirtual = t.IsVirtual ? true : null (false 면
+      JSON 생략, 기존 DriverId 패턴과 동일) / dto.Expression 도 빈 문자열이면 null
+  Core/Config/DeviceConfigLoader.cs
+    ← _BuildNode() Tag 케이스: IsVirtual = dto.IsVirtual ?? false,
+      Expression = dto.Expression ?? string.Empty 복원 추가
+  Views/DeviceTree/TagEditorView.xaml
+    ← "Tag 이름" 바로 아래 "계산 Tag(가상)" 카드 신규: 체크박스 1개 + (체크 시에만
+      Visibility 표시되는) 계산식 TextBox 1개(Consolas, NCalc 문법 힌트 텍스트 포함)
+    ← 레지스터 종류 ComboBox / 레지스터 주소 TextBox / 데이터 타입 ComboBox 3개에
+      IsEnabled="{Binding IsNotVirtual}" 추가 — 계산 Tag 는 이 3개를 쓰지 않으므로
+      값은 보존한 채 회색 비활성 표시만 함(체크 해제 시 즉시 복원 가능)
+
+변경하지 않음(이미 완성돼 있어 재사용):
+  Collector\IIoT.Collector\Core\Engine\VirtualTagEngine.cs (C-18, 무수정)
+  Collector\IIoT.Collector\Core\Models\TagRuntimeConfig.cs (IsVirtual/Expression 이미 존재)
+  Collector\IIoT.Collector\Core\Config\DeviceConfigDto.cs / CollectorConfigLoader.cs
+    (IsVirtual/Expression 읽기·평탄화 로직 이미 존재)
+  Collector settings.json 의 VirtualTag(Enabled/IntervalMs) 섹션(C-SET-01 에서 이미
+    환경설정 탭에 노출됨 — 평가 주기·on/off 스위치는 그쪽에서 이미 조정 가능)
+
+⚠ 이번 작업 중 발견한 별개 잠복 버그(가상 Tag 와 무관, 손대지 않음 — 판단 필요):
+  DeviceConfigLoader.cs _BuildNode() 의 Tag 케이스가 dto.ScaleEntryId/AlarmEntryId 를
+  전혀 복원하지 않고, ScaleEntry/AlarmEntry 모델도 Id { get; } 가 생성자에서 매번
+  새 Guid.NewGuid() 로 고정돼 있어 _RestoreScaleLibrary/_RestoreAlarmLibrary 가
+  dto.Id 를 반영하지 못한다 — 즉 Studio 재시작(저장→재로드) 후 Tag 의 스케일/알람
+  라이브러리 연결이 끊길 가능성이 있다. 가상 Tag 기능과는 무관한 기존 결함이라
+  이번 범위에서는 수정하지 않고 후속·보류 항목에 별도 등록만 함(아래 참조).
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild (Studio) → 오류 0개
+  [ ] Clean → Rebuild (Collector) → 오류 0개 (DTO 필드 추가가 기존 C-18 로직과
+      충돌하지 않는지만 재확인 — Collector 측 로직 자체는 무수정)
+
+### 2단계: 런타임
+  [ ] Studio 실행 → Tag 노드 선택 → "계산 Tag(가상)" 체크 → 계산식 TextBox 표시됨
+  [ ] 체크 시 레지스터 종류/주소/데이터 타입 3개 입력란이 회색 비활성화(값은 유지)
+  [ ] 체크 해제 시 3개 입력란 다시 활성화, 값 그대로 남아있는지 확인
+  [ ] 계산식에 "[T001] + [T002] * 0.5" 형태 입력 후 저장 → device.json 의 해당
+      Tag 노드에 "isVirtual": true, "expression": "..." 로 기록되는지 확인
+      (일반 Tag 는 두 필드 모두 생략되는지도 함께 확인 — JSON 용량 최소화 원칙)
+  [ ] Studio 재시작 후 device.json 다시 로드 → 체크 상태/계산식 문자열 그대로 복원
+  [ ] Collector 실행(같은 device.json 참조) → 로그에 "가상 Tag 엔진 초기화 완료 —
+      N개 계산 Tag" 출력 확인 → 참조된 실제 Tag 값이 갱신되면 계산 Tag 값도
+      주기적으로(설정 IntervalMs) 갱신되는지 Monitor/HMI 등에서 확인
+  [ ] 참조 Tag 값이 아직 없는 상태(수집 시작 직후)에는 계산이 스킵되고, 값이
+      채워지면 이후 정상 평가되는지 확인(VirtualTagEngine._TryEvaluate 동작)
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Studio 실행 → 장비 트리에서 Tag 노드 선택
+  2. Tag 편집기 상단 "계산 Tag(가상)" 체크 → 계산식 TextBox 가 나타남
+  3. 계산식에 다른 Tag 를 [TagId] 형태로 참조해 수식 작성
+     예) "[T001] + [T002] * 0.5" — TagId 는 트리에서 해당 Tag 를 선택하면 좌측
+     트리 또는 속성 패널에서 확인 가능한 Tag 고유 ID(Guid)
+  4. 저장 후 Collector 를 재시작하면 계산 Tag 가 설정된 주기(Collector 환경설정
+     탭의 "가상Tag" 섹션 IntervalMs, 기본값)로 자동 평가되어 실제 Tag 와 동일하게
+     Monitor/HMI 화면·알람·이력 저장에 반영됩니다
+
+확인 포인트:
+  - 계산 Tag 는 PLC 폴링 대상이 아니므로 레지스터 종류/주소/데이터 타입은 무시됩니다
+  - 스케일/알람 라이브러리 연결은 계산 Tag 에도 그대로 사용 가능합니다(알람은
+    VirtualTagEngine 이 AlarmStateManager 를 직접 호출해 실제 Tag 와 동일하게 동작)
+  - 참조하는 Tag 중 하나라도 아직 값이 없으면 그 주기는 계산을 건너뜁니다(오류 아님)
+```
+
+---
+
+## ✅ S-Virtual02: Function 노드 — 가상 Tag Roslyn C# 고급 스크립트 모드 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: Studio 보류 4건 강화 트랙의 2번째 항목("Function 노드"). 착수 전 확인 결과
+NCalc(가상 Tag, S-Virtual01)가 이미 산술·비교·삼항·비트연산·Math 함수까지 기본
+지원하고 있어, 원래 설계안(A안 NCalc)이 목표하던 기능 대부분이 가상 Tag로
+이미 커버됨을 확인 — 사용자 확인(2026-07-20) 결과 Function 노드는 NCalc로는
+불가능한 "Roslyn C# 고급 스크립트 모드"(반복·상태 저장 등 임의 C# 로직)만
+가상 Tag에 추가하는 것으로 범위 확정. 별도의 캔버스 노드가 아니라 가상 Tag의
+계산 모드를 하나 더 늘리는 방식(NCalc 기본 / Roslyn 고급, 라디오 버튼 전환).
+
+경로: Studio\IIoT.Studio\ + Collector\IIoT.Collector\
+변경 파일 (기존 코드는 그대로 두고 신규 부분만 추가):
+  Collector\IIoT.Collector\IIoT.Collector.csproj
+    ← PackageReference Microsoft.CodeAnalysis.CSharp.Scripting 4.8.0 추가
+  Studio\IIoT.Studio\Models\TreeNode.cs
+    ← TagTreeNode 에 UseRoslynScript(bool) / ScriptCode(string) 추가
+    ← UseNCalcMode 계산 프로퍼티(get/set 모두 있음, ScaleEntry.IsLinear/
+      IsExpression 과 동일한 확정 패턴) — RadioButton 양방향 바인딩용,
+      신규 컨버터 발명 없음
+  Studio\IIoT.Studio\Core\Config\DeviceConfigDto.cs (Studio+Collector 양쪽)
+    ← DeviceNodeDto 에 UseRoslynScript(bool?) / ScriptCode(string?) 추가
+      (두 프로젝트 DTO 1:1 동일화 관례 유지)
+  Studio\IIoT.Studio\Core\Config\DeviceConfigService.cs / DeviceConfigLoader.cs
+    ← Tag 저장/복원 매핑에 두 필드 추가(false/빈 값이면 JSON 생략, S-Virtual01과
+      동일 관례)
+  Studio\IIoT.Studio\Views\DeviceTree\TagEditorView.xaml
+    ← "계산 Tag(가상)" 카드 안에 모드 선택 RadioButton 2개(NCalc 수식 / Roslyn
+      C# 스크립트) 추가. 선택된 모드에 따라 기존 NCalc TextBox 또는 신규 Roslyn
+      코드 TextBox(Consolas, 높이 110, 사용법 힌트 포함)만 표시
+  Collector\IIoT.Collector\Core\Models\TagRuntimeConfig.cs
+    ← UseRoslynScript(bool) / ScriptCode(string?) 추가
+  Collector\IIoT.Collector\Core\Config\CollectorConfigLoader.cs
+    ← _BuildTagRuntimeConfig() 평탄화에 두 필드 추가
+  Collector\IIoT.Collector\Core\Engine\VirtualTagScriptContext.cs (신규)
+    ← Roslyn 스크립트 globals 클래스 — Values(Dictionary&lt;string,double&gt;
+      스냅샷) / Result(double, 출력) / Suppress(bool, true 면 이번 주기 발행
+      생략) 3개 public 멤버. 스크립트 안에서 한정자 없이 바로 참조 가능
+      (Roslyn 스크립팅 globals 바인딩 규칙)
+  Collector\IIoT.Collector\Core\Engine\VirtualTagEngine.cs
+    ← _compiledScripts 캐시(Dictionary&lt;string, ScriptRunner&lt;object&gt;?&gt;)
+      추가 — Initialize() 시점에 Roslyn 모드 Tag 를 1회만 CSharpScript.Create
+      → Compile() → CreateDelegate() 로 컴파일해 캐싱(매 평가 주기 재컴파일 방지)
+    ← 컴파일 오류(Diagnostic Severity.Error)가 있으면 경고 로그만 남기고 해당
+      Tag 는 캐시에 null 로 기록 — 평가 루프에서 조용히 건너뜀(엔진 전체는 계속 동작)
+    ← _EvaluateAllAsync() 를 진짜 async 로 전환(기존 `return Task.CompletedTask`
+      제거) 하고 Tag.UseRoslynScript 여부로 NCalc 경로/Roslyn 경로 분기.
+      Roslyn 경로: VirtualTagScriptContext 생성(Values=현재 _liveValues 스냅샷)
+      → runner(ctx, ct) await → ctx.Suppress 면 발행 생략, 아니면 ctx.Result 를
+      기존 NCalc 경로와 동일하게 TagValueUpdatedEvent 발행 + AlarmStateManager 연동
+
+변경하지 않음(그대로 재사용):
+  VirtualTagEngine 의 기존 NCalc 실행 경로(_TryEvaluate)는 한 줄도 수정하지 않음
+  — Roslyn 은 완전히 별도 분기로 추가, 기존 가상 Tag 동작에 영향 없음
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild (Collector) → 오류 0개
+  [ ] Microsoft.CodeAnalysis.CSharp.Scripting NuGet 복원 확인(인터넷 연결 필요할 수 있음)
+  [ ] Clean → Rebuild (Studio) → 오류 0개
+
+### 2단계: 런타임
+  [ ] Studio 실행 → Tag 선택 → "계산 Tag(가상)" 체크 → "NCalc 수식"/
+      "Roslyn C# 스크립트(고급)" 라디오 버튼 2개 표시, 기본은 NCalc 선택
+  [ ] "Roslyn C# 스크립트" 선택 → NCalc TextBox 숨김, Roslyn 코드 TextBox 표시
+  [ ] Roslyn 코드에 `Result = Values["T001"] + Values["T002"] * 0.5;` 입력 후 저장
+      → device.json 에 useRoslynScript:true, scriptCode:"..." 기록 확인
+      (expression 필드는 생략되는지도 확인 — 두 모드 값이 서로 독립 보관되는지)
+  [ ] 라디오를 다시 NCalc 로 전환 → 이전에 입력했던 Roslyn 코드가 사라지지 않고
+      그대로 남아있는지 확인(모드 전환 시 데이터 유지)
+  [ ] Collector 실행 → 로그에 "가상 Tag 엔진 초기화 완료 — N개 계산 Tag
+      (Roslyn 스크립트 M개 컴파일 성공)" 출력 확인
+  [ ] Roslyn 스크립트가 정상 평가되어 Monitor/HMI 에 값이 반영되는지 확인
+  [ ] Roslyn 코드에 일부러 문법 오류(예: 세미콜론 누락)를 넣고 저장 → Collector
+      재시작 → 로그에 "Roslyn 스크립트 컴파일 오류" 경고만 남고 프로그램 자체는
+      정상 기동하는지 확인(해당 Tag 만 평가 제외, 엔진 전체 중단 없음)
+  [ ] `if (Values["T001"] < 0) Suppress = true;` 형태로 조건부 필터링 스크립트
+      작성 → 조건 충족 시 해당 주기에 값이 발행되지 않는지(Monitor 값 안 바뀜) 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Studio 실행 → Tag 선택 → "계산 Tag(가상)" 체크
+  2. "Roslyn C# 스크립트(고급)" 라디오 선택
+  3. 코드 입력 — Values["TagId"]/Result/Suppress 를 한정자 없이 바로 사용:
+     예) 두 Tag 합산: "Result = Values["T001"] + Values["T002"] * 0.5;"
+     예) 이상값 필터링: "if (Values["T001"] < 0) Suppress = true; else Result = Values["T001"];"
+  4. 저장 후 Collector 재시작 → 스크립트가 설정된 주기(가상Tag 섹션 IntervalMs)로
+     자동 실행되어 계산 결과가 실제 Tag 와 동일하게 반영됩니다
+
+확인 포인트:
+  - NCalc 수식과 Roslyn 스크립트는 완전히 독립적으로 저장됩니다 — 한쪽 모드로
+    입력한 내용은 다른 모드로 전환해도 사라지지 않고, 저장 시 현재 선택된
+    모드의 내용만 device.json 에 반영됩니다
+  - 컴파일은 Collector 시작 시 1회만 수행되므로, 스크립트를 수정한 뒤에는
+    반드시 Collector 를 재시작해야 변경사항이 반영됩니다
+  - 스크립트 문법 오류는 프로그램을 멈추지 않습니다 — 해당 Tag 만 계산에서
+    제외되고 나머지 Tag(NCalc·Roslyn 모두)는 정상 동작합니다
+```
+
+---
+
+## ✅ S-프로토콜01: 프로토콜 편집 — 읽기/쓰기 블록 N개 (Step A 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: Studio 보류 4건 강화 트랙의 3번째 항목("프로토콜편집"). 사용자 요청:
+"프로토콜 편집시 읽을 데이터 블럭 N개와 쓰는 데이터 블럭 N개 적용되도록 구성".
+착수 전 확인 결과 IIoT.Contracts 의 IProtocolDriver 는 Tag(주소) 단위
+ReadTagsAsync/WriteTagAsync 만 지원하고 블록/프레임 개념이 없음(레지스터 범위
+최적화는 "드라이버 내부에서" 하도록 되어 있음) — 두 가지 방향이 가능하여
+사용자에게 확인(2026-07-20): "① 기존 드라이버(Modbus/Mitsubishi)용 배치
+블록" / "② 커스텀 프레임(STX/LEN/CRC) 신규 드라이버" 중 선택 요청 → 사용자
+답변 "1,2 둘다 사용". 이번 범위(Step A)는 Studio 쪽 정의·저장·복원·PLC/장비
+연결까지 — Collector 쪽에서 실제로 이 블록을 읽고 쓰는 실행 엔진(Step B)은
+별도 후속 작업으로 분리(아래 "🔧 후속·보류 항목" 참조, N포트 때와 동일하게
+투명히 공지).
+
+경로: Studio\IIoT.Studio\ (+ Collector\IIoT.Collector\ DTO 미러링만)
+신규/변경 파일:
+  Studio\IIoT.Studio\Models\ProtocolLibrary.cs (신규)
+    ← ProtocolEntry(읽기/쓰기 ObservableCollection<ProtocolBlock> 각각 보유,
+      UseFraming/StxHex/HasLengthField/CrcType 로 커스텀 프레임 설정 겸용) /
+      ProtocolBlock(StartAddress/Length/CmdCode — CmdCode 비어있으면 표준
+      주소범위 블록, 채워지면 커스텀 프레임 블록으로 단일 모델이 양쪽 겸용) /
+      ProtocolField(블록 내 개별 값 — ByteOffset/BufType/Unit/Scale)
+  Studio\IIoT.Studio\ViewModels\ProtocolLibraryViewModel.cs (신규)
+    ← Scale/Alarm/Comm 라이브러리와 동일한 Entry CRUD(Add/Delete/MoveUp/
+      MoveDown) + 신규 블록 단위 CRUD(읽기/쓰기 블록 각각 Add/Delete) + 블록
+      내 필드 단위 CRUD(Add/Delete) — 3단계 계층 CRUD
+  Studio\IIoT.Studio\Views\Protocol\ProtocolLibraryView.xaml(.cs) (신규)
+    ← Scale/Alarm/Comm 라이브러리와 동일한 좌측 목록(280px)/우측 편집기(*)
+      마스터-디테일 레이아웃. 우측: 기본정보 → 프레임 설정(UseFraming 체크
+      시에만 STX/CRC/LEN 표시) → 읽기 블록 섹션(블록 목록+선택 블록 편집+
+      필드 목록) → 쓰기 블록 섹션(동일 구조 반복). 하단에 "커스텀 프레임 실행
+      엔진은 Collector 에 아직 없어 실제 통신에는 적용되지 않음" 안내 배너
+  Studio\IIoT.Studio\MainViewModel.cs / MainWindow.xaml / App.xaml.cs
+    ← ProtocolLibraryViewModel DI 등록 + "📡 프로토콜" 탭(인덱스 7) 추가
+      (Scale/Alarm/Comm 탭과 동일 패턴)
+  Studio\IIoT.Studio\Core\Config\DeviceConfigDto.cs (Studio+Collector 양쪽)
+    ← ProtocolEntryDto/ProtocolBlockDto/ProtocolFieldDto 신규 3종 +
+      DeviceConfigRoot.ProtocolLibrary(List) + DeviceNodeDto.ProtocolEntryId
+      (두 프로젝트 DTO 1:1 동일화 관례 유지 — Collector 는 아직 미소비)
+  Studio\IIoT.Studio\Core\Config\DeviceConfigService.cs
+    ← _BuildDto() 에 ProtocolLibrary 저장 루프 + _MapBlock 헬퍼 추가,
+      _MapNode() PLC/Device 케이스에 dto.ProtocolEntryId 매핑 추가
+  Studio\IIoT.Studio\Core\Config\DeviceConfigLoader.cs
+    ← _RestoreProtocolLibrary()/_BuildProtocolBlock() 신규 복원 메서드,
+      _BuildPlcNode()/_BuildDeviceNode() 에 ProtocolEntryId 복원 추가
+  Studio\IIoT.Studio\Models\TreeNode.cs
+    ← DeviceTreeNode/PlcTreeNode 에 ProtocolEntryId(Guid?) 추가 — CommEntryId
+      와 동일 패턴(null = 미사용, IsProtocolReferenced 계산 프로퍼티)
+  Studio\IIoT.Studio\Views\DeviceTree\PlcEditorView.xaml(.cs) /
+  DeviceEditorView.xaml(.cs)
+    ← "프로토콜 라이브러리 참조" ComboBox + "참조 해제" 버튼 추가 (통신
+      라이브러리 참조 ComboBox 와 동일한 코드비하인드 주입 패턴)
+
+변경하지 않음:
+  IIoT.Contracts 의 IProtocolDriver/기존 드라이버(Modbus/Mitsubishi) 는 이번
+  범위에서 손대지 않음 — Step B 에서 배치 최적화/Raw 드라이버 작업 시 별도 검토
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild (Studio) → 오류 0개
+  [ ] Clean → Rebuild (Collector) → 오류 0개 (DTO 미러링만, 로직 변경 없음)
+
+### 2단계: 런타임
+  [ ] Studio 실행 → 상단 탭에 "📡 프로토콜" 탭(7번째) 표시 확인
+  [ ] 프로토콜 탭 → [+ 추가] → 새 프로토콜 항목 생성 → 좌측 목록에 표시 확인
+  [ ] 읽기 블록 [+ 추가] → StartAddress/Length 입력 → 필드 [+ 추가] → Name/
+      ByteOffset/BufType 입력 → 목록 미리보기(PreviewSummary)에 반영 확인
+  [ ] 쓰기 블록도 동일하게 추가 → "읽기 N개 · 쓰기 N개" 요약 텍스트 확인
+  [ ] "커스텀 프레임 사용" 체크 → STX/CRC/LEN 설정 UI 표시 확인, 체크 해제 시
+      숨김 확인
+  [ ] 저장 → device.json 에 protocolLibrary 배열 기록 확인(readBlocks/
+      writeBlocks/fields 중첩 구조 포함)
+  [ ] Studio 재시작 → 프로토콜 탭에 저장했던 항목·블록·필드가 그대로 복원
+      되는지 확인
+  [ ] PLC 노드 선택 → "프로토콜 라이브러리 참조" ComboBox 에서 방금 만든
+      프로토콜 선택 → 저장 후 재시작 → 선택이 유지되는지 확인
+  [ ] "참조 해제" 버튼 → ComboBox 선택이 풀리고 device.json 에서 
+      protocolEntryId 가 생략되는지 확인
+  [ ] 장비(Device) 노드에서도 동일하게 프로토콜 참조 ComboBox 동작 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Studio 실행 → 상단 "📡 프로토콜" 탭 이동
+  2. [+ 추가] 로 새 프로토콜 항목 생성 → 이름/설명 입력
+  3. 읽기 블록 목록에서 [+ 추가] → 시작주소/길이(또는 CMD 코드) 입력 →
+     블록 안 필드 목록에서 [+ 추가] 로 개별 값(오프셋/타입/단위) 정의
+  4. 쓰기 블록도 동일하게 N개 구성
+  5. 커스텀 프레임(STX/LEN/CRC) 통신이 필요하면 "커스텀 프레임 사용" 체크 후
+     설정 → CmdCode 를 채운 블록으로 구성
+  6. 완성된 프로토콜을 PLC/장비 편집기의 "프로토콜 라이브러리 참조"
+     ComboBox 에서 선택해 연결
+
+확인 포인트:
+  - 현재는 Studio 화면에서 프로토콜을 "정의·저장·PLC 연결"까지만 가능합니다.
+    실제 통신 시 이 블록 정의대로 읽고 쓰는 Collector 실행 엔진은 아직 없어,
+    지금 프로토콜을 만들어 PLC 에 연결해도 실제 수집 동작에는 영향이 없습니다
+    (N포트 때와 동일한 상황 — 화면 정의 완료, 실행 엔진은 후속 작업)
+    ★ 2026-07-20 갱신: 아래 "✅ S-프로토콜01 Step B" 절에서 Collector 실행
+    엔진이 완료되어 이 문단은 더 이상 유효하지 않습니다 — 이제 PLC/장비에
+    프로토콜을 연결하면 실제로 블록이 폴링되어 값이 Monitor/HMI 에 반영됩니다.
+  - 표준 주소범위 블록(CmdCode 비움)과 커스텀 프레임 블록(CmdCode 채움)은
+    같은 ProtocolBlock 모델을 공유합니다 — 둘을 섞어 쓸 수도 있습니다
+```
+
+---
+
+## ✅ S-프로토콜01 Step B: Collector 실행 엔진 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: 위 "✅ S-프로토콜01"(Step A)에서 Studio 쪽 프로토콜 라이브러리 정의·저장·
+PLC 연결까지 완료했으나, 실제로 이 블록을 읽고 쓰는 Collector 측 실행 엔진은
+후속으로 분리해 두었던 항목. 사용자 확인(2026-07-20)으로 착수. 착수 전 코드
+확인 결과 ①"기존 드라이버 배치 최적화"는 ModbusTcpDriver/MitsubishiDriver
+가 이미 ReadTagsAsync 내부에서 연속 주소를 자동으로 묶어 배치 읽기를
+하고 있어 사실상 완료된 상태임을 확인 — 사용자에게 "②커스텀 프레임 드라이버만
+신규 구현" vs "①②모두 명시적으로 구현" 중 선택 요청 → "①②모두 명시적으로
+구현" 답변. 단, IProtocolDriver 인터페이스가 Tag 주소 단위 읽기/쓰기만
+지원해 프로토콜 블록/필드 구조를 전달할 수 없어 인터페이스 확장이 필요함을
+확인 후 진행.
+
+핵심 설계: 표준 블록(CmdCode 없음)·커스텀 프레임 블록(CmdCode 있음) 모두
+동일한 IBlockProtocolDriver.ReadBlockAsync(ProtocolBlockSpec) 경로로 통일—
+FlowEngine 은 블록 타입을 구분하지 않고 "연결된 드라이버가 이 인터페이스를
+구현하는가"만 확인한다. 어떤 블록을 어떻게 처리할지는 각 드라이버가
+스스로 판단(표준 드라이버는 커스텀 프레임 블록을 거부, RawFrame 드라이버는
+표준 블록을 거부).
+
+경로: Contracts\ + Plugins\ + Collector\IIoT.Collector\
+신규/변경 파일:
+  Contracts\Models\ProtocolBlockSpec.cs (신규)
+    ← ProtocolFieldSpec(Id/Name/ByteOffset/BufType/Unit) record ·
+      ProtocolBlockSpec(Id/Name/StartAddress/Length/CmdCode/Fields +
+      UseFraming/StxHex/HasLengthField/CrcType — ProtocolEntry 레벨 프레이밍
+      설정을 블록 단위로 평탄화) record, IsStandardBlock 계산 프로퍼티
+      (CmdCode 비어있으면 true) · BlockReadResult/BlockWriteResult(Ok/Fail
+      팩토리, 기존 DriverReadResult/DriverWriteResult 와 동일 패턴)
+  Contracts\Interfaces\IBlockProtocolDriver.cs (신규)
+    ← ReadBlockAsync(ProtocolBlockSpec)/WriteBlockAsync(...) 2개 메서드의
+      선택적(opt-in) 확장 인터페이스 — IProtocolDriver 와 별도로, 구현하는
+      드라이버만 `driver is IBlockProtocolDriver` 로 캐스팅해 사용
+  Plugins\IIoT.Driver.ModbusTcp\ModbusTcpDriver.cs
+  Plugins\IIoT.Driver.Mitsubishi\MitsubishiDriver.cs
+    ← 둘 다 IBlockProtocolDriver 추가 구현 — 기존 내부 레지스터/소자
+      읽기·쓰기 로직(_ReadRegistersAsync/_ReadWordsRawAsync 등)을 그대로
+      재사용해 StartAddress/Length 기준으로 블록을 읽고 Fields(ByteOffset를
+      워드 오프시로 취급/BufType)로 슬라이싱. 커스텀 프레임 블록(CmdCode
+      있음)이 들어오면 명확한 오류 메시지와 함께 거부(raw-frame 드라이버
+      필요 안내). 미쓰비시는 비트 소자(X/Y/M 등) 블록도 미지원으로 거부
+      (워드 소자만 지원, 범위 제한 명시)
+  Plugins\IIoT.Driver.RawFrame\ (신규 프로젝트)
+    ← IIoT.Driver.RawFrame.csproj(다른 드라이버 플러그인과 동일한 빌드 후
+      Studio/Collector Plugins/ 자동 복사 패턴) · RawFramePlugin.cs(driverId
+      "raw-frame", PlcVendor.Free) · RawFrameDriver.cs — [STX][LEN?][CMD]
+      [DATA][CRC?] 프레임을 조립·파싱하는 참조 구현. ReadTagsAsync/
+      WriteTagAsync(Tag 주소 단위)는 명확히 미지원 처리(Fail 반환, 블록
+      전용임을 안내) — ReadBlockAsync/WriteBlockAsync 만 실제로 동작.
+      CRC 3종 구현: Crc16Modbus(표준 다항식 0xA001)/Xor/Sum, None 은 CRC
+      미부착. ★ 응답 프레임도 요청과 동일하게 LEN 필드가 있다고 가정하고
+      파싱하는 참조 구현 한계는 후속·보류 항목에 등록(아래 참조)
+  Plugins\IIoT.Driver.sln
+    ← IIoT.Driver.RawFrame 프로젝트 등록(새 GUID, Debug/Release 설정 추가)
+  Collector\IIoT.Collector\Core\Models\PlcRuntimeConfig.cs
+    ← ProtocolBlocks(List<ProtocolBlockSpec>) 추가 — CollectorConfigLoader 가
+      채우고 FlowEngine 이 폴링 시 사용
+  Collector\IIoT.Collector\Core\Models\TagRuntimeConfig.cs
+    ← IsProtocolBlockField(bool) 추가 — 프로토콜 블록 필드에서 자동 합성된
+      placeholder Tag 표시. true 인 Tag 는 일반 주소 폴링에서 제외되고
+      블록 폴링 경로에서만 값이 채워짐(DeviceInstance 트리에는 정상 포함되어
+      Monitor/HMI 에서 일반 Tag 처럼 조회·표시됨)
+  Collector\IIoT.Collector\Core\Models\ProtocolFieldTagId.cs (신규)
+    ← plcId/blockId/fieldId → 합성 TagId 생성 규칙을 한 곳에 모은 정적
+      헬퍼(CollectorConfigLoader 의 placeholder Tag 생성과 FlowEngine 의
+      값 발행이 동일 규칙을 공유해야 서로 매칭되므로 분리)
+  Collector\IIoT.Collector\Core\Config\CollectorConfigLoader.cs
+    ← ProtocolLibrary(Dictionary<string, ProtocolEntryDto>) 인덱스 추가
+      (ScaleLibrary/AlarmLibrary 와 동일 패턴) · _BuildPlcRuntimeConfig 에서
+      PLC.ProtocolEntryId 를 이 인덱스로 조회해 ReadBlocks 를
+      ProtocolBlockSpec 목록(_BuildProtocolBlockSpec)으로 변환해
+      plc.ProtocolBlocks 에 채움 + 블록의 각 필드마다 placeholder
+      TagRuntimeConfig 를 plc.Tags 에 함께 추가(IsProtocolBlockField=true)
+  Collector\IIoT.Collector\Core\Engine\FlowEngine.cs
+    ← _PollOnceAsync 의 enabledTags 필터에 `!IsProtocolBlockField` 조건
+      추가(일반 폴링에서 제외) · 매 폴링 사이클 끝에
+      _PollProtocolBlocksAsync(plc, driver, ct) 호출 추가 — plc.ProtocolBlocks
+      를 순회하며 driver 가 IBlockProtocolDriver 를 구현하는지 확인 후
+      ReadBlockAsync 호출, 필드 값을 ProtocolFieldTagId 로 만든 TagId 로
+      TagValueUpdatedEvent 발행(기존 Tag 값 발행과 동일 이벤트, EngValue 는
+      스케일 미적용 — Raw 값을 double 변환한 값 그대로) · 드라이버가
+      IBlockProtocolDriver 미구현이면 PLC 당 1회만 경고 로그(_blockUnsupportedWarned)
+      후 조용히 건너뜀 — 일반 Tag 수집은 계속 정상 동작
+
+변경하지 않음:
+  IProtocolDriver 의 기존 Tag 단위 ReadTagsAsync/WriteTagAsync 경로, 기존
+  FlowEngine 폴링·재연결·일시정지 로직은 한 줄도 수정하지 않음 — 프로토콜
+  블록 폴링은 완전히 별도 경로로 추가(기존 Tag 수집 동작에 영향 없음)
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild (Contracts) → 오류 0개
+  [ ] Clean → Rebuild (Plugins\IIoT.Driver.sln — ModbusTcp/Mitsubishi/Virtual/
+      RawFrame 전부) → 오류 0개, RawFrame.dll 이 생성되는지 확인
+  [ ] Studio/Collector 빌드 후 bin\...\Plugins\ 폴더에 IIoT.Driver.RawFrame.dll
+      이 자동 복사되는지 확인(csproj AfterTargets="Build" 카피 타겟)
+  [ ] Clean → Rebuild (Collector) → 오류 0개
+
+### 2단계: 런타임
+  [ ] Collector 실행 → 로그에 "드라이버 플러그인 로드 완료: N개" 에 raw-frame
+      포함 확인
+  [ ] Studio 에서 PLC 하나를 만들고 driverId="modbus-tcp" 로 설정 → 프로토콜
+      탭에서 읽기 블록 1개(표준, CmdCode 비움) 만들어 이 PLC 에 연결 → 저장
+  [ ] Collector 재시작 → 로그에 "device.json 로드 완료 — ... N개 프로토콜
+      (M개 블록 연결됨)" 표시 확인
+  [ ] Collector 로그에 프로토콜 블록 읽기 성공/실패 여부가 보이는지 확인
+      (읽기 실패 시 "프로토콜 블록[...] 읽기 실패: ..." 경고 로그)
+  [ ] Monitor 또는 DeviceInstanceService.GetDevice() 조회 시 해당 PLC 의
+      Tags 목록에 블록 필드 이름의 Tag(예: "블록1.필드1")가 포함되고 값이
+      갱신되는지 확인
+  [ ] PLC의 driverId 를 "modbus-tcp" 유지한 채 프로토콜에 커스텀 프레임
+      블록(CmdCode 채움)을 연결 → Collector 로그에 "표준 주소범위 블록만
+      지원합니다" 경고와 함께 해당 블록만 건너뛰는지 확인(일반 Tag 수집은
+      계속 정상 동작)
+  [ ] driverId="raw-frame" 인 PLC/장비를 만들고 커스텀 프레임 블록(STX/CRC
+      설정 포함)을 연결 → 실제 장비 또는 테스트 서버와 통신해 프레임
+      송수신이 되는지 확인(이 항목은 실제 커스텀 프레임 장비가 있어야
+      검증 가능 — 프레임 구조가 다르면 RawFrameDriver.cs 조정 필요)
+  [ ] driverId="virtual"(IIoT.Driver.Virtual) 인 PLC 에 프로토콜을 잘못
+      연결한 경우 → 로그에 "IBlockProtocolDriver 를 지원하지 않습니다" 경고가
+      PLC 당 1회만 남고 반복되지 않는지 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Studio 에서 프로토콜 라이브러리(📡 프로토콜 탭)로 읽기/쓰기 블록을
+     정의하고 PLC/장비 편집기에서 "프로토콜 라이브러리 참조"로 연결(Step A)
+  2. 표준 주소범위 블록(CmdCode 비움)은 PLC 의 기존 드라이버(modbus-tcp/
+     mitsubishi-mc)가 그대로 실행합니다 — 별도 드라이버 변경 불필요
+  3. 커스텀 프레임 블록(CmdCode 채움, STX/LEN/CRC 설정)을 쓰려면 해당 PLC/
+     장비의 드라이버를 "raw-frame" 으로 지정해야 합니다(Studio PLC 편집기
+     드라이버 드롭다운에서 선택)
+  4. 저장 후 Collector 재시작 → 블록의 각 필드가 자동으로 Tag 처럼 생성되어
+     (이름: "블록이름.필드이름") 폴링·발행되며, Monitor/HMI 화면에 다른
+     Tag 와 동일하게 표시됩니다
+
+확인 포인트:
+  - ★ 2026-07-20 갱신: 아래 "✅ S-프로토콜01 Step B 후속" 절에서 ScaleEntryId
+    연결 기능이 추가되어, 필드에 스케일 라이브러리를 연결하면 이제 실제
+    Raw→공학단위 변환이 적용됩니다(미연결 시에는 기존과 동일하게 Raw 그대로).
+  - 표준 블록에 raw-frame 드라이버를 연결하거나, 커스텀 프레임 블록에
+    modbus-tcp/mitsubishi-mc 를 연결하는 등 블록 타입과 드라이버가 맞지
+    않으면 해당 블록만 조용히 건너뛰고 경고 로그만 남습니다(수집 전체가
+    멈추지 않음)
+  - RawFrame 드라이버는 참조 구현입니다 — 실제 사용하는 장비의 프레임
+    규격(응답 헤더 구성, DATA 순서 등)이 다르면 RawFrameDriver.cs 를
+    프로젝트별로 조정해야 할 수 있습니다(★ 2026-07-20: LEN 필드 미사용 응답
+    파싱과 응답 CRC 검증은 아래 Step B 후속 절에서 해소됨)
+```
+
+---
+
+## ✅ S-프로토콜01 Step B 후속: RawFrame 한계 보완 + ScaleEntryId 연결 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: 위 "✅ S-프로토콜01 Step B" 절에서 문서화했던 한계 3건(RawFrame 응답이
+항상 LEN 필드를 가진다고 가정 / 응답 CRC 미검증 / ScaleMin·ScaleMax 미적용)을
+사용자 확인(2026-07-20)으로 이번 세션에서 모두 해소.
+
+① RawFrame LEN 필드 미사용(HasLengthField=false) 응답 파싱 지원
+   ② RawFrame 응답 CRC 검증 추가 는 함께 해결(둘 다 RawFrameDriver.cs 수신부).
+   ③ 필드 스케일 변환은 기존 ScaleMin/ScaleMax(참고용 2값 구조, 조사 결과
+      TagTemplateItem.ScaleMin/Max 와 동일하게 Collector 에서 실제 변환식으로
+      쓰인 적이 없는 "참고용 표시 범위"였음을 확인) 대신, Tag 와 동일한
+      ScaleEntryId(스케일 라이브러리 RawMin/RawMax/EngMin/EngMax 4값 구조)
+      연결 방식을 신규 도입 — 사용자가 "ScaleEntryId 연결 신규 구현"을 선택.
+
+경로: Plugins\IIoT.Driver.RawFrame\ + Contracts\ + Studio\IIoT.Studio\ + Collector\IIoT.Collector\
+변경 파일:
+  Plugins\IIoT.Driver.RawFrame\RawFrameDriver.cs
+    ← _SendReceiveAsync/_ReadRestOfFrameAsync 에 ProtocolBlockSpec block 매개변수
+      추가. HasLengthField=true 면 기존과 동일하게 LEN 바이트를 읽어 본문 길이를
+      알아내고, false 면 LEN 바이트를 읽지 않고 block.Length(커스텀 프레임
+      블록의 DATA 바이트 수 약속)를 고정 길이로 사용해 CMD(1)+DATA(Length)
+      만큼만 읽음 — 두 경우 모두 _ExtractPayload 의 헤더 길이 계산을
+      block.HasLengthField 기준으로 동적 처리하도록 함께 수정
+    ← 응답 CRC 검증 신규: CrcType 이 None 이 아니면 수신 CRC 바이트를 읽어
+      STX(+LEN)+CMD+DATA 구간에 대해 재계산한 CRC 와 비교, 불일치 시
+      OnError 로그 남기고 null(실패) 반환 — 이전에는 요청 CRC만 계산하고
+      응답 CRC 는 검증하지 않았음
+  Contracts\Models\ProtocolBlockSpec.cs
+    ← ProtocolFieldSpec 에 ScaleEntryId(string?, 기본값 null) 추가(위치 매개변수
+      마지막에 기본값과 함께 추가해 기존 생성 코드와 호환)
+  Studio\IIoT.Studio\Models\ProtocolLibrary.cs
+    ← ProtocolField 에 ScaleEntryId(Guid?) 추가 — 기존 ScaleMin/ScaleMax(참고용
+      표시 범위)는 그대로 유지, 서로 독립적인 값
+  Studio\IIoT.Studio\Core\Config\DeviceConfigDto.cs / DeviceConfigService.cs /
+  DeviceConfigLoader.cs
+    ← ProtocolFieldDto.ScaleEntryId(string?) 추가 + 저장 시 f.ScaleEntryId?.ToString()
+      직렬화 + 복원 시 Guid.TryParse 로 파싱해 필드에 대입(Tag 의 ScaleEntryId/
+      AlarmEntryId 복원 누락 버그(후속·보류 항목 ⑤)와 달리 이번 ProtocolField
+      복원은 정상적으로 구현함)
+  Studio\IIoT.Studio\ViewModels\ProtocolLibraryViewModel.cs
+    ← ScaleLibraryViewModel 생성자 주입 추가(DeviceTreeViewModel 과 동일 패턴,
+      DI 자동 생성자 주입이라 App.xaml.cs 변경 불필요) + ClearFieldScaleCommand
+      (ProtocolField? field) 신규 — 필드의 ScaleEntryId 를 null 로 해제
+      (읽기/쓰기 필드 공용, 필드 자체를 CommandParameter 로 받으므로 블록
+      구분 불필요)
+  Studio\IIoT.Studio\Views\Protocol\ProtocolLibraryView.xaml
+    ← 읽기/쓰기 블록 필드 DataTemplate 에 스케일 라이브러리 콤보(ItemsSource=
+      DataContext.ScaleLibrary.Entries, DisplayMemberPath=Name, SelectedValuePath=Id,
+      SelectedValue=필드의 ScaleEntryId) + "✕" 연결 해제 버튼 추가(TagEditorView
+      의 ScaleCombo 와 동일한 관례) — ListBox 높이를 90→112 로 확장해 2번째
+      행(스케일 콤보) 표시 공간 확보. 하단 안내 문구도 Step B 완료 상태에
+      맞게 갱신(더 이상 "실행 엔진 없음" 이 아님을 반영)
+  Collector\IIoT.Collector\Core\Config\DeviceConfigDto.cs
+    ← ProtocolFieldDto.ScaleEntryId(string?) 미러링 추가
+  Collector\IIoT.Collector\Core\Config\CollectorConfigLoader.cs
+    ← _BuildProtocolBlockSpec 에서 ProtocolFieldSpec 생성 시 ScaleEntryId 도
+      함께 전달 + 필드별 placeholder TagRuntimeConfig 합성 시 field.ScaleEntryId
+      를 그대로 대입(합성 Tag 가 스케일 참조까지 보유하게 됨)
+  Collector\IIoT.Collector\Core\Engine\FlowEngine.cs
+    ← _PollProtocolBlocksAsync 시작부에 plc.Tags 중 IsProtocolBlockField 인
+      것만 Id 로 조회하는 딕셔너리(blockTagsById) 구성 → 필드 값 발행 직전
+      해당 TagId 로 합성 Tag 를 찾아 _scaleEngine.Apply(tagConfig, raw) 호출
+      (일반 Tag 폴링 경로와 동일한 ScaleEngine 재사용 — Linear/Expression
+      모드 모두 그대로 지원) → EngValue/Unit/DecimalPlaces/WasScaled 를 스케일
+      결과로 발행. 합성 Tag 를 못 찾은 경우(이론상 미발생)만 이전처럼 Raw
+      double 캐스팅 값으로 폴백
+
+변경하지 않음:
+  ModbusTcpDriver/MitsubishiDriver 의 ReadBlockAsync/WriteBlockAsync, 표준
+  블록 처리 로직은 스케일과 무관하므로 손대지 않음(스케일 적용은 전적으로
+  FlowEngine 쪽 책임). 기존 ScaleMin/ScaleMax 필드·UI 도 그대로 유지(참고용
+  표시 범위로 계속 사용 가능, ScaleEntryId 와는 독립).
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild (Contracts) → 오류 0개
+  [ ] Clean → Rebuild (Plugins\IIoT.Driver.sln) → 오류 0개
+  [ ] Clean → Rebuild (Studio) → 오류 0개
+  [ ] Clean → Rebuild (Collector) → 오류 0개
+
+### 2단계: 런타임
+  [ ] Studio 프로토콜 탭에서 읽기 블록 필드에 스케일 라이브러리(Linear 모드,
+      예: RawMin=0/RawMax=4095/EngMin=0/EngMax=100) 연결 → 저장
+  [ ] Collector 재시작 → 해당 필드의 Tag 값이 Raw 그대로가 아니라 스케일
+      변환된 값(EngValue)으로 발행되는지 Monitor/HMI 에서 확인
+  [ ] "✕" 버튼으로 스케일 연결 해제 → 저장 → 재시작 → 다시 Raw 그대로 발행되는지 확인
+  [ ] raw-frame 드라이버 PLC 에 HasLengthField=false 인 커스텀 프레임 블록을
+      연결 → 실제 장비(또는 테스트 서버)와 통신해 LEN 바이트 없이 고정 길이
+      (block.Length 기준)로 응답을 올바르게 파싱하는지 확인
+  [ ] CrcType=Crc16Modbus(또는 Xor/Sum) 블록에서 응답 CRC 를 의도적으로 깨진
+      값으로 보내는 테스트 → Collector 로그에 "응답 CRC 불일치" 경고가 남고
+      해당 폴링만 실패 처리되는지 확인(수집 전체는 계속 정상 동작)
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Studio 프로토콜 라이브러리에서 블록의 필드를 선택하고, 필드 목록 각 행의
+     "스케일 라이브러리" 콤보에서 미리 정의한 스케일 항목을 선택
+  2. 저장 후 Collector 재시작 → 해당 필드 값이 자동으로 Raw→공학단위 변환되어
+     발행됩니다(Tag 의 스케일 연결과 완전히 동일한 방식)
+  3. "✕" 버튼으로 연결을 해제하면 다시 Raw 값 그대로 발행됩니다
+  4. 커스텀 프레임(raw-frame) 블록에서 LEN 필드를 쓰지 않는 장비도 이제
+     정상적으로 응답을 파싱하며, CRC 를 사용하는 경우 응답 CRC 도 함께
+     검증됩니다(불일치 시 해당 폴링만 실패 처리, 수집 자체는 중단되지 않음)
+
+확인 포인트:
+  - ScaleMin/ScaleMax(참고용 표시 범위)와 ScaleEntryId(실제 변환)는 서로
+    별개입니다 — 화면에 남아있는 ScaleMin/Max 값은 여전히 참고용일 뿐이며,
+    실제 변환을 적용하려면 반드시 스케일 라이브러리를 연결해야 합니다
+  - RawFrame 드라이버는 여전히 "응답 헤더 구조가 요청과 동일하다"고 가정하는
+    참조 구현입니다 — 실제 장비가 다른 헤더 구조를 쓰면 RawFrameDriver.cs 를
+    프로젝트별로 조정해야 합니다
+```
+
+---
+
+## ✅ S-20: N포트 노드 — 입력N/출력N 포트 라우팅 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: Studio 보류 4건 강화 트랙의 마지막 항목("N포트"). 이전 세션(S-Virtual02
+착수 전)에 Studio 의 "수집 흐름 캔버스"(collect.json, S-11~S-14)를 Collector
+가 전혀 소비하지 않는다는 사실을 확인해 우선순위를 뒤로 미뤘던 항목 —
+사용자 확인(2026-07-20)으로 이번 세션에 착수. 스킬 문서의 "N포트 노드
+아키텍처(S-20)" 설계(1:N 분기 / N:1 병합, AbstractCanvasNode.InputPorts/
+OutputPorts 는 이미 List<NodePort> 로 다중 포트를 지원하도록 설계되어 있었으나
+실제로 N>1 포트를 쓰는 노드 타입도, 포트를 추가/삭제하는 UI도 없었음)를 그대로
+구현. Studio 캔버스 전용 기능이라 위 프로토콜편집(S-프로토콜01) 때와 동일하게
+"화면 정의는 완료되나 Collector 가 소비하지 않아 실제 수집 동작에는 영향 없음"
+상태는 그대로 유지.
+
+경로: Studio\IIoT.Studio\ (전부 — Collector 변경 없음, collect.json 비소비 트랙)
+신규/변경 파일:
+  Studio\IIoT.Studio\Core\Canvas\CanvasNode.cs
+    ← NodePort.Index/Label 을 init→set 으로 변경(포트 삭제 시 재인덱싱, 사용자
+      이름변경 지원) · AbstractCanvasNode.InputPorts/OutputPorts 를
+      List<NodePort>→ObservableCollection<NodePort> 로 전환(XAML ItemsControl
+      이 Add/Remove 시 별도 Refresh() 없이 자동 갱신) · CardHeight 계산
+      프로퍼티 신규 추가(포트 개수에 맞춰 카드 높이 확장, 포트가 카드 밖으로
+      삐져나가지 않도록) · 공개 포트 CRUD 4종 추가: AddInputPort/
+      RemoveInputPort/AddOutputPort/RemoveOutputPort(각 최소 1개 포트 유지,
+      삭제 후 재인덱싱) · 신규 노드 2종: SplitterNode(1입력 N출력, 기본 2개
+      출력으로 시작 — 1:N 분기) / CompositeCalcNode(N입력 1출력 + Expression
+      문자열, 기본 2개 입력으로 시작 — N:1 병합, NCalc 식에서 입력 포트를
+      "[라벨]" 형태로 참조하는 문법은 가상Tag(S-Virtual01)와 동일하게 통일) ·
+      CanvasNodeFactory 에 두 타입 등록 + ProcessItems 팔레트에 추가
+  Studio\IIoT.Studio\ViewModels\CanvasViewModel.cs
+    ← IsSplitterSelected/IsCompositeCalcSelected 계산 프로퍼티(선택된 노드
+      타입에 따라 속성 패널 표시 여부) · NodePortsChanged 이벤트(포트
+      추가/삭제 시 코드비하인드의 PortsLayer 수동 재구성을 트리거) ·
+      AddSelectedNodeInputPort/OutputPort, RemoveSelectedNodeInputPort/
+      OutputPort 커맨드 4개 — 포트 삭제 시 그 포트에 연결된 Connections 도
+      함께 정리(_RemoveConnectionsForPort, 끊어진 연결선이 남지 않도록)
+  Studio\IIoT.Studio\Views\Canvas\CanvasView.xaml(.cs)
+    ← NodeCardTemplate 의 Border.MinHeight 를 고정값 60→{Binding CardHeight}
+      바인딩으로 변경(포트 많은 노드도 카드 안에 다 들어오도록, 기존
+      DeviceCanvasNode 의 Tag 미리보기로 인한 높이 자동 확장은 MinHeight 라
+      그대로 유지됨) · 우측 오버레이 패널 2종 신규 추가(캔버스 패닝/줌 영향
+      없는 화면 고정 좌표) — 🔱분배기 패널(출력 포트별 이름변경 TextBox+삭제
+      버튼+"+ 출력 추가", Splitter 선택 시만 표시) / 🧮복합계산 패널(입력
+      포트 이름변경+삭제+"+ 입력 추가" 및 NCalc 식 TextBox, CompositeCalc
+      선택 시만 표시) · 코드비하인드: NodePortsChanged 구독 추가(_vm 교체 시
+      이전 구독 해제 포함)
+  Studio\IIoT.Studio\Core\Config\CollectConfigService.cs / CollectConfigLoader.cs
+    ← Splitter(OutputLabels)/CompositeCalc(InputLabels+Expression) 저장·복원
+      추가 · ★ 기존 버그 수정: CanvasConnectionDto 에 SourcePortIndex/
+      TargetPortIndex 추가 — 종전에는 연결선 복원 시 포트 정보 없이
+      OutputPorts.FirstOrDefault()/InputPorts.FirstOrDefault() 로만 매칭해
+      다중 포트 노드는 항상 "첫 번째 포트"로만 연결이 복원되는 결함이 있었음
+      (단일 포트 노드만 있던 종전에는 드러나지 않던 잠복 버그). 저장 시 실제
+      포트의 Index 를 함께 기록하고, 복원 시 Index 매칭 우선 → 실패 시 첫
+      포트로 폴백(구버전 collect.json 하위호환)
+
+변경하지 않음:
+  기존 8종 노드(DeviceCanvasNode/ModbusInput/TcpInput/BufferParser/
+  ScaleFilter/DbOutput/MqttOutput)의 생성자·직렬화 로직은 무수정 — 포트 1개
+  고정인 기존 노드는 이번 변경(List→ObservableCollection 등)의 영향을 받지
+  않고 그대로 동작
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild (Studio) → 오류 0개 (Collector 변경 없음)
+
+### 2단계: 런타임
+  [ ] Studio 실행 → 장비 관리 탭 → 캔버스 하위 탭 → 좌측 팔레트 "처리 노드"
+      섹션에 "🔱 분배기(N출력)" / "🧮 복합계산(N입력)" 2개 항목 표시 확인
+  [ ] 분배기 노드를 캔버스에 추가 → 입력 포트 1개(좌측)·출력 포트 2개(우측,
+      기본값)가 카드 높이 안에 모두 표시되는지 확인
+  [ ] 분배기 선택 → 우측에 "🔱 분배기 출력 포트" 패널 표시 확인 → 출력
+      TextBox 이름 변경 → 카드의 포트 위치는 그대로, 이름만 바뀌는지 확인
+      (포트 이름은 커넥션 드래그 시 툴팁으로 확인 가능)
+  [ ] "+ 출력 추가" 클릭 → 출력 포트 3개로 증가, 카드 높이도 자동으로
+      늘어나는지(CardHeight) 확인
+  [ ] 출력 포트 옆 "✕" 클릭 → 포트 삭제 + 카드 높이 축소 확인, 단 마지막
+      1개 남았을 때는 삭제 버튼을 눌러도 삭제되지 않는지(최소 1개 유지) 확인
+  [ ] 복합계산 노드 추가 → 입력 포트 2개(기본) 확인 → "🧮 복합계산 입력 포트"
+      패널에서 "+ 입력 추가"/"✕" 로 개수 조절, NCalc 식 입력(예: "[입력1] +
+      [입력2]") 확인
+  [ ] 분배기 출력 3개 각각을 서로 다른 노드(예: DB Output 3개)에 연결 →
+      저장(💾 저장 버튼) → collect.json 을 열어 connections 배열에
+      sourcePortIndex 가 0/1/2 로 서로 다르게 기록되는지 확인
+  [ ] Studio 재시작 → 분배기 노드의 출력 포트 이름·개수, 각 연결선이 저장
+      전과 동일한 포트로 정확히 복원되는지 확인(과거에는 항상 첫 포트로만
+      복원되는 버그가 있었던 부분 — 이번에 함께 수정됨)
+  [ ] 복합계산 노드도 재시작 후 입력 포트 이름·개수·NCalc 식이 그대로
+      복원되는지 확인
+  [ ] 기존 8종 노드(Modbus Input 등)는 이번 변경과 무관하게 종전처럼
+      정상 동작하는지(회귀 없음) 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Studio 실행 → 장비 관리 탭의 캔버스 화면 → 좌측 팔레트 "처리 노드"에서
+     "🔱 분배기(N출력)" 또는 "🧮 복합계산(N입력)" 을 클릭해 캔버스에 추가
+  2. 분배기: 노드 선택 → 우측 "분배기 출력 포트" 패널에서 출력 이름을
+     바꾸거나 "+ 출력 추가"/"✕" 로 개수 조절 → 각 출력을 서로 다른 하위
+     노드(Scale Filter, DB Output 등)에 연결해 1개 입력값을 N갈래로 분배
+  3. 복합계산: 노드 선택 → 우측 "복합계산 입력 포트" 패널에서 입력 이름을
+     바꾸거나 "+ 입력 추가"/"✕" 로 개수 조절 → NCalc 식 TextBox 에 입력
+     포트를 "[라벨]" 형태로 참조하는 계산식 입력(예: "[압력1] - [압력2]")
+  4. 저장(💾) → collect.json 에 포트 구성·연결선·식이 저장됩니다
+
+확인 포인트:
+  - 이 기능은 Studio 캔버스(collect.json) 전용입니다 — 프로토콜편집(S-
+    프로토콜01)·N포트 이전에 이미 공지했듯, collect.json 은 Collector 가
+    소비하지 않는 화면 전용 트랙이라 지금 분배기/복합계산 노드를 만들어
+    연결해도 실제 수집 동작에는 영향이 없습니다(향후 Collector 쪽에
+    FlowEngine 이 이 캔버스를 실행하게 되면 그때 실제 동작함)
+  - 포트는 최소 1개가 항상 유지됩니다(마지막 포트는 삭제 불가) — 노드가
+    빈 껍데기가 되는 것을 방지하기 위함입니다
+  - 포트를 삭제하면 그 포트에 연결돼 있던 연결선도 함께 자동으로 삭제됩니다
+  - 이번 작업 중 다중 포트 노드의 연결선 복원 버그(항상 첫 포트로만 복원)를
+    함께 수정했습니다 — 기존 단일 포트 노드들은 포트가 1개뿐이라 이 버그가
+    드러나지 않았을 뿐, 잠재적으로 영향받는 코드였습니다
+```
+
+---
+
 ## 🔜 다음 세션 진행 순서
 
 ### ① Manager + lssLib.SignalR 통합 빌드 확인 — ✅ 완료 (2026-07-16, 사용자 직접 빌드·런타임 검토)
@@ -2500,6 +3211,119 @@ wwwroot/index.html.
 | | | **Consolas JSON 편집기). 저장은 파일만 갱신 — 대상 재시작 필요 원칙 유지.** |
 | | | **이로써 설정(Settings) UI 트랙 전체 완료 — 로컬 5개 프로그램 환경설정 탭 +** |
 | | | **Manager 원격 통합 조회·저장까지 코드 완료** |
+| **v11.36** | **S-Virtual01 코드 완료 (2026-07-20, 빌드 확인 대기) — Studio 가상(계산) Tag** |
+| | | **편집 UI. 사용자 지시(Studio→Collector→Monitor→HMI 순 강화, 그 중 Studio는** |
+| | | **가상Tag→N포트→Function노드→프로토콜편집 순)로 착수. 착수 전 확인 결과 Collector** |
+| | | **VirtualTagEngine(C-18)·TagRuntimeConfig 는 이미 완성돼 있어 Studio 쪽 UI+DTO** |
+| | | **직렬화만 이어붙임 — 엔진 재구현 없음. TreeNode.cs(TagTreeNode IsVirtual/** |
+| | | **Expression/IsNotVirtual) · DeviceConfigDto.cs(DTO 필드 추가, Collector 사본과** |
+| | | **1:1 동일화) · DeviceConfigService.cs(저장)/DeviceConfigLoader.cs(복원) ·** |
+| | | **TagEditorView.xaml(체크박스+계산식 TextBox, 레지스터/주소/데이터타입 3종은** |
+| | | **IsNotVirtual 로 비활성화, 신규 컨버터 없이 기존 bool 프로퍼티 재사용). 부수** |
+| | | **발견: Tag.ScaleEntryId/AlarmEntryId 가 재시작 후 끊길 수 있는 별개 잠복 버그 —** |
+| | | **범위 밖이라 미수정, 후속·보류 항목 ⑤번에 등록만 함. 다음: Studio Function 노드** |
+| **v11.37** | **S-Virtual02 코드 완료 (2026-07-20, 빌드 확인 대기) — Function 노드(가상 Tag** |
+| | | **Roslyn C# 고급 스크립트 모드). 착수 전 확인 결과 NCalc(S-Virtual01)가 이미** |
+| | | **산술·비교·삼항·비트연산·Math 함수를 지원해 원래 설계(A안 NCalc)가 목표하던** |
+| | | **기능 대부분을 가상 Tag 가 커버 — 사용자 확인(2026-07-20)으로 "NCalc로 불가능한** |
+| | | **Roslyn C# 고급 스크립트만 추가"로 범위 확정, 별도 캔버스 노드가 아니라 가상** |
+| | | **Tag의 계산 모드 하나(NCalc/Roslyn 라디오 전환)로 구현. 또한 N포트 노드는**  |
+| | | **Studio의 "수집 흐름 캔버스"(collect.json)가 Collector 에서 전혀 소비되지 않는** |
+| | | **것을 확인해(S-11~S-14 이후 실제 엔진 미연결) 사용자 확인으로 순서를 뒤로 미룸.** |
+| | | **Collector.csproj 에 Microsoft.CodeAnalysis.CSharp.Scripting 4.8.0 추가.** |
+| | | **TreeNode.cs(UseRoslynScript/ScriptCode/UseNCalcMode — ScaleEntry.IsLinear/** |
+| | | **IsExpression 과 동일 패턴) · DeviceConfigDto.cs(Studio+Collector 양쪽 동기화) ·** |
+| | | **DeviceConfigService/Loader.cs(저장·복원) · TagEditorView.xaml(모드 RadioButton** |
+| | | **2개+Roslyn 코드 TextBox) · TagRuntimeConfig.cs/CollectorConfigLoader.cs(평탄화) ·** |
+| | | **VirtualTagScriptContext.cs(신규 — Values/Result/Suppress globals) ·** |
+| | | **VirtualTagEngine.cs(Initialize 시 1회 컴파일·캐싱, _EvaluateAllAsync 진짜** |
+| | | **async 전환 + Roslyn/NCalc 분기, 컴파일 오류는 경고 로그 후 해당 Tag만 평가** |
+| | | **제외). 기존 NCalc 실행 경로(_TryEvaluate)는 한 줄도 수정 없음. 다음: Studio** |
+| | | **N포트 노드(우선순위 낮음) → 프로토콜편집, 이후 Collector→Monitor→HMI 순환** |
+| **v11.38** | **S-프로토콜01 Step A 코드 완료 (2026-07-20, 빌드 확인 대기) — 프로토콜** |
+| | | **편집(읽기/쓰기 블록 N개). 사용자 요청대로 착수, IProtocolDriver 가 Tag** |
+| | | **단위(주소)만 지원해 블록/프레임 개념이 없음을 확인 → 사용자에게 "①기존** |
+| | | **드라이버용 배치 블록/②커스텀 프레임 신규 드라이버" 중 선택 요청 → "1,2** |
+| | | **둘다 사용" 답변으로 단일 모델(CmdCode 비면 표준/채우면 커스텀) 채택.** |
+| | | **ProtocolLibrary.cs(신규 — ProtocolEntry/ProtocolBlock/ProtocolField,** |
+| | | **CollectionChanged 로 PreviewSummary 자동 갱신) · ProtocolLibraryViewModel.cs** |
+| | | **(신규 — Entry/Block/Field 3단 CRUD, Scale/Alarm/Comm 라이브러리 패턴 재사용) ·** |
+| | | **ProtocolLibraryView.xaml(.cs)(신규 — 마스터-디테일 + 읽기/쓰기 블록 중첩** |
+| | | **편집기) · MainViewModel/MainWindow/App.xaml.cs(📡 프로토콜 탭, 인덱스 7 추가) ·** |
+| | | **DeviceConfigDto.cs(Studio+Collector — ProtocolEntryDto/BlockDto/FieldDto** |
+| | | **3종 + DeviceNodeDto.ProtocolEntryId) · DeviceConfigService.cs(저장 매핑+** |
+| | | **_MapBlock) · DeviceConfigLoader.cs(_RestoreProtocolLibrary/** |
+| | | **_BuildProtocolBlock 복원) · TreeNode.cs(Device/PlcTreeNode.ProtocolEntryId,** |
+| | | **CommEntryId 와 동일 패턴) · PlcEditorView·DeviceEditorView(.xaml/.xaml.cs)** |
+| | | **(프로토콜 라이브러리 참조 ComboBox+참조해제, 통신 라이브러리 참조와 동일** |
+| | | **패턴). ★ 범위는 Step A(정의·저장·복원·PLC연결)까지만 — Collector 측 실행** |
+| | | **엔진(Step B, 배치 최적화+Raw 프레임 드라이버)은 미착수, 후속·보류 항목에** |
+| | | **신규 등록(N포트 때와 동일하게 투명 공지). 이로써 Studio 보류 4건 중 3건** |
+| | | **(가상Tag·Function노드·프로토콜편집Step A) 코드 완료, 남은 건 N포트 1건** |
+| **v11.39** | **S-20(N포트) 코드 완료 (2026-07-20, 빌드 확인 대기) — 입력N/출력N 포트** |
+| | | **라우팅. 사용자 확인으로 이번 세션 착수, 스킬 문서 "N포트 노드 아키텍처** |
+| | | **(S-20)" 설계 그대로 구현. CanvasNode.cs: NodePort.Index/Label init→set,** |
+| | | **InputPorts/OutputPorts List→ObservableCollection 전환, CardHeight 계산** |
+| | | **프로퍼티, 공개 포트 CRUD 4종(Add/RemoveInputPort·Add/RemoveOutputPort,** |
+| | | **최소 1개 유지) 추가. 신규 노드 2종: SplitterNode(1입력 N출력 — 1:N 분기,** |
+| | | **기본 2출력) / CompositeCalcNode(N입력 1출력+NCalc Expression — N:1 병합,** |
+| | | **입력은 "[라벨]"로 참조, 가상Tag와 동일 문법). CanvasViewModel.cs:** |
+| | | **IsSplitterSelected/IsCompositeCalcSelected + 포트 추가/삭제 커맨드 4개** |
+| | | **(삭제 시 연결된 Connections 도 함께 정리) + NodePortsChanged 이벤트.** |
+| | | **CanvasView.xaml(.cs): NodeCardTemplate MinHeight 를 CardHeight 바인딩으로** |
+| | | **동적화 + Splitter/CompositeCalc 전용 우측 오버레이 편집 패널 2종(패닝/줌** |
+| | | **영향 없는 화면 고정) 추가. ★ 기존 버그 수정: CollectConfigService/** |
+| | | **Loader.cs — CanvasConnectionDto 에 SourcePortIndex/TargetPortIndex 추가.** |
+| | | **종전에는 연결선 복원 시 OutputPorts.FirstOrDefault()로만 매칭해 다중** |
+| | | **포트 노드는 항상 첫 포트로만 연결이 복원되던 잠복 결함(단일 포트 노드만** |
+| | | **있던 종전엔 안 드러남)을 Index 매칭으로 수정. Studio 캔버스(collect.json)는** |
+| | | **여전히 Collector 미소비 화면 전용 트랙 — 실제 수집 동작 영향 없음(기존** |
+| | | **공지와 동일). 이로써 Studio 보류 4건(가상Tag·Function노드·프로토콜편집** |
+| | | **Step A·N포트) 전부 코드 완료. 다음: Collector→Monitor→HMI 순환 정리,** |
+| | | **S-프로토콜01 Step B(Collector 실행엔진) 착수 여부 확인 필요** |
+| **v11.40** | **S-프로토콜01 Step B 코드 완료 (2026-07-20, 빌드 확인 대기) — 프로토콜** |
+| | | **블록 Collector 실행 엔진. 사용자 확인으로 "①표준드라이버 배치최적화** |
+| | | **명시화 + ②커스텀프레임 신규 드라이버" 모두 구현. 신규** |
+| | | **IBlockProtocolDriver(ReadBlockAsync/WriteBlockAsync) 인터페이스를** |
+| | | **ModbusTcpDriver/MitsubishiDriver 에 opt-in 추가(기존 내부 배치 읽기** |
+| | | **로직 재사용, 커스텀프레임/비트소자 블록은 명확히 거부) + 신규 플러그인** |
+| | | **IIoT.Driver.RawFrame(STX/LEN/CMD/DATA/CRC 프레임 조립·파싱, CRC 3종:** |
+| | | **Crc16Modbus/Xor/Sum). Collector: PlcRuntimeConfig.ProtocolBlocks,** |
+| | | **TagRuntimeConfig.IsProtocolBlockField, ProtocolFieldTagId(합성 TagId** |
+| | | **공용 규칙) 신규. CollectorConfigLoader — ProtocolLibrary 인덱스 구축 +** |
+| | | **PLC 의 ProtocolEntryId 로 조회해 ReadBlocks 를 ProtocolBlockSpec 으로** |
+| | | **변환, 블록 필드마다 placeholder Tag 자동 합성(IsProtocolBlockField=true).** |
+| | | **FlowEngine._PollProtocolBlocksAsync 신규 — driver가 IBlockProtocolDriver** |
+| | | **구현 시 블록 폴링→필드값 TagValueUpdatedEvent 발행(합성 TagId 로** |
+| | | **DeviceInstanceService._tagIndex 매칭, Monitor/HMI 코드 변경 없이 자동** |
+| | | **표시). 미구현 드라이버는 PLC 당 1회만 경고(로그 스팸 방지). 기존 Tag** |
+| | | **단위 폴링 경로는 한 줄도 변경 없음(완전 별도 경로 추가). 알려진 한계** |
+| | | **(투명 공지, 후속·보류 항목 등록): RawFrame 응답 프레임은 항상 LEN 필드가** |
+| | | **있다고 가정하는 참조 구현(HasLengthField=false 미검증), 응답 CRC 검증** |
+| | | **미실시, ScaleMin/ScaleMax(Step A 정의)는 아직 미적용(Raw 값 그대로 발행).** |
+| | | **이로써 Studio 보류 4건 전부(가상Tag·Function노드·프로토콜편집** |
+| | | **Step A+B·N포트) 코드 완료. 다음: Collector→Monitor→HMI 잔여 보류 정리** |
+| | | **→ IIoT.Sequence 착수** |
+| **v11.41** | **S-프로토콜01 Step B 후속 코드 완료 (2026-07-20, 빌드 확인 대기) —** |
+| | | **v11.40 에서 문서화한 한계 3건 전부 해소. 사용자 확인으로 "RawFrame** |
+| | | **Step B 한계 보완" 선택 → ① RawFrameDriver.cs: HasLengthField=false** |
+| | | **응답도 block.Length 고정 길이로 파싱하도록 _ReadRestOfFrameAsync 수정** |
+| | | **(_ExtractPayload 헤더 길이도 동적 계산) ② 응답 CRC 검증 신규 추가(수신** |
+| | | **CRC 를 재계산값과 비교, 불일치 시 실패 처리) ③ ScaleMin/ScaleMax 는** |
+| | | **TagTemplateItem 과 동일하게 Collector 에서 실제 변환식으로 쓰인 적 없는** |
+| | | **"참고용 표시 범위"였음을 코드 확인으로 발견 → 사용자에게 문서만 수정할지** |
+| | | **ScaleEntryId 연결을 신규 구현할지 질의 → "ScaleEntryId 연결 신규 구현"** |
+| | | **선택. Contracts ProtocolFieldSpec/Studio ProtocolField·DTO/Collector** |
+| | | **DTO 에 ScaleEntryId 추가, ProtocolLibraryViewModel 에 ScaleLibraryViewModel** |
+| | | **주입(DI 자동 생성자 주입) + ClearFieldScaleCommand 신규, ProtocolLibraryView** |
+| | | **필드 편집 UI 에 스케일 라이브러리 콤보+해제 버튼 추가. Collector:** |
+| | | **CollectorConfigLoader 합성 Tag 에 ScaleEntryId 전달, FlowEngine.** |
+| | | **_PollProtocolBlocksAsync 가 합성 Tag 를 조회해 _scaleEngine.Apply() 로** |
+| | | **일반 Tag 와 동일하게 Linear/Expression 변환 적용(연결 없으면 기존과 동일** |
+| | | **Raw 그대로). 기존 ScaleMin/ScaleMax 필드·UI 는 참고용으로 그대로 유지** |
+| | | **(ScaleEntryId 와 독립). 후속·보류 항목의 "RawFrame 한계" 블록 삭제 —** |
+| | | **3건 모두 해소로 더 이상 보류 아님. 다음: IIoT.Sequence 착수(로드맵상** |
+| | | **다음 프로그램)** |
 | **v11.5** | **HM-Base-0~2 + HM-01~02 코드 완료 (2026-07-16, 빌드 확인 대기)** |
 | | | **HMI\IIoT.HMI.sln 신규 생성 (Contracts·UI.Themes·lssLib.Log 참조)** |
 | | | **App/MainWindow/HmiMainViewModel: 테마+탭바 5개(현황판·레이아웃 편집·** |

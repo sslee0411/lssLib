@@ -7,7 +7,8 @@
 //  Studio-P03: OnDriverSelectionChanged + _RenderParameterForm()
 //  Studio-P03 fix: ApplyTagTemplate 제거 → ApplyTemplateDialog 직접 호출
 //                  BulkAddressDialog namespace 수정 (Views.DeviceTree 직접)
-//  생성: 2026-06-18 / 수정: 2026-06-27
+//  S-프로토콜01: ProtocolEntryCombo 주입 + OnProtocolEntryDetach 추가
+//  생성: 2026-06-18 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Contracts;
@@ -40,6 +41,9 @@ public partial class PlcEditorView : UserControl
 
         // ★ S-28: CommEntryCombo ItemsSource 주입
         CommEntryCombo.ItemsSource = mainVm.CommLibrary.Entries;
+
+        // ★ S-프로토콜01: ProtocolEntryCombo ItemsSource 주입
+        ProtocolEntryCombo.ItemsSource = mainVm.ProtocolLibrary.Entries;
 
         // ★ Studio-P03: 드라이버 드롭다운 채우기
         var pluginSvc = mainVm.PluginRegistry;
@@ -228,6 +232,15 @@ public partial class PlcEditorView : UserControl
         if (DataContext is not PlcTreeNode plc) return;
         plc.CommEntryId = null;
         CommEntryCombo.SelectedItem = null;
+    }
+
+    // §3-1 ─ ★ S-프로토콜01: ProtocolEntry 참조 해제 ─────
+
+    private void OnProtocolEntryDetach(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PlcTreeNode plc) return;
+        plc.ProtocolEntryId = null;
+        ProtocolEntryCombo.SelectedItem = null;
     }
 
     // §4 ─ S-14: 템플릿 적용 ─────────────────────────────

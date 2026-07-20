@@ -11,7 +11,16 @@
 //  C-16: 이상값 필터(AnomalyFilterService) 연동
 //  C-19: PLC별 수집 일시정지/재개(PauseCollection/ResumeCollection) 추가
 //  C-EX-03: 일시정지/재개 시 감사 로그 기록 추가
-//  생성: 2026-06-29 / 수정: 2026-07-06
+//  S-프로토콜01 Step B: _PollOnceAsync 에서 IsProtocolBlockField Tag 제외 +
+//               _PollProtocolBlocksAsync 신규 — plc.ProtocolBlocks 를
+//               IBlockProtocolDriver 로 읽어 필드 값을 TagValueUpdatedEvent 로
+//               발행(합성 TagId, ProtocolFieldTagId.Make 규칙 공유).
+//               연결된 드라이버가 IBlockProtocolDriver 미구현이면 PLC 당 1회만
+//               경고 로그 후 건너뜀(매 폴링 로그 폭주 방지)
+//  S-프로토콜01 Step B 후속: _PollProtocolBlocksAsync 에서 필드에 연결된
+//               ScaleEntryId 를 합성 TagRuntimeConfig 로 조회해 일반 Tag 와
+//               동일하게 _scaleEngine.Apply() 로 Raw→공학단위 변환 적용
+//  생성: 2026-06-29 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
@@ -59,6 +68,10 @@ public sealed class FlowEngine : IAsyncDisposable
 
     /// <summary>PlcId → 현재 재시도 횟수 (백오프 인덱스 계산용)</summary>
     private readonly Dictionary<string, int> _retryCount = new();
+
+    /// <summary>★ S-프로토콜01 Step B: 블록 미지원 드라이버 경고를 이미 남긴 PlcId
+    /// (매 폴링 주기마다 반복 경고하지 않도록 1회만 기록)</summary>
+    private readonly HashSet<string> _blockUnsupportedWarned = new();
 
     private bool _isRunning;
 
@@ -200,8 +213,18 @@ public sealed class FlowEngine : IAsyncDisposable
     private async Task _PollOnceAsync(
         PlcRuntimeConfig plc, IProtocolDriver driver, CancellationToken ct)
     {
-        var enabledTags = plc.Tags.Where(t => t.IsEnabled).ToList();
-        if (enabledTags.Count == 0) return;
+        // ★ S-프로토콜01 Step B: 프로토콜 블록 필드 placeholder Tag 는 실주소가
+        //   없으므로 일반 폴링에서 제외 — _PollProtocolBlocksAsync 에서 별도 처리
+        var enabledTags = plc.Tags.Where(t => t.IsEnabled && !t.IsProtocolBlockField).ToList();
+
+        // ★ 블록만 있고 일반 Tag 는 없는 PLC 도 있을 수 있으므로, 블록 폴링은
+        //   enabledTags 가 비어도 항상 시도한다
+        if (enabledTags.Count == 0)
+        {
+            if (plc.ProtocolBlocks.Count > 0)
+                await _PollProtocolBlocksAsync(plc, driver, ct);
+            return;
+        }
 
         var requests = enabledTags
             .Select(t => new TagReadRequest(t.Id, t.Address, t.DataType))
@@ -259,7 +282,109 @@ public sealed class FlowEngine : IAsyncDisposable
             okStat.LastError   = null;
             okStat.LastPollAt  = DateTimeOffset.UtcNow;
         }
+
+        // ★ S-프로토콜01 Step B: 이 PLC 에 연결된 프로토콜 블록도 함께 폴링
+        if (plc.ProtocolBlocks.Count > 0)
+            await _PollProtocolBlocksAsync(plc, driver, ct);
     }
+
+    // §7B-1 ─ ★ S-프로토콜01 Step B: 프로토콜 블록 폴링 ─────────
+
+    /// <summary>
+    /// plc.ProtocolBlocks 를 IBlockProtocolDriver 로 읽어 필드 값을 발행합니다.
+    /// 연결된 드라이버가 IBlockProtocolDriver 를 구현하지 않으면(예: 가상 Tag
+    /// 전용 드라이버에 프로토콜을 잘못 연결한 경우) PLC 당 1회만 경고 로그를
+    /// 남기고 조용히 건너뜁니다 — 일반 Tag 수집은 계속 정상 동작합니다.
+    /// ★ S-프로토콜01 Step B 후속: 필드에 ScaleEntryId 가 연결되어 있으면
+    /// CollectorConfigLoader 가 합성한 placeholder TagRuntimeConfig(ScaleEntryId
+    /// 그대로 보유)를 찾아 일반 Tag 와 동일하게 _scaleEngine.Apply() 로 변환한다.
+    /// </summary>
+    private async Task _PollProtocolBlocksAsync(
+        PlcRuntimeConfig plc, IProtocolDriver driver, CancellationToken ct)
+    {
+        if (driver is not IBlockProtocolDriver blockDriver)
+        {
+            if (_blockUnsupportedWarned.Add(plc.PlcId))
+                LogManager.Instance.Warn("FlowEngine",
+                    $"[{plc.Name}] 드라이버[{plc.DriverId}] 는 프로토콜 블록 읽기(IBlockProtocolDriver)를 " +
+                    "지원하지 않습니다 — 연결된 프로토콜이 무시됩니다. " +
+                    "표준 블록은 modbus-tcp/mitsubishi-mc, 커스텀 프레임 블록은 raw-frame 드라이버가 필요합니다.");
+            return;
+        }
+
+        // ScaleEngine.Apply(TagRuntimeConfig, raw) 호출을 위해 합성 Tag 를 Id 로 조회
+        var blockTagsById = plc.Tags
+            .Where(t => t.IsProtocolBlockField)
+            .ToDictionary(t => t.Id);
+
+        foreach (var block in plc.ProtocolBlocks)
+        {
+            BlockReadResult result;
+            try
+            {
+                result = await blockDriver.ReadBlockAsync(block, ct);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Instance.Warn("FlowEngine",
+                    $"[{plc.Name}] 프로토콜 블록[{block.Name}] 읽기 예외: {ex.Message}");
+                continue;
+            }
+
+            if (!result.IsSuccess || result.FieldValues is null)
+            {
+                LogManager.Instance.Warn("FlowEngine",
+                    $"[{plc.Name}] 프로토콜 블록[{block.Name}] 읽기 실패: " +
+                    $"{result.Error ?? "알 수 없는 오류"}");
+                continue;
+            }
+
+            foreach (var field in block.Fields)
+            {
+                if (!result.FieldValues.TryGetValue(field.Id, out var raw)) continue;
+
+                var tagId   = ProtocolFieldTagId.Make(plc.PlcId, block.Id, field.Id);
+                var quality = raw is null ? TagQuality.Bad : TagQuality.Good;
+
+                // ★ Step B 후속: ScaleEntryId 연결 시 실제 선형/수식 변환 적용,
+                //   미연결 또는 합성 Tag 를 못 찾은 경우(이론상 발생하지 않음) Raw 값 그대로.
+                double eng; string unit; int decimals; bool wasScaled;
+                if (blockTagsById.TryGetValue(tagId, out var tagConfig))
+                {
+                    var scaled = _scaleEngine.Apply(tagConfig, raw);
+                    eng = scaled.EngValue; unit = scaled.Unit; decimals = scaled.DecimalPlaces; wasScaled = scaled.WasScaled;
+                }
+                else
+                {
+                    eng = _ToDoubleOrZero(raw); unit = field.Unit; decimals = 2; wasScaled = false;
+                }
+
+                EventBus.Instance.Publish(new TagValueUpdatedEvent(
+                    Value:         new TagValue(tagId, raw, quality, DateTimeOffset.UtcNow),
+                    PlcId:         plc.PlcId,
+                    EngValue:      eng,
+                    Unit:          unit,
+                    DecimalPlaces: decimals,
+                    WasScaled:     wasScaled));
+            }
+        }
+    }
+
+    /// <summary>raw 값을 double 로 변환(null/변환불가 시 0.0) — ScaleEngine._ToDouble 과 동일 관례.</summary>
+    private static double _ToDoubleOrZero(object? raw) => raw switch
+    {
+        null     => 0.0,
+        double d => d,
+        float f  => f,
+        int i    => i,
+        uint ui  => ui,
+        long l   => l,
+        short s  => s,
+        ushort us => us,
+        bool b   => b ? 1.0 : 0.0,
+        string s2 when double.TryParse(s2, out var v) => v,
+        _ => 0.0
+    };
 
     // §7B ─ Tag 강제값 쓰기 (C-15 신규) ────────────────────
 
@@ -484,6 +609,7 @@ public sealed class FlowEngine : IAsyncDisposable
 
         _isRunning = false;
         _stats.Clear();
+        _blockUnsupportedWarned.Clear();   // ★ S-프로토콜01 Step B
         LogManager.Instance.Info("FlowEngine", "수집 정지 완료");
     }
 

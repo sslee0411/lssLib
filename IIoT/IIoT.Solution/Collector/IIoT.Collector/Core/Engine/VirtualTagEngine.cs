@@ -11,13 +11,21 @@
 //    단, AlarmStateManager 는 FlowEngine 이 직접 호출하는 구조이므로
 //    가상 Tag 알람 연동을 위해 이 엔진에서도 동일하게 직접 호출한다.
 //
-//  ━━━ 수식 문법 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  ━━━ 수식 문법 (NCalc 기본 모드) ━━━━━━━━━━━━━━━━━━━━━━━━━
 //  다른 Tag 값 참조: [TagId]
 //  예) "[T001] + [T002] * 0.5"
 //  참조된 Tag 중 하나라도 아직 값이 없으면 이번 주기는 평가를 건너뛴다.
 //
+//  ━━━ Roslyn C# 고급 스크립트 모드 (S-Virtual02) ━━━━━━━━━━
+//  Tag.UseRoslynScript=true 이면 Expression(NCalc) 대신 Tag.ScriptCode 를
+//  Roslyn(CSharpScript) 으로 컴파일·실행한다. globals = VirtualTagScriptContext
+//  (Values/Result/Suppress 를 한정자 없이 스크립트에서 바로 참조 가능).
+//  컴파일은 Initialize() 시점에 1회만 수행하고 컴파일된 델리게이트를 캐싱해
+//  매 평가 주기마다 재컴파일하지 않는다(성능). 컴파일 실패 Tag 는 평가에서 제외.
+//
 //  C-18: 신규
-//  생성: 2026-07-06
+//  S-Virtual02: Roslyn C# 고급 스크립트 모드 추가
+//  생성: 2026-07-06 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using IIoT.Collector.Core.Config;
@@ -26,7 +34,11 @@ using IIoT.Collector.Core.Models;
 using IIoT.Contracts;
 using lssLib.Log;
 using lssLib.Messaging;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using NCalc;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace IIoT.Collector.Core.Engine;
@@ -47,6 +59,14 @@ public sealed partial class VirtualTagEngine : IDisposable
 
     /// <summary>가상 Tag 목록 (TagId → 설정)</summary>
     private readonly Dictionary<string, TagRuntimeConfig> _virtualTags = new();
+
+    /// <summary>★ S-Virtual02: Roslyn 컴파일 캐시 (TagId → 실행 델리게이트).
+    /// 값이 null 이면 컴파일 실패 — 해당 Tag 는 평가에서 제외한다.</summary>
+    private readonly Dictionary<string, ScriptRunner<object>?> _compiledScripts = new();
+
+    private static readonly ScriptOptions _scriptOptions = ScriptOptions.Default
+        .WithReferences(typeof(object).Assembly, typeof(Enumerable).Assembly)
+        .WithImports("System", "System.Linq");
 
     private IDisposable?   _sub;
     private ScheduledTask? _task;
@@ -78,6 +98,7 @@ public sealed partial class VirtualTagEngine : IDisposable
 
         _liveValues.Clear();
         _virtualTags.Clear();
+        _compiledScripts.Clear();   // ★ S-Virtual02
 
         var settings = _settingsLoader.Settings.VirtualTag;
         if (!settings.Enabled)
@@ -90,9 +111,22 @@ public sealed partial class VirtualTagEngine : IDisposable
         {
             foreach (var tag in plc.Tags)
             {
-                if (tag.IsVirtual && !string.IsNullOrWhiteSpace(tag.Expression))
-                    _virtualTags[tag.Id] = tag;
+                if (!tag.IsVirtual) continue;
+
+                // ★ S-Virtual02: 모드별로 필요한 내용이 채워져 있는지 확인
+                var hasContent = tag.UseRoslynScript
+                    ? !string.IsNullOrWhiteSpace(tag.ScriptCode)
+                    : !string.IsNullOrWhiteSpace(tag.Expression);
+                if (hasContent) _virtualTags[tag.Id] = tag;
             }
+        }
+
+        // ★ S-Virtual02: Roslyn 모드 Tag 는 여기서 1회만 컴파일해 캐싱
+        //   (매 평가 주기마다 재컴파일하면 CPU 낭비가 크다)
+        foreach (var (tagId, tag) in _virtualTags)
+        {
+            if (!tag.UseRoslynScript) continue;
+            _compiledScripts[tagId] = _CompileScript(tag);
         }
 
         _sub = EventBus.Instance.Subscribe<TagValueUpdatedEvent>(_OnTagValue);
@@ -102,8 +136,43 @@ public sealed partial class VirtualTagEngine : IDisposable
             _EvaluateAllAsync,
             name: "virtualtag:eval");
 
+        var scriptCount = _compiledScripts.Count(kv => kv.Value is not null);
         LogManager.Instance.Info("VirtualTag",
-            $"가상 Tag 엔진 초기화 완료 — {_virtualTags.Count}개 계산 Tag, {settings.IntervalMs}ms 주기");
+            $"가상 Tag 엔진 초기화 완료 — {_virtualTags.Count}개 계산 Tag " +
+            $"(Roslyn 스크립트 {scriptCount}개 컴파일 성공), {settings.IntervalMs}ms 주기");
+    }
+
+    /// <summary>
+    /// ★ S-Virtual02: Roslyn C# 스크립트를 컴파일해 실행 델리게이트로 반환합니다.
+    /// 컴파일 오류가 있으면 경고 로그를 남기고 null 을 반환합니다(해당 Tag 평가 제외).
+    /// </summary>
+    private static ScriptRunner<object>? _CompileScript(TagRuntimeConfig tag)
+    {
+        try
+        {
+            var script = CSharpScript.Create<object>(
+                tag.ScriptCode!, _scriptOptions, typeof(VirtualTagScriptContext));
+
+            var errors = script.Compile()
+                .Where(d => d.Severity == DiagnosticSeverity.Error)
+                .ToList();
+
+            if (errors.Count > 0)
+            {
+                LogManager.Instance.Warn("VirtualTag",
+                    $"[{tag.Name}] Roslyn 스크립트 컴파일 오류: " +
+                    string.Join("; ", errors.Select(e => e.GetMessage())));
+                return null;
+            }
+
+            return script.CreateDelegate();
+        }
+        catch (Exception ex)
+        {
+            LogManager.Instance.Warn("VirtualTag",
+                $"[{tag.Name}] Roslyn 스크립트 컴파일 실패: {ex.Message}");
+            return null;
+        }
     }
 
     // §4 ─ 최신값 캐싱 ─────────────────────────────────────
@@ -115,14 +184,37 @@ public sealed partial class VirtualTagEngine : IDisposable
 
     // §5 ─ 수식 평가 ───────────────────────────────────────
 
-    private Task _EvaluateAllAsync(CancellationToken ct)
+    private async Task _EvaluateAllAsync(CancellationToken ct)
     {
         foreach (var (tagId, tag) in _virtualTags)
         {
             try
             {
-                if (!_TryEvaluate(tag.Expression!, out var computed))
-                    continue; // 참조 Tag 값 미확보 — 이번 주기 건너뜀
+                double computed;
+
+                if (tag.UseRoslynScript)
+                {
+                    // ★ S-Virtual02: Roslyn 실행 경로
+                    if (!_compiledScripts.TryGetValue(tagId, out var runner) || runner is null)
+                        continue; // 컴파일 실패 Tag — 평가 제외
+
+                    var scriptCtx = new VirtualTagScriptContext
+                    {
+                        Values = new Dictionary<string, double>(_liveValues)
+                    };
+                    await runner(scriptCtx, ct);
+
+                    if (scriptCtx.Suppress)
+                        continue; // 스크립트가 이번 주기 발행을 명시적으로 생략
+
+                    computed = scriptCtx.Result;
+                }
+                else
+                {
+                    // 기존 NCalc 실행 경로 (변경 없음)
+                    if (!_TryEvaluate(tag.Expression!, out computed))
+                        continue; // 참조 Tag 값 미확보 — 이번 주기 건너뜀
+                }
 
                 var now = DateTimeOffset.UtcNow;
 
@@ -148,8 +240,6 @@ public sealed partial class VirtualTagEngine : IDisposable
                     $"[{tag.Name}] 수식 평가 실패: {ex.Message}");
             }
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>

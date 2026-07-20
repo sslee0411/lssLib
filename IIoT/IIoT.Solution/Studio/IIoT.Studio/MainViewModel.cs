@@ -14,7 +14,8 @@
 //  S-27:  SaveWithMemoCommand 추가 + 저장 이력 관리
 //  Studio-P03: PluginRegistry 프로퍼티 + 생성자 파라미터 추가
 //  Studio-P04: IsLogTab / LogPanelVisible / SwitchTab case 5 추가
-//  생성: 2026-06-15 / 수정: 2026-06-27
+//  S-프로토콜01: ProtocolLibraryViewModel 주입 + IsProtocolTab(인덱스 7) 추가
+//  생성: 2026-06-15 / 수정: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -37,11 +38,14 @@ public partial class MainViewModel : ObservableObject
 {
     // §1 ─ 서브 ViewModel ─────────────────────────────────────
 
-    public DeviceTreeViewModel   DeviceTree   { get; }
-    public ScaleLibraryViewModel ScaleLibrary { get; }
-    public AlarmLibraryViewModel AlarmLibrary { get; }
-    public CommLibraryViewModel  CommLibrary  { get; }
-    public CanvasViewModel       Canvas       { get; }
+    public DeviceTreeViewModel    DeviceTree    { get; }
+    public ScaleLibraryViewModel  ScaleLibrary  { get; }
+    public AlarmLibraryViewModel  AlarmLibrary  { get; }
+    public CommLibraryViewModel   CommLibrary   { get; }
+    public CanvasViewModel        Canvas        { get; }
+
+    // ★ S-프로토콜01: 프로토콜 라이브러리(읽기/쓰기 블록 N개) 서브 VM
+    public ProtocolLibraryViewModel ProtocolLibrary { get; }
 
     // ★ C-SET-01 후속: 환경설정 탭 서브 VM (기존 DeviceTree/Canvas 등과 동일 패턴)
     public SettingsViewModel     Settings     { get; }
@@ -69,17 +73,18 @@ public partial class MainViewModel : ObservableObject
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public MainViewModel(
-        DeviceTreeViewModel   deviceTree,
-        ScaleLibraryViewModel scaleLibrary,
-        AlarmLibraryViewModel alarmLibrary,
-        CommLibraryViewModel  commLibrary,
-        CanvasViewModel       canvas,
-        DeviceConfigService   deviceSvc,
-        CollectConfigService  collectSvc,
-        DeviceConfigLoader    deviceLoader,
-        PluginRegistryService pluginRegistry,    // ★ Studio-P03
-        StudioSettingsLoader  studioSettings,     // ★ C-SET-01 후속
-        SettingsViewModel     settingsVm)        // ★ C-SET-01 후속
+        DeviceTreeViewModel     deviceTree,
+        ScaleLibraryViewModel   scaleLibrary,
+        AlarmLibraryViewModel   alarmLibrary,
+        CommLibraryViewModel    commLibrary,
+        CanvasViewModel         canvas,
+        DeviceConfigService     deviceSvc,
+        CollectConfigService    collectSvc,
+        DeviceConfigLoader      deviceLoader,
+        PluginRegistryService   pluginRegistry,    // ★ Studio-P03
+        StudioSettingsLoader    studioSettings,     // ★ C-SET-01 후속
+        SettingsViewModel       settingsVm,         // ★ C-SET-01 후속
+        ProtocolLibraryViewModel protocolLibrary)   // ★ S-프로토콜01
     {
         DeviceTree     = deviceTree;
         ScaleLibrary   = scaleLibrary;
@@ -91,6 +96,7 @@ public partial class MainViewModel : ObservableObject
         PluginRegistry = pluginRegistry;         // ★ Studio-P03
         _studioSettings = studioSettings;        // ★ C-SET-01 후속
         Settings        = settingsVm;            // ★ C-SET-01 후속
+        ProtocolLibrary = protocolLibrary;        // ★ S-프로토콜01
 
         // ★ S-16
         _validationSvc = new ValidationService(DeviceTree, ScaleLibrary);
@@ -112,6 +118,8 @@ public partial class MainViewModel : ObservableObject
         ScaleLibrary.Entries.CollectionChanged += (_, _) => HasUnsavedChanges = true;
         AlarmLibrary.Entries.CollectionChanged += (_, _) => HasUnsavedChanges = true;
         CommLibrary.Entries.CollectionChanged  += (_, _) => HasUnsavedChanges = true;
+        // ★ S-프로토콜01
+        ProtocolLibrary.Entries.CollectionChanged += (_, _) => HasUnsavedChanges = true;
 
         // ★ S-19B: 트리 선택 변경 → StatusBarPath 갱신
         DeviceTree.PropertyChanged += (_, e) =>
@@ -148,6 +156,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsCommTab))]
     [NotifyPropertyChangedFor(nameof(IsLogTab))]   // ★ Studio-P04
     [NotifyPropertyChangedFor(nameof(IsSettingsTab))]   // ★ C-SET-01 후속
+    [NotifyPropertyChangedFor(nameof(IsProtocolTab))]   // ★ S-프로토콜01
     private int _activeTabIndex;
 
     // §5 ─ 탭 가시성 ─────────────────────────────────────────
@@ -163,6 +172,9 @@ public partial class MainViewModel : ObservableObject
 
     // ★ C-SET-01 후속: 환경설정 탭 (인덱스 6 — 5는 로그 토글 전용으로 이미 예약됨)
     public bool IsSettingsTab => ActiveTabIndex == 6;
+
+    // ★ S-프로토콜01: 프로토콜 편집 탭 (인덱스 7)
+    public bool IsProtocolTab => ActiveTabIndex == 7;
 
     // ★ Studio-P04: 하단 로그 패널 표시 여부
     [ObservableProperty]
