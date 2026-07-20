@@ -22,6 +22,10 @@
 //         메인 시각 트리에 있음)를 기준으로 VisualTreeHelper 로 직접 탐색한다.
 //         _FindAncestorUserControl() 은 특정 View 타입을 하드코딩하지 않고 범용
 //         UserControl 을 찾으므로 DeviceControlBase 의 재사용성을 해치지 않는다.
+//  HM-20: 코드 변경 없음 — IconText(TextBlock) → IconHost(Grid)+IconGlyphText 로
+//         XAML 구조만 바뀌었고(DeviceControlBase.xaml 참조), OnDeviceControlLoaded()
+//         훅 자체는 그대로다. 실제 벡터 아이콘 구성은 각 파생 클래스(Motor/
+//         Conveyor/Tank/Valve) 코드비하인드에서 처리한다.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 

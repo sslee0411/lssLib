@@ -7,10 +7,19 @@
 //         WPF(WinExe)+ASP.NET Core 공존: 별도 non-pool Thread 에서 WebApplication
 //         실행, FrameworkReference Microsoft.AspNetCore.App 필요)
 //
-//  ★ 범위 결정(1차): 읽기 전용 표시만 구현(ACK/ForceWrite 는 웹에서 미제공 —
-//    "🔧 후속·보류 항목" 참조). 웹은 WPF 의 "현재 활성 화면 1개"만 미러링하며,
-//    웹에서 별도로 화면(페이지)을 선택하는 기능은 없다(항상 WPF 쪽 ActivePage
-//    를 그대로 따라간다).
+//  ★ 범위 결정(1차, HM-11): 읽기 전용 표시만 구현. 웹은 WPF 의 "현재 활성
+//    화면 1개"만 미러링하며, 웹에서 별도로 화면(페이지)을 선택하는 기능은
+//    없다(항상 WPF 쪽 ActivePage 를 그대로 따라간다).
+//
+//  ★ HM-21: ACK/ForceWrite 를 웹에서도 지원한다. HmiWebHub 가 실제 라우팅
+//    로직을 갖고 있으며(CollectorConnectionManager.AcknowledgeAlarmAsync/
+//    ForceWriteAsync 로 위임), 이 서비스는 그 Hub 가 필요로 하는
+//    CollectorConnectionManager/LayoutCanvasViewModel 인스턴스를 ASP.NET
+//    Core 자체 DI 컨테이너(builder.Services)에 등록해 주는 역할만 한다 —
+//    WebApplication.CreateBuilder() 는 WPF 앱의 DI 컨테이너(App.xaml.cs
+//    _ConfigureServices)와 완전히 별개의 컨테이너이므로, Hub 생성자가
+//    참조하려면 "이미 만들어진 그 싱글턴 인스턴스"를 여기서 그대로
+//    다시 등록해 공유해야 한다.
 //
 //  ★ 갱신 전략: 노드 구조(추가/삭제/화면 전환) 또는 실시간 상태(값/알람)가
 //    바뀔 때마다 즉시 Push 하지 않고 "dirty 플래그 + 500ms 주기 브로드캐스트"로
@@ -24,12 +33,15 @@
 //    로 UI 스레드에 마샬링한다(프로젝트 규칙 "UI 마샬링" 준수 — 단, OnExit
 //    교착을 피하려는 취지의 ".Invoke 금지" 규칙은 블로킹 .Invoke() 에어 대한
 //    것이므로, 여기서는 비-블로킹 await 가능한 InvokeAsync() 를 사용한다).
+//    HmiWebHub 의 ACK/ForceWrite 메서드도 동일 원칙을 따른다.
 //
 //  HM-11: 신규
+//  HM-21: CollectorConnectionManager 의존성 추가 + builder.Services 등록 추가.
 //  생성: 2026-07-19
 // ══════════════════════════════════════════════════════════
 
 using IIoT.HMI.Core.Config;
+using IIoT.HMI.Core.Connection;
 using IIoT.HMI.Core.Layout;
 using IIoT.HMI.ViewModels;
 using lssLib.Log;
@@ -48,11 +60,13 @@ namespace IIoT.HMI.Core.Web;
 
 /// <summary>
 /// HM-11: 웹 브라우저 표시용 자체 Kestrel + SignalR Hub + wwwroot 호스팅(DI 싱글턴).
+/// HM-21: ACK/ForceWrite 라우팅에 필요한 CollectorConnectionManager 공유 추가.
 /// </summary>
 public sealed class HmiWebHostService : IAsyncDisposable
 {
-    private readonly HmiSettingsLoader     _settingsLoader;
-    private readonly LayoutCanvasViewModel _canvasVm;
+    private readonly HmiSettingsLoader        _settingsLoader;
+    private readonly LayoutCanvasViewModel    _canvasVm;
+    private readonly CollectorConnectionManager _connectionManager;
 
     private WebApplication?          _app;
     private Thread?                  _thread;
@@ -61,10 +75,14 @@ public sealed class HmiWebHostService : IAsyncDisposable
 
     private volatile bool _dirty;
 
-    public HmiWebHostService(HmiSettingsLoader settingsLoader, LayoutCanvasViewModel canvasVm)
+    public HmiWebHostService(
+        HmiSettingsLoader settingsLoader,
+        LayoutCanvasViewModel canvasVm,
+        CollectorConnectionManager connectionManager)
     {
-        _settingsLoader = settingsLoader;
-        _canvasVm       = canvasVm;
+        _settingsLoader    = settingsLoader;
+        _canvasVm          = canvasVm;
+        _connectionManager = connectionManager;
     }
 
     // §1 ─ 시작 ────────────────────────────────────────────────
@@ -89,6 +107,13 @@ public sealed class HmiWebHostService : IAsyncDisposable
         builder.Services.AddCors(opt => opt.AddDefaultPolicy(p =>
             p.SetIsOriginAllowed(_ => true).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
         builder.Services.AddSignalR(opt => opt.EnableDetailedErrors = true);
+
+        // ★ HM-21: HmiWebHub(이 컨테이너가 직접 생성) 생성자가 요구하는 두 인스턴스를
+        //   "이미 WPF 쪽에서 만들어진 그 싱글턴"으로 그대로 등록한다(새로 만들지 않음).
+        //   ASP.NET Core 의 DI 컨테이너는 WPF 앱의 DI 컨테이너와 별개이므로 이 등록이
+        //   없으면 HmiWebHub 생성 시 예외가 발생한다.
+        builder.Services.AddSingleton(_connectionManager);
+        builder.Services.AddSingleton(_canvasVm);
 
         builder.WebHost.UseUrls($"http://0.0.0.0:{web.Port}");
         builder.WebHost.UseWebRoot(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot"));
@@ -203,7 +228,9 @@ public sealed class HmiWebHostService : IAsyncDisposable
             n.NodeId, n.NodeType, n.Label, n.IconGlyph, n.CategoryColor,
             n.X, n.Y, n.ZIndex, n.IsBound,
             n.ValueText, n.ValueQuality, n.EngValue,
-            n.HasActiveAlarm, n.AlarmLevel, n.AlarmStatusText, n.AlarmMessage, n.AlarmTimeText
+            n.HasActiveAlarm, n.AlarmLevel, n.AlarmStatusText, n.AlarmMessage, n.AlarmTimeText,
+            // ★ HM-21: ACK/ForceWrite 요청 라우팅을 위해 추가된 식별 필드
+            n.AlarmKey, n.BoundCollectorId, n.BoundPlcId, n.BoundTagId, n.BoundTagName
         )).ToList());
     }
 

@@ -44,6 +44,18 @@
               DeviceControlBase 를 상속하는 클래스이며 별도 XAML 은 없다 — 베이스가
               유일하게 XAML/x:Class 를 갖는 클래스이므로 IComponentConnector 충돌
               없이 파생 클래스에서 이 요소들을 직접 참조할 수 있다.)
+     HM-20(HM-04-EX): 이모지 글리프(IconText, 큰 텍스트 1글자)를 실제 장비
+            형태를 알아볼 수 있는 벡터 도형으로 교체하기 위해 "아이콘 슬롯"
+            구조로 확장 — TextBlock 이었던 IconText 를 <Grid x:Name="IconHost">
+            로 바꾸고, 그 안에 기존과 동일한 기본 글리프 TextBlock(x:Name=
+            "IconGlyphText")을 1개 넣어 두었다(장비별 커스텀이 없는 타입은
+            지금까지처럼 이모지 그대로 표시 — GenericIconControl 등 무수정 호환).
+            Motor/Conveyor/Valve 는 OnDeviceControlLoaded() 에서 IconHost.
+            Children.Clear() 후 코드로 벡터 도형(Ellipse/Rectangle/Line 조합)을
+            직접 그려 넣고 애니메이션 대상도 그 도형으로 바꿨다(로직 자체는
+            HM-06 그대로, 대상만 IconText→새 도형으로 이동). Tank 는 IconText 를
+            건드리지 않았으므로 기존 LevelTrack/LevelFill 로직은 완전히 무수정—
+            IconHost 에 정적 실린더 외형만 추가로 그려 넣었다.
      생성: 2026-07-16
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.HMI.Views.DeviceControls.DeviceControlBase"
@@ -94,11 +106,15 @@
             <StackPanel Grid.Row="1" Margin="8,10"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
-                <!-- ★ HM-06: x:Name 부여 — 파생 클래스가 RenderTransform 적용(회전/흔들림) -->
-                <TextBlock x:Name="IconText"
-                           Text="{Binding IconGlyph}"
-                           FontSize="28" HorizontalAlignment="Center"
-                           RenderTransformOrigin="0.5,0.5"/>
+                <!-- ★ HM-20: 아이콘 슬롯 — 기본은 이모지 글리프(IconGlyphText)를 보여주고,
+                     Motor/Conveyor/Valve 등은 OnDeviceControlLoaded() 에서 이 안의
+                     내용을 벡터 도형으로 교체한다(Children.Clear() 후 직접 그림). -->
+                <Grid x:Name="IconHost" Width="56" Height="56">
+                    <TextBlock x:Name="IconGlyphText"
+                               Text="{Binding IconGlyph}"
+                               FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               RenderTransformOrigin="0.5,0.5"/>
+                </Grid>
                 <TextBlock Text="{Binding Label}"
                            FontSize="11" FontWeight="SemiBold"
                            HorizontalAlignment="Center"

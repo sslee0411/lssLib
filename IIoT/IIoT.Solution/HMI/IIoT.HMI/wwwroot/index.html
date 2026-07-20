@@ -2,14 +2,20 @@
 <!-- ══════════════════════════════════════════════════════════
      IIoT.HMI · wwwroot/index.html
      역할: 웹 브라우저 표시 확장(HM-11) — WPF [레이아웃 편집] 탭의 현재 활성
-           화면을 그대로 미러링하는 읽기 전용 웹 페이지.
+           화면을 그대로 미러링하는 웹 페이지.
            (IIoT.Collector wwwroot/index.html 패턴 준용 — 다크 테마 + 순수
             CSS/JS, SignalR CDN 1개만 의존, 별도 프레임워크 없음)
      동작: ① GET /api/layout 로 최초 스냅샷 1회 조회 → render()
            ② SignalR "/hmi-hub" 연결 → "NodesChanged" 수신 시마다 전체 재렌더
            (증분 갱신 대신 매번 전체 재렌더 — 카드 수가 많지 않은 HMI 특성상
             충분히 가볍고, 구현이 단순해 유지보수가 쉽다)
-     HM-11: 신규
+     HM-11: 신규(읽기 전용 표시만)
+     HM-21: ACK/ForceWrite 지원 추가.
+           ① 알람 배지(⚠) 클릭 → ACK 확인 모달 → conn.invoke("AcknowledgeAsync", ...)
+           ② Tag 바인딩된 카드 클릭 → 값 입력 + API Key 입력 모달 →
+              conn.invoke("ForceWriteAsync", ...) (WPF 화면 잠금 상태면 서버가 거부)
+           renderer 가 매번 카드를 새로 만들므로, 클릭 핸들러가 참조할 최신
+           노드 데이터를 latestNodes 맵에 별도로 캐시해 둔다.
      생성: 2026-07-19
      ══════════════════════════════════════════════════════════ -->
 <html lang="ko">
@@ -71,6 +77,8 @@
     padding: 10px 8px 8px;
     text-align: center;
   }
+  .card.bound { cursor: pointer; }
+  .card.bound:hover { border-color: var(--acc); }
   .card .bar {
     position: absolute; top: 0; left: 0; right: 0; height: 4px;
   }
@@ -84,28 +92,87 @@
   .card .alarm {
     position: absolute; top: 4px; left: 4px;
     font-size: 12px;
-    cursor: default;
+    cursor: pointer;
+    z-index: 10;
   }
   #empty {
     padding: 40px; text-align: center; color: var(--text2); font-size: 12px;
   }
+
+  /* ── HM-21: ACK/ForceWrite 모달 ── */
+  #modalOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+  }
+  #modalOverlay.open { display: flex; }
+  .modal {
+    width: 300px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .modal h2 { font-size: 13px; margin: 0 0 10px; }
+  .modal .row { margin-bottom: 10px; }
+  .modal label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .modal input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  .modal .msg { font-size: 11px; margin-top: 8px; min-height: 14px; }
+  .modal .msg.ok  { color: var(--green); }
+  .modal .msg.err { color: var(--red); }
+  .modal .btns { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+  .modal button {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #21262d;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .modal button.primary { background: var(--acc); color: #0d1117; border-color: var(--acc); font-weight: bold; }
 </style>
 </head>
 <body>
 <header>
   <div id="statusDot"></div>
   <div id="statusText">연결 대기 중...</div>
-  <h1>IIoT HMI — 생산현황판 (웹, 읽기 전용)</h1>
+  <h1>IIoT HMI — 생산현황판 (웹)</h1>
   <div id="nodeCount">0 개</div>
 </header>
 <div id="canvas"></div>
 
+<!-- HM-21: ACK/ForceWrite 공용 모달 -->
+<div id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 <script>
-  const canvas     = document.getElementById("canvas");
-  const statusDot  = document.getElementById("statusDot");
-  const statusText = document.getElementById("statusText");
-  const nodeCount  = document.getElementById("nodeCount");
+  const canvas       = document.getElementById("canvas");
+  const statusDot    = document.getElementById("statusDot");
+  const statusText   = document.getElementById("statusText");
+  const nodeCount    = document.getElementById("nodeCount");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalBox     = document.getElementById("modalBox");
+
+  // ★ HM-21: render() 가 매번 카드를 새로 그리므로, 클릭 핸들러가 필요로 하는
+  //   최신 노드 데이터(alarmKey/boundTagName 등)를 nodeId 로 조회할 수 있도록
+  //   별도로 캐시해 둔다.
+  let latestNodes = new Map();
 
   function qualityColor(q) {
     switch (q) {
@@ -123,11 +190,97 @@
     return "var(--text2)";
   }
 
+  function closeModal() {
+    modalOverlay.classList.remove("open");
+    modalBox.innerHTML = "";
+  }
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  // ── HM-21: 알람 ACK 모달 ──
+  function openAckModal(node) {
+    modalBox.innerHTML = `
+      <h2>⚠ 알람 확인(ACK)</h2>
+      <div class="row"><label>카드</label><div>${node.label}</div></div>
+      <div class="row"><label>메시지</label><div>${node.alarmMessage || "-"}</div></div>
+      <div class="msg" id="modalMsg"></div>
+      <div class="btns">
+        <button id="btnCancel">취소</button>
+        <button id="btnOk" class="primary">확인(ACK)</button>
+      </div>`;
+    modalOverlay.classList.add("open");
+
+    document.getElementById("btnCancel").onclick = closeModal;
+    document.getElementById("btnOk").onclick = async () => {
+      const msgEl = document.getElementById("modalMsg");
+      try {
+        const ok = await conn.invoke("AcknowledgeAsync", node.nodeId, node.alarmKey);
+        if (ok) {
+          msgEl.className = "msg ok";
+          msgEl.textContent = "ACK 전송 완료.";
+          setTimeout(closeModal, 700);
+        } else {
+          msgEl.className = "msg err";
+          msgEl.textContent = "ACK 실패 — Collector 연결을 확인하세요.";
+        }
+      } catch (err) {
+        msgEl.className = "msg err";
+        msgEl.textContent = "ACK 요청 오류: " + err;
+      }
+    };
+  }
+
+  // ── HM-21: ForceWrite 모달 ──
+  function openForceWriteModal(node) {
+    modalBox.innerHTML = `
+      <h2>✍ 강제쓰기</h2>
+      <div class="row"><label>Tag</label><div>${node.boundTagName || node.label}</div></div>
+      <div class="row">
+        <label>값</label>
+        <input id="fwValue" type="text" placeholder="새 값 입력" />
+      </div>
+      <div class="row">
+        <label>API Key</label>
+        <input id="fwApiKey" type="password" placeholder="ForceWrite API Key" />
+      </div>
+      <div class="msg" id="modalMsg"></div>
+      <div class="btns">
+        <button id="btnCancel">취소</button>
+        <button id="btnOk" class="primary">쓰기</button>
+      </div>`;
+    modalOverlay.classList.add("open");
+
+    document.getElementById("btnCancel").onclick = closeModal;
+    document.getElementById("btnOk").onclick = async () => {
+      const msgEl   = document.getElementById("modalMsg");
+      const value   = document.getElementById("fwValue").value;
+      const apiKey  = document.getElementById("fwApiKey").value;
+
+      try {
+        const result = await conn.invoke("ForceWriteAsync", node.nodeId, value, apiKey);
+        if (result.isSuccess) {
+          msgEl.className = "msg ok";
+          msgEl.textContent = "쓰기 성공.";
+          setTimeout(closeModal, 700);
+        } else {
+          msgEl.className = "msg err";
+          msgEl.textContent = "쓰기 실패: " + (result.error || "알 수 없는 오류");
+        }
+      } catch (err) {
+        msgEl.className = "msg err";
+        msgEl.textContent = "요청 오류: " + err;
+      }
+    };
+  }
+
   // ★ 노드 구조(구조/실시간 상태)는 항상 "NodesChanged" 전체 스냅샷으로만 반영된다
   //   (HmiWebHostService 의 dirty 플래그 + 500ms 주기 브로드캐스트 설계 참조).
   function render(nodes) {
     canvas.innerHTML = "";
     nodeCount.textContent = nodes.length + " 개";
+
+    latestNodes = new Map(nodes.map(n => [n.nodeId, n]));
 
     if (nodes.length === 0) {
       const empty = document.createElement("div");
@@ -144,10 +297,16 @@
       maxY = Math.max(maxY, n.y + 140);
 
       const card = document.createElement("div");
-      card.className = "card";
+      card.className = "card" + (n.isBound ? " bound" : "");
       card.style.left = n.x + "px";
       card.style.top  = n.y + "px";
       card.style.zIndex = n.zIndex;
+
+      // ★ HM-21: 바인딩된 카드를 클릭하면 ForceWrite 모달을 연다(알람 배지
+      //   클릭과 영역이 겹치지 않도록 stopPropagation 은 배지 쪽에서 처리).
+      if (n.isBound) {
+        card.addEventListener("click", () => openForceWriteModal(latestNodes.get(n.nodeId) || n));
+      }
 
       const bar = document.createElement("div");
       bar.className = "bar";
@@ -159,7 +318,11 @@
         badge.className = "alarm";
         badge.textContent = "⚠";
         badge.style.color = alarmColor(n.alarmLevel);
-        badge.title = n.alarmMessage || "";
+        badge.title = (n.alarmMessage || "") + " (클릭: ACK)";
+        badge.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openAckModal(latestNodes.get(n.nodeId) || n);
+        });
         card.appendChild(badge);
       }
 

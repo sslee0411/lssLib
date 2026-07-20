@@ -7,13 +7,21 @@
 //         Quality 가 Bad/Timeout/Disconnected 이거나 값이 0/미바인딩이면 정지.
 //         DeviceControlBase.OnDeviceControlLoaded() 훅을 통해 IconText(베이스의
 //         명명된 요소)에 RenderTransform 을 적용 — 카드 프레임은 그대로 재사용.
+//  HM-20: 이모지 글리프 대신 실제 모터 형태(원형 하우징 + 3개 회전 날개)를
+//         벡터 도형(Ellipse/Rectangle)으로 직접 그려 IconHost 에 넣는다.
+//         회전 애니메이션 로직(_rotate/_ApplyState/_OnNodePropertyChanged)은
+//         HM-06 그대로 — 대상만 IconText(TextBlock) → 날개 Canvas 로 바뀌었다.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
+using IIoT.HMI.Core.Converters;
 using IIoT.HMI.Core.Layout;
 using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Shapes;
 
 namespace IIoT.HMI.Views.DeviceControls;
 
@@ -24,7 +32,56 @@ public sealed class MotorControl : DeviceControlBase
 
     protected override void OnDeviceControlLoaded()
     {
-        IconText.RenderTransform = _rotate;
+        // ★ HM-20: 원형 하우징 + 3개 날개로 구성된 모터 벡터 아이콘을 직접 그린다
+        IconHost.Children.Clear();
+
+        var housing = new Ellipse
+        {
+            Width           = 44,
+            Height          = 44,
+            Fill            = ThemeResource.Find("SurfaceBrush"),
+            Stroke          = ThemeResource.Find("AccBrush"),
+            StrokeThickness = 3
+        };
+        IconHost.Children.Add(housing);
+
+        // 날개 3개(120도 간격)를 담는 Canvas — 이 Canvas 전체를 회전시키면 팬(Fan)이 돈다
+        var rotor = new Canvas
+        {
+            Width  = 44,
+            Height = 44
+        };
+        for (var i = 0; i < 3; i++)
+        {
+            var blade = new Rectangle
+            {
+                Width                = 6,
+                Height               = 17,
+                RadiusX              = 3,
+                RadiusY              = 3,
+                Fill                 = ThemeResource.Find("AccBrush"),
+                RenderTransformOrigin = new Point(0.5, 1.0),
+                RenderTransform      = new RotateTransform(i * 120)
+            };
+            Canvas.SetLeft(blade, 22 - 3); // 캔버스 중심(22,22)에서 위쪽으로 뻗도록 배치
+            Canvas.SetTop(blade, 22 - 17);
+            rotor.Children.Add(blade);
+        }
+
+        var hub = new Ellipse
+        {
+            Width  = 9,
+            Height = 9,
+            Fill   = ThemeResource.Find("TextBrush")
+        };
+        Canvas.SetLeft(hub, 22 - 4.5);
+        Canvas.SetTop(hub, 22 - 4.5);
+        rotor.Children.Add(hub);
+
+        // ★ HM-06 애니메이션 대상 — 예전에는 IconText(TextBlock) 였고, 이제는 rotor(Canvas)
+        rotor.RenderTransformOrigin = new Point(0.5, 0.5);
+        rotor.RenderTransform       = _rotate;
+        IconHost.Children.Add(rotor);
 
         if (DataContext is AbstractLayoutNode node)
         {

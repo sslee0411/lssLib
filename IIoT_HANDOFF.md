@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-19 | 버전: v11.24 | 다음 세션 시작점: ① HM-Base-0~HM-19 전체 빌드·런타임 확인(★특히 HM-19 ShutdownMode 변경 후 정상 종료 여부 확인) → ② HM-20(장비 아이콘 실형상화) 착수**
+**작성일: 2026-07-20 | 버전: v11.27 | 다음 세션 시작점: ① HM-Base-0~HM-21 전체 빌드·런타임 확인(★특히 웹 ACK/ForceWrite 는 물리 PLC에 영향을 주는 기능이므로 반드시 테스트 환경에서 먼저 확인) → ② HM-22(설정 UI 편집 화면) 착수**
 
 > 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
 > SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
@@ -235,10 +235,14 @@ HM-18   화면 캡처 PNG (현재 레이아웃 캔버스를 PNG 이미지로 저
 HM-19   다중 모니터 지원 (같은 LayoutCanvasViewModel 을 공유하는 두 번째        ✅ 코드완료(빌드대기)
         LayoutCanvasView 를 독립 창(SecondaryDisplayWindow)으로 띄워 다른
         모니터로 옮길 수 있음 — 두 창에 동일 레이아웃이 실시간 동기화됨)
-HM-20   장비 아이콘 실형상 UI 컨트롤화 (HM-04-EX — 모터/컨베이어/탱크/밸브       ⭕ 예정
-        컨트롤을 이모지 텍스트 대신 벡터 도형으로 교체, 4개 컨트롤 전면 재작업)
-HM-21   웹에서 ACK/ForceWrite 지원 (HM-11-EX — HmiWebHub 클라이언트 호출 메서드  ⭕ 예정
-        추가, HM-12 보안 정책 재검토 선행 필요)
+HM-20   장비 아이콘 실형상 UI 컨트롤화 (HM-04-EX — 모터/컨베이어/탱크/밸브       ✅ 코드완료(빌드대기)
+        컨트롤을 이모지 텍스트 대신 벡터 도형으로 교체. ★ 코드로 직접 그린
+        도형이라 실제 화면에서 비율·색상 확인 필요 — 시각적 조정은 빌드 후 요청 시 진행)
+        HM-20b(사용자 피드백 반영): 탱크 수위 게이지를 막대형→차량 속도계
+        스타일(다이얼+눈금+회전 바늘)로 전면 교체, 컨베이어를 화물 왕복 방식→
+        롤러 실제 회전+벨트 점선 스크롤 방식으로 전면 교체(모터/밸브는 대상 아님)
+HM-21   웹에서 ACK/ForceWrite 지원 (HM-11-EX — HmiWebHub 클라이언트 호출 메서드  ✅ 코드완료(빌드대기)
+        추가, HM-12 IsForceWriteLocked 재사용 + API Key 검증 그대로 유지)
 HM-22   설정(Settings) UI 편집 화면 (task #5 — Collector/Manager/Monitor/HMI    ⭕ 예정
         각 프로그램 설정 탭 신설 + Manager 원격 통합 설정 화면, 4개 솔루션에
         걸친 최대 범위 과제라 마지막 순서)
@@ -266,9 +270,11 @@ HM-22   설정(Settings) UI 편집 화면 (task #5 — Collector/Manager/Monitor
    → 사용자 결정: "1차 마감 보류, HM-EX 후보 7건 전체 착수" (2026-07-19)
 ⑥ HM-16 (알람 이력 SQLite) — ✅ 코드 완료(빌드 대기) → HM-17 (실시간 트렌드 창) —
    ✅ 코드 완료(빌드 대기) → HM-18 (화면 캡처 PNG) — ✅ 코드 완료(빌드 대기) →
-   HM-19 (다중 모니터) — ✅ 코드 완료(빌드 대기) → HM-20 (장비 아이콘 실형상화) →
-   HM-21 (웹 ACK/ForceWrite) → HM-22 (설정 UI 편집 화면) 순서로 진행 —
-   위 "확장" 절 참조
+   HM-19 (다중 모니터) — ✅ 코드 완료(빌드 대기) → HM-20/HM-20b (장비 아이콘
+   실형상화 — 모터/밸브 HM-20 1차로 완료, 탱크/컨베이어는 HM-20b 재작업까지
+   완료) — ✅ 코드 완료(빌드 대기) → HM-21 (웹 ACK/ForceWrite) — ✅ 코드
+   완료(빌드 대기) → HM-22 (설정 UI 편집 화면) — ⭕ 예정
+   순서로 진행 — 위 "확장" 절 참조
 ```
 
 ### HM-03 구현 내역 (코드 완료 — 2026-07-16, 빌드 확인 대기)
@@ -1642,6 +1648,146 @@ App.xaml.cs(ShutdownMode=OnMainWindowClose 명시 — 메인 창을 닫으면 Ow
 완료 확인 후 → HM-20(장비 아이콘 실형상화) 착수. ← 다음 시작점
 ```
 
+### ⑲ HM-20 (장비 아이콘 실형상 UI 컨트롤화, HM-04-EX) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+착수 전 조사: 4개 장비 컨트롤(Motor/Conveyor/Tank/Valve)이 HM-06 애니메이션을
+전부 베이스의 공유 요소 IconText(TextBlock, 이모지 글리프)에 걸어 두고 있음을
+확인 — Motor/Conveyor 는 RenderTransform(회전/이동), Valve 는 Foreground(색상
+전환)로 사용 중, Tank 는 IconText 를 전혀 쓰지 않고 별도 LevelTrack/LevelFill
+게이지만 사용. 이 결합관계에 따라 컨트롤별로 위험도가 달라 접근을 구분했다.
+DeviceControlBase.xaml: IconText(TextBlock) 를 IconHost(Grid, 신규 "아이콘
+슬롯") + 그 안의 기본 글리프 IconGlyphText(기존과 동일한 TextBlock)로 교체 —
+GenericIconControl 등 커스텀 아이콘이 없는 타입은 지금까지처럼 이모지 그대로
+표시되어 100% 하위 호환.
+MotorControl.cs: 원형 하우징(Ellipse)+3개 회전 날개(Rectangle, 120도 간격)를
+직접 그려 넣고, 날개 그룹 전체에 기존 _rotate(RotateTransform)를 적용 — 회전
+속도 계산 로직(_ApplyState/_OnNodePropertyChanged)은 완전히 무수정.
+ConveyorControl.cs: 좌우 롤러(Ellipse)+벨트 라인(Line)+화물 3개(Rectangle)를
+그려 넣고, 화물 그룹에 기존 _shift(TranslateTransform)를 적용 — 흐름 속도
+계산 로직은 무수정.
+TankControl.cs: 원통 몸통(Rectangle)+타원 뚜껑(Ellipse)을 정적 장식으로만
+추가 — IconText 를 원래 쓰지 않았으므로 수위 게이지 로직(_ApplyState/
+LevelTrack.SizeChanged 등)은 단 한 줄도 건드리지 않음(최저 위험 변경).
+ValveControl.cs: 배관(Line)+밸브 바디(Ellipse)+손잡이(Line)를 그려 넣고,
+기존 "색상만 전환" 방식을 "손잡이 색상 전환 + 회전(열림=배관과 나란히/
+닫힘=수직, 표준 밸브 심볼 표기)"으로 확장 — EngValue>0→열림 판정 기준선은
+HM-06 그대로 유지.
+전체 5개 파일(DeviceControlBase.xaml + 4개 컨트롤) 수정 완료.
+★ 중요 — 시각 검증 필요: 이 도형들은 좌표 계산으로 코드에서 직접 그린
+것이라(WPF 렌더링 미리보기 불가 환경에서 작성) 실제 화면에서 크기 비율·
+겹침·색상 대비를 육안으로 확인해야 한다. 어색한 부분이 있으면 구체적으로
+알려주시면 좌표/크기만 조정하는 건 빠르게 가능하다.
+사용자 빌드·런타임 확인 필요(★ 특히 카드 크기(Width=120/MinHeight=100) 안에
+아이콘(56x56)이 잘 들어맞는지, 4개 장비 모두 확인).
+완료 확인 후 → HM-21(웹에서 ACK/ForceWrite 지원) 착수. ← 다음 시작점
+```
+
+### ⑲-1 HM-20b (탱크 게이지·컨베이어 애니메이션 재작업, 사용자 피드백) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-19)
+```
+★ 사용자 피드백: "컨트롤러 UI를 사각형이 아니라 게이지의 경우 차량 속도계처럼,
+컨베이어 벨트의 경우 실제 컨베이어가 돌아가거나 회전하는 그런 UI"를 요청 —
+HM-20 1차 결과물(탱크=단순 막대 게이지, 컨베이어=화물 3개가 좌우로 왕복)이
+기대에 못 미쳐 두 컨트롤만 다시 설계(모터/밸브는 대상 아님, 이번 피드백에서
+언급되지 않음).
+TankControl.cs: 직사각형 LevelTrack/LevelFill 막대 게이지를 완전히 대체 —
+PathGeometry+ArcSegment 로 240도 원호 다이얼을 그리고, 0/25/50/75/100% 위치에
+눈금(Line)을 배치, 빨간 바늘(Line+RotateTransform)이 수위(%)에 비례한 각도로
+회전한다(값이 바뀔 때마다 400ms 이징 애니메이션으로 부드럽게 이동 — 실제
+속도계 바늘처럼). 각도 계산용 _PointOnCircle() 헬퍼(위쪽=0도·시계방향 +) 신규
+추가. LevelTrack/LevelFill 은 이 컨트롤에서는 더 이상 사용하지 않지만 베이스
+요소 자체는 삭제하지 않음(다른 장비가 막대형이 필요하면 재사용 가능하도록).
+ConveyorControl.cs: 화물 3개가 왕복(oscillate)하던 방식을 폐기하고 ①좌우
+롤러에 스포크(십자선) 2개를 넣고 그 스포크 그룹을 RotateTransform 으로 계속
+회전시켜 "롤러가 실제로 도는" 것처럼 보이게 하고, ②벨트 상/하 라인을
+점선(StrokeDashArray)으로 그린 뒤 Shape.StrokeDashOffsetProperty 를
+AutoReverse 없이 한 방향으로 계속 흘려보내 "벨트가 흐르는"(마칭 앤츠) 효과를
+낸다. 속도(seconds)는 기존과 동일하게 EngValue 절대값에 비례.
+전체 2개 파일(TankControl.cs, ConveyorControl.cs) 수정 완료.
+사용자 빌드·런타임 확인 필요(★ 바늘 회전 중심이 정확히 맞는지, 벨트 스크롤
+방향/속도가 자연스러운지 육안 확인 우선 — 마음에 안 드는 부분 있으면 구체적으로
+알려주시면 좌표/속도만 조정 가능).
+완료 확인 후 → HM-21(웹에서 ACK/ForceWrite 지원) 착수. ← 다음 시작점
+```
+
+### ⑲-2 HM-20 관련 컨트롤러 실형상화 현황 점검 (사용자 질의 응답, 2026-07-20)
+```
+사용자 질의: "탱크와 컨베이어 같이 만들어야 할 컨트롤러 목록을 정리해달라"
+→ 점검 결과, 4개 장비 컨트롤 전부 이미 HM-20/HM-20b 로 벡터 도형+애니메이션
+처리가 끝나 있으며, 추가 작업이 필요한 컨트롤러는 없음:
+  · Tank(탱크)     — HM-20b 로 속도계 다이얼(회전 바늘)까지 완료.
+  · Conveyor(컨베이어) — HM-20b 로 롤러 회전+벨트 스크롤까지 완료.
+  · Motor(모터)    — HM-20 1차에서 이미 회전 날개(3개 Rectangle, 120도 간격)가
+    실제로 회전하는 벡터 아이콘으로 완료. 이번 사용자 피드백(속도계/컨베이어
+    회전)에서 별도로 지적되지 않았음 — Tank/Conveyor 와 동일한 수준의 "실제로
+    움직이는" 표현이 이미 적용되어 있어 추가 조치 불필요.
+  · Valve(밸브)    — HM-20 1차에서 이미 배관+바디+손잡이 벡터 아이콘 + 손잡이
+    회전(열림=나란히/닫힘=수직, 표준 밸브 심볼)까지 완료. 마찬가지로 이번
+    피드백에서 지적되지 않았고 이미 동등한 수준.
+  · GenericIconControl(미지정 장비) — 의도적으로 이모지 글리프 그대로 유지
+    (향후 추가될 미지정 장비 타입을 위한 기본 폴백, 커스텀 벡터 대상 아님).
+결론: 추가로 "탱크/컨베이어처럼 만들어야 할" 컨트롤러 없음. Motor/Valve 도
+구체적으로 어색한 부분이 있다면 언제든 알려주면 좌표/애니메이션만 조정 가능.
+```
+
+### ⑳ HM-21: 웹에서 ACK/ForceWrite 지원 (HM-11-EX) — ✅ 코드 완료, 빌드 확인 대기 (2026-07-20)
+```
+목표: HM-11(웹 표시)이 "읽기 전용"으로 남겨뒀던 ACK(알람 확인)/ForceWrite(강제
+쓰기)를 웹 페이지에서도 가능하게 한다.
+
+보안 설계(HM-12 재검토 결과 — 신규 인증체계를 만들지 않고 기존 안전장치를
+웹 경로까지 그대로 확장):
+  · ForceWrite 는 WPF 쪽 LayoutCanvasViewModel.IsForceWriteLocked(기본값=잠금)
+    를 그대로 재사용 — WPF 콘솔에서 🔒 버튼으로 잠금 해제하기 전에는 웹에서도
+    ForceWrite 가 거부된다. ACK 는 WPF 알람 팝업과 동일하게 잠금과 무관하게 허용.
+  · ForceWrite 는 기존과 동일하게 API Key(Collector Security.ForceWriteApiKey
+    검증)를 웹 페이지에서 직접 입력받아 매 요청마다 함께 전송.
+  · ⚠ 잔여 리스크: HmiWebHostService 의 CORS 정책은 변경 없이 전체 허용
+    (SetIsOriginAllowed(_ => true))이므로, 같은 네트워크에서 웹 포트에 접근
+    가능한 누구나 두 메서드 호출을 "시도"할 수 있다 — 실제 통제는 위 잠금+
+    API Key 2단계로 이루어진다. 더 강한 네트워크 격리/인증이 필요하면 후속
+    Step 에서 별도 검토.
+
+WebNodeDto.cs: AlarmKey/BoundCollectorId/BoundPlcId/BoundTagId/BoundTagName
+5개 필드 추가(ACK/ForceWrite 요청을 어느 노드/Tag/Collector 로 라우팅할지
+식별하기 위함 — 전부 서버가 nodeId 로 노드를 다시 찾아 검증하므로 클라이언트가
+값을 변조해도 실제 라우팅에는 영향 없음, 표시 참고용).
+
+HmiWebHostService.cs: 생성자에 CollectorConnectionManager 의존성 추가 +
+StartAsync() 의 ASP.NET Core 자체 DI 컨테이너(builder.Services)에 그 인스턴스와
+LayoutCanvasViewModel 인스턴스를 그대로 등록(WPF DI 컨테이너와 별개이므로 Hub
+생성자가 참조하려면 공유 등록이 필요) + _BuildSnapshotAsync() 에 신규 DTO
+필드 5개 채우기 추가.
+
+HmiWebHub.cs: 빈 Hub → 클라이언트 호출 가능한 2개 메서드 추가.
+  · AcknowledgeAsync(nodeId, alarmKey): nodeId 로 노드의 BoundCollectorId 를
+    찾아 CollectorConnectionManager.AcknowledgeAlarmAsync 로 위임("발생
+    출처로만 전송" 원칙 그대로 유지).
+  · ForceWriteAsync(nodeId, value, apiKey): IsForceWriteLocked 체크 →
+    IsBound 체크 → CollectorConnectionManager.ForceWriteAsync 위임, 결과
+    (ForceWriteResult)를 그대로 반환.
+  둘 다 LayoutCanvasViewModel.Nodes(WPF UI 스레드 소유)를 참조하는 부분은
+  Application.Current.Dispatcher.InvokeAsync 로 마샬링(프로젝트 UI 마샬링
+  규칙 준수).
+
+wwwroot/index.html: 카드 클릭/알람 배지 클릭에 대응하는 모달 UI 신규 추가.
+  · 알람 배지(⚠) 클릭 → ACK 확인 모달 → conn.invoke("AcknowledgeAsync", ...).
+  · Tag 바인딩된 카드 클릭 → 값 입력+API Key 입력 모달 →
+    conn.invoke("ForceWriteAsync", ...) → 성공/실패 메시지 표시(잠금 상태면
+    서버가 즉시 실패 메시지 반환).
+  · render() 가 매번 카드를 새로 그리는 기존 구조를 유지하되, 클릭 핸들러가
+    참조할 최신 노드 데이터를 latestNodes(Map) 로 별도 캐시.
+  · 헤더 문구에서 "(읽기 전용)" 문구 제거(더 이상 읽기 전용이 아니므로).
+
+전체 4개 파일 수정: WebNodeDto.cs / HmiWebHostService.cs / HmiWebHub.cs /
+wwwroot/index.html.
+사용자 빌드·런타임 확인 필요(★ ACK/ForceWrite 는 실제 PLC/Collector 에
+영향을 주는 기능이므로, 반드시 테스트 환경에서 먼저 확인 — 특히 (1) WPF
+잠금 상태에서 웹 ForceWrite 가 정상 거부되는지, (2) 잠금 해제 후 정상
+동작하는지, (3) 여러 브라우저/여러 Collector 동시 접속 시 라우팅이 섞이지
+않는지).
+완료 확인 후 → HM-22(설정 UI 편집 화면) 착수. ← 다음 시작점
+```
+
 ---
 
 ## Ver History (요약)
@@ -1840,7 +1986,43 @@ App.xaml.cs(ShutdownMode=OnMainWindowClose 명시 — 메인 창을 닫으면 Ow
 | | | **보조 창도 함께 종료)**|
 | | | **다음 세션 시작점: HM-Base-0~HM-19 빌드 확인(★특히 정상 종료 여부)** |
 | | | **→ HM-20(장비 아이콘 실형상화) 착수** |
+| **v11.25** | **HM-20(장비 아이콘 실형상화, HM-04-EX) 코드 완료(빌드 확인 대기)** |
+| | | **DeviceControlBase: IconText(TextBlock)→IconHost(Grid, 아이콘 슬롯)** |
+| | | **+IconGlyphText(기본 글리프, 하위호환) 로 구조 확장**|
+| | | **Motor: 원형 하우징+3개 회전 날개 벡터 그림, 기존 회전 애니메이션 로직** |
+| | | **무수정(대상만 이동) · Conveyor: 롤러+벨트+화물 3개, 흐름 로직 무수정**|
+| | | **Tank: 원통+뚜껑 정적 장식만 추가, 수위 게이지 로직 완전 무수정(최저** |
+| | | **위험) · Valve: 배관+바디+손잡이, 색상전환에 회전(열림/닫힘) 추가**|
+| | | **★ 코드로 직접 그린 벡터라 실제 화면 육안 확인 필요 — 좌표/비율 조정은** |
+| | | **피드백 주시면 빠르게 반영 가능**|
+| | | **다음 세션 시작점: HM-Base-0~HM-20 빌드 확인(★비율/색상 육안 확인 우선)** |
+| | | **→ HM-21(웹 ACK/ForceWrite) 착수** |
+| **v11.26** | **HM-20b(탱크 게이지·컨베이어 애니메이션 재작업) 코드 완료(빌드** |
+| | | **확인 대기) — 사용자 피드백: "게이지는 차량 속도계처럼, 컨베이어는** |
+| | | **실제로 돌아가는 느낌"**|
+| | | **Tank: 막대 게이지 폐기 → PathGeometry+ArcSegment 240도 다이얼+눈금+** |
+| | | **회전 바늘(RotateTransform, 400ms 이징 애니메이션)**|
+| | | **Conveyor: 화물 왕복 폐기 → 롤러 스포크 회전(RotateTransform 연속) +** |
+| | | **벨트 점선 StrokeDashOffset 연속 스크롤(AutoReverse 없음)**|
+| | | **다음 세션 시작점: HM-Base-0~HM-20(b 포함) 빌드 확인(★바늘 회전 중심/** |
+| | | **벨트 스크롤 육안 확인) → HM-21(웹 ACK/ForceWrite) 착수** |
+| **v11.27** | **컨트롤러 실형상화 현황 점검(Motor/Valve 는 이미 HM-20 1차로 완료,** |
+| | | **추가 조치 불필요 — Tank/Conveyor 만 HM-20b 대상이었음) +** |
+| | | **HM-21(웹 ACK/ForceWrite) 코드 완료(빌드 확인 대기)**|
+| | | **WebNodeDto: AlarmKey/BoundCollectorId/BoundPlcId/BoundTagId/** |
+| | | **BoundTagName 5개 필드 추가(라우팅 식별용)**|
+| | | **HmiWebHostService: CollectorConnectionManager 의존성 추가 + 웹 자체** |
+| | | **DI 컨테이너에 공유 인스턴스 등록(WPF DI 와 별개 컨테이너이므로 필요)**|
+| | | **HmiWebHub: AcknowledgeAsync/ForceWriteAsync 2개 클라이언트 호출** |
+| | | **메서드 추가 — ForceWrite 는 기존 IsForceWriteLocked(HM-12) 그대로** |
+| | | **재사용해 잠금 시 거부 + API Key 검증은 Collector 기존 로직 그대로**|
+| | | **index.html: 알람 배지 클릭→ACK 모달, 바인딩 카드 클릭→ForceWrite** |
+| | | **모달(값+API Key 입력) 추가, "(읽기 전용)" 문구 제거**|
+| | | **⚠ CORS 는 기존 그대로 전체 허용 — 실 통제는 잠금+API Key 2단계임을** |
+| | | **핸드오프에 명시(잔여 리스크로 기록)**|
+| | | **다음 세션 시작점: HM-Base-0~HM-21 빌드·런타임 확인(★PLC 영향 기능이므로** |
+| | | **테스트 환경에서 먼저 확인) → HM-22(설정 UI 편집 화면) 착수** |
 
 ---
 
-*다음 세션: 이 파일을 먼저 읽고 → HM-Base-0~HM-19 전체 빌드·런타임 확인(★HM-19 ShutdownMode 변경 후 정상 종료 여부 우선 확인) → HM-20(장비 아이콘 실형상화) 착수*
+*다음 세션: 이 파일을 먼저 읽고 → HM-Base-0~HM-21 전체 빌드·런타임 확인(★웹 ACK/ForceWrite 는 테스트 환경에서 먼저 확인) → HM-22(설정 UI 편집 화면) 착수*
