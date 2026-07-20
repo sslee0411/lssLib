@@ -1,0 +1,443 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Collector · Views/Settings/SettingsView.xaml
+     역할: 환경설정 탭 — settings.json 11개 섹션 편집
+           (일반/저장소/SignalR/재연결/알림/강제쓰기/이상값필터/
+            가상Tag/보안/데이터보존/DB백업)
+     C-SET-01: 신규
+     규칙:
+       ① 좌측 섹션 네비게이션은 기존 탭바와 동일한 GhostBtn+
+          SwitchSectionCommand(string) 패턴 재사용 (신규 UI 패턴 도입 안 함)
+       ② Storage.Provider 는 IsInfluxDbProvider(bool) 래퍼로 섹션 전환
+          (S-25 IsDisabled=!IsEnabled 와 동일한 "양쪽 bool 노출" 기법)
+       ③ 민감정보(SMTP 비밀번호/InfluxDB Token/MQTT 비밀번호/API Key 2종)는
+          PasswordBox + 코드비하인드 동기화 (PasswordBox 는 직접 바인딩 불가)
+     생성: 2026-07-20
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Collector.Views.Settings.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BgBrush}">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <!--
+          ★ ModernPasswordBox — 이 화면 전용 로컬 스타일.
+             PasswordBox 는 보안상 Password 프로퍼티를 바인딩할 수 없어
+             테마 공용 PropInput 을 그대로 쓸 수 없으므로, PropInput 과
+             동일한 외형(Template)만 PasswordBox 용으로 이 파일에 한정해 정의한다
+             (공용 IIoT.UI.Themes 라이브러리는 건드리지 않음).
+        -->
+        <Style x:Key="ModernPasswordBox" TargetType="PasswordBox">
+            <Setter Property="Background"      Value="{DynamicResource CardBrush}" />
+            <Setter Property="Foreground"      Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderBrush"     Value="{DynamicResource Border2Brush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding"          Value="7,5" />
+            <Setter Property="FontSize"         Value="{DynamicResource FontBase}" />
+            <Setter Property="FontFamily"       Value="{DynamicResource UiFont}" />
+            <Setter Property="CaretBrush"       Value="{DynamicResource TextBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{DynamicResource RadiusSm}">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="root" Property="BorderBrush" Value="{DynamicResource AccBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="root" Property="BorderBrush" Value="{DynamicResource Border2Brush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- ══════════════════════════════════════════════════
+             § 상단 — 재시작 필요 안내 배너 (항상 표시)
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Top"
+                Background="#2A2410"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,8">
+            <TextBlock Text="⚠ 대부분의 설정 변경은 프로그램을 재시작해야 실제로 적용됩니다."
+                       FontSize="11"
+                       Foreground="#E0A030" />
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 하단 — 저장/새로고침 + 상태 메시지
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Bottom"
+                Height="44"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Button Content="↻ 다시 불러오기"
+                            Command="{Binding ReloadCommand}"
+                            Style="{DynamicResource SecondaryBtn}"
+                            Margin="0,0,8,0" />
+                    <Button Content="💾 저장"
+                            Command="{Binding SaveCommand}"
+                            Style="{DynamicResource PrimaryBtn}" />
+                </StackPanel>
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="11"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#3FB950" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Foreground" Value="#E05050" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </DockPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 좌측 — 섹션 네비게이션 (220px)
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Left"
+                Width="220"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <StackPanel Margin="0,8">
+                <Button Content="⚙  일반"                Command="{Binding SwitchSectionCommand}" CommandParameter="0"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="💾  저장소 (Storage)"    Command="{Binding SwitchSectionCommand}" CommandParameter="1"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="🔌  SignalR"             Command="{Binding SwitchSectionCommand}" CommandParameter="2"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="🔁  재연결 (Retry)"      Command="{Binding SwitchSectionCommand}" CommandParameter="3"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="🔔  알림 (Notification)" Command="{Binding SwitchSectionCommand}" CommandParameter="4"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="✍  강제쓰기 (ForceWrite)" Command="{Binding SwitchSectionCommand}" CommandParameter="5"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="📉  이상값 필터 (Filter)" Command="{Binding SwitchSectionCommand}" CommandParameter="6"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="🧮  가상 Tag"             Command="{Binding SwitchSectionCommand}" CommandParameter="7"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="🔒  보안 (Security)"     Command="{Binding SwitchSectionCommand}" CommandParameter="8"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="🗑  데이터 보존"          Command="{Binding SwitchSectionCommand}" CommandParameter="9"  Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+                <Button Content="📦  DB 백업 (Backup)"     Command="{Binding SwitchSectionCommand}" CommandParameter="10" Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+            </StackPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 우측 — 섹션 본문
+             ══════════════════════════════════════════════════ -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      Padding="24,16">
+            <Grid MaxWidth="640" HorizontalAlignment="Left">
+
+                <!-- ── 0. 일반 ─────────────────────────────── -->
+                <StackPanel Visibility="{Binding IsGeneralSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="일반" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+
+                    <TextBlock Text="CollectorId" FontSize="11" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4" />
+                    <TextBlock Text="Monitor/HMI 가 여러 Collector 를 구분할 때 사용하는 고유 식별자입니다. 배포 시 담당자가 알아보기 쉬운 이름(예: COL-공장1-1호기)으로 변경을 권장합니다."
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Style="{DynamicResource PropInput}"
+                                 Text="{Binding Settings.CollectorId, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1" Content="🎲 재발급" Command="{Binding RegenerateCollectorIdCommand}"
+                                Style="{DynamicResource SecondaryBtn}" Margin="8,0,0,0" />
+                    </Grid>
+
+                    <TextBlock Text="Config 감시 폴더 (WatchPath)" FontSize="11" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4" />
+                    <TextBlock Text="비워두면 Collector 자신의 Config 폴더를 감시합니다. Studio 와 Config 폴더를 공유하려면 Studio 실행파일의 Config 폴더 절대경로를 입력하세요."
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <TextBox Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.WatchPath, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <!-- ── 1. 저장소 ───────────────────────────── -->
+                <StackPanel Visibility="{Binding IsStorageSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="저장소 (Storage)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" /><ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="SDT 허용 오차 (%)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.SdtExcDevPercent}" />
+                    </Grid>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" /><ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="수집 통계 저장 주기 (초)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.StatIntervalSec}" />
+                    </Grid>
+
+                    <CheckBox Content="InfluxDB 사용 (해제 시 SQLite)" Style="{DynamicResource DarkCheckBox}"
+                              IsChecked="{Binding IsInfluxDbProvider}" Margin="0,4,0,12" />
+
+                    <!-- SQLite 하위 -->
+                    <StackPanel Visibility="{Binding IsSqliteProvider, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="SQLite" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,10" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="DB 파일 경로" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.SQLite.DbPath}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- InfluxDB 하위 -->
+                    <StackPanel Visibility="{Binding IsInfluxDbProvider, Converter={StaticResource BoolToVisibility}}">
+                        <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="InfluxDB" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,10" />
+                                <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="URL" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.InfluxDB.Url}" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Token" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                    <PasswordBox x:Name="InfluxTokenBox" Grid.Column="1" Style="{DynamicResource ModernPasswordBox}" PasswordChanged="InfluxTokenBox_PasswordChanged" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Org" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.InfluxDB.Org}" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Bucket" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.InfluxDB.Bucket}" />
+                                </Grid>
+                                <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="배치 최대 건수" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.InfluxDB.BatchSize}" />
+                                </Grid>
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="배치 최대 대기(ms)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.InfluxDB.FlushIntervalMs}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- MQTT 발행 -->
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,12">
+                        <StackPanel>
+                            <CheckBox Content="MQTT 발행 활성화" Style="{DynamicResource DarkCheckBox}"
+                                      IsChecked="{Binding Settings.Storage.Mqtt.Enabled}" Margin="0,0,0,10" />
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="브로커 호스트" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.Mqtt.BrokerHost}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="브로커 포트" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.Mqtt.BrokerPort}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="토픽 접두사" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.Mqtt.TopicPrefix}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="QoS (0 또는 1)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.Mqtt.QoS}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="사용자명 (선택)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Storage.Mqtt.Username}" />
+                            </Grid>
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="비밀번호 (선택)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <PasswordBox x:Name="MqttPasswordBox" Grid.Column="1" Style="{DynamicResource ModernPasswordBox}" PasswordChanged="MqttPasswordBox_PasswordChanged" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ── 2. SignalR ──────────────────────────── -->
+                <StackPanel Visibility="{Binding IsSignalRSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="SignalR" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <CheckBox Content="Hub 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.SignalR.Enabled}" Margin="0,0,0,10" />
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="수신 포트" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.SignalR.Port}" />
+                    </Grid>
+                    <TextBlock Text="허용 CORS Origin (한 줄에 하나, 비우면 전체 허용)" FontSize="11" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4" />
+                    <TextBox Style="{DynamicResource PropInput}" Text="{Binding AllowedOriginsText, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True" Height="80" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
+                </StackPanel>
+
+                <!-- ── 3. 재연결 ───────────────────────────── -->
+                <StackPanel Visibility="{Binding IsRetrySection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="재연결 (Retry)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <CheckBox Content="자동 재연결 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Retry.Enabled}" Margin="0,0,0,10" />
+                    <TextBlock Text="재연결 시도 간격 (초, 콤마 구분 — 지수 백오프, 예: 5,15,30,60)" FontSize="11" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,4" />
+                    <TextBox Style="{DynamicResource PropInput}" Text="{Binding RetryIntervalsSecText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="최대 재시도 횟수 (0=무제한)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Retry.MaxRetries}" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- ── 4. 알림 ─────────────────────────────── -->
+                <StackPanel Visibility="{Binding IsNotificationSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="알림 (Notification)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <CheckBox Content="알람 에스컬레이션 알림 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Notification.Enabled}" Margin="0,0,0,12" />
+
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="SMTP (이메일)" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,10" />
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="호스트" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Notification.Smtp.Host}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="포트" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Notification.Smtp.Port}" />
+                            </Grid>
+                            <CheckBox Content="SSL 사용" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Notification.Smtp.UseSsl}" Margin="0,0,0,8" />
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="사용자" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Notification.Smtp.User}" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="비밀번호" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <PasswordBox x:Name="SmtpPasswordBox" Grid.Column="1" Style="{DynamicResource ModernPasswordBox}" PasswordChanged="SmtpPasswordBox_PasswordChanged" />
+                            </Grid>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="발신 주소" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Notification.Smtp.FromAddress}" />
+                            </Grid>
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="발신 이름" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Notification.Smtp.FromName}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,12">
+                        <StackPanel>
+                            <TextBlock Text="Webhook (SMS 등 외부 REST)" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Text2Brush}" Margin="0,0,0,10" />
+                            <CheckBox Content="Webhook 발송 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Notification.Webhook.Enabled}" Margin="0,0,0,8" />
+                            <TextBox Style="{DynamicResource PropInput}" Text="{Binding Settings.Notification.Webhook.Url}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ── 5. 강제쓰기 ─────────────────────────── -->
+                <StackPanel Visibility="{Binding IsForceWriteSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="강제쓰기 (ForceWrite)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <Border Background="#2A1414" BorderBrush="#E05050" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                        <TextBlock Text="⚠ 실제 PLC 에 값을 직접 씁니다. 현장 적용 시에만 의도적으로 활성화하세요."
+                                   FontSize="11" Foreground="#E08080" TextWrapping="Wrap" />
+                    </Border>
+                    <CheckBox Content="강제쓰기 기능 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.ForceWrite.Enabled}" Margin="0,0,0,10" />
+                    <CheckBox Content="활성 알람(HH/LL) 중인 Tag 강제쓰기 시 경고 로그 표시" Style="{DynamicResource DarkCheckBox}"
+                              IsChecked="{Binding Settings.ForceWrite.WarnOnActiveAlarm}" />
+                </StackPanel>
+
+                <!-- ── 6. 이상값 필터 ──────────────────────── -->
+                <StackPanel Visibility="{Binding IsFilterSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="이상값 필터 (Filter)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,12" Margin="0,0,0,12">
+                        <StackPanel>
+                            <CheckBox Content="스파이크 필터 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Filter.SpikeFilterEnabled}" Margin="0,0,0,10" />
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="스파이크 판정 임계값 (%)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Filter.SpikeMaxDeltaPercent}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,12">
+                        <StackPanel>
+                            <CheckBox Content="데드밴드 필터 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Filter.DeadbandEnabled}" Margin="0,0,0,10" />
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="데드밴드 임계값 (%)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Filter.DeadbandPercent}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ── 7. 가상 Tag ─────────────────────────── -->
+                <StackPanel Visibility="{Binding IsVirtualTagSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="가상 Tag (VirtualTag)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <CheckBox Content="가상 Tag 엔진 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.VirtualTag.Enabled}" Margin="0,0,0,10" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="계산 주기 (ms)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.VirtualTag.IntervalMs}" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- ── 8. 보안 ─────────────────────────────── -->
+                <StackPanel Visibility="{Binding IsSecuritySection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="보안 (Security)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <TextBlock Text="비워두면 해당 검증을 생략합니다 (기존 동작과 동일 — 하위 호환)." FontSize="10" Foreground="{DynamicResource Text2Brush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+                    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="강제쓰기 API Key" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <PasswordBox x:Name="ForceWriteApiKeyBox" Grid.Column="1" Style="{DynamicResource ModernPasswordBox}" PasswordChanged="ForceWriteApiKeyBox_PasswordChanged" />
+                    </Grid>
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="REST API Key" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <PasswordBox x:Name="ApiKeyBox" Grid.Column="1" Style="{DynamicResource ModernPasswordBox}" PasswordChanged="ApiKeyBox_PasswordChanged" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- ── 9. 데이터 보존 ──────────────────────── -->
+                <StackPanel Visibility="{Binding IsRetentionSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="데이터 보존 (Retention)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <CheckBox Content="보존 정책 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Retention.Enabled}" Margin="0,0,0,10" />
+                    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="원본 보존 일수" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Retention.RetentionDays}" />
+                    </Grid>
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="실행 시각 (HH:mm)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Retention.RunAtTime}" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- ── 10. DB 백업 ─────────────────────────── -->
+                <StackPanel Visibility="{Binding IsBackupSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="DB 백업 (Backup)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <CheckBox Content="자동 백업 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.Backup.Enabled}" Margin="0,0,0,10" />
+                    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="실행 시각 (HH:mm)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Backup.RunAtTime}" />
+                    </Grid>
+                    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="최대 백업 개수" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Backup.MaxBackupCount}" />
+                    </Grid>
+                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="백업 폴더 경로" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Backup.BackupDir}" />
+                    </Grid>
+                </StackPanel>
+
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

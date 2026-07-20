@@ -11,6 +11,7 @@
 //        비워둔 "현황판" placeholder 탭은 중복이라 사용자 확인 후 제거함.
 //        탭 인덱스 재정렬: 0=레이아웃 편집 1=Collector 관리 2=알람 3=로그
 //        (IsDashboardTab 제거, 나머지 Is*Tab 은 번호만 1씩 당김)
+//  C-SET-01 후속 (HMI): [⚙ 환경설정] 탭 추가 — 인덱스 4. IsSettingsTab 추가.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -45,12 +46,16 @@ public partial class HmiMainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsCollectorTab))]
     [NotifyPropertyChangedFor(nameof(IsAlarmTab))]
     [NotifyPropertyChangedFor(nameof(IsLogTab))]
+    [NotifyPropertyChangedFor(nameof(IsSettingsTab))]   // ★ C-SET-01 후속
     private int _activeTabIndex;
 
     public bool IsLayoutTab    => ActiveTabIndex == 0;
     public bool IsCollectorTab => ActiveTabIndex == 1;
     public bool IsAlarmTab     => ActiveTabIndex == 2;
     public bool IsLogTab       => ActiveTabIndex == 3;
+
+    /// <summary>환경설정 탭 (4) — C-SET-01 후속</summary>
+    public bool IsSettingsTab  => ActiveTabIndex == 4;
 
     // §2 ─ 명령 ──────────────────────────────────────────────
 

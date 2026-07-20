@@ -1,0 +1,92 @@
+<!-- ══════════════════════════════════════════════════════════
+     IIoT.Monitor · Views/Settings/SettingsView.xaml
+     역할: [환경설정] 탭 — monitor.json Web 섹션(자체 SignalR Hub Enabled/Port) 편집
+           (Collectors/즐겨찾기는 이미 각자 탭에서 편집 가능하므로 대상 아님)
+     C-SET-01 후속 (Monitor): Manager 환경설정 탭과 동일 설계 원칙 — 항목이
+           1개 섹션뿐이라 좌측 네비게이션 없이 단일 카드로 구성.
+     생성: 2026-07-20
+     규칙:
+       ① DynamicResource 필수 (버튼: 테마 정식 스타일)
+       ② UserControl.Resources 는 UserControl 직계 자식
+       ③ Grid 는 Padding 불가 → Border.Padding 사용 (MC3072)
+     ══════════════════════════════════════════════════════════ -->
+<UserControl x:Class="IIoT.Monitor.Views.Settings.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"    Value="10"/>
+            <Setter Property="Padding"         Value="16,12"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Padding="24">
+        <Grid MaxWidth="560" HorizontalAlignment="Left">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /> <!-- 재시작 안내 -->
+                <RowDefinition Height="Auto" /> <!-- 웹 Hub 카드 -->
+                <RowDefinition Height="Auto" /> <!-- 저장/새로고침 + 상태 -->
+            </Grid.RowDefinitions>
+
+            <!-- § 재시작 필요 안내 -->
+            <Border Grid.Row="0" Background="#2A2410" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,16">
+                <TextBlock Text="⚠ 이 설정은 Monitor 시작 시 1회만 적용됩니다 — 저장 후 재시작이 필요합니다."
+                           FontSize="11" Foreground="#E0A030" TextWrapping="Wrap" />
+            </Border>
+
+            <!-- § 웹 Hub -->
+            <Border Grid.Row="1" Style="{StaticResource SectionCard}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="웹 브라우저 연동 (Web Hub)" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextBrush}" Margin="0,0,0,4" />
+                    <TextBlock Text="Monitor 가 자체적으로 구동하는 SignalR Hub 설정입니다. 활성화하면 브라우저에서 이 포트로 접속해 실시간 태그/알람을 볼 수 있습니다. Collector 의 Hub 포트(기본 7878)와 겹치지 않도록 주의하세요."
+                               FontSize="11" Foreground="{DynamicResource Text3Brush}"
+                               TextWrapping="Wrap" Margin="0,0,0,14" />
+
+                    <CheckBox Content="자체 웹 Hub 활성화" Style="{DynamicResource DarkCheckBox}"
+                              IsChecked="{Binding Settings.Web.Enabled}" Margin="0,0,0,10" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="웹 Hub 포트"
+                                   FontSize="11" Foreground="{DynamicResource Text2Brush}"
+                                   VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}"
+                                 Text="{Binding Settings.Web.Port}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- § 저장/새로고침 + 상태 -->
+            <StackPanel Grid.Row="2">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="💾 저장" Command="{Binding SaveCommand}"
+                            Style="{DynamicResource PrimaryBtn}" Margin="0,0,8,0" />
+                    <Button Content="↻ 다시 불러오기" Command="{Binding ReloadCommand}"
+                            Style="{DynamicResource SecondaryBtn}" />
+                </StackPanel>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="11" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource GreenBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource RedBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+
+        </Grid>
+    </Border>
+</UserControl>

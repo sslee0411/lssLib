@@ -16,6 +16,7 @@ using IIoT.Collector.Views.Flow;
 using IIoT.Collector.Views.Trend;
 using IIoT.Collector.Views.Status;
 using IIoT.Collector.Views.Device;   // ★ 추가
+using IIoT.Collector.Views.Settings; // ★ C-SET-01 신규
 using System.Windows;
 
 namespace IIoT.Collector;
@@ -35,6 +36,7 @@ public partial class MainWindow : Window
     public FlowView   FlowView   { get; }
     public TrendView  TrendView  { get; }
     public DeviceTreeView DeviceTreeView { get; }   // ★ C-EX-01-6 신규
+    public SettingsView SettingsView { get; }       // ★ C-SET-01 신규
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
@@ -43,7 +45,8 @@ public partial class MainWindow : Window
     /// ★ 기본 생성자 절대 금지 — App.xaml.cs AddSingleton 팩토리 충돌
     /// </summary>
     public MainWindow(MainViewModel vm, StatusView statusView, AlarmView alarmView,
-                      FlowView flowView, TrendView trendView, DeviceTreeView deviceTreeView)
+                      FlowView flowView, TrendView trendView, DeviceTreeView deviceTreeView,
+                      SettingsView settingsView)
     {
         _vm = vm;
         StatusView = statusView;
@@ -51,6 +54,7 @@ public partial class MainWindow : Window
         FlowView   = flowView;
         TrendView  = trendView;
         DeviceTreeView = deviceTreeView;   // ★ C-EX-01-6 신규
+        SettingsView = settingsView;       // ★ C-SET-01 신규
 
         InitializeComponent();
         DataContext = vm;
@@ -64,6 +68,8 @@ public partial class MainWindow : Window
         // ★ C-13: TrendView 코드 주입
         TrendViewHost.Content  = TrendView;
         // ★ C-EX-01-6 신규
-        DeviceTreeViewHost.Content = DeviceTreeView;  
+        DeviceTreeViewHost.Content = DeviceTreeView;
+        // ★ C-SET-01 신규
+        SettingsViewHost.Content = SettingsView;
     }
 }

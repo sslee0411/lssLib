@@ -118,6 +118,13 @@
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
 
+                <!-- C-SET-01: 환경설정 탭 -->
+                <Button Content="⚙  환경설정"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="5"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40" Padding="16,0" />
+
                 <!-- 로그 패널 토글 버튼 (탭 전환이 아닌 하단 패널 토글) -->
                 <Button Content="📋  로그"
                         Command="{Binding SwitchTabCommand}"
@@ -218,6 +225,12 @@
             <Grid Visibility="{Binding IsDeviceTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <ContentControl x:Name="DeviceTreeViewHost" />
+            </Grid>
+
+            <!-- 환경설정 탭 (5) — SettingsView (코드비하인드에서 DI 주입) C-SET-01 -->
+            <Grid Visibility="{Binding IsSettingsTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <ContentControl x:Name="SettingsViewHost" />
             </Grid>
 
         </Grid>

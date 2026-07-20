@@ -62,6 +62,7 @@ using IIoT.Monitor.Views.CollectorManage;
 using IIoT.Monitor.Views.Dashboard;
 using IIoT.Monitor.Views.LiveTag;
 using IIoT.Monitor.Views.Log;
+using IIoT.Monitor.Views.Settings;   // ★ C-SET-01 후속
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -228,6 +229,10 @@ public partial class App : Application
         services.AddSingleton<CollectorManageViewModel>();
         services.AddSingleton<CollectorManageView>();
 
+        // ★ C-SET-01 후속 신규: 환경설정 화면 (MonitorSettingsLoader 의존 — 위에서 먼저 등록됨)
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<SettingsView>();
+
         // ★ MN-Base-1: MainWindow DataContext
         services.AddSingleton<MonitorMainViewModel>();
 
@@ -258,7 +263,8 @@ public partial class App : Application
                 sp.GetRequiredService<LogPanelView>(),
                 sp.GetRequiredService<MonitorHostService>(),
                 sp.GetRequiredService<AlarmHistoryService>(),
-                sp.GetRequiredService<TrayNotificationService>()));
+                sp.GetRequiredService<TrayNotificationService>(),
+                sp.GetRequiredService<SettingsView>()));   // ★ C-SET-01 후속
 
         return services.BuildServiceProvider();
     }

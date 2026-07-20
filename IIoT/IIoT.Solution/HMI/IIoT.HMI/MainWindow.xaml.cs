@@ -9,6 +9,8 @@
 //         CollectorConnectionManager.AlarmChanged 를 자체 구독해 채움)
 //  HM-15: LogPanelView 주입 (로그 탭 호스트 — 초기 데이터 로드 불필요, 생성자에서
 //         자체적으로 LogManager.Instance.LogAdded 를 구독해 채움)
+//  C-SET-01 후속 (HMI): SettingsView 주입 (환경설정 탭 호스트 — 자체 Loaded 에서
+//         hmi.json 을 다시 로드해 채움, CollectorManageView 와 동일 패턴)
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -16,6 +18,7 @@ using IIoT.HMI.Views.Alarm;
 using IIoT.HMI.Views.CollectorManage;
 using IIoT.HMI.Views.LayoutCanvas;
 using IIoT.HMI.Views.Log;
+using IIoT.HMI.Views.Settings;
 using System.Windows;
 
 namespace IIoT.HMI;
@@ -28,7 +31,8 @@ public partial class MainWindow : Window
                       CollectorManageView collectorManageView,
                       LayoutCanvasView    layoutCanvasView,
                       AlarmView           alarmView,
-                      LogPanelView        logPanelView)
+                      LogPanelView        logPanelView,
+                      SettingsView        settingsView)   // ★ C-SET-01 후속
     {
         InitializeComponent();
 
@@ -47,5 +51,8 @@ public partial class MainWindow : Window
 
         // ★ HM-15: 로그 탭 주입 (초기 데이터 로드 불필요 — 실시간 이벤트로만 채워짐)
         LogHost.Content = logPanelView;
+
+        // ★ C-SET-01 후속: 환경설정 탭 주입 (자체 Loaded 에서 hmi.json 재로드)
+        SettingsHost.Content = settingsView;
     }
 }

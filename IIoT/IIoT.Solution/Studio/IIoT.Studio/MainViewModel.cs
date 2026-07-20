@@ -29,6 +29,8 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 
+// ★ C-SET-01 후속: ViewModels.SettingsViewModel 은 using IIoT.Studio.ViewModels; 로 이미 커버됨
+
 namespace IIoT.Studio;
 
 public partial class MainViewModel : ObservableObject
@@ -41,6 +43,9 @@ public partial class MainViewModel : ObservableObject
     public CommLibraryViewModel  CommLibrary  { get; }
     public CanvasViewModel       Canvas       { get; }
 
+    // ★ C-SET-01 후속: 환경설정 탭 서브 VM (기존 DeviceTree/Canvas 등과 동일 패턴)
+    public SettingsViewModel     Settings     { get; }
+
     // ★ Studio-P03: 플러그인 레지스트리 (PlcEditorView / DeviceEditorView 에서 참조)
     public PluginRegistryService? PluginRegistry { get; private set; }
 
@@ -48,6 +53,9 @@ public partial class MainViewModel : ObservableObject
 
     private readonly DeviceConfigService  _deviceSvc;
     private readonly CollectConfigService _collectSvc;
+
+    // ★ C-SET-01 후속: 저장 이력 최대 개수(Editor.SaveHistoryMaxCount) 조회용
+    private readonly StudioSettingsLoader _studioSettings;
 
     // ★ S-16: 유효성 검사 서비스
     private readonly ValidationService _validationSvc;
@@ -69,7 +77,9 @@ public partial class MainViewModel : ObservableObject
         DeviceConfigService   deviceSvc,
         CollectConfigService  collectSvc,
         DeviceConfigLoader    deviceLoader,
-        PluginRegistryService pluginRegistry)   // ★ Studio-P03
+        PluginRegistryService pluginRegistry,    // ★ Studio-P03
+        StudioSettingsLoader  studioSettings,     // ★ C-SET-01 후속
+        SettingsViewModel     settingsVm)        // ★ C-SET-01 후속
     {
         DeviceTree     = deviceTree;
         ScaleLibrary   = scaleLibrary;
@@ -79,6 +89,8 @@ public partial class MainViewModel : ObservableObject
         _deviceSvc     = deviceSvc;
         _collectSvc    = collectSvc;
         PluginRegistry = pluginRegistry;         // ★ Studio-P03
+        _studioSettings = studioSettings;        // ★ C-SET-01 후속
+        Settings        = settingsVm;            // ★ C-SET-01 후속
 
         // ★ S-16
         _validationSvc = new ValidationService(DeviceTree, ScaleLibrary);
@@ -135,6 +147,7 @@ public partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsAlarmTab))]
     [NotifyPropertyChangedFor(nameof(IsCommTab))]
     [NotifyPropertyChangedFor(nameof(IsLogTab))]   // ★ Studio-P04
+    [NotifyPropertyChangedFor(nameof(IsSettingsTab))]   // ★ C-SET-01 후속
     private int _activeTabIndex;
 
     // §5 ─ 탭 가시성 ─────────────────────────────────────────
@@ -145,8 +158,11 @@ public partial class MainViewModel : ObservableObject
     public bool IsAlarmTab  => ActiveTabIndex == 3;
     public bool IsCommTab   => ActiveTabIndex == 4;
 
-    // ★ Studio-P04: 로그 탭 (ActiveTabIndex 변경 없이 패널 토글)
+    // ★ Studio-P04: 로그 탭 (ActiveTabIndex 변경 없이 패널 토글, SwitchTab 에서 idx==5 특별 처리)
     public bool IsLogTab    => ActiveTabIndex == 5;
+
+    // ★ C-SET-01 후속: 환경설정 탭 (인덱스 6 — 5는 로그 토글 전용으로 이미 예약됨)
+    public bool IsSettingsTab => ActiveTabIndex == 6;
 
     // ★ Studio-P04: 하단 로그 패널 표시 여부
     [ObservableProperty]
@@ -327,7 +343,10 @@ public partial class MainViewModel : ObservableObject
     {
         _saveHistory.Insert(0, new SaveHistoryItem(
             DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), memo));
-        if (_saveHistory.Count > 10)
+
+        // ★ C-SET-01 후속: 하드코딩된 10 → studio-settings.json(Editor.SaveHistoryMaxCount)
+        var max = _studioSettings.Settings.Editor.SaveHistoryMaxCount;
+        while (_saveHistory.Count > max)
             _saveHistory.RemoveAt(_saveHistory.Count - 1);
     }
 

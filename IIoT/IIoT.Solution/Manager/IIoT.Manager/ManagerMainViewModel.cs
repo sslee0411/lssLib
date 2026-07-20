@@ -53,6 +53,7 @@ public partial class ManagerMainViewModel : ObservableObject
     private readonly EventHistoryService   _events;
     private readonly ViewModels.DeployViewModel   _deployVm;
     private readonly ViewModels.ScheduleViewModel _scheduleVm;
+    private readonly ViewModels.SettingsViewModel _settingsVm;   // ★ C-SET-01 후속
     private readonly ScheduleService              _scheduleService;
     private readonly StartupRegistrationService   _startupReg;
     private readonly Core.Storage.EventHistoryDbService _eventDb;
@@ -80,6 +81,7 @@ public partial class ManagerMainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsDashboardTab))]
     [NotifyPropertyChangedFor(nameof(IsDeployTab))]
     [NotifyPropertyChangedFor(nameof(IsScheduleTab))]
+    [NotifyPropertyChangedFor(nameof(IsSettingsTab))]   // ★ C-SET-01 후속
     private int _activeTabIndex;
 
     public bool IsProcessTab   => ActiveTabIndex == 0;
@@ -87,6 +89,9 @@ public partial class ManagerMainViewModel : ObservableObject
     public bool IsDashboardTab => ActiveTabIndex == 2;
     public bool IsDeployTab    => ActiveTabIndex == 3;
     public bool IsScheduleTab  => ActiveTabIndex == 4;
+
+    /// <summary>환경설정 탭 (5) — C-SET-01 후속</summary>
+    public bool IsSettingsTab  => ActiveTabIndex == 5;
 
     /// <summary>★ MG-EX-03: Windows 시작 시 Manager 자동 실행 (레지스트리 HKCU Run)</summary>
     [ObservableProperty]
@@ -116,6 +121,7 @@ public partial class ManagerMainViewModel : ObservableObject
                                 EventHistoryService   events,
                                 ViewModels.DeployViewModel   deployVm,
                                 ViewModels.ScheduleViewModel scheduleVm,
+                                ViewModels.SettingsViewModel settingsVm,
                                 ScheduleService              scheduleService,
                                 StartupRegistrationService   startupReg,
                                 Core.Storage.EventHistoryDbService eventDb)
@@ -127,6 +133,7 @@ public partial class ManagerMainViewModel : ObservableObject
         _events          = events;
         _deployVm        = deployVm;
         _scheduleVm      = scheduleVm;
+        _settingsVm      = settingsVm;   // ★ C-SET-01 후속
         _scheduleService = scheduleService;
         _startupReg      = startupReg;
         _eventDb         = eventDb;
@@ -186,6 +193,9 @@ public partial class ManagerMainViewModel : ObservableObject
             // ★ MG-07: 스케줄 탭 초기화 + 스케줄 검사 시작 (설정 로드 후)
             _scheduleVm.Initialize();
             _scheduleService.Start();
+
+            // ★ C-SET-01 후속: 환경설정 탭 초기화 (설정 로드 후)
+            _settingsVm.Initialize();
 
             await _RefreshAllAsync();   // 첫 화면부터 상태가 보이도록 즉시 1회 갱신
 

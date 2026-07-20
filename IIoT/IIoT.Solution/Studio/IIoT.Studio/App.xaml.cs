@@ -33,6 +33,10 @@ public partial class App : Application
     // ★ MG-03: Manager 헬스체크 응답 서버 (NamedPipe 핑/퐁)
     private HealthPipeServer?     _healthServer;
 
+    // ★ C-SET-01 후속: studio-settings.json — LogManager.Start() 및 DI 그래프
+    //   구성(DeviceTreeViewModel/MainViewModel 생성자)보다 반드시 먼저 동기 로드
+    private StudioSettingsLoader? _studioSettings;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -41,15 +45,22 @@ public partial class App : Application
         _themeSettings = new ThemeSettingsService();
         _themeSettings.LoadAndApply(this);
 
+        // ★ C-SET-01 후속: studio-settings.json 동기 로드 (LogManager.Start() 보다 먼저 —
+        //   아래 LogConfig 가 이 값을 사용하고, DeviceTreeViewModel/MainViewModel 생성자도
+        //   DI 그래프 구성 시점에 이 값을 필요로 함)
+        _studioSettings = new StudioSettingsLoader();
+        _studioSettings.LoadSync();
+        var logCfg = _studioSettings.Settings.Log;
+
         // ② LogManager 시작 (반드시 DI 빌드 전에 호출)
         LogManager.Instance.Start(new LogConfig
         {
             LogRootPath         = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log"),
-            ValidDays           = 30,
+            ValidDays           = logCfg.ValidDays,
             FileFormat          = LogFileFormat.Both,
-            MinimumLevel        = LogLevel.Debug,
-            MinimumConsoleLevel = LogLevel.Info,
-            MaxDisplayCount     = 2000
+            MinimumLevel        = logCfg.MinimumLevel,
+            MinimumConsoleLevel = logCfg.MinimumConsoleLevel,
+            MaxDisplayCount     = logCfg.MaxDisplayCount
         });
 
         LogManager.Instance.Info("App", "IIoT.Studio 시작");
@@ -62,7 +73,7 @@ public partial class App : Application
         _healthServer.Start();
 
         // ③ DI 빌드
-        _services = _ConfigureServices();
+        _services = _ConfigureServices(_studioSettings);
 
         // ④ 창 생성
         var win = _services.GetRequiredService<MainWindow>();
@@ -113,9 +124,17 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    private static IServiceProvider _ConfigureServices()
+    private static IServiceProvider _ConfigureServices(StudioSettingsLoader studioSettings)
     {
         var services = new ServiceCollection();
+
+        // ★ C-SET-01 후속: OnStartup 에서 이미 LoadSync() 완료된 인스턴스를 그대로 등록
+        //   (다른 프로그램의 AddSingleton<XxxSettingsLoader>() 후 나중에 LoadAsync() 하는
+        //   방식과 달리, Studio 는 DI 그래프 구성 시점부터 값이 필요해 미리 로드해둔다)
+        services.AddSingleton(studioSettings);
+
+        // ★ C-SET-01 후속: 환경설정 화면 ViewModel (DeviceTreeViewModel/MainViewModel 보다 먼저 등록)
+        services.AddSingleton<SettingsViewModel>();
 
         // ★ Studio-P01: 플러그인 레지스트리
         services.AddSingleton<PluginRegistryService>();
@@ -136,7 +155,8 @@ public partial class App : Application
             new DeviceTreeViewModel(
                 sp.GetRequiredService<ScaleLibraryViewModel>(),
                 sp.GetRequiredService<AlarmLibraryViewModel>(),
-                sp.GetRequiredService<TagTemplateViewModel>()));
+                sp.GetRequiredService<TagTemplateViewModel>(),
+                sp.GetRequiredService<StudioSettingsLoader>()));   // ★ C-SET-01 후속
 
         // ── 캔버스
         services.AddSingleton<CanvasViewModel>(sp =>
@@ -178,7 +198,9 @@ public partial class App : Application
                 sp.GetRequiredService<DeviceConfigService>(),
                 sp.GetRequiredService<CollectConfigService>(),
                 sp.GetRequiredService<DeviceConfigLoader>(),
-                sp.GetRequiredService<PluginRegistryService>()));
+                sp.GetRequiredService<PluginRegistryService>(),
+                sp.GetRequiredService<StudioSettingsLoader>(),     // ★ C-SET-01 후속
+                sp.GetRequiredService<SettingsViewModel>()));      // ★ C-SET-01 후속
 
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(sp.GetRequiredService<MainViewModel>()));

@@ -26,6 +26,7 @@ using IIoT.Monitor.Views.CollectorManage;
 using IIoT.Monitor.Views.Dashboard;
 using IIoT.Monitor.Views.LiveTag;
 using IIoT.Monitor.Views.Log;
+using IIoT.Monitor.Views.Settings;   // ★ C-SET-01 후속
 using System.Windows;
 
 namespace IIoT.Monitor;
@@ -42,7 +43,8 @@ public partial class MainWindow : Window
         LogPanelView          logPanelView,
         MonitorHostService    monitorHostService,
         AlarmHistoryService   alarmHistoryService,
-        TrayNotificationService trayService)
+        TrayNotificationService trayService,
+        SettingsView          settingsView)   // ★ C-SET-01 후속
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -54,6 +56,7 @@ public partial class MainWindow : Window
         DashboardHost.Content       = dashboardView;
         ChartHost.Content           = chartView;
         LogHost.Content             = logPanelView;
+        SettingsHost.Content        = settingsView;   // ★ C-SET-01 후속
 
         // ★ MN-05: 창이 뜬 뒤 Monitor 자체 웹 Hub 시작
         // ★ MN-EX-02: 창이 뜬 뒤 알람 이력 SQLite DB 초기화

@@ -21,6 +21,8 @@
             교체 — LogManager.Instance.LogAdded 구독 실시간 로그 뷰어(레벨/Source
             필터+지우기, Studio/Collector/Monitor 와 동일한 LogPanelView 패턴 이식).
             이로써 4개 탭 전부 placeholder 없이 실제 화면으로 채워짐.
+     C-SET-01 후속 (HMI): [⚙ 환경설정] 탭 추가 (인덱스 4, TabBtn4) — hmi.json 의
+            Web/ForceWriteSecurity/Log 편집(SettingsView, ContentControl 주입).
      생성: 2026-07-16
      규칙:
        ① DynamicResource 필수 (StaticResource → 테마 전환 시 깨짐)
@@ -108,6 +110,16 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- 탭 4 (환경설정) 선택 시 강조 — ★ C-SET-01 후속 -->
+        <Style x:Key="TabBtn4" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSettingsTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
@@ -162,6 +174,10 @@
                         Style="{StaticResource TabBtn3}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="3"/>
+                <Button Content="⚙ 환경설정"
+                        Style="{StaticResource TabBtn4}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="4"/>
             </StackPanel>
         </Border>
 
@@ -198,6 +214,10 @@
             <!-- 탭 3: 로그 — ✅ HM-15 실제 화면 (LogManager.Instance.LogAdded 구독 실시간 뷰어) -->
             <ContentControl x:Name="LogHost"
                             Visibility="{Binding IsLogTab, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- 탭 4: 환경설정 — ✅ C-SET-01 후속 실제 화면 (Web/ForceWriteSecurity/Log) -->
+            <ContentControl x:Name="SettingsHost"
+                            Visibility="{Binding IsSettingsTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

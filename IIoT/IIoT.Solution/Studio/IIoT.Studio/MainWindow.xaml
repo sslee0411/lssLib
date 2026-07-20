@@ -19,6 +19,7 @@
         xmlns:vAlarm="clr-namespace:IIoT.Studio.Views.Alarm"
         xmlns:vComm="clr-namespace:IIoT.Studio.Views.Comm"
         xmlns:vCanvas="clr-namespace:IIoT.Studio.Views.Canvas"
+        xmlns:vSettings="clr-namespace:IIoT.Studio.Views.Settings"
         xmlns:local="clr-namespace:IIoT.Studio.Views.Log"
         Title="IIoT Studio — 설정"
         Width="1440" Height="900"
@@ -282,6 +283,13 @@
                         CommandParameter="5"
                         Style="{DynamicResource GhostBtn}"
                         Height="40" Padding="16,0" />
+
+                <!-- ★ C-SET-01 후속: 환경설정 탭 (인덱스 6) -->
+                <Button Content="⚙  환경설정"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="6"
+                        Style="{DynamicResource GhostBtn}"
+                        Height="40" Padding="16,0" />
             </StackPanel>
         </Border>
 
@@ -341,6 +349,11 @@
             <Grid Visibility="{Binding IsCommTab,
                                Converter={StaticResource BoolToVisibility}}">
                 <vComm:CommLibraryView DataContext="{Binding CommLibrary}" />
+            </Grid>
+            <!-- ★ C-SET-01 후속: 환경설정 탭 -->
+            <Grid Visibility="{Binding IsSettingsTab,
+                               Converter={StaticResource BoolToVisibility}}">
+                <vSettings:SettingsView DataContext="{Binding Settings}" />
             </Grid>
         </Grid>
 

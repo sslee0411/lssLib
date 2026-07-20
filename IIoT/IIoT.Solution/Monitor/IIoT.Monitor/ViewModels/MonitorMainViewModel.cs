@@ -49,6 +49,7 @@ public partial class MonitorMainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsCollectorTab))]
     [NotifyPropertyChangedFor(nameof(IsDashboardTab))]
     [NotifyPropertyChangedFor(nameof(IsChartTab))]
+    [NotifyPropertyChangedFor(nameof(IsSettingsTab))]   // ★ C-SET-01 후속
     private int _activeTabIndex;
 
     public bool IsTagTab       => ActiveTabIndex == 0;
@@ -56,6 +57,9 @@ public partial class MonitorMainViewModel : ObservableObject
     public bool IsCollectorTab => ActiveTabIndex == 2;
     public bool IsDashboardTab => ActiveTabIndex == 3;
     public bool IsChartTab     => ActiveTabIndex == 4;
+
+    /// <summary>환경설정 탭 (5) — C-SET-01 후속</summary>
+    public bool IsSettingsTab  => ActiveTabIndex == 5;
 
     // §3 ─ 하단 로그 패널 (탭과 독립) ───────────────────────
 

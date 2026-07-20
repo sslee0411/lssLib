@@ -14,6 +14,7 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using IIoT.Studio.Core.Config;   // ★ C-SET-01 후속
 using IIoT.Studio.Core.UndoRedo;
 using IIoT.Studio.Core.UndoRedo.Actions;
 using IIoT.Studio.Models;
@@ -30,18 +31,25 @@ public partial class DeviceTreeViewModel : ObservableObject
     public AlarmLibraryViewModel AlarmLibrary  { get; }
 
     // ★ S-29: 실행취소/다시실행 히스토리
-    private readonly CommandHistory _history = new(maxSize: 50);
+    //   ★ C-SET-01 후속: maxSize 를 studio-settings.json(Editor.UndoHistoryMaxSize)
+    //     에서 읽어와야 하므로 필드 초기화 대신 생성자 본문에서 대입한다
+    //     (필드 초기화식은 생성자 매개변수를 참조할 수 없음).
+    private readonly CommandHistory _history;
 
     // §2 ─ 생성자 ─────────────────────────────────────────────
 
     public DeviceTreeViewModel(
         ScaleLibraryViewModel scaleLibrary,
         AlarmLibraryViewModel alarmLibrary,
-        TagTemplateViewModel  tagTemplateVm)
+        TagTemplateViewModel  tagTemplateVm,
+        StudioSettingsLoader  studioSettings)   // ★ C-SET-01 후속
     {
         ScaleLibrary  = scaleLibrary;
         AlarmLibrary  = alarmLibrary;
         TagTemplateVm = tagTemplateVm;
+
+        // ★ C-SET-01 후속: 기본값 50 은 studio-settings.json 미존재/파싱 실패 시에도 동일
+        _history = new CommandHistory(maxSize: studioSettings.Settings.Editor.UndoHistoryMaxSize);
 
         // S-17C: RootNodes 변경 시 FilteredRootNodes 재계산
         RootNodes.CollectionChanged +=

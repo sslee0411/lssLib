@@ -100,6 +100,16 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- ★ C-SET-01 후속: 탭 5 (환경설정) 선택 시 강조 -->
+        <Style x:Key="TabBtn5" TargetType="Button" BasedOn="{StaticResource TabBtnBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSettingsTab}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource AccFaintBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
@@ -161,6 +171,11 @@
                         Style="{StaticResource TabBtn4}"
                         Command="{Binding SwitchTabCommand}"
                         CommandParameter="4"/>
+                <!-- ★ C-SET-01 후속 -->
+                <Button Content="⚙ 환경설정"
+                        Style="{StaticResource TabBtn5}"
+                        Command="{Binding SwitchTabCommand}"
+                        CommandParameter="5"/>
             </StackPanel>
         </Border>
 
@@ -192,6 +207,9 @@
             <!-- ★ MG-07 -->
             <ContentControl x:Name="ScheduleHost"
                             Visibility="{Binding IsScheduleTab, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- ★ C-SET-01 후속 -->
+            <ContentControl x:Name="SettingsHost"
+                            Visibility="{Binding IsSettingsTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

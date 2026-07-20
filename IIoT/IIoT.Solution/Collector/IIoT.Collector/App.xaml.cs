@@ -36,6 +36,7 @@ using IIoT.Collector.Views.Flow;
 using IIoT.Collector.Core.Plugin;
 using IIoT.Collector.ViewModels;
 using IIoT.Collector.Views.Status;
+using IIoT.Collector.Views.Settings;   // ★ C-SET-01 신규
 using IIoT.Collector.Notification;
 using IIoT.UI.Themes;
 using lssLib.Messaging;
@@ -127,6 +128,10 @@ public partial class App : Application
             //   DeviceInstanceService.Initialize() 보다 반드시 먼저 호출
             await _services.GetRequiredService<CollectorSettingsLoader>()
                             .LoadAsync();
+
+            // ★ C-SET-01: 환경설정 화면에 로드된 Settings 반영 (SettingsLoader 로드 직후)
+            _services.GetRequiredService<SettingsViewModel>()
+                     .Initialize();
 
             // ★ C-EX-01: DeviceInstance 트리 조립 (ConfigLoader + SettingsLoader 로드 직후)
             _services.GetRequiredService<DeviceInstanceService>()
@@ -361,8 +366,14 @@ public partial class App : Application
                 sp.GetRequiredService<StatusViewModel>(),
                 sp.GetRequiredService<ForceWriteService>()));
 
+        // ── 환경설정 탭 (C-SET-01 신규)
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<SettingsView>(sp =>
+            new SettingsView(sp.GetRequiredService<SettingsViewModel>()));
+
         // ★ AddSingleton 필수 (Transient → 이중 창 버그)
         //   ★ C-EX-01-6: DeviceTreeView 인자 추가
+        //   ★ C-SET-01: SettingsView 인자 추가
         services.AddSingleton<MainWindow>(sp =>
             new MainWindow(
                 sp.GetRequiredService<MainViewModel>(),
@@ -370,7 +381,8 @@ public partial class App : Application
                 sp.GetRequiredService<AlarmView>(),
                 sp.GetRequiredService<FlowView>(),
                 sp.GetRequiredService<TrendView>(),
-                sp.GetRequiredService<DeviceTreeView>()));
+                sp.GetRequiredService<DeviceTreeView>(),
+                sp.GetRequiredService<SettingsView>()));
 
         // ── C-14 알림/에스컬레이션
         services.AddSingleton<NotificationService>();

@@ -272,6 +272,27 @@ public sealed class CollectorSettingsLoader
     /// <summary>새 CollectorId 생성 ("COL-" + GUID 앞 8자리, 예: COL-3F2A9B7C)</summary>
     private static string _GenerateCollectorId()
         => $"COL-{Guid.NewGuid():N}"[..12].ToUpperInvariant();
+
+    // ── C-SET-01 신규 (환경설정 탭) ───────────────────────────
+
+    /// <summary>
+    /// 현재 메모리의 <see cref="Settings"/> 를 settings.json 에 그대로 저장합니다.
+    /// 설정(Settings) UI 의 [저장] 버튼에서 호출 — 파일 포맷/경로는 LoadAsync 와 동일.
+    /// </summary>
+    public async Task SaveAsync()
+    {
+        var path = SettingsPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var json = JsonSerializer.Serialize(Settings, _opts);
+        await File.WriteAllTextAsync(path, json, Encoding.UTF8);
+        LogManager.Instance.Info("Settings", $"settings.json 저장 완료 (환경설정 화면): {path}");
+    }
+
+    /// <summary>
+    /// 새 CollectorId 를 생성만 하고 반환합니다 (설정 UI [재발급] 버튼 전용).
+    /// 실제 반영은 호출 측에서 Settings.CollectorId 에 대입 후 SaveAsync() 호출 필요.
+    /// </summary>
+    public static string GenerateNewCollectorId() => _GenerateCollectorId();
 }
 
 // ── 알림 섹션 (C-14 신규) ─────────────────────────────────

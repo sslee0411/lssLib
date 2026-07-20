@@ -12,12 +12,19 @@
 //         탭의 "화면 잠금 모드"(더블클릭 시 ForceWriteDialog 오픈 차단) 기본값을
 //         앱 시작 시 어느 상태(잠김/해제)로 시작할지 설정. 기본 true(잠김) —
 //         운영자 실수로 인한 오조작을 안전 우선으로 방지.
+//  C-SET-01 후속 (HMI): Log(LogSettings) 추가 — 이전까지 App.xaml.cs 에
+//         하드코딩돼 있던 로그 레벨·보존일수·최대표시건수를 이 설정으로 옮겨
+//         [환경설정] 탭에서 편집 가능하게 한다(Studio C-SET-01 후속과 동일 트랙).
+//         Log 설정은 DI 빌드 전(LogManager.Instance.Start() 호출 전)에 필요하므로
+//         HmiSettingsLoader 에 LoadSync()(동기) 를 추가해 Studio 와 동일한
+//         "OnStartup 맨 앞 동기 로드 + 화면용 비동기 재로드" 이중 패턴을 따른다.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
 using IIoT.HMI.Models;
 using lssLib.Log;
 using System.IO;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -36,6 +43,29 @@ public sealed class HmiSettings
 
     /// <summary>★ HM-12: ForceWrite 화면 잠금 모드 관련 설정.</summary>
     public ForceWriteSecuritySettings ForceWriteSecurity { get; set; } = new();
+
+    /// <summary>★ C-SET-01 후속: 로그 설정 — App.xaml.cs 의
+    /// LogManager.Instance.Start() 인자로 사용.</summary>
+    public LogSettings Log { get; set; } = new();
+}
+
+/// <summary>
+/// ★ C-SET-01 후속: 로그 설정 (Studio Core/Config/StudioSettings.cs 의
+/// LogSettings 와 동일 구조).
+/// </summary>
+public sealed class LogSettings
+{
+    /// <summary>파일 로그 최소 레벨 (기본 Debug — 개발 중 상세 기록)</summary>
+    public LogLevel MinimumLevel { get; set; } = LogLevel.Debug;
+
+    /// <summary>콘솔/로그 패널 표시 최소 레벨 (기본 Info)</summary>
+    public LogLevel MinimumConsoleLevel { get; set; } = LogLevel.Info;
+
+    /// <summary>로그 파일 보존 일수 (기본 30일)</summary>
+    public int ValidDays { get; set; } = 30;
+
+    /// <summary>로그 패널 최대 표시 건수 (기본 2000)</summary>
+    public int MaxDisplayCount { get; set; } = 2000;
 }
 
 /// <summary>
@@ -79,13 +109,44 @@ public sealed class HmiSettingsLoader
         PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition      = JsonIgnoreCondition.WhenWritingNull,
         Encoder                     = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented               = true
+        WriteIndented               = true,
+        Converters                  = { new JsonStringEnumConverter() }   // ★ C-SET-01 후속: LogLevel 문자열 저장
     };
 
     public static string SettingsPath =>
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "hmi.json");
 
     public HmiSettings Settings { get; private set; } = new();
+
+    /// <summary>
+    /// ★ C-SET-01 후속: 동기 로드 — OnStartup 맨 앞 전용(LogManager.Instance.Start()
+    /// 호출 전, 비동기 컨텍스트 진입 전). 파일이 없으면 기본값을 저장한다.
+    /// (Studio StudioSettingsLoader.LoadSync() 와 동일 패턴)
+    /// </summary>
+    public void LoadSync()
+    {
+        var path = SettingsPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        if (!File.Exists(path))
+        {
+            Settings = new HmiSettings();
+            File.WriteAllText(path, JsonSerializer.Serialize(Settings, _opts), Encoding.UTF8);
+            return;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(path, Encoding.UTF8);
+            Settings = JsonSerializer.Deserialize<HmiSettings>(json, _opts) ?? new HmiSettings();
+        }
+        catch (Exception ex)
+        {
+            // ★ 이 시점은 LogManager.Start() 호출 전이라 로그 기록 불가 — 콘솔 출력만
+            System.Diagnostics.Debug.WriteLine($"hmi.json 파싱 실패(LoadSync) → 기본값 사용: {ex.Message}");
+            Settings = new HmiSettings();
+        }
+    }
 
     /// <summary>
     /// hmi.json 을 로드합니다. 파일이 없으면 빈 설정을 저장 후 반환합니다.

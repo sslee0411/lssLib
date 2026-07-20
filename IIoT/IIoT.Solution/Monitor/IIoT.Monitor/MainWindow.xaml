@@ -117,6 +117,11 @@
                             Command="{Binding SwitchTabCommand}" CommandParameter="4"
                             Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=4}"
                             Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=4}"/>
+                    <!-- ★ C-SET-01 후속: 환경설정 탭 -->
+                    <Button Content="⚙ 환경설정" Style="{StaticResource TabBtn}"
+                            Command="{Binding SwitchTabCommand}" CommandParameter="5"
+                            Background="{Binding ActiveTabIndex, Converter={StaticResource TabBg}, ConverterParameter=5}"
+                            Foreground="{Binding ActiveTabIndex, Converter={StaticResource TabFg}, ConverterParameter=5}"/>
 
                     <!-- ★ 로그 패널 토글 버튼 — 다른 탭 버튼과 같은 줄에 좌측 정렬
                          (탭 전환이 아닌 하단 패널 토글). Studio/Collector와 동일하게 GhostBtn -->
@@ -209,6 +214,10 @@
             <!-- [차트] 탭 전용 View 호스트 -->
             <ContentControl x:Name="ChartHost"
                             Visibility="{Binding IsChartTab, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- [환경설정] 탭 전용 View 호스트 — ★ C-SET-01 후속 -->
+            <ContentControl x:Name="SettingsHost"
+                            Visibility="{Binding IsSettingsTab, Converter={StaticResource BoolToVisibility}}"/>
         </Grid>
 
     </DockPanel>

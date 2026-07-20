@@ -32,6 +32,12 @@
 //         WPF 기본값(OnLastWindowClose)을 그대로 두면 메인 창을 닫아도 보조
 //         창이 남아있는 한 프로세스가 종료되지 않는다. 메인 창이 닫히면 보조
 //         창도 함께 정리되도록 명시적으로 고정.
+//  C-SET-01 후속 (HMI): [환경설정] 탭 DI 등록 추가.
+//         ★ Studio 와 동일하게 HmiSettingsLoader.LoadSync() 를 LogManager.Start()
+//         호출보다 먼저(동기) 호출해 Log 설정을 읽어온 뒤, 그 값을 LogConfig 에
+//         반영한다. 이미 로드된 인스턴스를 그대로 DI 에 등록(services.AddSingleton(
+//         settingsLoader))하여 CollectorConnectionManager 등 기존 소비자와 동일한
+//         싱글턴을 공유한다.
 //  생성: 2026-07-16
 // ══════════════════════════════════════════════════════════
 
@@ -46,6 +52,7 @@ using IIoT.HMI.Views.Alarm;
 using IIoT.HMI.Views.CollectorManage;
 using IIoT.HMI.Views.LayoutCanvas;
 using IIoT.HMI.Views.Log;
+using IIoT.HMI.Views.Settings;
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -79,15 +86,22 @@ public partial class App : Application
         _themeSettings = new ThemeSettingsService();
         _themeSettings.LoadAndApply(this);
 
-        // ② LogManager 시작 (반드시 DI 빌드 전에 호출)
+        // ★ C-SET-01 후속: hmi.json 동기 로드 — Log 설정이 LogManager.Instance.Start()
+        //   보다 먼저 필요하므로 DI 빌드보다도 앞서 여기서 동기적으로 읽는다
+        //   (Studio App.xaml.cs 의 StudioSettingsLoader.LoadSync() 호출과 동일 위치/이유).
+        var settingsLoader = new HmiSettingsLoader();
+        settingsLoader.LoadSync();
+
+        // ② LogManager 시작 (반드시 DI 빌드 전에 호출) — ★ 하드코딩 값 대신
+        //    hmi.json 의 Log 설정을 사용(C-SET-01 후속)
         LogManager.Instance.Start(new LogConfig
         {
             LogRootPath         = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log"),
-            ValidDays           = 30,
+            ValidDays           = settingsLoader.Settings.Log.ValidDays,
             FileFormat          = LogFileFormat.Both,
-            MinimumLevel        = LogLevel.Debug,
-            MinimumConsoleLevel = LogLevel.Info,
-            MaxDisplayCount     = 2000
+            MinimumLevel        = settingsLoader.Settings.Log.MinimumLevel,
+            MinimumConsoleLevel = settingsLoader.Settings.Log.MinimumConsoleLevel,
+            MaxDisplayCount     = settingsLoader.Settings.Log.MaxDisplayCount
         });
 
         LogManager.Instance.Info("App", "IIoT.HMI 시작");
@@ -100,7 +114,7 @@ public partial class App : Application
         _healthServer.Start();
 
         // ④ DI 빌드
-        _services = _ConfigureServices();
+        _services = _ConfigureServices(settingsLoader);
 
         // ★ HM-16: 알람 생성/상태전이 시마다 SQLite 이력 저장 (fire-and-forget) —
         //   AlarmHistoryService.InitializeAsync() 가 아직 끝나지 않은 시점에 호출돼도
@@ -172,13 +186,15 @@ public partial class App : Application
 
     // §4 ─ DI 구성 ────────────────────────────────────────────
 
-    private static IServiceProvider _ConfigureServices()
+    private static IServiceProvider _ConfigureServices(HmiSettingsLoader settingsLoader)
     {
         var services = new ServiceCollection();
 
         // ★ HM-01 신규: hmi.json 설정 + Collector 연결 관리자
         //   (CollectorManageViewModel 보다 먼저 등록 — 생성자 의존성)
-        services.AddSingleton<HmiSettingsLoader>();
+        // ★ C-SET-01 후속: OnStartup 에서 이미 LoadSync() 로 로드된 인스턴스를
+        //   그대로 등록(신규 인스턴스 생성 안 함) — Studio 의 studioSettings 등록과 동일 패턴.
+        services.AddSingleton(settingsLoader);
         services.AddSingleton<CollectorConnectionManager>();
 
         // ★ HM-02 신규: [Collector 관리] 탭
@@ -211,6 +227,11 @@ public partial class App : Application
         //   실제 의존은 없지만 등록 순서를 기능 도입 순서와 맞춤)
         services.AddSingleton<AlarmHistoryService>();
 
+        // ★ C-SET-01 후속 신규: [환경설정] 탭 — Web/ForceWriteSecurity/Log 3개 섹션
+        //   (HmiSettingsLoader 는 이미 위에서 등록됨)
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<SettingsView>();
+
         // ★ HM-Base-1: MainWindow DataContext
         services.AddSingleton<HmiMainViewModel>();
 
@@ -221,7 +242,8 @@ public partial class App : Application
                 sp.GetRequiredService<CollectorManageView>(),
                 sp.GetRequiredService<LayoutCanvasView>(),
                 sp.GetRequiredService<AlarmView>(),
-                sp.GetRequiredService<LogPanelView>()));
+                sp.GetRequiredService<LogPanelView>(),
+                sp.GetRequiredService<SettingsView>()));   // ★ C-SET-01 후속
 
         return services.BuildServiceProvider();
     }

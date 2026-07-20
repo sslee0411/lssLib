@@ -44,6 +44,7 @@ using IIoT.Manager.Views.Deploy;
 using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
 using IIoT.Manager.Views.Schedule;
+using IIoT.Manager.Views.Settings;   // ★ C-SET-01 후속
 using IIoT.UI.Themes;
 using lssLib.Log;
 using Microsoft.Extensions.DependencyInjection;
@@ -200,6 +201,11 @@ public partial class App : Application
         services.AddSingleton<ScheduleView>(sp =>
             new ScheduleView(sp.GetRequiredService<ScheduleViewModel>()));
 
+        // ★ C-SET-01 후속: 환경설정 (SettingsViewModel 이 ManagerMainViewModel 의존성 — 먼저 등록)
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<SettingsView>(sp =>
+            new SettingsView(sp.GetRequiredService<SettingsViewModel>()));
+
         // ★ MG-01 신규: MainWindow DataContext (카드 목록 + 2초 갱신 타이머)
         services.AddSingleton<ManagerMainViewModel>();
 
@@ -220,7 +226,8 @@ public partial class App : Application
                 sp.GetRequiredService<DashboardView>(),
                 sp.GetRequiredService<DeployView>(),
                 sp.GetRequiredService<ScheduleView>(),
-                sp.GetRequiredService<TrayService>()));
+                sp.GetRequiredService<TrayService>(),
+                sp.GetRequiredService<SettingsView>()));
 
         return services.BuildServiceProvider();
     }

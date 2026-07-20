@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-20 | 버전: v11.27 | 다음 세션 시작점: ① HM-Base-0~HM-21 전체 빌드·런타임 확인(★특히 웹 ACK/ForceWrite 는 물리 PLC에 영향을 주는 기능이므로 반드시 테스트 환경에서 먼저 확인) → ② HM-22(설정 UI 편집 화면) 착수**
+**작성일: 2026-07-20 | 버전: v11.33 | 다음 세션 시작점: ① HM-Base-0~HM-21 + HMI 환경설정 탭 사용자 로컬 Windows 빌드·런타임 확인(정적 DI/생성자 감사는 완료 — 불일치 0건, 아래 "🔍 HM-Base-0~HM-21 정적 사전 점검" 절의 통합 체크리스트로 진행, ★특히 웹 ACK/ForceWrite 는 물리 PLC에 영향을 주는 기능이므로 반드시 테스트 환경에서 먼저 확인) → ② 설정(Settings) UI 편집 화면 트랙 — Collector·Manager·Studio·Monitor·HMI 5개 프로그램 전부 코드 완료(전부 빌드 확인 대기) → ③ HM-22(Manager 원격 통합 설정관리 화면) 착수**
 
 > 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
 > SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
@@ -1372,6 +1372,446 @@ Collector 측 ForceWriteService(C-15)에 위임되어 HMI 쪽에는 별도 검�
 
 ---
 
+## ✅ C-SET-01: IIoT.Collector 환경설정 탭 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: "설정(Settings) UI 편집 화면" 후속 기능(위 "⭐ 신규 후속 기능: 설정 UI 편집
+화면" 절, task #5) 중 ① 개별 프로그램 로컬 탭을 Collector 부터 우선 착수
+(사용자 확인 완료, 2026-07-20). Manager 원격 통합 설정관리 화면(②)은 HM-22 로
+그대로 유지 — 개별 프로그램 로컬 탭이 전부 갖춰진 뒤 착수 예정.
+
+경로: Collector\IIoT.Collector\
+추가 파일:
+  ViewModels/SettingsViewModel.cs
+    ← CollectorSettings(settings.json) 11개 섹션을 좌측 네비게이션 + 우측 폼으로 편집
+      (일반/저장소·SQLite·InfluxDB·MQTT/SignalR/재연결/알림·SMTP·Webhook/
+       강제쓰기/이상값필터/가상Tag/보안/데이터보존/DB백업)
+    ← ActiveSectionIndex(0~10) — 기존 MainViewModel.SwitchTab 패턴 그대로 재사용
+    ← IsInfluxDbProvider(bool) — Storage.Provider(string) 섹션 전환용 래퍼
+      (S-25 IsDisabled=!IsEnabled 와 동일 "양쪽 bool 노출" 기법)
+    ← RetryIntervalsSecText / AllowedOriginsText — int[]/string[] 텍스트 변환 래퍼
+    ← SaveCommand: _ValidateAll() 통과 시에만 CollectorSettingsLoader.SaveAsync() 호출
+      (포트 범위·HH:mm 형식·필수값 등 검사, 실패 시 저장 중단 + 오류 메시지 표시)
+    ← ReloadCommand: 디스크 settings.json 다시 로드(편집 취소)
+    ← RegenerateCollectorIdCommand: 새 CollectorId 발급(저장 전까지는 미반영)
+  Views/Settings/SettingsView.xaml(.cs)
+    ← 상단 "재시작 필요" 안내 배너(항상 표시) + 좌측 11개 섹션 네비게이션(GhostBtn,
+      기존 탭바와 동일 패턴) + 우측 스크롤 폼 + 하단 저장/다시불러오기 바
+    ← ModernPasswordBox: 이 화면 전용 로컬 스타일(PropInput 과 동일 외형) —
+      PasswordBox 는 Password 프로퍼티 바인딩 불가하므로 공용 테마 대신
+      이 파일에 한정해 정의(공용 IIoT.UI.Themes 라이브러리 미변경)
+    ← 코드비하인드에서 PasswordBox 5개(InfluxDB Token · MQTT 비밀번호 ·
+      SMTP 비밀번호 · ForceWrite API Key · REST API Key)를
+      ViewModel.Settings 하위 필드와 직접 동기화(_suppressSync 가드로
+      Initialize/Reload 시 재귀 방지)
+
+변경 파일 (기존 코드는 그대로 두고 신규 부분만 추가):
+  Core/Config/CollectorSettings.cs
+    ← CollectorSettingsLoader.SaveAsync() 추가 (기존 LoadAsync 와 동일 옵션으로 직렬화)
+    ← CollectorSettingsLoader.GenerateNewCollectorId() 추가 (기존 private
+      _GenerateCollectorId() 를 감싸는 public static 래퍼 — 기존 메서드 미변경)
+  MainWindow.xaml / MainWindow.xaml.cs / MainViewModel.cs
+    ← 탭바에 "⚙ 환경설정" 버튼(인덱스 5) 추가, SettingsViewHost(ContentControl) 추가
+    ← IsSettingsTab(ActiveTabIndex==5) 추가 (기존 IsDeviceTab 패턴과 동일)
+  App.xaml.cs
+    ← SettingsViewModel/SettingsView DI 등록, MainWindow 팩토리 인자 추가
+    ← win.Loaded: CollectorSettingsLoader.LoadAsync() 직후 SettingsViewModel.Initialize() 호출
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+  [ ] PasswordBox 스타일(ModernPasswordBox)이 SettingsView.xaml 내부에서만 참조되는지 확인
+      (공용 IIoT.UI.Themes 프로젝트는 수정하지 않았음)
+
+### 2단계: 런타임
+  [ ] F5 실행 → 탭바 "⚙ 환경설정" 클릭 → 좌측 11개 섹션 목록 + 우측 폼 표시
+  [ ] 좌측 섹션 클릭 시마다 우측 폼이 해당 섹션으로 전환
+  [ ] "일반" 섹션: CollectorId 표시, [🎲 재발급] 클릭 → 새 값으로 즉시 교체(아직 미저장 상태)
+  [ ] "저장소" 섹션: "InfluxDB 사용" 체크 시 SQLite 카드 숨김 + InfluxDB 카드 표시(반대도 동일)
+  [ ] InfluxDB Token / MQTT 비밀번호 / SMTP 비밀번호 / 강제쓰기 API Key / REST API Key
+      입력란이 모두 마스킹(PasswordBox)으로 표시되는지 확인
+  [ ] 포트 필드에 범위를 벗어난 값(예: 99999) 입력 후 [💾 저장] → 저장 거부 + 오류 메시지 표시
+  [ ] 정상 값으로 [💾 저장] → 하단에 "저장 완료 (HH:mm:ss) — 재시작 필요" 메시지
+  [ ] {실행파일경로}\Config\settings.json 파일 내용이 화면에서 입력한 값대로 갱신됐는지 확인
+  [ ] [↻ 다시 불러오기] → 저장 전 임시로 고친 값이 디스크 값으로 되돌아감
+  [ ] Collector 재시작 → 환경설정 탭에 마지막 저장값이 그대로 복원되는지 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Collector 실행 → 탭바 [⚙ 환경설정] 클릭
+  2. 좌측 목록에서 편집할 섹션 선택(일반/저장소/SignalR/재연결/알림/강제쓰기/
+     이상값필터/가상Tag/보안/데이터보존/DB백업)
+  3. 값 수정 후 우측 하단 [💾 저장] 클릭 — 유효성 오류가 있으면 저장이 거부되고
+     화면 하단에 어떤 값이 잘못됐는지 표시됩니다
+  4. 저장 성공 시 "재시작해야 적용됨" 안내가 함께 표시됩니다 — Collector 를
+     재시작해야 실제 수집 동작에 반영됩니다(파일 감시 자동 재시작(C-08)과는 무관 —
+     .signal 은 device.json/collect.json 변경만 감지하며 settings.json 은
+     해당하지 않음)
+  5. 실수로 값을 고쳤다면 저장하지 않은 상태에서 [↻ 다시 불러오기]로 취소 가능
+
+확인 포인트:
+  - CollectorId 재발급은 화면에만 반영되고 [저장]을 눌러야 파일에 기록됩니다
+  - 저장소 섹션의 SQLite/InfluxDB 카드는 "InfluxDB 사용" 체크박스 하나로 전환됩니다
+  - InfluxDB Token 등 민감정보는 화면에서 항상 마스킹 표시됩니다
+
+다음 진행:
+  Manager(Resource 1개 항목만 — 범위가 작아 빠르게 완료 가능) → Monitor(Web
+  1개 항목만) 순으로 동일 패턴(좌측 네비게이션 + 우측 폼)의 로컬 환경설정 탭을
+  이어서 추가. 4개 프로그램 로컬 탭이 모두 끝나면 HM-22(Manager 원격 통합
+  설정관리 화면) 착수.
+
+---
+
+## ✅ C-SET-01 후속: IIoT.Manager 환경설정 탭 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: Collector C-SET-01 과 동일한 개별 프로그램 로컬 설정탭 트랙의 2번째.
+Manager 는 manager.json 의 Processes/Deploy/Schedules 가 이미 각자 탭
+([프로세스]/[배포]/[스케줄])에서 편집 가능하므로, UI 가 없던 Resource
+섹션(CpuWarnPercent·MemoryWarnMb) 1개만 신규 탭으로 추가하면 된다 —
+Collector 대비 범위가 작아 좌측 섹션 네비게이션 없이 단일 카드로 구성.
+
+★ 확인된 사실(설계에 반영): ManagerSettingsLoader.Settings.Resource 객체는
+ManagerMainViewModel.InitializeAsync() 에서 각 ProcessCardViewModel 생성자에
+"참조로" 그대로 전달된다(ProcessCardViewModel.cs 의 _resource 필드). 따라서
+이번 화면에서 CpuWarnPercent/MemoryWarnMb 값을 바꾸면 [저장] 을 누르기 전이라도
+이미 실행 중인 카드의 경고 감시에 즉시 반영된다 — Collector 와 달리 재시작
+불필요(사용 설명에 명시). 단, [↻ 다시 불러오기] 는 LoadAsync() 로 완전히 새
+ManagerSettings 객체를 생성하므로 이 경우에는 재시작 전까지 카드가 이전 값을
+참조하는 상태로 남는다(드문 경로라 우선 기록만, 필요 시 후속 개선).
+
+경로: Manager\IIoT.Manager\
+추가 파일:
+  ViewModels/SettingsViewModel.cs — Settings(=ManagerSettingsLoader.Settings) 노출,
+    SaveCommand(0 이상 검증 후 ManagerSettingsLoader.SaveAsync() 호출 — 기존에
+    이미 있던 메서드라 신규 추가 불필요) / ReloadCommand
+  Views/Settings/SettingsView.xaml(.cs) — DeployView.xaml 과 동일한 SectionCard
+    스타일의 단일 카드(CPU%/메모리MB 2개 필드) + 저장/다시불러오기 + 상태 텍스트
+
+변경 파일 (기존 코드는 그대로 두고 신규 부분만 추가):
+  MainWindow.xaml / MainWindow.xaml.cs — 탭바에 "⚙ 환경설정"(인덱스 5, TabBtn5
+    스타일) + SettingsHost(ContentControl) 추가 (기존 TabBtn0~4 패턴과 동일)
+  ManagerMainViewModel.cs — IsSettingsTab(ActiveTabIndex==5) 추가,
+    InitializeAsync() 에서 manager.json 로드 후 SettingsViewModel.Initialize() 호출
+  App.xaml.cs — SettingsViewModel/SettingsView DI 등록, MainWindow 팩토리 인자 추가
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+
+### 2단계: 런타임
+  [ ] F5 실행 → 탭바 "⚙ 환경설정" 클릭 → CPU%/메모리MB 입력 카드 표시
+  [ ] 값 변경 후 [💾 저장] → 하단에 "저장 완료" 메시지 + {실행파일경로}\Config\
+      manager.json 의 Resource 값이 갱신됐는지 확인
+  [ ] 음수 입력 후 저장 시도 → 저장 거부 + 오류 메시지 표시
+  [ ] 저장 없이 값만 바꾼 상태에서 [프로세스] 탭으로 이동해 CPU 사용량이 높은
+      프로그램을 실행 중이면, 낮춘 임계값 기준으로 경고가 즉시 발생하는지 확인
+      (재시작 불필요 — 참조 공유 특성)
+  [ ] [↻ 다시 불러오기] → 편집 취소되어 디스크 값으로 복원되는지 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Manager 실행 → 탭바 [⚙ 환경설정] 클릭
+  2. CPU 사용률 경고(%) / 메모리 사용량 경고(MB) 값 입력 (0 이하 = 검사 안 함)
+  3. [💾 저장] 클릭 — 이 값은 저장 여부와 무관하게 화면에서 바꾸는 즉시 이미
+     실행 중인 프로세스 카드의 경고 감시에도 반영됩니다(파일에는 저장을 눌러야
+     기록됨 — Manager 재시작 후에도 유지하려면 반드시 저장 필요)
+  4. 실수로 값을 고쳤다면 [↻ 다시 불러오기]로 취소 가능
+
+다음 진행: Monitor(Web Enabled/Port 1개 항목) 환경설정 탭.
+
+---
+
+## ✅ C-SET-01 후속: IIoT.Monitor 환경설정 탭 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: Manager 와 마찬가지로 범위가 작다 — monitor.json 의 Collectors[]/
+FavoriteTagKeys 는 이미 [Collector 관리] 탭/즐겨찾기 UI에서 편집 가능하므로,
+Web(자체 SignalR Hub Enabled/Port — 브라우저 연동) 1개 섹션만 신규 탭으로 추가.
+
+경로: Monitor\IIoT.Monitor\
+추가 파일:
+  ViewModels/SettingsViewModel.cs — Settings(=MonitorSettingsLoader.Settings) 노출,
+    InitializeAsync()(monitor.json 로드 후 반영) / SaveCommand(포트 범위 검증
+    후 MonitorSettingsLoader.SaveAsync() 호출 — 기존에 이미 있던 메서드) / ReloadCommand
+    ★ CollectorManageView.Loaded 에서도 같은 로더로 monitor.json 을 로드하지만,
+      두 Loaded 핸들러의 실행 순서를 가정하지 않기 위해 이 화면이 스스로도
+      다시 로드한다(동일 파일 재읽기라 안전).
+  Views/Settings/SettingsView.xaml(.cs) — CollectorManageView.xaml.cs 와 동일한
+    "DI 생성자 + Loaded 시 InitializeAsync()" 패턴. Manager SettingsView 와 동일한
+    SectionCard 스타일 단일 카드(Enabled 체크박스 + Port 입력) 구성.
+
+변경 파일 (기존 코드는 그대로 두고 신규 부분만 추가):
+  ViewModels/MonitorMainViewModel.cs — IsSettingsTab(ActiveTabIndex==5) 추가
+  MainWindow.xaml / MainWindow.xaml.cs — 탭바에 "⚙ 환경설정"(인덱스 5, 기존
+    TabBg/TabFg 컨버터 재사용) + SettingsHost(ContentControl) 추가
+  App.xaml.cs — SettingsViewModel/SettingsView DI 등록, MainWindow 팩토리 인자 추가
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+
+### 2단계: 런타임
+  [ ] F5 실행 → 탭바 "⚙ 환경설정" 클릭 → 웹 Hub 카드(체크박스+포트) 표시
+  [ ] 포트에 범위를 벗어난 값(예: 99999) 입력 후 [💾 저장] → 저장 거부 + 오류 메시지
+  [ ] 정상 값으로 저장 → {실행파일경로}\Config\monitor.json 의 Web 섹션 갱신 확인
+  [ ] [↻ 다시 불러오기] → 편집 취소되어 디스크 값으로 복원되는지 확인
+  [ ] [Collector 관리] 탭 정상 동작(회귀 없음) 확인 — 같은 MonitorSettingsLoader 공유
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Monitor 실행 → 탭바 [⚙ 환경설정] 클릭
+  2. "자체 웹 Hub 활성화" 체크 + 포트 입력(Collector 의 7878과 겹치지 않게 주의)
+  3. [💾 저장] — Monitor 재시작 후에 실제로 반영됩니다(상단 배너로 안내)
+  4. 실수로 값을 고쳤다면 [↻ 다시 불러오기]로 취소 가능
+
+다음 진행: Collector·Manager·Studio·Monitor 4개 프로그램 로컬 설정탭 전부 완료.
+HMI 는 아직 자체 설정(hmi.json 등)이 얇아 착수 전 범위를 사용자와 재확인 필요
+(HM-Base-0~HM-21 빌드 확인이 우선순위 더 높음). 이후 HM-22(Manager 원격 통합
+설정관리 화면) 착수.
+
+---
+
+## ✅ C-SET-01 후속: IIoT.Studio 환경설정 탭 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: 사용자 요청으로 개별 프로그램 로컬 설정탭 트랙에 Studio 도 추가(원래 계획엔
+Collector/Manager/Monitor/HMI 4개만 있었음). 단, Studio 는 Collector/Manager 와
+달리 자체 settings.json 이 아예 없었다 — Studio 의 "설정"은 지금까지 전부
+device.json/collect.json(장비·수집흐름) 이었고 이는 이미 각자 탭에서 편집 가능.
+그래서 이번에 신규로 만든 studio-settings.json 은 Studio 프로그램 자신의 동작
+(로그 레벨/보존일수, Undo 히스토리 단계 수, 저장 이력 개수)만 다룬다 —
+지금까지 App.xaml.cs/DeviceTreeViewModel/MainViewModel 에 하드코딩돼 있던 값들.
+
+★ 설계 난제와 해결(다른 프로그램과 다른 점): Collector/Manager 는 설정을
+MainWindow.Loaded 이후 비동기로 읽어도 되지만, Studio 는 LogManager.Start()
+(DI 빌드 전, 매우 이른 시점)와 DeviceTreeViewModel(Undo 히스토리 maxSize)/
+MainViewModel(저장 이력 개수)의 생성자가 전부 DI 그래프 구성 시점(OnStartup 중,
+동기)에 값을 필요로 한다. 그래서 StudioSettingsLoader 에 동기 LoadSync()를
+추가해 테마 적용 직후·LogManager.Start() 호출 전에 먼저 읽고, 이렇게 이미
+로드된 인스턴스를 DI 컨테이너에 그대로 등록(services.AddSingleton(studioSettings))
+해서 이후 생성되는 모든 ViewModel 이 참조할 수 있게 했다. 환경설정 화면의
+[다시 불러오기]/[저장] 버튼은 별도의 비동기 LoadAsync()/SaveAsync() 를 사용.
+
+경로: Studio\IIoT.Studio\
+추가 파일:
+  Core/Config/StudioSettings.cs — StudioSettings(Log/Editor 2섹션) + StudioSettingsLoader
+    (LoadSync 동기 전용 + LoadAsync/SaveAsync 비동기 — 용도 분리)
+  ViewModels/SettingsViewModel.cs — Settings 노출(생성자에서 바로 loader.Settings 대입,
+    별도 Initialize() 불필요 — 이미 LoadSync() 완료 상태), SaveCommand(유효성 검사) /
+    ReloadCommand
+  Views/Settings/SettingsView.xaml(.cs) — Manager SettingsView 와 동일한 SectionCard
+    스타일 폼(로그 카드 + 편집기 카드) + 저장/다시불러오기 + 상태 텍스트.
+    ★ DataContext 는 다른 Studio 서브 화면(DeviceTreeView 등)과 동일하게
+      MainWindow.xaml 에서 DataContext="{Binding Settings}" 로 직접 주입 —
+      Collector/Manager 의 ContentControl+코드비하인드 DI 주입 패턴과 다름
+      (SettingsView 는 매개변수 없는 생성자만 가짐)
+
+변경 파일 (기존 코드는 그대로 두고 신규 부분만 추가):
+  App.xaml.cs
+    ← studioSettings 필드 추가, OnStartup 맨 앞(테마 직후)에서 LoadSync() 호출
+    ← LogManager.Instance.Start() 인자를 하드코딩값 → studioSettings.Settings.Log 값으로 교체
+    ← _ConfigureServices(StudioSettingsLoader) 로 시그니처 변경, 로드된 인스턴스 등록
+  ViewModels/DeviceTreeViewModel.cs
+    ← _history 필드 초기화식(= new(maxSize: 50)) → 생성자 본문 대입으로 이동
+      (필드 초기화식은 생성자 매개변수 참조 불가) + StudioSettingsLoader 생성자 파라미터 추가
+  MainViewModel.cs
+    ← StudioSettingsLoader/SettingsViewModel 생성자 파라미터 추가, Settings 서브 VM 프로퍼티 추가
+    ← _AddHistory() 하드코딩 10 → _studioSettings.Settings.Editor.SaveHistoryMaxCount
+    ← IsSettingsTab(ActiveTabIndex==6) 추가 — 5는 로그 토글 전용으로 이미 예약돼 있어 6 사용
+  MainWindow.xaml — 탭바에 "⚙ 환경설정"(CommandParameter="6") + SettingsView 본문 추가
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild → 오류 0개
+  [ ] DeviceTreeViewModel/MainViewModel 생성자 시그니처 변경에 따라 다른 파일에서
+      직접 new DeviceTreeViewModel(...)/new MainViewModel(...) 호출하는 곳이
+      없는지 확인(App.xaml.cs 의 DI 팩토리 외에는 없어야 정상)
+
+### 2단계: 런타임
+  [ ] F5 실행 → 정상 시작(기존 화면 전부 회귀 없음) 확인
+  [ ] 최초 실행 시 {실행파일경로}\Config\studio-settings.json 자동 생성 확인
+  [ ] 탭바 "⚙ 환경설정" 클릭 → 로그/편집기 카드 표시
+  [ ] 로그 레벨 콤보박스에 Debug/Info/Warn/Error/Fatal 5개 표시
+  [ ] Undo 최대 단계 수를 예: 5 로 변경 후 저장 → 재시작 → 노드 6번 편집 후
+      Ctrl+Z 6번 시도 → 5번째 이후는 더 이상 되돌려지지 않는지 확인
+      (studio-settings.json 값이 실제 CommandHistory 에 반영됐는지 검증)
+  [ ] 저장 이력 개수를 예: 3 으로 변경 후 저장 → 재시작 → [📝 메모 저장] 5회
+      반복 → SaveMemoDialog 이력 목록이 최근 3개까지만 유지되는지 확인
+  [ ] 로그 보존 일수/최대 표시 건수 값 유효성 검사(100 미만 입력 시 저장 거부) 확인
+  [ ] [↻ 다시 불러오기] → 편집 취소 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. Studio 실행 → 탭바 [⚙ 환경설정] 클릭
+  2. 로그 레벨(파일/패널)·보존일수·최대표시건수, 실행취소 최대 단계 수,
+     저장 이력 최대 개수를 편집
+  3. [💾 저장] — 이 화면의 모든 설정은 Studio 시작 시 1회만 적용되므로
+     반드시 재시작해야 실제로 반영됩니다(상단 배너로 항상 안내)
+  4. 실수로 값을 고쳤다면 [↻ 다시 불러오기]로 취소 가능
+
+다음 진행: Monitor(Web Enabled/Port 1개 항목) 환경설정 탭.
+
+---
+
+## ✅ C-SET-01 후속: IIoT.HMI 환경설정 탭 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: Collector·Manager·Studio·Monitor 4개 프로그램 로컬 설정탭이 모두 완료된 후,
+남은 HMI 는 hmi.json 이 아직 얇아(Collectors/Web/ForceWriteSecurity 뿐) 착수 전
+범위 확인이 필요했음(직전 세션에서 보류). 사용자 확인(2026-07-20) 결과:
+  · Web(자체 SignalR Hub Enabled/Port) — 포함
+  · ForceWriteSecurity(화면 잠금 기본값) — 포함
+  · Log(로그 레벨/보존일수/최대표시건수) — 포함(Studio 패턴과 동일하게 신규 추가)
+  · Collectors[] — 제외([Collector 관리] 탭에서 이미 CRUD 가능하므로 중복)
+
+★ HMI 는 Studio 와 동일한 구조적 난제를 가짐: Log 설정이 LogManager.Instance.Start()
+(DI 빌드 전, 완전 동기 컨텍스트)에 필요하므로 HmiSettingsLoader 에도 Studio의
+StudioSettingsLoader 와 동일한 이중 로더 패턴(LoadSync 동기 + LoadAsync/SaveAsync
+비동기)을 도입함. 단, HMI 의 나머지 화면들(CollectorManageView/LayoutCanvasView 등)은
+전부 Monitor 식 "DI 생성자 주입 + ContentControl 호스트 + Loaded 시 자체 로드" 패턴을
+따르므로, SettingsView 도 Studio(서브 VM 직접 바인딩)가 아닌 Monitor 패턴을 그대로
+재사용함(HMI 기존 관례 우선).
+
+Core/Config/HmiSettings.cs (기존 파일 확장, 기존 코드 미변경):
+  · HmiSettings 에 LogSettings Log 필드 추가(MinimumLevel/MinimumConsoleLevel/
+    ValidDays/MaxDisplayCount, 기본값 Studio 와 동일)
+  · HmiSettingsLoader 에 LoadSync() 신규 추가(OnStartup 맨 앞 전용, 동기 파일 I/O)
+  · _opts 에 Converters={new JsonStringEnumConverter()} 추가 — LogLevel 을
+    문자열로 hmi.json 에 저장(기존 LoadAsync/SaveAsync 는 그대로 재사용)
+
+ViewModels/SettingsViewModel.cs (신규): Monitor SettingsViewModel.cs 이식.
+  InitializeAsync() 에서 자체적으로 HmiSettingsLoader.LoadAsync() 재호출(
+  CollectorManageView.Loaded 와의 실행 순서 비의존). SaveCommand 유효성 검사:
+  Web.Port 1~65535, Log.ValidDays≥1, Log.MaxDisplayCount≥100. ReloadCommand 포함.
+
+Views/Settings/SettingsView.xaml(.cs) (신규): Monitor SettingsView 이식 +
+  Studio 의 ObjectDataProvider(LogLevel enum) 콤보 패턴 결합. 섹션 카드 3개
+  (웹 Hub / 화면 잠금 / 로그), 좌측 네비게이션 없음(Manager/Monitor 와 동일 원칙).
+
+MainWindow.xaml/.xaml.cs — "⚙ 환경설정" 탭 추가(인덱스 4, TabBtn4), SettingsHost
+  ContentControl, 생성자 6번째 인자로 SettingsView 추가.
+HmiMainViewModel.cs — IsSettingsTab => ActiveTabIndex==4 추가.
+App.xaml.cs —
+  · OnStartup 맨 앞(테마 적용 직후)에서 new HmiSettingsLoader().LoadSync() 호출,
+    이어서 LogManager.Instance.Start() 의 ValidDays/MinimumLevel/MinimumConsoleLevel/
+    MaxDisplayCount 인자를 하드코딩값 대신 이 로더의 Log 설정으로 교체
+  · _ConfigureServices(HmiSettingsLoader settingsLoader) 로 시그니처 변경,
+    services.AddSingleton(settingsLoader) 로 이미 로드된 인스턴스를 그대로 등록
+    (기존 CollectorConnectionManager/LayoutCanvasViewModel 등 소비자와 동일 싱글턴 공유)
+  · services.AddSingleton<SettingsViewModel>()/<SettingsView>() 추가,
+    MainWindow 팩토리 인자에 SettingsView 추가
+```
+
+## ✅ 컴파일 확인 체크리스트
+
+```
+□ HmiSettings.cs: LogSettings 클래스 · HmiSettingsLoader.LoadSync() 신규 메서드 —
+  기존 Settings/LoadAsync/SaveAsync 프로퍼티·메서드는 시그니처 변경 없음
+□ App.xaml.cs: _ConfigureServices() → _ConfigureServices(HmiSettingsLoader) 시그니처
+  변경 — 호출부(OnStartup)도 함께 수정됐는지 확인. using IIoT.HMI.Views.Settings; 추가
+□ SettingsViewModel.cs: [RelayCommand] private async Task SaveAsync()/ReloadAsync()
+  → SaveCommand/ReloadCommand 로 노출(Async 접미사 자동 제거, 기존 4개 프로그램과
+  동일 확인된 패턴)
+□ SettingsView.xaml: xmlns:log="clr-namespace:lssLib.Log;assembly=lssLib.Log" +
+  xmlns:sys="clr-namespace:System;assembly=mscorlib" 네임스페이스 선언 확인
+□ MainWindow.xaml.cs: 생성자 6번째 매개변수(SettingsView) ↔ App.xaml.cs MainWindow
+  팩토리 6번째 인자 순서·타입 일치 확인(정적 감사로 이미 1차 확인 완료)
+□ HmiMainViewModel.cs: ActiveTabIndex 의 [NotifyPropertyChangedFor(nameof(
+  IsSettingsTab))] 추가 확인
+```
+
+## 📖 사용 설명
+
+```
+화면 조작 방법:
+  1. HMI 실행 → 탭바 [⚙ 환경설정] 클릭
+  2. 웹 Hub 활성화 여부/포트, 화면 잠금 시작 기본값, 로그 레벨(파일/패널)·
+     보존일수·최대표시건수를 편집
+  3. [💾 저장] — 웹 Hub/로그 설정은 HMI 시작 시 1회만 적용되므로 재시작 필요
+     (상단 배너로 안내). 화면 잠금 기본값도 다음 시작부터 반영됨
+  4. 실수로 값을 고쳤다면 [↻ 다시 불러오기]로 취소 가능
+
+이로써 Collector·Manager·Studio·Monitor·HMI 5개 프로그램 전부 로컬 환경설정 탭
+코드 완료. 다음 진행: HM-22(Manager 원격 통합 설정관리 화면) 착수.
+```
+
+---
+
+## 🔍 HM-Base-0~HM-21 정적 사전 점검 (2026-07-20, 샌드박스에 .NET SDK 없어 실제 빌드 대체)
+
+```
+★ 환경 제약: 이 세션(Linux 샌드박스)에는 dotnet SDK 가 설치되어 있지 않음
+  (`dotnet --version` → command not found). WPF(net8.0-windows)는 Windows 전용이므로
+  Clean → Rebuild → F5 등 실제 빌드·런타임 검증은 사용자 로컬 Windows 머신에서만
+  가능하다. 이번 세션에서는 그 대체로 HMI 프로젝트의 DI 등록 ↔ 실제 생성자 시그니처를
+  1:1 정적 대조하는 코드 감사를 수행했다(가장 흔한 실사용 실패 원인인
+  "InvalidOperationException: Unable to resolve service..." 런타임 오류를 미리 걸러내기 위함).
+
+대조 결과 — 전부 일치, 불일치 0건:
+  · MainWindow(HmiMainViewModel, CollectorManageView, LayoutCanvasView, AlarmView,
+    LogPanelView) ↔ App.xaml.cs MainWindow 팩토리 5개 인자 순서·타입 정확히 일치
+  · CollectorManageViewModel(HmiSettingsLoader, CollectorConnectionManager) ↔ 둘 다 등록됨
+  · LayoutCanvasViewModel(CollectorConnectionManager, HmiLayoutLoader, HmiSettingsLoader)
+    ↔ 3개 전부 등록됨(등록 순서도 생성자 의존 순서와 일치)
+  · HmiWebHostService(HmiSettingsLoader, LayoutCanvasViewModel, CollectorConnectionManager)
+    ↔ 3개 전부 등록됨
+  · AlarmAggregator(CollectorConnectionManager) / AlarmViewModel(AlarmAggregator,
+    CollectorConnectionManager) ↔ 전부 등록됨
+  · CollectorManageView/LayoutCanvasView/AlarmView 각각 대응 ViewModel 1개만 요구 ↔ 일치
+  · LogPanelView() / HmiSettingsLoader() / HmiLayoutLoader() / AlarmHistoryService() /
+    HmiMainViewModel() — 전부 매개변수 없는 생성자, DI 등록 문제 없음
+  · ForceWriteDialog/TrendWindow/SecondaryDisplayWindow(HM-09/17/19) — DI 미등록이 맞음
+    (LayoutCanvasView.xaml.cs 안에서 `new`로 직접 생성, 노드 정보나 이미 주입된
+    LayoutCanvasViewModel 인스턴스만 인자로 받음 — DI 컨테이너 의존성 없어 문제 없음)
+
+결론: DI 그래프 자체의 논리적 결함은 발견되지 않음. 단, 이는 "생성자 의존성이
+      전부 해소 가능한가"만 확인한 것이며, XAML 바인딩 오타·NullReferenceException·
+      실제 PLC 통신 등 런타임에서만 드러나는 문제는 이 정적 점검으로 잡을 수 없다.
+      아래 통합 체크리스트로 실제 빌드·조작 검증은 여전히 필요하다.
+```
+
+### 통합 수동 검증 체크리스트 (HM-Base-0~HM-21, 개별 Step 절 15개를 1개로 병합)
+
+```
+순서대로 Clean → Rebuild → F5 로 진행. ★ 표시는 핸드오프에 이미 기록된 고위험 항목.
+
+□ HM-Base-0~2: 빈 창 + 테마 적용 + HmiMainViewModel 탭 전환(4개 탭) 정상 동작
+□ HM-01~02: hmi.json 로드, [Collector 관리] 탭에서 Collector 추가/삭제/저장 정상
+□ HM-03/07: [레이아웃 편집] 탭 진입, 화면(페이지) 목록 로드, 마지막 활성 화면 복원
+□ HM-04/05: 장비 아이콘 팔레트 → 캔버스 드래그 배치, 속성 패널에서
+  Collector→Device→Tag 3단 선택 후 실시간 값이 카드에 반영되는지 확인
+□ HM-06: Motor/Valve/Tank/Conveyor 애니메이션(회전/레벨/점선 스크롤) 육안 확인
+□ HM-08: 활성 알람 시 카드에 알람 배지·색상 오버레이 표시 확인
+□ ★HM-09: [강제쓰기] 다이얼로그 — 활성 알람 있을 때 경고 문구 노출,
+  API Key 세션 캐시(PrefillApiKey) 정상 동작, 실제 PLC 영향 있으므로
+  테스트 환경에서 먼저 검증
+□ HM-10: 화면 탭 추가/이름변경(더블클릭)/삭제, 화면별 노드 캐시 분리 확인
+□ ★HM-11: 자체 웹 서버(Kestrel+SignalR) 기동 — win.Loaded 이후 브라우저로
+  접속 확인(FrameworkReference 추가로 인한 빌드 실패 위험이 가장 큰 Step)
+□ HM-12: 화면 잠금(🔒) 켜짐 시 강제쓰기 차단 문구 노출 확인
+□ HM-14~15: [알람]/[로그] 탭 실시간 갱신 확인
+□ HM-16: 앱 재시작 후에도 alarm_history.db(SQLite)에 이전 알람 이력 남아있는지 확인
+□ HM-17: 노드 우클릭 → 트렌드 창 비모달로 복수 개 동시 오픈 가능 확인
+□ HM-18: 캔버스 PNG 캡처 저장 확인
+□ HM-19: 보조 창(다른 모니터로 이동) 오픈 후, 메인 창 닫으면 보조 창도 함께
+  종료되는지 확인(ShutdownMode=OnMainWindowClose 검증)
+□ HM-20/20b: Motor/Valve(1차)·Tank/Conveyor(2차) 실형상 애니메이션 세부
+  (바늘 회전 중심, 벨트 스크롤 방향) 육안 확인
+□ ★HM-21: 웹 화면에서 알람 배지 클릭→ACK, 카드 클릭→ForceWrite 모달 —
+  물리 PLC에 실제 쓰기가 발생하는 기능이므로 반드시 테스트 환경에서 우선 확인
+```
+
+---
+
 ## 🔜 다음 세션 진행 순서
 
 ### ① Manager + lssLib.SignalR 통합 빌드 확인 — ✅ 완료 (2026-07-16, 사용자 직접 빌드·런타임 검토)
@@ -1809,6 +2249,50 @@ wwwroot/index.html.
 | v11.4 | 설정(Settings) UI 편집 화면 — 후속 기능으로 기록 (2026-07-16, 착수 안 함) — |
 | | | Collector/Manager/Monitor 모두 "환경설정" 탭 없음 확인, Collector settings.json |
 | | | 10개 섹션 등 UI 부재 목록화. Manager 원격 통합 설정관리 탭 아이디어 기록 |
+| **v11.28** | **C-SET-01 코드 완료 (2026-07-20, 빌드 확인 대기) — Collector 환경설정 탭.** |
+| | | **개별 프로그램 로컬 설정탭 착수 순서 확정(Collector→Manager→Monitor→HMI,** |
+| | | **사용자 확인) 후 Collector 부터 구현. SettingsViewModel(11섹션+유효성검사+** |
+| | | **PasswordBox 5종 마스킹) / SettingsView / MainWindow·MainViewModel 탭 연동 /** |
+| | | **App.xaml.cs DI 등록. CollectorSettingsLoader 에 SaveAsync/** |
+| | | **GenerateNewCollectorId 추가(기존 메서드 미변경). 다음: Manager 환경설정 탭** |
+| **v11.29** | **C-SET-01 후속(Manager) 코드 완료 (2026-07-20, 빌드 확인 대기) — Collector** |
+| | | **빌드 확인 완료 보고 받고 이어서 진행. Resource(CpuWarnPercent/MemoryWarnMb)** |
+| | | **1개 섹션만 대상이라 좌측 네비게이션 없이 단일 카드로 구성. ManagerSettingsLoader** |
+| | | **에 SaveAsync 가 이미 있어 신규 추가 불필요. ResourceSettings 가 실행 중인** |
+| | | **ProcessCardViewModel 에 참조로 공유되어 저장 전에도 즉시 반영되는 특성 확인·** |
+| | | **문서화. 다음: Monitor 환경설정 탭(Web Enabled/Port 1개 항목)** |
+| **v11.30** | **C-SET-01 후속(Studio) 코드 완료 (2026-07-20, 빌드 확인 대기) — 사용자 요청으로** |
+| | | **원래 계획(Collector/Manager/Monitor/HMI)에 없던 Studio 도 트랙에 추가. Studio 는** |
+| | | **자체 settings.json 이 없어 studio-settings.json(Log/Editor) 신규 도입.** |
+| | | **LogManager.Start()/DeviceTreeViewModel(Undo maxSize)/MainViewModel(저장이력** |
+| | | **개수) 가 전부 DI 그래프 구성 시점(동기)에 값이 필요해 StudioSettingsLoader.** |
+| | | **LoadSync() 동기 로더를 OnStartup 맨 앞에 추가(다른 프로그램과 다른 설계).** |
+| | | **DeviceTreeViewModel _history 필드초기화 → 생성자 본문 이동. 다음: Monitor** |
+| **v11.31** | **C-SET-01 후속(Monitor) 코드 완료 (2026-07-20, 빌드 확인 대기) — Web(자체** |
+| | | **SignalR Hub Enabled/Port) 1개 섹션만 대상, Manager 와 동일하게 단일 카드로** |
+| | | **구성. MonitorSettingsLoader 에 SaveAsync 가 이미 있어 신규 추가 불필요.** |
+| | | **CollectorManageView.Loaded 와 SettingsView.Loaded 가 동일 로더를 각자** |
+| | | **로드하는 구조(실행 순서 비의존) 확인. 이로써 Collector·Manager·Studio·** |
+| | | **Monitor 4개 프로그램 로컬 설정탭 전부 코드 완료 — 남은 건 HMI 뿐** |
+| **v11.32** | **HM-Base-0~HM-21 정적 사전 점검 완료 (2026-07-20) — 샌드박스에 .NET SDK** |
+| | | **없어 실제 빌드 불가 확인(`dotnet` command not found), 대체로 HMI 전체 DI** |
+| | | **등록↔생성자 시그니처 1:1 정적 대조 수행. MainWindow/CollectorManageViewModel/** |
+| | | **LayoutCanvasViewModel/HmiWebHostService/AlarmAggregator·ViewModel 등 전부** |
+| | | **일치, 불일치 0건. ForceWriteDialog/TrendWindow/SecondaryDisplayWindow 는** |
+| | | **DI 미등록이 정상(코드 내 `new`로 직접 생성)임을 확인. 개별 Step 15개로** |
+| | | **흩어진 체크리스트를 "🔍 HM-Base-0~HM-21 정적 사전 점검" 절 1개로 통합.** |
+| | | **실제 빌드·조작 검증은 여전히 사용자 로컬 Windows 머신에서 필요** |
+| **v11.33** | **C-SET-01 후속(HMI) 코드 완료 (2026-07-20, 빌드 확인 대기) — 범위 확인** |
+| | | **(사용자 확인): Web+ForceWriteSecurity+Log 포함, Collectors 는 [Collector** |
+| | | **관리] 탭과 중복이라 제외. HmiSettings.cs 에 LogSettings 추가 +** |
+| | | **HmiSettingsLoader.LoadSync() 신규(Studio 이중 로더 패턴 이식) — Log 설정이** |
+| | | **LogManager.Instance.Start() 보다 먼저 필요하기 때문. SettingsView 는** |
+| | | **HMI 기존 관례를 따라 Studio(서브 VM) 대신 Monitor 패턴(DI 생성자 주입 +** |
+| | | **ContentControl 호스트) 재사용. App.xaml.cs: OnStartup 맨 앞에서 LoadSync()** |
+| | | **호출 후 LogConfig 하드코딩값 교체, _ConfigureServices(HmiSettingsLoader)** |
+| | | **시그니처 변경. MainWindow/HmiMainViewModel 에 환경설정 탭(인덱스 4) 추가.** |
+| | | **이로써 Collector·Manager·Studio·Monitor·HMI 5개 프로그램 전부 로컬** |
+| | | **환경설정 탭 코드 완료 — 다음: HM-22(Manager 원격 통합 설정관리 화면)** |
 | **v11.5** | **HM-Base-0~2 + HM-01~02 코드 완료 (2026-07-16, 빌드 확인 대기)** |
 | | | **HMI\IIoT.HMI.sln 신규 생성 (Contracts·UI.Themes·lssLib.Log 참조)** |
 | | | **App/MainWindow/HmiMainViewModel: 테마+탭바 5개(현황판·레이아웃 편집·** |

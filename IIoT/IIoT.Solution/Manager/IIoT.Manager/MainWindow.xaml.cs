@@ -24,6 +24,7 @@ using IIoT.Manager.Views.Deploy;
 using IIoT.Manager.Views.Schedule;
 using IIoT.Manager.Views.LogViewer;
 using IIoT.Manager.Views.ProcessStatus;
+using IIoT.Manager.Views.Settings;   // ★ C-SET-01 후속
 using System.Windows;
 
 namespace IIoT.Manager;
@@ -42,7 +43,8 @@ public partial class MainWindow : Window
                       DashboardView        dashboardView,
                       DeployView           deployView,
                       ScheduleView         scheduleView,
-                      TrayService          trayService)
+                      TrayService          trayService,
+                      SettingsView         settingsView)
     {
         InitializeComponent();
 
@@ -65,6 +67,9 @@ public partial class MainWindow : Window
 
         // ★ MG-07: 스케줄 주입
         ScheduleHost.Content = scheduleView;
+
+        // ★ C-SET-01 후속: 환경설정 주입
+        SettingsHost.Content = settingsView;
 
         // ★ MG-02: manager.json 로드 (창 표시 후 — 파일 I/O 블로킹 방지)
         Loaded += _OnLoaded;
