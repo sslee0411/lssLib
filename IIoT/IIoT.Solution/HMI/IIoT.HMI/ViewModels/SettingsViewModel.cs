@@ -12,6 +12,10 @@
 //          SettingsViewModel.cs 와 동일 방어 패턴).
 //        ★ Log 섹션은 App.xaml.cs OnStartup 맨 앞에서 LoadSync() 로 이미 1회
 //          적용된 뒤이므로, 여기서 값을 바꿔 저장해도 재시작해야 반영된다.
+//  설정화면 통일(2026-07-20): Collector 환경설정 탭과 완전히 동일한 좌측
+//        섹션 네비게이션 골격(ActiveSectionIndex/IsXSection/SwitchSectionCommand)
+//        + 전체 오류 목록 표시(_ValidateAll) 패턴으로 통일(기존에는 개별
+//        early-return 검증이라 첫 오류만 표시되었음).
 //  생성: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
@@ -19,6 +23,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IIoT.HMI.Core.Config;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace IIoT.HMI.ViewModels;
@@ -27,6 +32,27 @@ namespace IIoT.HMI.ViewModels;
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly HmiSettingsLoader _loader;
+
+    // §1 ─ 좌측 섹션 네비게이션 (★ 설정화면 통일 — Collector 와 동일 패턴) ──
+
+    /// <summary>현재 선택된 섹션 인덱스. 0=웹Hub 1=화면잠금 2=로그</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsWebSection))]
+    [NotifyPropertyChangedFor(nameof(IsSecuritySection))]
+    [NotifyPropertyChangedFor(nameof(IsLogSection))]
+    private int _activeSectionIndex;
+
+    public bool IsWebSection      => ActiveSectionIndex == 0;
+    public bool IsSecuritySection => ActiveSectionIndex == 1;
+    public bool IsLogSection      => ActiveSectionIndex == 2;
+
+    [RelayCommand]
+    private void SwitchSection(string idx)
+    {
+        if (int.TryParse(idx, out var i)) ActiveSectionIndex = i;
+    }
+
+    // §2 ─ 설정 모델 ──────────────────────────────────────────
 
     /// <summary>편집 대상 설정 객체 (HmiSettingsLoader.Settings 와 동일 참조)</summary>
     [ObservableProperty]
@@ -52,25 +78,16 @@ public partial class SettingsViewModel : ObservableObject
         HasError = false;
     }
 
+    // §3 ─ 커맨드 ─────────────────────────────────────────────
+
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if (Settings.Web.Port is < 1 or > 65535)
+        var errors = _ValidateAll();
+        if (errors.Count > 0)
         {
             HasError = true;
-            StatusMessage = "저장 실패 — 웹 Hub 포트는 1~65535 범위여야 합니다";
-            return;
-        }
-        if (Settings.Log.ValidDays < 1)
-        {
-            HasError = true;
-            StatusMessage = "저장 실패 — 로그 보존 일수는 1일 이상이어야 합니다";
-            return;
-        }
-        if (Settings.Log.MaxDisplayCount < 100)
-        {
-            HasError = true;
-            StatusMessage = "저장 실패 — 로그 패널 최대 표시 건수는 100 이상이어야 합니다";
+            StatusMessage = "저장 실패 — " + string.Join(" / ", errors);
             return;
         }
 
@@ -86,5 +103,22 @@ public partial class SettingsViewModel : ObservableObject
         Settings = _loader.Settings;
         StatusMessage = "hmi.json 을 다시 불러왔습니다 (편집 중이던 내용은 취소됨).";
         HasError = false;
+    }
+
+    // §4 ─ 유효성 검사 (★ 설정화면 통일 — Collector 와 동일하게 전체 오류를
+    //      한 번에 모아 표시하는 _ValidateAll() 패턴) ──────────────────
+
+    private List<string> _ValidateAll()
+    {
+        var errors = new List<string>();
+
+        if (Settings.Web.Port is < 1 or > 65535)
+            errors.Add("웹 Hub 포트는 1~65535 범위여야 합니다");
+        if (Settings.Log.ValidDays < 1)
+            errors.Add("로그 보존 일수는 1일 이상이어야 합니다");
+        if (Settings.Log.MaxDisplayCount < 100)
+            errors.Add("로그 패널 최대 표시 건수는 100 이상이어야 합니다");
+
+        return errors;
     }
 }

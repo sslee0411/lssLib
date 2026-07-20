@@ -69,13 +69,13 @@
              § 상단 — 재시작 필요 안내 배너 (항상 표시)
              ══════════════════════════════════════════════════ -->
         <Border DockPanel.Dock="Top"
-                Background="#2A2410"
+                Background="{DynamicResource YellowFaintBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="16,8">
             <TextBlock Text="⚠ 대부분의 설정 변경은 프로그램을 재시작해야 실제로 적용됩니다."
                        FontSize="11"
-                       Foreground="#E0A030" />
+                       Foreground="{DynamicResource YellowBrush}" />
         </Border>
 
         <!-- ══════════════════════════════════════════════════
@@ -105,10 +105,10 @@
                            TextTrimming="CharacterEllipsis">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="#3FB950" />
+                            <Setter Property="Foreground" Value="{DynamicResource GreenBrush}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding HasError}" Value="True">
-                                    <Setter Property="Foreground" Value="#E05050" />
+                                    <Setter Property="Foreground" Value="{DynamicResource RedBrush}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -348,9 +348,9 @@
                 <!-- ── 5. 강제쓰기 ─────────────────────────── -->
                 <StackPanel Visibility="{Binding IsForceWriteSection, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="강제쓰기 (ForceWrite)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
-                    <Border Background="#2A1414" BorderBrush="#E05050" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                    <Border Background="{DynamicResource RedFaintBrush}" BorderBrush="{DynamicResource RedBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
                         <TextBlock Text="⚠ 실제 PLC 에 값을 직접 씁니다. 현장 적용 시에만 의도적으로 활성화하세요."
-                                   FontSize="11" Foreground="#E08080" TextWrapping="Wrap" />
+                                   FontSize="11" Foreground="{DynamicResource RedBrush}" TextWrapping="Wrap" />
                     </Border>
                     <CheckBox Content="강제쓰기 기능 활성화" Style="{DynamicResource DarkCheckBox}" IsChecked="{Binding Settings.ForceWrite.Enabled}" Margin="0,0,0,10" />
                     <CheckBox Content="활성 알람(HH/LL) 중인 Tag 강제쓰기 시 경고 로그 표시" Style="{DynamicResource DarkCheckBox}"

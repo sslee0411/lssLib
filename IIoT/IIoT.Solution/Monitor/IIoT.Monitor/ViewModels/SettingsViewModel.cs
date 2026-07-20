@@ -9,6 +9,10 @@
 //          수행하지만(monitor.json 공유), 두 Loaded 핸들러의 실행 순서를
 //          가정하지 않기 위해 이 화면 스스로 다시 로드해 값을 확정한다
 //          (동일 파일 재읽기라 안전 — 파일 I/O 외 부작용 없음).
+//  설정화면 통일(2026-07-20): Collector 환경설정 탭과 완전히 동일한 좌측
+//        섹션 네비게이션 골격(ActiveSectionIndex/IsXSection/SwitchSectionCommand)
+//        + 전체 오류 목록 표시(_ValidateAll) 패턴으로 통일. 섹션이 1개뿐이라
+//        네비게이션에는 항목이 하나만 표시된다.
 //  생성: 2026-07-20
 // ══════════════════════════════════════════════════════════
 
@@ -16,6 +20,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IIoT.Monitor.Core.Config;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace IIoT.Monitor.ViewModels;
@@ -24,6 +29,23 @@ namespace IIoT.Monitor.ViewModels;
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly MonitorSettingsLoader _loader;
+
+    // §1 ─ 좌측 섹션 네비게이션 (★ 설정화면 통일 — Collector 와 동일 패턴) ──
+
+    /// <summary>현재 선택된 섹션 인덱스. 0=웹 Hub(유일한 섹션)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsWebSection))]
+    private int _activeSectionIndex;
+
+    public bool IsWebSection => ActiveSectionIndex == 0;
+
+    [RelayCommand]
+    private void SwitchSection(string idx)
+    {
+        if (int.TryParse(idx, out var i)) ActiveSectionIndex = i;
+    }
+
+    // §2 ─ 설정 모델 ──────────────────────────────────────────
 
     /// <summary>편집 대상 설정 객체 (MonitorSettingsLoader.Settings 와 동일 참조)</summary>
     [ObservableProperty]
@@ -49,13 +71,16 @@ public partial class SettingsViewModel : ObservableObject
         HasError = false;
     }
 
+    // §3 ─ 커맨드 ─────────────────────────────────────────────
+
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if (Settings.Web.Port is < 1 or > 65535)
+        var errors = _ValidateAll();
+        if (errors.Count > 0)
         {
             HasError = true;
-            StatusMessage = "저장 실패 — 포트는 1~65535 범위여야 합니다";
+            StatusMessage = "저장 실패 — " + string.Join(" / ", errors);
             return;
         }
 
@@ -71,5 +96,18 @@ public partial class SettingsViewModel : ObservableObject
         Settings = _loader.Settings;
         StatusMessage = "monitor.json 을 다시 불러왔습니다 (편집 중이던 내용은 취소됨).";
         HasError = false;
+    }
+
+    // §4 ─ 유효성 검사 (★ 설정화면 통일 — Collector 와 동일하게 전체 오류를
+    //      한 번에 모아 표시하는 _ValidateAll() 패턴) ──────────────────
+
+    private List<string> _ValidateAll()
+    {
+        var errors = new List<string>();
+
+        if (Settings.Web.Port is < 1 or > 65535)
+            errors.Add("포트는 1~65535 범위여야 합니다");
+
+        return errors;
     }
 }

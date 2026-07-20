@@ -3,83 +3,52 @@
      역할: [환경설정] 탭 — manager.json Resource 섹션(CPU/메모리 경고 임계) 편집
            (Processes/Deploy/Schedules 는 이미 각자 탭에서 편집 가능하므로 대상 아님)
      C-SET-01 후속 (Manager): Collector 환경설정 탭과 동일 설계 원칙, 항목이
-           1개 섹션뿐이라 좌측 네비게이션 없이 단일 카드로 구성.
-     생성: 2026-07-20
-     규칙 (DeployView.xaml 과 동일):
+           1개 섹션뿐이라 좌측 네비게이션에는 항목이 하나만 표시됨.
+     설정화면 통일(2026-07-20): Collector 와 동일한 DockPanel 골격(좌측 220px
+           섹션 네비 + 우측 스크롤 폼 + 하단 고정 저장/다시불러오기 바)으로 전면
+           교체 — 기존 "중앙 단일 카드" 레이아웃에서 변경. 이 화면은 재시작 없이
+           즉시 반영되므로 상단 경고 배너는 표시하지 않음(다른 4개 프로그램과의
+           의도적 차이 — 사용 설명에 명시).
+     규칙 (Collector 와 동일):
        ① DynamicResource 필수 (버튼: 테마 정식 스타일)
-       ② UserControl.Resources 는 UserControl 직계 자식
-       ③ Grid 는 Padding 불가 → Border.Padding 사용 (MC3072)
+       ② 좌측 섹션 네비게이션은 GhostBtn+SwitchSectionCommand(string) 패턴
      ══════════════════════════════════════════════════════════ -->
 <UserControl x:Class="IIoT.Manager.Views.Settings.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource BgBrush}">
 
     <UserControl.Resources>
-        <Style x:Key="SectionCard" TargetType="Border">
-            <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
-            <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"    Value="10"/>
-            <Setter Property="Padding"         Value="16,12"/>
-        </Style>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </UserControl.Resources>
 
-    <Border Padding="24">
-        <Grid MaxWidth="560" HorizontalAlignment="Left">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" /> <!-- 리소스 카드 -->
-                <RowDefinition Height="Auto" /> <!-- 저장/새로고침 + 상태 -->
-            </Grid.RowDefinitions>
+    <DockPanel LastChildFill="True">
 
-            <!-- § 리소스 임계값 -->
-            <Border Grid.Row="0" Style="{StaticResource SectionCard}" Margin="0,0,0,16">
-                <StackPanel>
-                    <TextBlock Text="리소스 경고 임계 (Resource)"
-                               FontSize="13" FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextBrush}"
-                               Margin="0,0,0,4" />
-                    <TextBlock Text="관리 대상 프로그램(Studio/Collector/Monitor/HMI)의 CPU·메모리 사용량이 아래 임계를 초과하면 트레이 알림 + 이벤트 이력에 경고가 기록됩니다. 프로그램·항목별 5분 쿨다운이 적용됩니다."
-                               FontSize="11" Foreground="{DynamicResource Text3Brush}"
-                               TextWrapping="Wrap" Margin="0,0,0,14" />
-
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="200" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="CPU 사용률 경고 (%)"
-                                   FontSize="11" Foreground="{DynamicResource Text2Brush}"
-                                   VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}"
-                                 Text="{Binding Settings.Resource.CpuWarnPercent}" />
-                    </Grid>
-
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="200" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="메모리 사용량 경고 (MB)"
-                                   FontSize="11" Foreground="{DynamicResource Text2Brush}"
-                                   VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}"
-                                 Text="{Binding Settings.Resource.MemoryWarnMb}" />
-                    </Grid>
-
-                    <TextBlock Text="0 이하로 설정하면 해당 항목 검사를 하지 않습니다."
-                               FontSize="10" Foreground="{DynamicResource Text3Brush}" />
+        <!-- ══════════════════════════════════════════════════
+             § 하단 — 저장/다시불러오기 + 상태 메시지
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Bottom"
+                Height="44"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Button Content="↻ 다시 불러오기"
+                            Command="{Binding ReloadCommand}"
+                            Style="{DynamicResource SecondaryBtn}"
+                            Margin="0,0,8,0" />
+                    <Button Content="💾 저장"
+                            Command="{Binding SaveCommand}"
+                            Style="{DynamicResource PrimaryBtn}" />
                 </StackPanel>
-            </Border>
-
-            <!-- § 저장/새로고침 + 상태 -->
-            <StackPanel Grid.Row="1">
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="💾 저장" Command="{Binding SaveCommand}"
-                            Style="{DynamicResource PrimaryBtn}" Margin="0,0,8,0" />
-                    <Button Content="↻ 다시 불러오기" Command="{Binding ReloadCommand}"
-                            Style="{DynamicResource SecondaryBtn}" />
-                </StackPanel>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="11" TextWrapping="Wrap">
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="11"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="{DynamicResource GreenBrush}" />
@@ -91,8 +60,57 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
-            </StackPanel>
+            </DockPanel>
+        </Border>
 
-        </Grid>
-    </Border>
+        <!-- ══════════════════════════════════════════════════
+             § 좌측 — 섹션 네비게이션 (220px)
+             ══════════════════════════════════════════════════ -->
+        <Border DockPanel.Dock="Left"
+                Width="220"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <StackPanel Margin="0,8">
+                <Button Content="📊  리소스 임계값" Command="{Binding SwitchSectionCommand}" CommandParameter="0" Style="{DynamicResource GhostBtn}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="16,8" />
+            </StackPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════
+             § 우측 — 섹션 본문
+             ══════════════════════════════════════════════════ -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      Padding="24,16">
+            <Grid MaxWidth="640" HorizontalAlignment="Left">
+
+                <!-- ── 0. 리소스 임계값 ─────────────────────── -->
+                <StackPanel Visibility="{Binding IsResourceSection, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="리소스 경고 임계 (Resource)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,12" />
+                    <TextBlock Text="관리 대상 프로그램(Studio/Collector/Monitor/HMI)의 CPU·메모리 사용량이 아래 임계를 초과하면 트레이 알림 + 이벤트 이력에 경고가 기록됩니다. 프로그램·항목별 5분 쿨다운이 적용됩니다. 이 설정은 저장 즉시 실행 중인 감시에 반영되며 재시작이 필요 없습니다."
+                               FontSize="10" Foreground="{DynamicResource Text2Brush}" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="CPU 사용률 경고 (%)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Resource.CpuWarnPercent}" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="메모리 사용량 경고 (MB)" FontSize="11" Foreground="{DynamicResource Text2Brush}" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Style="{DynamicResource PropInput}" Text="{Binding Settings.Resource.MemoryWarnMb}" />
+                    </Grid>
+
+                    <TextBlock Text="0 이하로 설정하면 해당 항목 검사를 하지 않습니다." FontSize="10" Foreground="{DynamicResource Text3Brush}" />
+                </StackPanel>
+
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
 </UserControl>

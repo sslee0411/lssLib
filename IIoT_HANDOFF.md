@@ -1,5 +1,5 @@
 # IIoT.Solution 개발 핸드오프 파일
-**작성일: 2026-07-20 | 버전: v11.41 | 다음 세션 시작점: ① 그동안의 코드(HM-Base-0~HM-23, HM-22, 설정 UI 트랙, S-Virtual01, S-Virtual02, S-프로토콜01 Step A+B+후속, S-20 N포트) 전부 사용자 로컬 Windows 빌드·런타임 확인(정적 검증은 전부 완료, 신규 플러그인 IIoT.Driver.RawFrame 포함 — Plugins/IIoT.Driver.sln 리빌드 필요) → ② 이로써 Studio 보류 4건(가상Tag·Function노드·프로토콜편집 Step A+B·N포트) 전부 코드 완료, S-프로토콜01 Step B 문서화 한계 3건(LEN필드/응답CRC/스케일)도 전부 해소 → ③ IIoT.Sequence 착수(로드맵상 다음 프로그램 — Manager→HMI 순으로 기본구조 확립 완료됨에 따라 다음 차례)**
+**작성일: 2026-07-20 | 버전: v11.43 | 다음 세션 시작점: ① 그동안의 코드(HM-Base-0~HM-23, HM-22, 설정 UI 트랙+테마·레이아웃·UX 통일, S-Virtual01, S-Virtual02, S-프로토콜01 Step A+B+후속, S-20 N포트) 전부 사용자 로컬 Windows 빌드·런타임 확인(정적 검증은 전부 완료, 신규 플러그인 IIoT.Driver.RawFrame 포함 — Plugins/IIoT.Driver.sln 리빌드 필요) → ② 이로써 Studio 보류 4건 전부 코드 완료, S-프로토콜01 Step B 문서화 한계 3건도 전부 해소, 5개 프로그램 환경설정 화면의 레이아웃·색상·검증 UX 도 Collector 기준으로 전면 통일 완료 → ③ 솔루션 종합 안내서(Word) 작성 완료 → ④ IIoT.Sequence 착수(로드맵상 다음 프로그램)**
 
 > 새 세션 시작 시 이 파일을 가장 먼저 읽을 것.
 > SKILL.md 는 함께 참조하되, **진행 상태·착수 순서는 이 핸드오프가 최우선**
@@ -2710,6 +2710,159 @@ OutputPorts 는 이미 List<NodePort> 로 다중 포트를 지원하도록 설�
 
 ---
 
+## ✅ 설정 화면 테마·레이아웃·UX 통일 (코드 완료 — 2026-07-20, 빌드 확인 대기)
+
+```
+배경: IIoT.Sequence 착수 직전, 사용자가 "나머지 솔루션들의 설정 테마 및
+기능의 테마를 맞춰야 할 필요가 있지 않을까?" 라고 질의(2026-07-20). 5개
+프로그램(Studio/Collector/Monitor/Manager/HMI)의 환경설정 화면이 각자 다른
+세션에서 독립적으로 만들어져 실제로 레이아웃·색상·검증 UX 가 서로 다름을
+Explore 조사로 확인 후 사용자에게 보고 → "테마+레이아웃+UX 전면 통일" 선택.
+
+발견된 불일치(조사 결과):
+  ① 레이아웃: Collector 만 좌측 섹션 네비게이션(11개 섹션) 구조, 나머지
+     4개(Manager/Studio/Monitor/HMI)는 중앙 단일/복수 카드 나열 구조
+  ② 경고 배너: 위치(스크롤 안/밖)·유무가 프로그램마다 다름(Manager 는
+     설정이 즉시 반영되어 배너 자체가 없음 — 이는 의도된 정상 차이)
+  ③ 색상: 경고 배너(#2A2410/#E0A030)와 Collector 상태 텍스트(#3FB950/
+     #E05050)·ForceWrite 경고카드(#2A1414/#E05050/#E08080)가 테마 리소스
+     대신 하드코딩 헥스로 반복됨 — 테마 전환 시 이 부분만 색이 안 바뀜
+  ④ 저장/다시불러오기 버튼: Collector 만 순서가 반대(다시불러오기→저장),
+     정렬도 우측/좌측으로 다름
+  ⑤ 검증 UX: Collector 는 모든 오류를 한 번에 모아 표시(_ValidateAll),
+     나머지 4개는 첫 오류만 표시하고 중단(early-return)
+
+해결 방향: Collector 를 기준(가장 먼저 만들어진 정식 설계, 나머지 4개의
+코드 주석이 이미 "Collector 환경설정 탭과 동일 설계 원칙"을 표방하고 있었음)
+으로 삼아 나머지 4개를 구조적으로 맞춤. 신규 테마 리소스 추가는 불필요했음
+— 8개 테마 전부에 이미 YellowBrush/YellowFaintBrush(경고)·GreenBrush/
+RedBrush/RedFaintBrush(상태·위험)가 정의되어 있어 하드코딩 헥스를
+DynamicResource 참조로 교체하는 것만으로 테마 연동이 해결됨.
+
+경로: Manager\IIoT.Manager\ + Studio\IIoT.Studio\ + Monitor\IIoT.Monitor\ +
+      HMI\IIoT.HMI\ + Collector\IIoT.Collector\ (5개 프로그램)
+변경 파일:
+  Collector\IIoT.Collector\Views\Settings\SettingsView.xaml
+    ← 하드코딩 3곳 교체: 배너 #2A2410/#E0A030 → YellowFaintBrush/YellowBrush,
+      상태 텍스트 #3FB950/#E05050 → GreenBrush/RedBrush, ForceWrite 경고카드
+      #2A1414/#E05050/#E08080 → RedFaintBrush/RedBrush/RedBrush. 레이아웃·
+      버튼 순서는 이미 기준(레퍼런스)이라 변경 없음
+  Manager\IIoT.Manager\ViewModels\SettingsViewModel.cs / Views\Settings\SettingsView.xaml
+    ← ActiveSectionIndex/IsResourceSection/SwitchSectionCommand 신규(섹션
+      1개뿐이라 네비 항목도 1개) + _ValidateAll() 목록 검증 패턴으로 교체.
+      XAML 을 Collector 와 동일한 DockPanel 골격(좌측 220px 네비 + 우측
+      스크롤 폼 + 하단 고정 저장/다시불러오기 바)으로 전면 재작성. 이
+      화면은 저장 즉시 반영되어 재시작이 불필요하므로 경고 배너는 의도적으로
+      계속 표시하지 않음(다른 4개와의 유일한 의도된 차이 — 사용 설명에 명시)
+  Studio\IIoT.Studio\ViewModels\SettingsViewModel.cs / Views\Settings\SettingsView.xaml
+    ← ActiveSectionIndex/IsLogSection/IsEditorSection/SwitchSectionCommand
+      신규 + _ValidateAll() 목록 검증 패턴(기존 4단계 early-return 검증
+      통합). XAML 동일 DockPanel 골격 재작성, 배너 색상 YellowFaintBrush/
+      YellowBrush 로 교체. DataContext 를 MainWindow.xaml 에서 직접 주입하는
+      기존 Studio 고유 패턴은 변경하지 않음(구조적 통일 대상은 화면
+      레이아웃/색상/검증 UX 뿐 — DI 배선 방식은 각 프로그램 고유 관례 유지)
+  Monitor\IIoT.Monitor\ViewModels\SettingsViewModel.cs / Views\Settings\SettingsView.xaml
+    ← ActiveSectionIndex/IsWebSection/SwitchSectionCommand 신규(섹션 1개) +
+      _ValidateAll() 패턴. XAML 동일 DockPanel 골격 재작성 + 배너 색상 교체
+  HMI\IIoT.HMI\ViewModels\SettingsViewModel.cs / Views\Settings\SettingsView.xaml
+    ← ActiveSectionIndex/IsWebSection/IsSecuritySection/IsLogSection/
+      SwitchSectionCommand 신규 + _ValidateAll() 패턴(기존 3단계
+      early-return 검증 통합). XAML 동일 DockPanel 골격 재작성(좌측 네비
+      3항목: 웹Hub/화면잠금/로그) + 배너 색상 교체
+
+변경하지 않음:
+  각 프로그램의 SettingsView.xaml.cs(코드비하인드 DI 생성자/Loaded 패턴),
+  각 SettingsLoader(로드/저장 로직), Settings 모델 클래스, MainWindow.xaml 의
+  ContentControl 호스팅 방식(Manager/Collector/Monitor/HMI) 또는 직접
+  DataContext 주입 방식(Studio)은 그대로 유지 — 이번 통일은 순수하게 화면
+  레이아웃 골격·색상·검증 표시 방식에 한정. UI.Themes 의 8개 테마 파일 자체는
+  건드리지 않음(기존 Yellow/Green/Red 계열 리소스로 충분히 해결됨).
+
+## ✅ 컴파일 확인 체크리스트
+
+### 1단계: 빌드
+  [ ] Clean → Rebuild (Manager) → 오류 0개
+  [ ] Clean → Rebuild (Studio) → 오류 0개
+  [ ] Clean → Rebuild (Monitor) → 오류 0개
+  [ ] Clean → Rebuild (HMI) → 오류 0개
+  [ ] Clean → Rebuild (Collector) → 오류 0개
+
+### 2단계: 런타임
+  [ ] Manager 실행 → [환경설정] 탭 → 좌측에 "📊 리소스 임계값" 네비 1개 +
+      우측 폼 + 하단 고정 저장/다시불러오기 바가 Collector 와 동일한 골격으로
+      표시되는지 확인(경고 배너는 없음 — 의도된 정상 상태)
+  [ ] Studio 실행 → [환경설정] 탭 → 좌측 "로그"/"편집기" 네비 2개 전환 확인,
+      상단 노란 배너·하단 바 색상/위치가 Collector 와 동일한지 확인
+  [ ] Monitor/HMI 도 각각 실행해 동일 골격(배너+좌측네비+하단바) 확인,
+      HMI 는 좌측 네비 3항목(웹Hub/화면잠금/로그) 전환 확인
+  [ ] 5개 프로그램 모두 테마 선택기에서 테마를 바꿔가며 경고 배너/상태
+      텍스트 색상이 테마에 따라 함께 바뀌는지 확인(이전에는 하드코딩이라
+      테마를 바꿔도 배너 색상만 고정되어 있었음 — 이번에 해소)
+  [ ] 각 화면에서 저장 실패 조건을 2개 이상 동시에 유발(예: Studio 로그
+      보존일수 0 + Undo 단계 수 0) → 오류 메시지에 2개 항목이 모두 " / "
+      로 이어져 표시되는지 확인(이전에는 첫 항목만 표시되고 중단)
+  [ ] Collector [환경설정] → 강제쓰기 섹션의 위험 경고 카드가 테마의 Red
+      계열 색상으로 표시되는지, 상태 메시지(저장 성공/실패) 색상도 Green/
+      Red 테마 리소스로 표시되는지 확인
+
+## 📖 사용 설명
+
+화면 조작 방법:
+  1. 5개 프로그램 모두 [환경설정] 탭에서 동일한 형태(좌측 섹션 네비게이션
+     + 우측 스크롤 폼 + 하단 고정 저장/다시불러오기 바)로 보입니다
+  2. Manager 는 설정이 저장 즉시 반영되어 재시작 안내 배너가 없고, 나머지
+     4개는 대부분 재시작이 필요해 상단에 노란 배너가 항상 표시됩니다
+  3. 저장 시 여러 항목에 문제가 있으면 한 번에 모두 표시되므로, 한 번의
+     [저장] 클릭으로 어떤 항목들을 고쳐야 하는지 전부 확인할 수 있습니다
+
+확인 포인트:
+  - 이번 통일은 화면 골격·색상·검증 UX 에 한정되며, 각 프로그램의 실제
+    설정 항목(무엇을 설정할 수 있는가)은 전혀 변경되지 않았습니다
+  - Manager 에 경고 배너가 없는 것은 버그가 아니라 의도된 차이입니다
+    (Resource 임계값은 저장 즉시 실행 중인 감시 로직에 반영되어 재시작이
+    필요 없음 — 나머지 4개는 재시작이 필요해 배너가 있음)
+  - UI.Themes 의 8개 테마 파일은 이번에 전혀 수정하지 않았습니다 — 이미
+    존재하던 Yellow/Green/Red 계열 리소스를 하드코딩 대신 참조하도록
+    화면단만 고쳤습니다
+```
+
+---
+
+## ✅ 솔루션 종합 안내서(Word) 작성 완료 — 2026-07-20 (v11.43)
+
+배경: IIoT.Sequence 착수 전, 지금까지 완료된 5개 프로그램(Studio·Collector·
+Manager·Monitor·HMI)의 구조·기능·사용법을 한 파일로 정리해 달라는 요청.
+이 IIoT_HANDOFF.md 는 개발 진행 기록(Step 맵·변경 이력) 위주라 실사용/구조
+설명 문서로는 적합하지 않아, 별도의 사용설명서를 신규 작성함.
+
+산출물: `D:\lssLib\IIoT_Solution_종합안내서.docx` (A4, 약 15페이지)
+- 표지 · 목차(Word 목차 필드, 열 때 자동 갱신)
+- 1장 문서 개요 / 2장 시스템 개요·아키텍처(5개 프로그램 요약표·데이터
+  흐름 5단계·개발 2단계 원칙) / 3장 공통 인프라(Contracts·Plugins 4종
+  드라이버표·UI.Themes 8테마·lssLib)
+- 4~8장: Studio·Collector·Manager·Monitor·HMI 각 프로그램의 탭 구성표,
+  핵심 기능(FlowEngine 동작 5단계, Tag 3종, 스케일/알람 라이브러리,
+  프로토콜 블록, N포트, HMI 레이아웃 편집 등), 환경설정 항목
+- 9장 환경설정 화면 공통 규격(2026-07-20 통일 내용 요약) / 10장 버전
+  현황 및 다음 단계(Sequence) / 부록 A 경로·포트 요약 / 부록 B 용어집
+
+작성 방식: 각 프로그램의 실제 MainWindow.xaml 을 직접 Grep 하여 탭 목록을
+검증(HANDOFF 프로즈만 참고하지 않음) 후 docx(Node.js) 라이브러리로 생성,
+LibreOffice 변환 → PDF → 이미지 렌더링으로 표지·목차·표·글머리 기호 등
+전체 페이지를 육안 검증함.
+
+수정 사항 1건: 최초 생성본에서 탭/항목 이름 앞에 붙인 장식용 이모지
+(🖥🔀📐🔔 등)가 LibreOffice 변환 시 빈 사각형(tofu)으로 깨지는 것을
+확인 → 실사용 환경(Windows MS Word, Segoe UI Emoji 폰트 내장)에서는
+정상 렌더링될 가능성이 높으나, 검증 불가능한 리스크를 없애기 위해 전체
+이모지를 제거하고 순수 텍스트 라벨로 교체 후 재검증 완료(표 헤더가
+있어 이모지 없이도 항목 구분에 지장 없음).
+
+변경하지 않음: 코드/설정 파일은 이번 작업 대상이 아니며 전혀 수정하지
+않았습니다. 이 문서는 기존 코드 상태를 설명하는 별도 산출물입니다.
+
+---
+
 ## 🔜 다음 세션 진행 순서
 
 ### ① Manager + lssLib.SignalR 통합 빌드 확인 — ✅ 완료 (2026-07-16, 사용자 직접 빌드·런타임 검토)
@@ -3147,6 +3300,9 @@ wwwroot/index.html.
 | v11.4 | 설정(Settings) UI 편집 화면 — 후속 기능으로 기록 (2026-07-16, 착수 안 함) — |
 | | | Collector/Manager/Monitor 모두 "환경설정" 탭 없음 확인, Collector settings.json |
 | | | 10개 섹션 등 UI 부재 목록화. Manager 원격 통합 설정관리 탭 아이디어 기록 |
+| v11.43 | 솔루션 종합 안내서(Word) 작성 완료 — D:\lssLib\IIoT_Solution_종합안내서.docx |
+| | | (5개 프로그램 구조·기능·사용법 통합 문서, 15페이지). 장식용 이모지가 |
+| | | 일부 뷰어에서 깨지는 문제 확인 후 제거·재검증. 코드 변경 없음. |
 | **v11.28** | **C-SET-01 코드 완료 (2026-07-20, 빌드 확인 대기) — Collector 환경설정 탭.** |
 | | | **개별 프로그램 로컬 설정탭 착수 순서 확정(Collector→Manager→Monitor→HMI,** |
 | | | **사용자 확인) 후 Collector 부터 구현. SettingsViewModel(11섹션+유효성검사+** |
@@ -3324,6 +3480,26 @@ wwwroot/index.html.
 | | | **(ScaleEntryId 와 독립). 후속·보류 항목의 "RawFrame 한계" 블록 삭제 —** |
 | | | **3건 모두 해소로 더 이상 보류 아님. 다음: IIoT.Sequence 착수(로드맵상** |
 | | | **다음 프로그램)** |
+| **v11.42** | **설정 화면 테마·레이아웃·UX 통일 코드 완료 (2026-07-20, 빌드 확인** |
+| | | **대기) — Sequence 착수 전 사용자 질의("나머지 솔루션 설정 테마·기능** |
+| | | **테마를 맞춰야 하지 않을까?")로 착수. Explore 조사 결과 5개 프로그램** |
+| | | **환경설정 화면이 레이아웃(Collector 만 좌측 섹션네비, 나머지 4개는** |
+| | | **카드나열)·경고배너 위치/하드코딩색상(#2A2410/#E0A030 4곳 반복,** |
+| | | **Collector 상태색 #3FB950/#E05050·ForceWrite경고 #2A1414 등 3곳** |
+| | | **추가)·저장버튼 순서·검증UX(Collector 만 전체오류 표시, 나머지는 첫** |
+| | | **오류만 표시 후 중단)에서 서로 불일치함을 확인 → 사용자에게 보고 →** |
+| | | **"테마+레이아웃+UX 전면 통일" 선택. Collector 를 기준으로 삼아 Manager/** |
+| | | **Studio/Monitor/HMI 4개 SettingsViewModel.cs 에 ActiveSectionIndex/** |
+| | | **IsXSection/SwitchSectionCommand + _ValidateAll() 전체오류 목록 패턴** |
+| | | **추가, SettingsView.xaml 4개 전부를 Collector 와 동일한 DockPanel** |
+| | | **골격(상단 경고배너+좌측 220px 섹션네비+우측 스크롤폼+하단 고정** |
+| | | **저장/다시불러오기 바)으로 전면 재작성. 신규 테마 리소스 추가는** |
+| | | **불필요 — 8개 테마 전부에 이미 YellowBrush/YellowFaintBrush·GreenBrush/** |
+| | | **RedBrush/RedFaintBrush 존재 확인, 하드코딩 헥스 5곳을 DynamicResource** |
+| | | **참조로 교체(Collector 포함)만으로 테마 연동 해결. Manager 는 설정이** |
+| | | **즉시 반영되어 재시작 불필요하므로 경고배너 없음을 유지(의도된 유일한** |
+| | | **차이, 문서화). UI.Themes 8개 테마 파일 자체는 미변경. 다음:** |
+| | | **IIoT.Sequence 착수** |
 | **v11.5** | **HM-Base-0~2 + HM-01~02 코드 완료 (2026-07-16, 빌드 확인 대기)** |
 | | | **HMI\IIoT.HMI.sln 신규 생성 (Contracts·UI.Themes·lssLib.Log 참조)** |
 | | | **App/MainWindow/HmiMainViewModel: 테마+탭바 5개(현황판·레이아웃 편집·** |
